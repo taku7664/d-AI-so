@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>Daiso.App</RootNamespace>
+    <AssemblyName>d-AI-so</AssemblyName>
+    <UseWinUI>true</UseWinUI>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Platforms>x64</Platforms>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+
+    <!-- 설치 없이 실행되는 unpackaged 앱. 머신에 Windows App Runtime 1.8이 이미 있다 -->
+    <WindowsPackageType>None</WindowsPackageType>
+    <!-- 머신에 설치된 Windows App Runtime 버전에 의존하지 않도록 SDK를 앱에 포함한다 -->
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+
+    <!-- WinUI는 실제 문화권 정보를 쓴다. 솔루션 기본값(Invariant)을 이 프로젝트에서만 되돌린다 -->
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <EnableMsixTooling>false</EnableMsixTooling>
+
+    <!-- MVVMTK0045: [ObservableProperty] 필드가 AOT에 맞지 않다는 경고. 이 앱은 AOT를 쓰지 않는다 -->
+    <NoWarn>$(NoWarn);MVVMTK0045</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260804001" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Daiso.Core\Daiso.Core.csproj" />
+    <ProjectReference Include="..\Daiso.Providers.Claude\Daiso.Providers.Claude.csproj" />
+    <ProjectReference Include="..\Daiso.Providers.Codex\Daiso.Providers.Codex.csproj" />
+    <ProjectReference Include="..\Daiso.Infrastructure\Daiso.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

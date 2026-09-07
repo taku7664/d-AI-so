@@ -1,0 +1,86 @@
+using Daiso.App.Services;
+using Daiso.App.ViewModels;
+using Daiso.Core;
+using Daiso.Infrastructure;
+using Daiso.Providers.Claude;
+using Daiso.Providers.Codex;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Xaml;
+
+namespace Daiso.App;
+
+/// <summary>앱 진입점. DI 컨테이너를 만들고 Shell 창을 띄운다. (ARCHITECTURE §6)</summary>
+public partial class App : Application
+{
+    private Window? _window;
+
+    public App()
+    {
+        InitializeComponent();
+        Services = BuildServices();
+    }
+
+    /// <summary>화면에서 ViewModel을 꺼내 쓰는 통로.</summary>
+    public static IServiceProvider Services { get; private set; } = null!;
+
+    /// <summary>열려 있는 Shell 창. 파일 선택 대화상자가 창 핸들을 필요로 한다.</summary>
+    public static Window? MainWindow { get; private set; }
+
+    protected override void OnLaunched(LaunchActivatedEventArgs args)
+    {
+        _window = Services.GetRequiredService<ShellWindow>();
+        MainWindow = _window;
+        _window.Activate();
+    }
+
+    /// <summary>
+    /// ARCHITECTURE §3의 인터페이스를 구현으로 잇는다.
+    /// Provider는 <c>IEnumerable&lt;IProvider&gt;</c>로 주입된다.
+    /// </summary>
+    private static ServiceProvider BuildServices()
+    {
+        var services = new ServiceCollection();
+
+        // Core (순수)
+        services.AddSingleton<IRulePresetSerializer, RulePresetSerializer>();
+        services.AddSingleton<IMarkdownRuleRenderer, MarkdownRuleRenderer>();
+        services.AddSingleton<IInstructionMarkerWriter, InstructionMarkerWriter>();
+        services.AddSingleton<IInstructionTemplate, InstructionTemplate>();
+        services.AddSingleton<IContextAnalyzer, ContextAnalyzer>();
+
+        // Providers
+        services.AddSingleton<IProvider, ClaudeProvider>();
+        services.AddSingleton<IProvider, CodexProvider>();
+
+        // Infrastructure
+        services.AddSingleton<IRuleFileService, RuleFileService>();
+        services.AddSingleton<IFileDisposer, RecycleBinFileDisposer>();
+        services.AddSingleton<ITerminalLauncher, WindowsTerminalLauncher>();
+        services.AddSingleton<IContextInspector>(provider =>
+            new ContextInspector(
+                provider.GetRequiredService<IEnumerable<IProvider>>(),
+                provider.GetRequiredService<IContextAnalyzer>()));
+        services.AddSingleton<ISessionExporter>(provider =>
+            new MarkdownSessionExporter(provider.GetRequiredService<IEnumerable<IProvider>>()));
+        services.AddSingleton<ISessionIndex>(provider =>
+            new SqliteSessionIndex(
+                provider.GetRequiredService<IEnumerable<IProvider>>(),
+                provider.GetRequiredService<ISettingsStore>().Current.IndexDatabasePath
+                    ?? SqliteSessionIndex.DefaultDatabasePath));
+
+        // App
+        services.AddSingleton<ISettingsStore, SettingsStore>();
+        services.AddSingleton<IndexService>();
+
+        services.AddSingleton<ShellViewModel>();
+        services.AddSingleton<DashboardViewModel>();
+        services.AddSingleton<TerminalViewModel>();
+        services.AddSingleton<SessionsViewModel>();
+        services.AddSingleton<RuleMakerViewModel>();
+        services.AddSingleton<SettingsViewModel>();
+
+        services.AddSingleton<ShellWindow>();
+
+        return services.BuildServiceProvider();
+    }
+}
