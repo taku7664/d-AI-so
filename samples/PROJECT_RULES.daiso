@@ -1,0 +1,33 @@
+daiso: 1
+name: Backend Rules
+description: 서버 코드 작업 시 규칙
+
+global:
+  - action: 한국어로 응답한다
+    priority: SHOULD
+  - action: 비밀키/토큰 값을 출력하지 않는다
+    priority: MUST
+
+rules:
+  - when: C# 파일을 수정할 때
+    then:
+      - action: 변경 전 영향 범위를 먼저 설명한다
+        priority: MUST
+      - action: 관련 테스트를 함께 수정한다
+        priority: SHOULD
+
+  - when:
+      and:
+        - C# 파일을 수정할 때
+        - or:
+            - public API 변경
+            - DB 스키마 변경
+    then:
+      - action: 마이그레이션 계획을 먼저 작성한다
+        priority: MUST
+
+  - when:
+      not: 테스트 코드
+    then:
+      - action: 공개 함수에 XML 주석을 남긴다
+        priority: MAY
