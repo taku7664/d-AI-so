@@ -1,8 +1,209 @@
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Daiso.App.Services;
+using Daiso.Core;
 
 namespace Daiso.App.ViewModels;
 
-/// <summary>Dashboard 페이지 상태.</summary>
+/// <summary>도구별 설치·로그인 상태와 세션·사용량 요약. (REQUIREMENTS §3, GOAL Step 9)</summary>
 public sealed partial class DashboardViewModel : ObservableObject
 {
+    private const int UsageDays = 7;
+
+    private readonly IReadOnlyList<IProvider> _providers;
+    private readonly ITerminalLauncher _launcher;
+    private readonly IndexService _indexService;
+
+    [ObservableProperty]
+    private bool isBusy;
+
+    [ObservableProperty]
+    private int sessionCount;
+
+    [ObservableProperty]
+    private long totalSizeBytes;
+
+    [ObservableProperty]
+    private TokenUsage recentUsage = TokenUsage.Zero;
+
+    public DashboardViewModel(
+        IEnumerable<IProvider> providers,
+        ITerminalLauncher launcher,
+        IndexService indexService)
+    {
+        ArgumentNullException.ThrowIfNull(providers);
+        ArgumentNullException.ThrowIfNull(launcher);
+        ArgumentNullException.ThrowIfNull(indexService);
+
+        _providers = providers.ToList();
+        _launcher = launcher;
+        _indexService = indexService;
+
+        Tools = new ObservableCollection<ToolCardViewModel>(
+            _providers.Select(provider => new ToolCardViewModel(provider.Kind)));
+    }
+
+    /// <summary>도구 카드. Claude, Codex 순서.</summary>
+    public ObservableCollection<ToolCardViewModel> Tools { get; }
+
+    /// <summary>최근 며칠을 요약하는지.</summary>
+    public int UsageDayCount => UsageDays;
+
+    /// <summary>사람이 읽는 총 용량.</summary>
+    public string TotalSizeText => FormatSize(TotalSizeBytes);
+
+    /// <summary>최근 사용량 요약 문구.</summary>
+    public string RecentUsageText =>
+        $"입력 {RecentUsage.Input:N0} · 출력 {RecentUsage.Output:N0} · "
+        + $"캐시 쓰기 {RecentUsage.CacheCreate:N0} · 캐시 읽기 {RecentUsage.CacheRead:N0}";
+
+    /// <summary>도구 상태와 세션·사용량 요약을 다시 읽는다.</summary>
+    [RelayCommand]
+    public async Task LoadAsync(CancellationToken ct)
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        IsBusy = true;
+
+        try
+        {
+            foreach (var provider in _providers)
+            {
+                var card = Tools.First(tool => tool.Kind == provider.Kind);
+                card.Apply(
+                    await provider.IsInstalledAsync(ct).ConfigureAwait(true),
+                    await provider.GetAuthStatusAsync(ct).ConfigureAwait(true));
+            }
+
+            var sessions = await _indexService.Index
+                .ListAsync(SessionFilter.All, ct)
+                .ConfigureAwait(true);
+
+            SessionCount = sessions.Count;
+            TotalSizeBytes = sessions.Sum(session => session.SizeBytes);
+
+            var to = DateOnly.FromDateTime(DateTime.UtcNow);
+            var usage = await _indexService.Index
+                .GetUsageAsync(to.AddDays(-(UsageDays - 1)), to, ct)
+                .ConfigureAwait(true);
+
+            RecentUsage = usage.Days.Aggregate(TokenUsage.Zero, (total, day) => total.Add(day.Usage));
+
+            OnPropertyChanged(nameof(TotalSizeText));
+            OnPropertyChanged(nameof(RecentUsageText));
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>터미널을 열어 로그인 절차를 띄운다. 앱은 토큰을 다루지 않는다.</summary>
+    [RelayCommand]
+    public async Task LoginAsync(ToolCardViewModel? card)
+    {
+        if (card is null)
+        {
+            return;
+        }
+
+        var provider = _providers.First(p => p.Kind == card.Kind);
+        var arguments = provider.Kind == ToolKind.Codex ? "login" : string.Empty;
+        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+        await _launcher.LaunchAsync(home, provider.ExecutableName, arguments).ConfigureAwait(true);
+    }
+
+    internal static string FormatSize(long bytes) => bytes switch
+    {
+        < 1024 => $"{bytes} B",
+        < 1024 * 1024 => $"{bytes / 1024.0:N1} KB",
+        < 1024L * 1024 * 1024 => $"{bytes / (1024.0 * 1024):N1} MB",
+        _ => $"{bytes / (1024.0 * 1024 * 1024):N2} GB",
+    };
+}
+
+/// <summary>도구 하나의 카드 상태. 토큰 값은 어떤 속성에도 담지 않는다. (ARCHITECTURE §7.1)</summary>
+public sealed partial class ToolCardViewModel : ObservableObject
+{
+    [ObservableProperty]
+    private bool isInstalled;
+
+    [ObservableProperty]
+    private AuthState state = AuthState.Missing;
+
+    [ObservableProperty]
+    private string? accountLabel;
+
+    [ObservableProperty]
+    private string? email;
+
+    [ObservableProperty]
+    private DateTimeOffset? sessionExpiresAt;
+
+    public ToolCardViewModel(ToolKind kind) => Kind = kind;
+
+    public ToolKind Kind { get; }
+
+    /// <summary>카드 제목.</summary>
+    public string Title => Kind == ToolKind.Claude ? "Claude Code" : "Codex CLI";
+
+    /// <summary>부가 정보. MCP 커넥터 이름, 구독 등급 등.</summary>
+    public ObservableCollection<string> Extras { get; } = [];
+
+    /// <summary>상태 배지.</summary>
+    public string Badge => State switch
+    {
+        AuthState.LoggedIn => "🟢",
+        AuthState.ExpiringSoon => "🟡",
+        _ => "🔴",
+    };
+
+    /// <summary>상태 설명.</summary>
+    public string StateText => State switch
+    {
+        AuthState.LoggedIn => "로그인됨",
+        AuthState.ExpiringSoon => "곧 만료",
+        AuthState.Expired => "만료됨",
+        _ => "로그인 정보 없음",
+    };
+
+    /// <summary>설치 여부 문구.</summary>
+    public string InstalledText => IsInstalled ? "설치됨" : "설치되지 않음";
+
+    /// <summary>재로그인 필요 시각 문구.</summary>
+    public string ExpiresText => SessionExpiresAt is { } at
+        ? $"{at.ToLocalTime():yyyy-MM-dd HH:mm} 이후 재로그인 필요"
+        : "만료 정보 없음";
+
+    /// <summary>로그인이 필요한 상태인지. 버튼 강조에 쓴다.</summary>
+    public bool NeedsLogin => State is AuthState.Missing or AuthState.Expired or AuthState.ExpiringSoon;
+
+    internal void Apply(bool installed, AuthStatus status)
+    {
+        ArgumentNullException.ThrowIfNull(status);
+
+        IsInstalled = installed;
+        State = status.State;
+        AccountLabel = status.AccountLabel;
+        Email = status.Email;
+        SessionExpiresAt = status.SessionExpiresAt;
+
+        Extras.Clear();
+
+        foreach (var extra in status.Extras)
+        {
+            Extras.Add(extra);
+        }
+
+        OnPropertyChanged(nameof(Badge));
+        OnPropertyChanged(nameof(StateText));
+        OnPropertyChanged(nameof(InstalledText));
+        OnPropertyChanged(nameof(ExpiresText));
+        OnPropertyChanged(nameof(NeedsLogin));
+    }
 }
