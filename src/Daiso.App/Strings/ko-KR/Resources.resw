@@ -918,4 +918,12 @@
   <data name="Sessions_TimelineTruncated" xml:space="preserve">
     <value>앞 {0}건만 보여줍니다. 전체는 Markdown으로 내보내 보세요.</value>
   </data>
+  <!-- 첫 실행 안내 -->
+  <data name="Sessions_Indexing" xml:space="preserve">
+    <value>세션을 처음 훑고 있습니다. 끝나면 목록이 채워집니다.</value>
+  </data>
+  <!-- 세션 개요 -->
+  <data name="Sessions_Overview" xml:space="preserve">
+    <value>프로젝트 {0}개 · 세션 {1}건</value>
+  </data>
 </root>

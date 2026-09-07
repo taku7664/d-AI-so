@@ -14,6 +14,7 @@ public sealed partial class SessionsPage : Page
     {
         InitializeComponent();
         ViewModel = App.Services.GetRequiredService<SessionsViewModel>();
+        Shell.PropertyChanged += OnShellPropertyChanged;
         Doctor = App.Services.GetRequiredService<ContextDoctorViewModel>();
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
 
@@ -21,6 +22,21 @@ public sealed partial class SessionsPage : Page
     }
 
     public SessionsViewModel ViewModel { get; }
+
+    /// <summary>첫 실행 인덱싱 진행을 빈 목록 안내에 함께 보여준다.</summary>
+    public ShellViewModel Shell { get; } = App.Services.GetRequiredService<ShellViewModel>();
+
+    /// <summary>
+    /// 인덱싱이 끝나면 목록을 자동으로 다시 읽는다.
+    /// 첫 실행에는 인덱싱 도중 목록을 그린 상태라 그대로 두면 옛 숫자가 남는다.
+    /// </summary>
+    private void OnShellPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ShellViewModel.IsIndexing) && !Shell.IsIndexing)
+        {
+            _ = ViewModel.LoadCommand.ExecuteAsync(null);
+        }
+    }
 
     /// <summary>오른쪽 컨텍스트 탭.</summary>
     public ContextDoctorViewModel Doctor { get; }
@@ -82,6 +98,15 @@ public sealed partial class SessionsPage : Page
         Microsoft.UI.Xaml.Input.KeyboardAcceleratorInvokedEventArgs args)
     {
         SearchBox.Focus(FocusState.Programmatic);
+        args.Handled = true;
+    }
+
+    /// <summary>Esc는 검색을 지운다.</summary>
+    private void OnClearSearchInvoked(
+        Microsoft.UI.Xaml.Input.KeyboardAccelerator sender,
+        Microsoft.UI.Xaml.Input.KeyboardAcceleratorInvokedEventArgs args)
+    {
+        ViewModel.ClearSearchCommand.Execute(null);
         args.Handled = true;
     }
 

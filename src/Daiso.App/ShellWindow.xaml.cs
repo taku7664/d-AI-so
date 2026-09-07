@@ -61,6 +61,21 @@ public sealed partial class ShellWindow : Window
         Navigate(tag);
     }
 
+    /// <summary>Ctrl+1~6으로 왼쪽 메뉴 순서대로 이동한다.</summary>
+    private void OnNavAccelerator(
+        Microsoft.UI.Xaml.Input.KeyboardAccelerator sender,
+        Microsoft.UI.Xaml.Input.KeyboardAcceleratorInvokedEventArgs args)
+    {
+        var index = sender.Key - Windows.System.VirtualKey.Number1;
+        var items = Navigation.MenuItems.OfType<NavigationViewItem>().ToList();
+
+        if (index >= 0 && index < items.Count)
+        {
+            Navigation.SelectedItem = items[index];
+            args.Handled = true;
+        }
+    }
+
     private void OnSelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
     {
         if (args.SelectedItem is NavigationViewItem { Tag: string tag })

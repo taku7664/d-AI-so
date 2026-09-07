@@ -200,7 +200,7 @@ public sealed partial class SessionsViewModel : ObservableObject
             _allSessions = [.. await _indexService.Index.ListAsync(BuildFilter(), ct).ConfigureAwait(true)];
             RebuildProjects();
             ApplyProjectSelection();
-            StatusText = UiStrings.Format("Sessions_Count", _allSessions.Count);
+            StatusText = UiStrings.Format("Sessions_Overview", Projects.Count, _allSessions.Count);
         }
         finally
         {

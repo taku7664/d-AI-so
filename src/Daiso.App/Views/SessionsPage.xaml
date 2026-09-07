@@ -9,6 +9,7 @@
     <Grid Padding="{StaticResource PagePadding}" RowSpacing="14">
         <Grid.KeyboardAccelerators>
             <KeyboardAccelerator Modifiers="Control" Key="F" Invoked="OnFocusSearchInvoked" />
+            <KeyboardAccelerator Key="Escape" Invoked="OnClearSearchInvoked" />
         </Grid.KeyboardAccelerators>
 
         <Grid.RowDefinitions>
@@ -264,11 +265,30 @@
                             VerticalAlignment="Top"
                             Visibility="{x:Bind ViewModel.IsListEmpty, Mode=OneWay}">
                             <StackPanel Spacing="10">
-                                <TextBlock Text="{loc:Str Key=Sessions_EmptyList}" Style="{StaticResource PageSubtitleText}" />
+                                <!-- 인덱싱 중이면 진행을 알려준다. 첫 실행에는 목록이 비어 있는 게 정상이다 -->
+                                <StackPanel Spacing="8" Visibility="{x:Bind Shell.IsIndexing, Mode=OneWay}">
+                                    <TextBlock Text="{loc:Str Key=Sessions_Indexing}" Style="{StaticResource PageSubtitleText}" />
+                                    <TextBlock
+                                        Text="{x:Bind Shell.StatusMessage, Mode=OneWay}"
+                                        Style="{StaticResource MutedText}"
+                                        TextTrimming="CharacterEllipsis" />
+                                    <muxc:ProgressBar
+                                        Width="240"
+                                        HorizontalAlignment="Left"
+                                        Value="{x:Bind Shell.StatusPercent, Mode=OneWay}"
+                                        IsIndeterminate="False" />
+                                </StackPanel>
+
+                                <TextBlock
+                                    Text="{loc:Str Key=Sessions_EmptyList}"
+                                    Style="{StaticResource PageSubtitleText}"
+                                    Visibility="{x:Bind Shell.IsNotIndexing, Mode=OneWay}" />
+
                                 <Button
                                     Content="{loc:Str Key=Sessions_ReloadList}"
                                     HorizontalAlignment="Left"
                                     AutomationProperties.AutomationId="EmptyReloadButton"
+                                    Visibility="{x:Bind Shell.IsNotIndexing, Mode=OneWay}"
                                     Command="{x:Bind ViewModel.LoadCommand}" />
                             </StackPanel>
                         </Border>

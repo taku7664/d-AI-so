@@ -30,12 +30,17 @@ public sealed partial class ShellViewModel : ObservableObject
         _indexService.StatusChanged += OnStatusChanged;
     }
 
+    /// <summary>인덱싱이 돌고 있지 않은가. 빈 목록 안내를 가리는 데 쓴다.</summary>
+    public bool IsNotIndexing => !IsIndexing;
+
     /// <summary>UI 스레드로 값을 옮길 때 쓴다. 창이 붙기 전에는 null이다.</summary>
     public Action<Action>? Dispatch { get; set; }
 
     /// <summary>첫 실행에 백그라운드로 인덱스를 갱신한다. 창을 막지 않는다.</summary>
     public void StartBackgroundRefresh() =>
         _ = Task.Run(() => _indexService.RefreshAsync());
+
+    partial void OnIsIndexingChanged(bool value) => OnPropertyChanged(nameof(IsNotIndexing));
 
     private void OnStatusChanged(object? sender, IndexStatus status)
     {
