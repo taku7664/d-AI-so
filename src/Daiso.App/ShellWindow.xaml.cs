@@ -3,7 +3,11 @@ using Daiso.App.ViewModels;
 using Daiso.App.Views;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
+using Windows.UI;
 
 namespace Daiso.App;
 
@@ -27,7 +31,9 @@ public sealed partial class ShellWindow : Window
         _viewModel.PropertyChanged += (_, _) => ApplyStatus();
         ApplyStatus();
 
+        ExtendTitleBar();
         ApplyTheme();
+        WatchThemeSetting();
         RestoreWindowSize();
         ApplyIcon();
 
@@ -91,15 +97,87 @@ public sealed partial class ShellWindow : Window
         StatusProgress.Value = _viewModel.StatusPercent;
     }
 
-    /// <summary>설정의 테마를 적용한다. "System"이면 손대지 않아 OS 설정을 따른다.</summary>
-    private void ApplyTheme()
+    /// <summary>
+    /// 테마를 적용한다. "System"이면 OS를 따르고 Mica를 쓴다.
+    /// Light/Dark를 고른 경우 Mica는 OS 테마 색으로 남아 글자와 어긋나므로,
+    /// 배경을 그 테마의 색으로 직접 칠하고 제목줄 단추 색도 맞춘다.
+    /// </summary>
+    public void ApplyTheme(string? theme = null)
     {
-        RootGrid.RequestedTheme = _settings.Current.Theme switch
+        var name = theme ?? _settings.Current.Theme;
+
+        RootGrid.RequestedTheme = name switch
         {
             "Light" => ElementTheme.Light,
             "Dark" => ElementTheme.Dark,
             _ => ElementTheme.Default,
         };
+
+        if (RootGrid.RequestedTheme == ElementTheme.Default)
+        {
+            SystemBackdrop = new MicaBackdrop();
+            RootGrid.Background = null;
+            ResetTitleBarColors();
+
+            return;
+        }
+
+        var dark = RootGrid.RequestedTheme == ElementTheme.Dark;
+
+        // Mica는 OS 테마를 따르므로 명시적 테마에서는 끄고 단색으로 칠한다.
+        SystemBackdrop = null;
+        RootGrid.Background = new SolidColorBrush(dark
+            ? Color.FromArgb(255, 32, 32, 32)
+            : Color.FromArgb(255, 243, 243, 243));
+
+        ApplyTitleBarColors(dark);
+    }
+
+    /// <summary>
+    /// 제목줄을 앱 화면 안으로 끌어온다. Windows 10에서는 제목줄 색을 바꿀 수 없어
+    /// 시스템이 그리는 밝은 띠가 남기 때문이다. 끌어온 영역은 창 드래그로 쓴다.
+    /// </summary>
+    private void ExtendTitleBar()
+    {
+        ExtendsContentIntoTitleBar = true;
+        SetTitleBar(TitleBarArea);
+    }
+
+    private void ApplyTitleBarColors(bool dark)
+    {
+        var bar = AppWindow.TitleBar;
+        var foreground = dark ? Colors.White : Colors.Black;
+        var background = dark
+            ? Color.FromArgb(255, 32, 32, 32)
+            : Color.FromArgb(255, 243, 243, 243);
+        var hover = dark
+            ? Color.FromArgb(255, 58, 58, 58)
+            : Color.FromArgb(255, 226, 226, 226);
+
+        bar.ButtonForegroundColor = foreground;
+        bar.ButtonInactiveForegroundColor = foreground;
+        bar.ButtonHoverForegroundColor = foreground;
+        bar.ButtonBackgroundColor = background;
+        bar.ButtonInactiveBackgroundColor = background;
+        bar.ButtonHoverBackgroundColor = hover;
+        bar.BackgroundColor = background;
+        bar.InactiveBackgroundColor = background;
+        bar.ForegroundColor = foreground;
+    }
+
+    private void ResetTitleBarColors()
+    {
+        var bar = AppWindow.TitleBar;
+
+        bar.ButtonForegroundColor = null;
+        bar.ButtonInactiveForegroundColor = null;
+        bar.ButtonHoverForegroundColor = null;
+        bar.ButtonBackgroundColor = null;
+        bar.ButtonInactiveBackgroundColor = null;
+        bar.ButtonHoverBackgroundColor = null;
+        bar.BackgroundColor = null;
+        bar.InactiveBackgroundColor = null;
+        bar.ForegroundColor = null;
     }
 
     /// <summary>제목줄과 작업 표시줄 아이콘.</summary>
@@ -119,6 +197,15 @@ public sealed partial class ShellWindow : Window
         var height = Math.Max(600, _settings.Current.WindowHeight);
 
         AppWindow.Resize(new Windows.Graphics.SizeInt32(width, height));
+    }
+
+    /// <summary>설정에서 테마를 바꾸면 창이 바로 따라간다.</summary>
+    private void WatchThemeSetting()
+    {
+        var settings = App.Services.GetRequiredService<ViewModels.SettingsViewModel>();
+
+        settings.ThemeChanged += (_, theme) =>
+            RootGrid.DispatcherQueue.TryEnqueue(() => ApplyTheme(theme));
     }
 
     private void OnClosed(object sender, WindowEventArgs args)

@@ -12,18 +12,38 @@
 
     <Grid x:Name="RootGrid">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
+        <!-- 제목줄: 창 테마를 따라가도록 앱이 직접 그린다 -->
+        <Grid
+            x:Name="TitleBarArea"
+            Grid.Row="0"
+            Height="36"
+            Background="Transparent">
+            <StackPanel
+                Orientation="Horizontal"
+                Spacing="10"
+                Margin="14,0,0,0"
+                VerticalAlignment="Center">
+                <Image Source="Assets/daiso.ico" Width="16" Height="16" />
+                <TextBlock
+                    Text="d-AI-so"
+                    FontSize="12"
+                    VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
+        </Grid>
+
         <muxc:NavigationView
             x:Name="Navigation"
-            Grid.Row="0"
+            Grid.Row="1"
             IsBackButtonVisible="Collapsed"
             IsSettingsVisible="False"
             PaneDisplayMode="Left"
             OpenPaneLength="200"
-            PaneTitle="d-AI-so"
             SelectionChanged="OnSelectionChanged">
 
             <muxc:NavigationView.MenuItems>
@@ -59,7 +79,7 @@
 
         <Border
             x:Name="StatusBar"
-            Grid.Row="1"
+            Grid.Row="2"
             Padding="12,6"
             BorderThickness="0,1,0,0"
             BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"

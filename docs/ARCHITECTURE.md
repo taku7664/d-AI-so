@@ -492,6 +492,11 @@ Apply(projectDir, direction, dryRun)
 - 목록의 한 줄은 **한 줄로 끝낸다** (`TextTrimming`). 전체 값은 ToolTip
 - 파괴적인 버튼(삭제)은 대상이 없으면 비활성이다
 - 빈 상태는 흰 판을 두지 않고 `NoticeBorder`로 다음에 할 일을 알려 준다
+
+**테마** — 설정의 테마는 고른 즉시 적용한다 (`SettingsViewModel.ThemeChanged` → `ShellWindow.ApplyTheme`).
+- `System`: `MicaBackdrop` + 배경 없음. OS 테마를 따른다
+- `Light` / `Dark`: Mica는 OS 테마 색으로 남아 글자와 어긋나므로 **끄고** 그 테마의 단색으로 칠한다
+- 제목줄은 `ExtendsContentIntoTitleBar`로 앱이 직접 그린다. Windows 10은 제목줄 색 API를 지원하지 않아 시스템이 그리면 밝은 띠가 남는다
 ---
 
 ## 7. 불변 규칙

@@ -43,6 +43,9 @@ public sealed partial class SettingsViewModel : ObservableObject
         Load();
     }
 
+    /// <summary>테마를 고르면 창이 바로 갈아입도록 알린다. 값은 "System" | "Light" | "Dark".</summary>
+    public event EventHandler<string>? ThemeChanged;
+
     /// <summary>테마 항목.</summary>
     public IReadOnlyList<string> Themes { get; } =
     [
@@ -99,6 +102,30 @@ public sealed partial class SettingsViewModel : ObservableObject
         }
 
         NotifyPriceState();
+    }
+
+    /// <summary>
+    /// 테마는 고른 즉시 적용하고 저장한다.
+    /// 다른 값처럼 저장 버튼을 기다리면 "골랐는데 아무 일도 안 난다"로 보인다.
+    /// </summary>
+    partial void OnThemeIndexChanged(int value)
+    {
+        var theme = value switch
+        {
+            1 => "Light",
+            2 => "Dark",
+            _ => "System",
+        };
+
+        if (string.Equals(_settings.Current.Theme, theme, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _settings.Current.Theme = theme;
+        _settings.Save();
+
+        ThemeChanged?.Invoke(this, theme);
     }
 
     /// <summary>값을 설정 파일에 쓴다.</summary>
