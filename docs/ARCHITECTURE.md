@@ -188,6 +188,9 @@ public interface IInstructionMarkerWriter
     string Apply(string? existingContent, string instructionBody);
     // existingContent null → 새 파일 내용. 마커 있음 → 블록 내부만 교체. 없음 → 끝에 빈 줄 + 블록 추가
     // 마커 밖 내용은 바이트 단위 불변 (개행 문자 종류 포함)
+
+    string Strip(string content);
+    // 마커 블록(마커 두 줄 포함)과 블록이 남기는 빈 줄을 제거한 나머지. 마이그레이션 diff·복사의 입력
 }
 
 // 도구별 지시문 본문 생성
@@ -203,6 +206,30 @@ public interface IContextAnalyzer
 {
     ContextReport Analyze(ToolKind tool, IReadOnlyList<ContextFile> files);
 }
+
+// CLAUDE.md ↔ AGENTS.md 마이그레이션 (REQUIREMENTS §7). 파일 읽기·쓰기는 호출자 책임
+public interface IInstructionMigrator
+{
+    InstructionMigrationPlan Plan(InstructionSource claude, InstructionSource codex);
+    MigrationResult Render(InstructionMigrationPlan plan, MigrationDirection direction);
+}
+
+public enum MigrationDirection { ClaudeToCodex, CodexToClaude }
+public enum DiffKind { Same, Added, Removed }
+
+public sealed record DiffLine(DiffKind Kind, int? LeftLine, int? RightLine, string Text);
+
+// Imports: 원본에 있는 `@경로` → 읽어온 내용 (null이면 못 읽음 → 경고)
+public sealed record InstructionSource(bool Exists, string? Content, IReadOnlyDictionary<string, string?> Imports);
+
+public sealed record InstructionMigrationPlan(
+    InstructionSource Claude, InstructionSource Codex,
+    string ClaudeBody, string CodexBody,          // 마커 블록을 뺀 본문
+    IReadOnlyList<DiffLine> Diff,                 // 왼쪽=CLAUDE.md, 오른쪽=AGENTS.md
+    MigrationDirection? Suggested,                // 한쪽만 있으면 그 방향, 둘 다 있으면 null(사용자 선택)
+    IReadOnlyList<string> Notes);
+
+public sealed record MigrationResult(ToolKind Target, string Content, IReadOnlyList<string> Warnings);
 ```
 
 ### 3.2 Provider (Providers 프로젝트 구현)
@@ -231,6 +258,12 @@ public interface IRuleFileService          // 경로 기반. Core의 Serializer/
     RulePreset Load(string path);
     void Save(RulePreset preset, string path);
     void EnsureInstruction(string projectDir, IEnumerable<IProvider> providers);
+}
+
+public interface IInstructionMigrationService   // §5.6. Core의 IInstructionMigrator에 파일 IO를 붙인다
+{
+    InstructionMigrationPlan Plan(string projectDir);
+    MigrationResult Apply(string projectDir, MigrationDirection direction, bool dryRun);
 }
 
 public interface ISessionIndex
@@ -402,6 +435,26 @@ IContextInspector.InspectAsync(tool, dir)
   → 나머지 FileSystem.DeleteFile(path, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin)
   → 인덱스에서 해당 세션 행 삭제
 ```
+
+### 5.6 CLAUDE.md ↔ AGENTS.md 마이그레이션
+```
+Plan(projectDir)
+  → 프로젝트 루트의 CLAUDE.md / AGENTS.md 읽기 (UTF-8, 없으면 Exists=false)
+  → CLAUDE.md의 `@경로` import를 재귀 해석 (깊이 5, 순환 차단, ~ 는 홈)
+  → IInstructionMigrator.Plan
+       · 양쪽에서 daiso 마커 블록 제거 → Body
+       · Body를 줄 단위 LCS diff (왼쪽 CLAUDE.md, 오른쪽 AGENTS.md)
+       · 한쪽만 있으면 Suggested = 그 방향, 둘 다 있으면 null → 사용자가 방향 선택
+
+Apply(projectDir, direction, dryRun)
+  → Render: 원본 Body 복사
+       · 대상이 Codex → `@경로` 줄을 읽어온 내용으로 인라인 전개 + 경고 (Codex는 import 없음)
+       · 대상이 Claude → 전개하지 않음
+       · 대상 도구의 daiso 블록을 IInstructionMarkerWriter.Apply로 다시 넣는다 (양쪽 각자 형식 유지)
+  → dryRun=false면 대상 파일에 UTF-8(BOM 없음) 기록. 내용이 같으면 쓰지 않는다
+```
+- 원본 파일은 읽기만 한다. 쓰는 것은 **대상 파일 하나**뿐이다
+- import 전개는 대상이 Codex일 때만. 실패한 import는 줄을 그대로 두고 경고에 남긴다
 
 ---
 

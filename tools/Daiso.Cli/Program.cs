@@ -20,6 +20,7 @@ internal static class Program
           daiso rules render <path>
           daiso rules roundtrip <path>
           daiso rules install <projectDir>
+          daiso rules migrate <projectDir> [--to claude|codex] [--apply]
           daiso doctor <dir> [--tool claude|codex]
           daiso export <sessionId> <out.md>
         """;
@@ -213,7 +214,7 @@ internal static class Commands
     {
         if (args.Length < 3)
         {
-            Console.Error.WriteLine("사용법: daiso rules render|roundtrip|install <경로>");
+            Console.Error.WriteLine("사용법: daiso rules render|roundtrip|install|migrate <경로>");
             return Task.FromResult(2);
         }
 
@@ -240,10 +241,90 @@ internal static class Commands
 
                 return Task.FromResult(0);
 
+            case "migrate":
+                return Task.FromResult(Migrate(path, args));
+
             default:
                 Console.Error.WriteLine($"알 수 없는 rules 하위 명령: {args[1]}");
                 return Task.FromResult(2);
         }
+    }
+
+    /// <summary>CLAUDE.md ↔ AGENTS.md 비교·복사. `--apply` 없이는 쓰지 않는다. (REQUIREMENTS §7)</summary>
+    private static int Migrate(string projectDir, string[] args)
+    {
+        var directory = Path.GetFullPath(projectDir);
+        var service = new InstructionMigrationService(Providers);
+        var plan = service.Plan(directory);
+
+        Console.WriteLine($"[migrate] {directory}");
+        Console.WriteLine($"  CLAUDE.md: {(plan.Claude.Exists ? "있음" : "없음")}"
+            + $"   AGENTS.md: {(plan.Codex.Exists ? "있음" : "없음")}");
+
+        foreach (var note in plan.Notes)
+        {
+            Console.WriteLine($"  · {note}");
+        }
+
+        if (!plan.CanMigrate)
+        {
+            return 0;
+        }
+
+        Console.WriteLine("  diff (왼쪽 CLAUDE.md, 오른쪽 AGENTS.md, 마커 블록 제외)");
+
+        foreach (var line in plan.Diff)
+        {
+            var sign = line.Kind switch
+            {
+                DiffKind.Removed => '<',
+                DiffKind.Added => '>',
+                _ => ' ',
+            };
+
+            Console.WriteLine($"    {line.LeftLine?.ToString() ?? "",4} {line.RightLine?.ToString() ?? "",4} {sign} {line.Text}");
+        }
+
+        var direction = DirectionOption(args) ?? plan.Suggested;
+
+        if (direction is null)
+        {
+            Console.Error.WriteLine("  양쪽이 다르다. --to claude 또는 --to codex 로 방향을 정해라");
+            return 2;
+        }
+
+        var apply = args.Contains("--apply", StringComparer.Ordinal);
+        var result = service.Apply(directory, direction.Value, dryRun: !apply);
+        var targetName = Providers.First(p => p.Kind == result.Target).RulesFileName;
+
+        foreach (var warning in result.Warnings)
+        {
+            Console.WriteLine($"  경고: {warning}");
+        }
+
+        Console.WriteLine(apply
+            ? $"  OK  {targetName} 를 {direction} 방향으로 갱신했다 ({result.Content.Length:N0}자)"
+            : $"  미리보기 ({direction}, {result.Content.Length:N0}자). 실제로 쓰려면 --apply");
+
+        return 0;
+    }
+
+    /// <summary>`--to claude|codex` → 대상 도구 기준 방향.</summary>
+    private static MigrationDirection? DirectionOption(string[] args)
+    {
+        var index = Array.IndexOf(args, "--to");
+
+        if (index < 0 || index + 1 >= args.Length)
+        {
+            return null;
+        }
+
+        return args[index + 1].ToLowerInvariant() switch
+        {
+            "codex" or "agents" => MigrationDirection.ClaudeToCodex,
+            "claude" => MigrationDirection.CodexToClaude,
+            _ => null,
+        };
     }
 
     internal static async Task<int> DoctorAsync(string[] args)

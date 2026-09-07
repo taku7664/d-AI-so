@@ -156,6 +156,99 @@ public sealed partial class RuleMakerPage : Page
         }
     }
 
+    // ── 지시문 마이그레이션 (REQUIREMENTS §7) ────────────────────────────
+
+    /// <summary>좌우 diff를 보여 주고 방향을 고르게 한다. 고르기 전에는 아무것도 쓰지 않는다.</summary>
+    private async void OnMigrateClick(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel.ProjectDirectory is not { Length: > 0 } directory)
+        {
+            await ShowAsync("프로젝트 폴더가 필요하다", "머리말의 '프로젝트 폴더'에 경로를 넣고 다시 눌러라");
+            return;
+        }
+
+        var migration = App.Services.GetRequiredService<MigrationViewModel>();
+
+        try
+        {
+            migration.Inspect(directory);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            await ShowAsync("읽을 수 없음", ex.Message);
+            return;
+        }
+
+        var dialog = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = "CLAUDE.md ↔ AGENTS.md",
+            Content = BuildMigrationView(migration),
+            PrimaryButtonText = "CLAUDE.md → AGENTS.md",
+            SecondaryButtonText = "AGENTS.md → CLAUDE.md",
+            CloseButtonText = "닫기",
+            IsPrimaryButtonEnabled = migration.CanMigrateToCodex,
+            IsSecondaryButtonEnabled = migration.CanMigrateToClaude,
+            DefaultButton = ContentDialogButton.Close,
+        };
+
+        var choice = await dialog.ShowAsync();
+
+        var direction = choice switch
+        {
+            ContentDialogResult.Primary => (MigrationDirection?)MigrationDirection.ClaudeToCodex,
+            ContentDialogResult.Secondary => MigrationDirection.CodexToClaude,
+            _ => null,
+        };
+
+        if (direction is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var result = migration.Apply(direction.Value);
+            var target = result.Target == ToolKind.Claude ? "CLAUDE.md" : "AGENTS.md";
+
+            await ShowAsync(
+                $"{target} 를 갱신했다",
+                result.Warnings.Count == 0 ? "경고 없음" : string.Join('\n', result.Warnings));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+        {
+            await ShowAsync("옮길 수 없음", ex.Message);
+        }
+    }
+
+    private static FrameworkElement BuildMigrationView(MigrationViewModel migration)
+    {
+        var panel = new StackPanel { Spacing = 8, Width = 640 };
+
+        panel.Children.Add(new TextBlock
+        {
+            Text = migration.Notes,
+            TextWrapping = TextWrapping.Wrap,
+        });
+
+        panel.Children.Add(new TextBlock
+        {
+            Text = "왼쪽 CLAUDE.md, 오른쪽 AGENTS.md. daiso 마커 블록은 비교에서 뺀다",
+            Style = Application.Current.Resources["CaptionTextBlockStyle"] as Style,
+        });
+
+        panel.Children.Add(new ListView
+        {
+            ItemsSource = migration.Diff,
+            DisplayMemberPath = nameof(MigrationDiffLineViewModel.Display),
+            FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Consolas"),
+            SelectionMode = ListViewSelectionMode.None,
+            MaxHeight = 360,
+        });
+
+        return panel;
+    }
+
     private void BuildRecentFlyout()
     {
         RecentFlyout.Items.Clear();

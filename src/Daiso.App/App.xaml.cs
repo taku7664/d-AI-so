@@ -71,6 +71,8 @@ public partial class App : Application
 
         // Infrastructure
         services.AddSingleton<IRuleFileService, RuleFileService>();
+        services.AddSingleton<IInstructionMigrationService>(provider =>
+            new InstructionMigrationService(provider.GetServices<IProvider>()));
         services.AddSingleton<IFileDisposer, RecycleBinFileDisposer>();
         services.AddSingleton<ITerminalLauncher, WindowsTerminalLauncher>();
         services.AddSingleton<IContextInspector>(provider =>
@@ -97,6 +99,7 @@ public partial class App : Application
         services.AddSingleton<SessionsViewModel>();
         services.AddSingleton<ContextDoctorViewModel>();
         services.AddSingleton<RuleMakerViewModel>();
+        services.AddSingleton<MigrationViewModel>();
         services.AddSingleton<SettingsViewModel>();
 
         services.AddSingleton<ShellWindow>();

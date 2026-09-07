@@ -11,6 +11,18 @@ public interface IRuleFileService
     void EnsureInstruction(string projectDir, IEnumerable<IProvider> providers);
 }
 
+/// <summary>
+/// CLAUDE.md ↔ AGENTS.md 마이그레이션에 파일 IO를 붙인다. 구현은 Daiso.Infrastructure. (ARCHITECTURE §5.6)
+/// </summary>
+public interface IInstructionMigrationService
+{
+    /// <summary>프로젝트 루트의 두 파일을 읽어 비교한다. import는 재귀 해석한다.</summary>
+    InstructionMigrationPlan Plan(string projectDir);
+
+    /// <summary>고른 방향으로 대상 파일 하나만 쓴다. <paramref name="dryRun"/>이면 내용만 만들고 쓰지 않는다.</summary>
+    MigrationResult Apply(string projectDir, MigrationDirection direction, bool dryRun);
+}
+
 /// <summary>세션 파일 정리. 실행 중 세션은 거부한다. (ARCHITECTURE §5.5)</summary>
 public interface IFileDisposer
 {

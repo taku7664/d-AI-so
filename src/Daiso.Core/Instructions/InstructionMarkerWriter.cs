@@ -43,6 +43,48 @@ public sealed class InstructionMarkerWriter : IInstructionMarkerWriter
         return head + newline + Normalize(instructionBody, newline) + newline + tail;
     }
 
+    /// <inheritdoc />
+    public string Strip(string content)
+    {
+        ArgumentNullException.ThrowIfNull(content);
+
+        var start = content.IndexOf(StartMarker, StringComparison.Ordinal);
+        var end = start < 0
+            ? -1
+            : content.IndexOf(EndMarker, start + StartMarker.Length, StringComparison.Ordinal);
+
+        if (start < 0 || end < 0)
+        {
+            return content;
+        }
+
+        // 마커가 놓인 줄 전체를 지운다. 마커 앞뒤에 다른 글자가 있어도 그 줄은 블록의 일부로 본다.
+        var head = content[..(content.LastIndexOf('\n', start) + 1)];
+        var afterEnd = end + EndMarker.Length;
+        var lineEnd = content.IndexOf('\n', afterEnd);
+        var tail = lineEnd < 0 ? string.Empty : content[(lineEnd + 1)..];
+
+        return Seam(head, tail);
+    }
+
+    /// <summary>블록이 빠진 자리의 빈 줄을 하나로 줄인다.</summary>
+    private static string Seam(string head, string tail)
+    {
+        var trimmedHead = head.TrimEnd('\r', '\n');
+
+        if (tail.Length == 0)
+        {
+            return trimmedHead.Length == 0 ? string.Empty : trimmedHead + DetectNewline(head);
+        }
+
+        if (trimmedHead.Length == 0)
+        {
+            return tail;
+        }
+
+        return trimmedHead + DetectNewline(head) + tail;
+    }
+
     private static string Append(string existingContent, string instructionBody, string newline)
     {
         var separator = existingContent.Length == 0

@@ -52,6 +52,11 @@
                 Icon="Link"
                 AutomationProperties.AutomationId="LinkButton"
                 Click="OnLinkClick" />
+            <muxc:AppBarButton
+                Label="지시문 마이그레이션"
+                Icon="Sync"
+                AutomationProperties.AutomationId="MigrateButton"
+                Click="OnMigrateClick" />
         </muxc:CommandBar>
 
         <!-- 헤더 -->

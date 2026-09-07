@@ -92,9 +92,9 @@ dotnet test Daiso.sln --filter "Category=Slow"
 | 대상 | 결과 |
 |---|---|
 | `dotnet build Daiso.sln` | 경고 0, 오류 0 |
-| `Daiso.Core.Tests` | 87건 통과 |
+| `Daiso.Core.Tests` | 115건 통과 |
 | `Daiso.Providers.Tests` | 70건 통과 |
-| `Daiso.Infrastructure.Tests` | 55건 통과 |
+| `Daiso.Infrastructure.Tests` | 69건 통과 |
 | `Category=Slow` (20MB 스트리밍) | 2건 통과 |
 
 ## CLI
@@ -114,6 +114,7 @@ dotnet run --project tools/Daiso.Cli -- auth
 | `daiso rules render <path>` | `.daiso`를 마크다운 미리보기로 |
 | `daiso rules roundtrip <path>` | `.daiso` 직렬화 안정성 검사 |
 | `daiso rules install <projectDir>` | 폴더의 `CLAUDE.md`/`AGENTS.md`에 daiso 마커 블록을 넣거나 갱신 |
+| `daiso rules migrate <projectDir> [--to claude\|codex] [--apply]` | `CLAUDE.md` ↔ `AGENTS.md` 좌우 diff. `--apply` 없이는 미리보기만 |
 | `daiso doctor <dir> [--tool claude\|codex]` | 폴더의 컨텍스트 파일 목록·글자 수·중복 줄·충돌 후보 |
 | `daiso export <sessionId> <out.md>` | 세션을 마크다운으로 내보내기 |
 
@@ -138,6 +139,10 @@ DAISO_INDEX_DB=F:\daiso\index.db dotnet run --project tools/Daiso.Cli -- session
 
 그 밖에 확인한 것:
 
+- 지시문 마이그레이션: 임시 폴더에서 `daiso rules migrate`로 확인했다.
+  CLAUDE.md만 있는 폴더 → AGENTS.md 생성(import 인라인 전개, 원본 CLAUDE.md 바이트 불변),
+  두 번 실행 시 해시 동일, 둘 다 있으면 `--to`로 방향을 요구, 없는 import는 줄을 남기고 경고.
+  RuleMaker의 "지시문 마이그레이션" 버튼(같은 로직, 좌우 diff 대화상자)은 화면 확인이 남아 있다
 - 창 크기 기억: 1024×700으로 바꾼 뒤 닫고 다시 열면 같은 크기로 뜬다
 - 앱 아이콘: 제목줄·작업 표시줄에 표시
 - 예외 로그: `%LOCALAPPDATA%\d-AI-so\logs\`에 남기며, 기록 전에 토큰 형태 문자열을 `[REDACTED]`로 가린다 (단위 테스트 10건)

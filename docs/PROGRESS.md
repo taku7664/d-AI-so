@@ -1,7 +1,7 @@
 # PROGRESS — 진행 상태 인수인계
 
 컨텍스트가 압축되거나 세션이 바뀌어도 잃지 않아야 하는 것만 적는다.
-마지막 갱신: 2026-09-08, 커밋 `8a92b5f`.
+마지막 갱신: 2026-09-08, 지시문 마이그레이션 구현 커밋까지.
 
 ## 문서 구조 (역할 분담)
 
@@ -21,20 +21,22 @@
 
 - **Stage 1 (Step 1–7)**: Core · Providers · Infrastructure · 검증용 CLI. 게이트 통과
 - **Stage 2 (Step 8–16)**: WinUI 3 앱 5개 페이지 + 사용량 탭 + Context Doctor 탭. 게이트 통과
-- 빌드 경고 0 / 오류 0, 테스트 212건 + Slow 2건 통과 (2026-09-08)
+- **REQ §7 마이그레이션**: `CLAUDE.md` ↔ `AGENTS.md` 좌우 diff·방향 선택·import 인라인 전개 (Core·Infrastructure·CLI·RuleMaker 버튼)
+- 빌드 경고 0 / 오류 0, 테스트 254건 + Slow 2건 통과 (2026-09-08)
 - 완성 상태 6항목 확인 결과는 README "수동 확인 체크리스트"에 있다
 
-## ARCHITECTURE에서 벗어난 판단 3건 (모두 문서 반영됨)
+## ARCHITECTURE에서 벗어난 판단 4건 (모두 문서 반영됨)
 
 1. **프로젝트 10개** — `ProjectPathNormalizer`가 `Path.GetFullPath`를 쓰므로 Core 순수성 규칙 아래 두 Provider가 공유할 수 없어 `Daiso.Providers.Common`을 추가
 2. **`IUsageReader` / `IProjectFactsReader` 추가** — `IProvider`만으로는 Claude의 날짜별 사용량 합산과 REQ 5.3 부가 정보를 얻을 수 없어 별개 인터페이스로 분리 (기존 시그니처는 그대로)
 3. **Codex `response_item.message` role=user → System** — 실제 세션에서 AGENTS 지시문·플러그인 목록이 이 경로로 주입되는 것을 확인. ARCH의 "시스템 주입 제외" 원칙에 맞춤
+4. **`IInstructionMarkerWriter.Strip` 추가 + `IInstructionMigrator`/`IInstructionMigrationService` 신설** — 마이그레이션은 마커 블록을 뺀 본문만 비교·복사해야 해서 블록 제거가 필요했다. import 전개는 파일을 읽어야 하므로 Core(순수)와 Infrastructure(IO)로 나눴다 (ARCHITECTURE §3.1·§3.3·§5.6에 반영)
 
 ## 남은 일
 
 | # | 항목 | 근거 | 상태 |
 |---|---|---|---|
-| 1 | `CLAUDE.md` ↔ `AGENTS.md` 마이그레이션 | REQUIREMENTS §7 표. Stage 1에서 제외했고 Stage 2 Step에도 없어 **미구현**. GOAL의 최종 수락 기준(REQ 1~7절 전부)에는 포함된다 | 미착수 |
+| 1 | RuleMaker "지시문 마이그레이션" 대화상자 화면 확인 | REQ §7. 로직은 CLI `rules migrate`로 검증했고, 좌우 diff 대화상자 표시·버튼 활성 조건은 화면 확인이 남았다 | 사람이 직접 확인 |
 | 2 | RuleMaker "프로젝트에 연동" **폴더 선택 대화상자** 확정 클릭 | GOAL Step 12 완료 기준 | 사람이 직접 확인 |
 | 3 | `settings.json` 권한·훅 GUI 편집기 | REQ §7에서 **후순위(선택)** 로 표시 | 하지 않음 |
 
