@@ -46,12 +46,9 @@
                                 <Button
                                     Grid.Column="1"
                                     VerticalAlignment="Bottom"
+                                    Content="{loc:Str Key=Common_PickFolder}"
                                     AutomationProperties.AutomationId="PickSessionHomeButton"
-                                    AutomationProperties.Name="{loc:Str Key=Common_PickFolder}"
-                                    ToolTipService.ToolTip="{loc:Str Key=Common_PickFolder}"
-                                    Click="OnPickSessionHomeClick">
-                                    <SymbolIcon Symbol="Folder" />
-                                </Button>
+                                    Click="OnPickSessionHomeClick" />
                             </Grid>
 
                             <TextBlock Style="{StaticResource MutedText}">

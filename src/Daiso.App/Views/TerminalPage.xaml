@@ -41,7 +41,6 @@
                             AutomationProperties.AutomationId="ProjectPickerButton">
                             <muxc:DropDownButton.Content>
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <SymbolIcon Symbol="Folder" />
                                     <TextBlock Text="{loc:Str Key=Common_KnownProjects}" />
                                 </StackPanel>
                             </muxc:DropDownButton.Content>
