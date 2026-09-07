@@ -1,2 +1,7 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# 테스트가 바이트 오프셋과 개행을 그대로 검사하므로 LF로 고정한다
+tests/fixtures/** text eol=lf
+*.jsonl text eol=lf
+*.daiso text eol=lf
