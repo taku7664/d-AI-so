@@ -2,10 +2,111 @@
     x:Class="Daiso.App.Views.TerminalPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
     <ScrollViewer Padding="24">
-        <StackPanel Spacing="12">
+        <StackPanel Spacing="18" MaxWidth="900">
+
             <TextBlock Text="Terminal" Style="{ThemeResource TitleTextBlockStyle}" />
-            <TextBlock Text="준비 중" Style="{ThemeResource BodyTextBlockStyle}" Opacity="0.7" />
+
+            <!-- 폴더 -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="작업 폴더" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+
+                <Grid ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBox
+                        Grid.Column="0"
+                        Text="{x:Bind ViewModel.WorkingDirectory, Mode=TwoWay}"
+                        PlaceholderText="폴더 경로" />
+
+                    <Button Grid.Column="1" Content="폴더 고르기" Click="OnPickFolderClick" />
+                </Grid>
+
+                <TextBlock Text="최근 폴더" Style="{ThemeResource CaptionTextBlockStyle}" Opacity="0.8" />
+
+                <ListView
+                    ItemsSource="{x:Bind ViewModel.RecentFolders}"
+                    SelectionMode="Single"
+                    MaxHeight="200"
+                    SelectionChanged="OnRecentSelectionChanged">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="x:String">
+                            <TextBlock Text="{x:Bind}" TextTrimming="CharacterEllipsis" />
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </StackPanel>
+
+            <!-- 인자 -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="옵션 인자" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+
+                <TextBox
+                    Text="{x:Bind ViewModel.Arguments, Mode=TwoWay}"
+                    PlaceholderText="예: --continue" />
+
+                <TextBlock Text="Claude 프리셋" Style="{ThemeResource CaptionTextBlockStyle}" Opacity="0.8" />
+                <ItemsControl ItemsSource="{x:Bind ViewModel.ClaudePresets}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <muxc:ItemsWrapGrid
+                                xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
+                                Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="x:String">
+                            <Button Content="{x:Bind}" Margin="0,0,8,8" Click="OnPresetClick" Tag="{x:Bind}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock Text="Codex 프리셋" Style="{ThemeResource CaptionTextBlockStyle}" Opacity="0.8" />
+                <ItemsControl ItemsSource="{x:Bind ViewModel.CodexPresets}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <muxc:ItemsWrapGrid
+                                xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
+                                Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="x:String">
+                            <Button Content="{x:Bind}" Margin="0,0,8,8" Click="OnPresetClick" Tag="{x:Bind}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+            <!-- 실행 -->
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <Button
+                    Content="Claude 열기"
+                    Style="{ThemeResource AccentButtonStyle}"
+                    Command="{x:Bind ViewModel.LaunchClaudeCommand}"
+                    IsEnabled="{x:Bind ViewModel.CanLaunch, Mode=OneWay}" />
+                <Button
+                    Content="Codex 열기"
+                    Command="{x:Bind ViewModel.LaunchCodexCommand}"
+                    IsEnabled="{x:Bind ViewModel.CanLaunch, Mode=OneWay}" />
+            </StackPanel>
+
+            <TextBlock
+                Text="{x:Bind ViewModel.LastCommand, Mode=OneWay}"
+                Style="{ThemeResource CaptionTextBlockStyle}"
+                Opacity="0.8"
+                TextWrapping="Wrap" />
+
+            <TextBlock
+                Text="claude / codex 는 npm 셸(.cmd)이라 항상 pwsh · powershell · cmd 로 감싸 실행한다. wt.exe가 있으면 그 안에서 연다."
+                Style="{ThemeResource CaptionTextBlockStyle}"
+                Opacity="0.6"
+                TextWrapping="Wrap" />
+
         </StackPanel>
     </ScrollViewer>
 </Page>
