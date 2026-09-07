@@ -479,6 +479,19 @@ Apply(projectDir, direction, dryRun)
 - 문체는 **존댓말**로 통일한다 (`~습니다`, `~하세요`). 로그·CLI·문서는 평서체를 그대로 쓴다
 - 다른 언어를 넣을 때는 `Strings/<태그>/Resources.resw`를 추가하고 `PRIResource`에 등록하면 된다. 코드는 손대지 않는다
 
+
+### 6.2 화면 공통 규칙
+
+- 페이지 구성은 `제목 → (부제) → 행동 버튼 → 카드들` 순서로 같다
+- 본문은 **왼쪽 정렬**, 최대 폭 `ContentMaxWidth`(1280). 넓은 창에서 가운데로 뜨지 않는다
+- 간격은 4의 배수. 페이지 여백은 `PagePadding`, 카드 사이는 16
+- 카드는 `CardBorder` 스타일 하나만 쓴다 (모서리 8, 1px 선)
+- 글자 스타일은 `PageTitleText` · `PageSubtitleText` · `SectionTitleText` · `MutedText` · `MonoText` · `NumberText` 여섯 개로 제한한다
+- 표의 숫자는 `NumberText`(고정 폭·오른쪽 정렬). 큰 수는 `Formats.Tokens`로 줄여 쓰고 원래 값은 ToolTip에 둔다
+- 열이 많은 표는 자기 안에서 가로 스크롤한다. 페이지가 잘리게 두지 않는다
+- 목록의 한 줄은 **한 줄로 끝낸다** (`TextTrimming`). 전체 값은 ToolTip
+- 파괴적인 버튼(삭제)은 대상이 없으면 비활성이다
+- 빈 상태는 흰 판을 두지 않고 `NoticeBorder`로 다음에 할 일을 알려 준다
 ---
 
 ## 7. 불변 규칙

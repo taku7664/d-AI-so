@@ -37,6 +37,23 @@ public sealed partial class ShellWindow : Window
         Closed += OnClosed;
     }
 
+    /// <summary>다른 페이지의 안내에서 이 페이지로 보내 달라고 할 때 쓴다. 왼쪽 선택 표시도 맞춘다.</summary>
+    public void NavigateTo(string tag)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(tag);
+
+        foreach (var item in Navigation.MenuItems.OfType<NavigationViewItem>())
+        {
+            if (item.Tag as string == tag)
+            {
+                Navigation.SelectedItem = item;
+                return;
+            }
+        }
+
+        Navigate(tag);
+    }
+
     private void OnSelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
     {
         if (args.SelectedItem is NavigationViewItem { Tag: string tag })

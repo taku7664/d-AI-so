@@ -6,7 +6,7 @@
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
     xmlns:vm="using:Daiso.App.ViewModels">
 
-    <Grid Padding="16" RowSpacing="12">
+    <Grid Padding="{StaticResource PagePadding}" RowSpacing="14">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -14,38 +14,76 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- 검색 -->
-        <Grid Grid.Row="0" ColumnSpacing="8">
+        <!-- 제목 · 검색 -->
+        <Grid Grid.Row="0" ColumnSpacing="12">
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
+            <StackPanel Grid.Column="0" Spacing="2" MinWidth="180">
+                <TextBlock Text="{loc:Str Key=Sessions_Title}" Style="{StaticResource PageTitleText}" />
+                <TextBlock
+                    AutomationProperties.AutomationId="SessionsStatus"
+                    Text="{x:Bind ViewModel.StatusText, Mode=OneWay}"
+                    Style="{StaticResource PageSubtitleText}" />
+            </StackPanel>
+
             <TextBox
-                Grid.Column="0"
+                Grid.Column="1"
+                VerticalAlignment="Top"
+                Margin="0,4,0,0"
                 Text="{x:Bind ViewModel.SearchQuery, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                 PlaceholderText="{loc:Str Key=Sessions_SearchPlaceholder}"
                 AutomationProperties.AutomationId="SearchBox"
                 KeyDown="OnSearchKeyDown" />
 
-            <Button Grid.Column="1" Content="{loc:Str Key=Common_Search}" AutomationProperties.AutomationId="SearchButton" Command="{x:Bind ViewModel.SearchCommand}" />
-            <Button Grid.Column="2" Content="{loc:Str Key=Sessions_ClearSearch}" AutomationProperties.AutomationId="ClearSearchButton" Command="{x:Bind ViewModel.ClearSearchCommand}" />
-            <Button Grid.Column="3" Content="{loc:Str Key=Sessions_ReloadList}" AutomationProperties.AutomationId="ReloadButton" Command="{x:Bind ViewModel.LoadCommand}" />
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" Margin="0,4,0,0" VerticalAlignment="Top">
+                <Button
+                    AutomationProperties.AutomationId="SearchButton"
+                    AutomationProperties.Name="{loc:Str Key=Common_Search}"
+                    ToolTipService.ToolTip="{loc:Str Key=Common_Search}"
+                    Style="{ThemeResource AccentButtonStyle}"
+                    Command="{x:Bind ViewModel.SearchCommand}">
+                    <Button.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control" Key="F" />
+                    </Button.KeyboardAccelerators>
+                    <FontIcon Glyph="&#xE721;" FontSize="14" />
+                </Button>
+                <Button
+                    AutomationProperties.AutomationId="ClearSearchButton"
+                    AutomationProperties.Name="{loc:Str Key=Sessions_ClearSearch}"
+                    ToolTipService.ToolTip="{loc:Str Key=Sessions_ClearSearch}"
+                    Command="{x:Bind ViewModel.ClearSearchCommand}">
+                    <FontIcon Glyph="&#xE711;" FontSize="14" />
+                </Button>
+                <Button
+                    AutomationProperties.AutomationId="ReloadButton"
+                    AutomationProperties.Name="{loc:Str Key=Sessions_ReloadList}"
+                    ToolTipService.ToolTip="{loc:Str Key=Sessions_ReloadList}"
+                    Command="{x:Bind ViewModel.LoadCommand}">
+                    <Button.KeyboardAccelerators>
+                        <KeyboardAccelerator Key="F5" />
+                    </Button.KeyboardAccelerators>
+                    <FontIcon Glyph="&#xE72C;" FontSize="14" />
+                </Button>
+            </StackPanel>
         </Grid>
 
-        <!-- 필터 바 -->
+        <!-- 필터 (바꾸면 바로 적용) -->
         <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="12">
             <ComboBox
                 Header="{loc:Str Key=Common_Tool}"
                 Width="120"
+                AutomationProperties.AutomationId="ToolFilterCombo"
                 ItemsSource="{x:Bind ViewModel.ToolFilters}"
                 SelectedIndex="{x:Bind ViewModel.ToolFilterIndex, Mode=TwoWay}" />
 
             <ComboBox
                 Header="{loc:Str Key=Common_Period}"
-                Width="140"
+                Width="130"
+                AutomationProperties.AutomationId="PeriodFilterCombo"
                 ItemsSource="{x:Bind ViewModel.PeriodFilters}"
                 SelectedIndex="{x:Bind ViewModel.PeriodFilterIndex, Mode=TwoWay}" />
 
@@ -54,132 +92,185 @@
                 Width="150"
                 Minimum="0"
                 SpinButtonPlacementMode="Compact"
+                AutomationProperties.AutomationId="MinSizeBox"
                 Value="{x:Bind ViewModel.MinSizeMegabytes, Mode=TwoWay}" />
 
             <CheckBox
                 Content="{loc:Str Key=Sessions_OrphanOnly}"
                 VerticalAlignment="Bottom"
+                AutomationProperties.AutomationId="OrphansOnlyCheck"
                 IsChecked="{x:Bind ViewModel.OrphansOnly, Mode=TwoWay}" />
 
             <CheckBox
                 Content="{loc:Str Key=Sessions_IncludeArchived}"
                 VerticalAlignment="Bottom"
+                AutomationProperties.AutomationId="IncludeArchivedCheck"
                 IsChecked="{x:Bind ViewModel.IncludeArchived, Mode=TwoWay}" />
 
-            <Button
-                Content="{loc:Str Key=Sessions_ApplyFilter}"
+            <muxc:ProgressRing
+                Width="18"
+                Height="18"
                 VerticalAlignment="Bottom"
-                Command="{x:Bind ViewModel.ApplyFiltersCommand}" />
+                Margin="0,0,0,6"
+                IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}" />
         </StackPanel>
 
-        <!-- 본문 -->
-        <Grid Grid.Row="2" ColumnSpacing="12">
+        <!-- 본문: 프로젝트 · 세션 · 상세 -->
+        <Grid Grid.Row="2" ColumnSpacing="14">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="300" />
+                <ColumnDefinition Width="290" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="380" />
+                <ColumnDefinition Width="400" />
             </Grid.ColumnDefinitions>
 
-            <!-- 왼쪽: 프로젝트 트리 또는 검색 결과 -->
-            <Border
-                Grid.Column="0"
-                CornerRadius="8"
-                BorderThickness="1"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
-                <Grid>
-                    <ListView
-                        x:Name="ProjectList"
-                        AutomationProperties.AutomationId="ProjectList"
-                        ItemsSource="{x:Bind ViewModel.Projects}"
-                        SelectedItem="{x:Bind ViewModel.SelectedProject, Mode=TwoWay}"
-                        Visibility="{x:Bind ViewModel.ProjectListVisibility, Mode=OneWay}">
-                        <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="vm:ProjectGroupViewModel">
-                                <StackPanel Padding="0,6">
-                                    <TextBlock
-                                        Text="{x:Bind DisplayName}"
-                                        Style="{ThemeResource BodyStrongTextBlockStyle}"
-                                        TextTrimming="CharacterEllipsis" />
-                                    <TextBlock
-                                        Text="{x:Bind Summary}"
-                                        Style="{ThemeResource CaptionTextBlockStyle}"
-                                        Opacity="0.75" />
-                                    <TextBlock
-                                        Text="{x:Bind Path}"
-                                        Style="{ThemeResource CaptionTextBlockStyle}"
-                                        Opacity="0.5"
-                                        TextTrimming="CharacterEllipsis" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
+            <!-- 왼쪽 -->
+            <Border Grid.Column="0" Style="{StaticResource CardBorder}" Padding="0">
+                <Grid RowSpacing="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
 
-                    <muxc:TreeView
-                        x:Name="SearchTree"
-                        SelectionMode="Single"
-                        ItemInvoked="OnSearchItemInvoked"
-                        Visibility="{x:Bind ViewModel.SearchTreeVisibility, Mode=OneWay}" />
+                    <TextBlock
+                        Grid.Row="0"
+                        Margin="16,14,16,8"
+                        Style="{StaticResource SectionTitleText}"
+                        Text="{loc:Str Key=Sessions_Projects}" />
+
+                    <Grid Grid.Row="1">
+                        <ListView
+                            x:Name="ProjectList"
+                            AutomationProperties.AutomationId="ProjectList"
+                            ItemsSource="{x:Bind ViewModel.Projects}"
+                            SelectedItem="{x:Bind ViewModel.SelectedProject, Mode=TwoWay}"
+                            Visibility="{x:Bind ViewModel.ProjectListVisibility, Mode=OneWay}">
+                            <ListView.ItemTemplate>
+                                <DataTemplate x:DataType="vm:ProjectGroupViewModel">
+                                    <StackPanel Padding="0,7" Spacing="2" ToolTipService.ToolTip="{x:Bind Path}">
+                                        <TextBlock
+                                            Text="{x:Bind DisplayName}"
+                                            Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                            TextWrapping="NoWrap"
+                                            TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{x:Bind Summary}" Style="{StaticResource MutedText}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+
+                        <muxc:TreeView
+                            x:Name="SearchTree"
+                            SelectionMode="Single"
+                            ItemInvoked="OnSearchItemInvoked"
+                            Visibility="{x:Bind ViewModel.SearchTreeVisibility, Mode=OneWay}" />
+                    </Grid>
                 </Grid>
             </Border>
 
-            <!-- 가운데: 세션 목록 -->
-            <Border
-                Grid.Column="1"
-                CornerRadius="8"
-                BorderThickness="1"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
-                <ListView
-                    AutomationProperties.AutomationId="SessionList"
-                    ItemsSource="{x:Bind ViewModel.Sessions}"
-                    SelectedItem="{x:Bind ViewModel.SelectedSession, Mode=TwoWay}"
-                    SelectionChanged="OnSessionSelectionChanged">
-                    <ListView.ItemTemplate>
-                        <DataTemplate x:DataType="vm:SessionRowViewModel">
-                            <Grid Padding="0,8" ColumnSpacing="10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
+            <!-- 가운데 -->
+            <Border Grid.Column="1" Style="{StaticResource CardBorder}" Padding="0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
 
-                                <CheckBox
-                                    Grid.Column="0"
-                                    IsChecked="{x:Bind IsChecked, Mode=TwoWay}"
-                                    MinWidth="32" />
+                    <Grid Grid.Row="0" Margin="16,14,16,8" ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
 
-                                <TextBlock Grid.Column="1" Text="{x:Bind ToolIcon}" FontSize="16" VerticalAlignment="Top" />
+                        <TextBlock
+                            Grid.Column="0"
+                            Style="{StaticResource SectionTitleText}"
+                            Text="{loc:Str Key=Sessions_ListHeader}" />
 
-                                <StackPanel Grid.Column="2">
-                                    <TextBlock
-                                        Text="{x:Bind FirstPromptText}"
-                                        Style="{ThemeResource BodyStrongTextBlockStyle}"
-                                        TextTrimming="CharacterEllipsis" />
-                                    <TextBlock
-                                        Style="{ThemeResource CaptionTextBlockStyle}"
-                                        Opacity="0.75"
-                                        Text="{x:Bind MetaText}" />
-                                    <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Opacity="0.5">
-                                        <Run Text="{x:Bind Session.Id}" />
-                                        <Run Text=" " />
-                                        <Run Text="{x:Bind Badges}" />
-                                    </TextBlock>
-                                </StackPanel>
-                            </Grid>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
+                        <TextBlock
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            Style="{StaticResource MutedText}"
+                            Text="{x:Bind ViewModel.SessionCountText, Mode=OneWay}" />
+                    </Grid>
+
+                    <Grid Grid.Row="1">
+                        <ListView
+                            AutomationProperties.AutomationId="SessionList"
+                            ItemsSource="{x:Bind ViewModel.Sessions}"
+                            SelectedItem="{x:Bind ViewModel.SelectedSession, Mode=TwoWay}"
+                            SelectionChanged="OnSessionSelectionChanged">
+                            <ListView.ItemTemplate>
+                                <DataTemplate x:DataType="vm:SessionRowViewModel">
+                                    <Grid Padding="0,10" ColumnSpacing="12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <CheckBox
+                                            Grid.Column="0"
+                                            MinWidth="28"
+                                            VerticalAlignment="Center"
+                                            AutomationProperties.Name="{x:Bind TitleText}"
+                                            IsChecked="{x:Bind IsChecked, Mode=TwoWay}" />
+
+                                        <Border
+                                            Grid.Column="1"
+                                            Width="26"
+                                            Height="26"
+                                            CornerRadius="13"
+                                            VerticalAlignment="Center"
+                                            Background="{x:Bind ToolBrush}"
+                                            ToolTipService.ToolTip="{x:Bind ToolName}">
+                                            <TextBlock
+                                                Text="{x:Bind ToolInitial}"
+                                                Foreground="White"
+                                                FontSize="12"
+                                                FontWeight="SemiBold"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center" />
+                                        </Border>
+
+                                        <StackPanel Grid.Column="2" Spacing="3">
+                                            <TextBlock
+                                                Text="{x:Bind TitleText}"
+                                                Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                                TextWrapping="NoWrap"
+                                                TextTrimming="CharacterEllipsis"
+                                                ToolTipService.ToolTip="{x:Bind FirstPromptText}" />
+                                            <TextBlock
+                                                Style="{StaticResource MutedText}"
+                                                Text="{x:Bind MetaText}"
+                                                ToolTipService.ToolTip="{x:Bind IdShort}" />
+                                        </StackPanel>
+
+                                        <Border
+                                            Grid.Column="3"
+                                            Style="{StaticResource PillBorder}"
+                                            Visibility="{x:Bind HasBadges}">
+                                            <TextBlock Text="{x:Bind Badges}" FontSize="11" />
+                                        </Border>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+
+                        <Border
+                            Style="{StaticResource NoticeBorder}"
+                            Margin="16"
+                            VerticalAlignment="Top"
+                            Visibility="{x:Bind ViewModel.IsListEmpty, Mode=OneWay}">
+                            <TextBlock Text="{loc:Str Key=Sessions_EmptyList}" Style="{StaticResource PageSubtitleText}" />
+                        </Border>
+                    </Grid>
+                </Grid>
             </Border>
 
-            <!-- 오른쪽: 세션 상세 / 컨텍스트 닥터 -->
-            <Border
-                Grid.Column="2"
-                CornerRadius="8"
-                BorderThickness="1"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
-                <muxc:Pivot Padding="4">
+            <!-- 오른쪽: 상세 · 컨텍스트 -->
+            <Border Grid.Column="2" Style="{StaticResource CardBorder}" Padding="4,0,4,4">
+                <muxc:Pivot Padding="8,4,8,0">
 
                     <muxc:PivotItem Header="{loc:Str Key=Sessions_Detail}">
                         <Grid RowSpacing="10">
@@ -189,21 +280,46 @@
                             </Grid.RowDefinitions>
 
                             <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
-                                <Button Content="{loc:Str Key=Sessions_Resume}" AutomationProperties.AutomationId="ResumeButton" Click="OnResumeClick" />
-                                <Button Content="{loc:Str Key=Sessions_ExportMarkdown}" AutomationProperties.AutomationId="ExportButton" Click="OnExportClick" />
+                                <Button
+                                    Style="{ThemeResource AccentButtonStyle}"
+                                    AutomationProperties.AutomationId="ResumeButton"
+                                    IsEnabled="{x:Bind ViewModel.HasSelectedSession, Mode=OneWay}"
+                                    Click="OnResumeClick">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <FontIcon Glyph="&#xE768;" FontSize="13" />
+                                        <TextBlock Text="{loc:Str Key=Sessions_Resume}" />
+                                    </StackPanel>
+                                </Button>
+                                <Button
+                                    Content="{loc:Str Key=Sessions_ExportMarkdown}"
+                                    AutomationProperties.AutomationId="ExportButton"
+                                    IsEnabled="{x:Bind ViewModel.HasSelectedSession, Mode=OneWay}"
+                                    Click="OnExportClick" />
                             </StackPanel>
 
-                            <ScrollViewer Grid.Row="1">
+                            <Border
+                                Grid.Row="1"
+                                Style="{StaticResource NoticeBorder}"
+                                VerticalAlignment="Top"
+                                Visibility="{x:Bind ViewModel.NoSelection, Mode=OneWay}">
+                                <TextBlock Text="{loc:Str Key=Sessions_PickHint}" Style="{StaticResource PageSubtitleText}" />
+                            </Border>
+
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                                 <ItemsControl ItemsSource="{x:Bind ViewModel.Timeline}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate x:DataType="vm:MessageViewModel">
-                                            <StackPanel Margin="0,0,0,10">
-                                                <StackPanel Visibility="{x:Bind PlainVisibility}">
-                                                    <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Opacity="0.6">
-                                                        <Run Text="{x:Bind RoleText}" />
-                                                        <Run Text="·" />
-                                                        <Run Text="{x:Bind TimeText}" />
-                                                    </TextBlock>
+                                            <StackPanel Margin="0,0,0,12">
+                                                <StackPanel Visibility="{x:Bind PlainVisibility}" Spacing="3">
+                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                        <Border Style="{StaticResource PillBorder}">
+                                                            <TextBlock Text="{x:Bind RoleText}" FontSize="11" />
+                                                        </Border>
+                                                        <TextBlock
+                                                            Text="{x:Bind TimeText}"
+                                                            Style="{StaticResource MutedText}"
+                                                            VerticalAlignment="Center" />
+                                                    </StackPanel>
                                                     <TextBlock
                                                         Text="{x:Bind Text}"
                                                         Style="{ThemeResource BodyTextBlockStyle}"
@@ -215,7 +331,7 @@
                                                     HorizontalAlignment="Stretch"
                                                     Visibility="{x:Bind CollapsibleVisibility}">
                                                     <Expander.Header>
-                                                        <TextBlock Style="{ThemeResource CaptionTextBlockStyle}">
+                                                        <TextBlock Style="{StaticResource MutedText}">
                                                             <Run Text="{x:Bind RoleText}" />
                                                             <Run Text="·" />
                                                             <Run Text="{x:Bind TimeText}" />
@@ -223,7 +339,8 @@
                                                     </Expander.Header>
                                                     <TextBlock
                                                         Text="{x:Bind Text}"
-                                                        Style="{ThemeResource CaptionTextBlockStyle}"
+                                                        Style="{StaticResource MonoText}"
+                                                        TextTrimming="None"
                                                         TextWrapping="Wrap"
                                                         IsTextSelectionEnabled="True" />
                                                 </Expander>
@@ -236,90 +353,124 @@
                     </muxc:PivotItem>
 
                     <muxc:PivotItem Header="{loc:Str Key=Sessions_Context}">
-                        <ScrollViewer>
-                            <StackPanel Spacing="10">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Spacing="12">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <ComboBox
                                         Width="120"
                                         AutomationProperties.AutomationId="ContextToolCombo"
+                                        AutomationProperties.Name="{loc:Str Key=Common_Tool}"
                                         ItemsSource="{x:Bind Doctor.Tools}"
                                         SelectedIndex="{x:Bind Doctor.ToolIndex, Mode=TwoWay}" />
                                     <Button
                                         Content="{loc:Str Key=Common_Inspect}"
                                         AutomationProperties.AutomationId="InspectButton"
                                         Command="{x:Bind Doctor.InspectCommand}" />
+                                    <muxc:ProgressRing
+                                        Width="18"
+                                        Height="18"
+                                        VerticalAlignment="Center"
+                                        IsActive="{x:Bind Doctor.IsBusy, Mode=OneWay}" />
                                 </StackPanel>
 
                                 <TextBlock
                                     AutomationProperties.AutomationId="ContextStatus"
                                     Text="{x:Bind Doctor.StatusText, Mode=OneWay}"
-                                    Style="{ThemeResource CaptionTextBlockStyle}"
-                                    TextWrapping="Wrap" />
+                                    Style="{StaticResource PageSubtitleText}" />
 
                                 <TextBlock
                                     AutomationProperties.AutomationId="ContextTotal"
                                     Text="{x:Bind Doctor.TotalCharsText, Mode=OneWay}"
-                                    Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                                    FontSize="18"
+                                    FontWeight="SemiBold" />
 
-                                <TextBlock Text="{loc:Str Key=Sessions_FilesInOrder}" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                                <TextBlock Text="{loc:Str Key=Sessions_FilesInOrder}" Style="{StaticResource SectionTitleText}" />
                                 <ListView
                                     AutomationProperties.AutomationId="ContextFileList"
                                     ItemsSource="{x:Bind Doctor.Files}"
                                     SelectedItem="{x:Bind Doctor.SelectedFile, Mode=TwoWay}"
-                                    MaxHeight="220">
+                                    MaxHeight="200">
                                     <ListView.ItemTemplate>
                                         <DataTemplate x:DataType="vm:ContextFileViewModel">
-                                            <TextBlock
-                                                Text="{x:Bind Summary}"
-                                                Style="{ThemeResource CaptionTextBlockStyle}"
-                                                TextTrimming="CharacterEllipsis" />
+                                            <Grid
+                                                ColumnSpacing="8"
+                                                Padding="0,4"
+                                                Opacity="{x:Bind Dim}"
+                                                ToolTipService.ToolTip="{x:Bind Summary}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <FontIcon
+                                                    Grid.Column="0"
+                                                    Glyph="{x:Bind StateGlyph}"
+                                                    FontSize="12"
+                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+
+                                                <TextBlock
+                                                    Grid.Column="1"
+                                                    Text="{x:Bind PathText}"
+                                                    Style="{StaticResource MonoText}" />
+
+                                                <TextBlock
+                                                    Grid.Column="2"
+                                                    Text="{x:Bind CharsText}"
+                                                    Style="{StaticResource NumberText}"
+                                                    FontSize="12" />
+                                            </Grid>
                                         </DataTemplate>
                                     </ListView.ItemTemplate>
                                 </ListView>
 
-                                <TextBlock Text="{loc:Str Key=Sessions_SelectedFileContent}" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                                <ScrollViewer MaxHeight="200">
+                                <TextBlock Text="{loc:Str Key=Sessions_SelectedFileContent}" Style="{StaticResource SectionTitleText}" />
+                                <ScrollViewer MaxHeight="180" HorizontalScrollBarVisibility="Auto">
                                     <TextBlock
                                         AutomationProperties.AutomationId="ContextPreview"
                                         Text="{x:Bind Doctor.SelectedFileContent, Mode=OneWay}"
-                                        FontFamily="Consolas"
+                                        Style="{StaticResource MonoText}"
+                                        TextTrimming="None"
                                         TextWrapping="Wrap"
                                         IsTextSelectionEnabled="True" />
                                 </ScrollViewer>
 
-                                <TextBlock Text="{loc:Str Key=Sessions_Duplicates}" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                                <TextBlock Text="{loc:Str Key=Sessions_Duplicates}" Style="{StaticResource SectionTitleText}" />
                                 <ItemsControl ItemsSource="{x:Bind Doctor.Duplicates}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate x:DataType="x:String">
                                             <TextBlock
                                                 Text="{x:Bind}"
-                                                Style="{ThemeResource CaptionTextBlockStyle}"
+                                                Style="{StaticResource MutedText}"
+                                                TextTrimming="None"
                                                 TextWrapping="Wrap"
                                                 Margin="0,0,0,4" />
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
 
-                                <TextBlock Text="{loc:Str Key=Sessions_Conflicts}" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                                <TextBlock Text="{loc:Str Key=Sessions_Conflicts}" Style="{StaticResource SectionTitleText}" />
                                 <ItemsControl ItemsSource="{x:Bind Doctor.Conflicts}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate x:DataType="x:String">
                                             <TextBlock
                                                 Text="{x:Bind}"
-                                                Style="{ThemeResource CaptionTextBlockStyle}"
+                                                Style="{StaticResource MutedText}"
+                                                TextTrimming="None"
                                                 TextWrapping="Wrap"
                                                 Margin="0,0,0,6" />
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
 
-                                <TextBlock Text="{loc:Str Key=Common_Extras}" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                                <TextBlock Text="{loc:Str Key=Common_Extras}" Style="{StaticResource SectionTitleText}" />
                                 <ItemsControl ItemsSource="{x:Bind Doctor.Facts}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate x:DataType="x:String">
                                             <TextBlock
                                                 Text="{x:Bind}"
-                                                Style="{ThemeResource CaptionTextBlockStyle}"
+                                                Style="{StaticResource MutedText}"
+                                                TextTrimming="None"
                                                 TextWrapping="Wrap" />
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
@@ -332,9 +483,8 @@
         </Grid>
 
         <!-- 정리 -->
-        <Grid Grid.Row="3" ColumnSpacing="8">
+        <Grid Grid.Row="3" ColumnSpacing="10">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
@@ -342,20 +492,52 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <Button Grid.Column="0" Content="{loc:Str Key=Sessions_SelectOld}" AutomationProperties.AutomationId="SelectOldButton" Click="OnSelectOldClick" />
-            <Button Grid.Column="1" Content="{loc:Str Key=Sessions_SelectOrphan}" AutomationProperties.AutomationId="SelectOrphanButton" Click="OnSelectOrphanClick" />
-            <Button Grid.Column="2" Content="{loc:Str Key=Sessions_SelectLarge}" AutomationProperties.AutomationId="SelectLargeButton" Click="OnSelectLargeClick" />
+            <muxc:DropDownButton Grid.Column="0" AutomationProperties.AutomationId="SelectMenuButton">
+                <muxc:DropDownButton.Content>
+                    <TextBlock Text="{loc:Str Key=Sessions_SelectMenu}" />
+                </muxc:DropDownButton.Content>
+                <muxc:DropDownButton.Flyout>
+                    <MenuFlyout>
+                        <MenuFlyoutItem
+                            Text="{loc:Str Key=Sessions_SelectOld}"
+                            AutomationProperties.AutomationId="SelectOldButton"
+                            Click="OnSelectOldClick" />
+                        <MenuFlyoutItem
+                            Text="{loc:Str Key=Sessions_SelectOrphan}"
+                            AutomationProperties.AutomationId="SelectOrphanButton"
+                            Click="OnSelectOrphanClick" />
+                        <MenuFlyoutItem
+                            Text="{loc:Str Key=Sessions_SelectLarge}"
+                            AutomationProperties.AutomationId="SelectLargeButton"
+                            Click="OnSelectLargeClick" />
+                    </MenuFlyout>
+                </muxc:DropDownButton.Flyout>
+            </muxc:DropDownButton>
 
-            <TextBlock
+            <Border Grid.Column="1" Style="{StaticResource PillBorder}">
+                <TextBlock
+                    AutomationProperties.AutomationId="CheckedCountText"
+                    Text="{x:Bind ViewModel.CheckedText, Mode=OneWay}"
+                    FontSize="12" />
+            </Border>
+
+            <Button
                 Grid.Column="3"
-                Text="{x:Bind ViewModel.StatusText, Mode=OneWay}"
-                VerticalAlignment="Center"
-                Margin="12,0"
-                Style="{ThemeResource CaptionTextBlockStyle}"
-                TextTrimming="CharacterEllipsis" />
+                AutomationProperties.AutomationId="RecycleButton"
+                IsEnabled="{x:Bind ViewModel.HasChecked, Mode=OneWay}"
+                Click="OnRecycleClick">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon Glyph="&#xE74D;" FontSize="13" />
+                    <TextBlock Text="{loc:Str Key=Sessions_SendToRecycleBin}" />
+                </StackPanel>
+            </Button>
 
-            <Button Grid.Column="4" Content="{loc:Str Key=Sessions_SendToRecycleBin}" AutomationProperties.AutomationId="RecycleButton" Click="OnRecycleClick" />
-            <Button Grid.Column="5" Content="{loc:Str Key=Common_PermanentDelete}" AutomationProperties.AutomationId="PermanentButton" Click="OnPermanentClick" />
+            <Button
+                Grid.Column="4"
+                Content="{loc:Str Key=Common_PermanentDelete}"
+                AutomationProperties.AutomationId="PermanentButton"
+                IsEnabled="{x:Bind ViewModel.HasChecked, Mode=OneWay}"
+                Click="OnPermanentClick" />
         </Grid>
     </Grid>
 </Page>

@@ -62,6 +62,15 @@ public sealed partial class UsageViewModel : ObservableObject
     /// <summary>비용은 항상 추정임을 밝힌다.</summary>
     public string EstimatedCostText => UiStrings.Format("Usage_EstimatedCost", EstimatedCost);
 
+    /// <summary>보여줄 사용량이 있는가.</summary>
+    public bool HasData => Days.Any(day => day.Day.Usage.Total > 0);
+
+    /// <summary>기간에 기록이 없어 빈 상태를 보여줄 때.</summary>
+    public bool IsEmpty => !HasData;
+
+    /// <summary>사용량은 있는데 단가표가 없어 비용이 0인 상태.</summary>
+    public bool NeedsPrices => HasData && EstimatedCost == 0m;
+
     /// <summary>인덱스에서 사용량을 다시 읽는다.</summary>
     [RelayCommand]
     public async Task LoadAsync(CancellationToken ct)
@@ -113,7 +122,7 @@ public sealed partial class UsageViewModel : ObservableObject
 
         foreach (var entry in _summary.ByProject.OrderByDescending(entry => entry.Value.Total).Take(10))
         {
-            TopProjects.Add(new UsageRowViewModel(entry.Key, entry.Value, projectTotal, 0));
+            TopProjects.Add(new UsageRowViewModel(entry.Key, entry.Value, projectTotal, 0, isPath: true));
         }
 
         var modelTotal = _summary.ByModel.Sum(entry => entry.Value.Total);
@@ -128,6 +137,9 @@ public sealed partial class UsageViewModel : ObservableObject
 
         EstimatedCost = cost;
         OnPropertyChanged(nameof(EstimatedCostText));
+        OnPropertyChanged(nameof(HasData));
+        OnPropertyChanged(nameof(IsEmpty));
+        OnPropertyChanged(nameof(NeedsPrices));
     }
 
     /// <summary>단가표에 없는 모델은 0으로 둔다. 없는 값을 추측하지 않는다.</summary>
@@ -164,7 +176,9 @@ public sealed class UsageDayViewModel
 
     public string DateText => Day.Date.ToString("MM-dd");
 
-    public string TotalText => $"{Day.Usage.Total:N0}";
+    public string TotalText => Formats.Tokens(Day.Usage.Total);
+
+    public string TotalExact => Formats.Exact(Day.Usage.Total);
 
     public string Detail =>
         UiStrings.Format(
@@ -178,9 +192,10 @@ public sealed class UsageDayViewModel
 /// <summary>프로젝트별·모델별 한 줄.</summary>
 public sealed class UsageRowViewModel
 {
-    public UsageRowViewModel(string label, TokenUsage usage, long total, decimal cost)
+    public UsageRowViewModel(string label, TokenUsage usage, long total, decimal cost, bool isPath = false)
     {
         Label = label;
+        IsPath = isPath;
         Usage = usage;
         Percent = total > 0 ? usage.Total * 100.0 / total : 0;
         Cost = cost;
@@ -188,13 +203,27 @@ public sealed class UsageRowViewModel
 
     public string Label { get; }
 
+    /// <summary>Label이 파일 경로인가 (프로젝트별 목록).</summary>
+    public bool IsPath { get; }
+
     public TokenUsage Usage { get; }
 
     public double Percent { get; }
 
     public decimal Cost { get; }
 
-    public string TotalText => $"{Usage.Total:N0}";
+    public string TotalText => Formats.Tokens(Usage.Total);
+
+    public string TotalExact => Formats.Exact(Usage.Total);
+
+    /// <summary>목록에 크게 보일 이름. 경로면 마지막 폴더만.</summary>
+    public string PrimaryText => IsPath ? Formats.FolderName(Label) : Label;
+
+    /// <summary>보조 설명. 경로일 때만 전체 경로를 옅게 보여준다.</summary>
+    public string SecondaryText => IsPath ? Label : string.Empty;
+
+    /// <summary>보조 설명이 있는가.</summary>
+    public bool HasSecondary => SecondaryText.Length > 0;
 
     public string PercentText => $"{Percent:N1}%";
 

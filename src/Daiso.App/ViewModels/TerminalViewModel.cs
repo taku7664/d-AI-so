@@ -54,6 +54,38 @@ public sealed partial class TerminalViewModel : ObservableObject
     /// <summary>폴더가 정해졌는지. 버튼 활성에 쓴다.</summary>
     public bool CanLaunch => !string.IsNullOrWhiteSpace(WorkingDirectory);
 
+    /// <summary>최근 폴더가 비었는가. 안내 문구를 띄운다.</summary>
+    public bool HasNoRecentFolders => RecentFolders.Count == 0;
+
+    /// <summary>Claude를 눌렀을 때 실제로 실행될 명령.</summary>
+    public string ClaudePreview => Preview(ToolKind.Claude);
+
+    /// <summary>Codex를 눌렀을 때 실제로 실행될 명령.</summary>
+    public string CodexPreview => Preview(ToolKind.Codex);
+
+    /// <summary>마지막 실행 기록이 있는가.</summary>
+    public bool HasLastCommand => !string.IsNullOrWhiteSpace(LastCommand);
+
+    /// <summary>버튼을 누르기 전에 무엇이 실행될지 보여준다. 셸 감싸기는 실행 시점에 붙는다.</summary>
+    private string Preview(ToolKind kind)
+    {
+        var executable = _providers.FirstOrDefault(provider => provider.Kind == kind)?.ExecutableName
+            ?? kind.ToString().ToLowerInvariant();
+
+        var command = Arguments.Length > 0 ? $"{executable} {Arguments.Trim()}" : executable;
+        var label = kind == ToolKind.Claude ? "Claude" : "Codex";
+
+        return $"{label}  ▸  {command}";
+    }
+
+    partial void OnArgumentsChanged(string value)
+    {
+        OnPropertyChanged(nameof(ClaudePreview));
+        OnPropertyChanged(nameof(CodexPreview));
+    }
+
+    partial void OnLastCommandChanged(string? value) => OnPropertyChanged(nameof(HasLastCommand));
+
     /// <summary>폴더 선택 결과를 받아 히스토리에 넣는다.</summary>
     public void SetFolder(string path)
     {
@@ -64,6 +96,7 @@ public sealed partial class TerminalViewModel : ObservableObject
 
         WorkingDirectory = path;
         Remember(path);
+        OnPropertyChanged(nameof(HasNoRecentFolders));
     }
 
     /// <summary>세션 "이어서 열기"에서 넘어온 인자를 채운다.</summary>

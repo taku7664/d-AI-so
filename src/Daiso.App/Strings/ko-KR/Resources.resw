@@ -145,9 +145,6 @@
   <data name="Dashboard_SessionSummary" xml:space="preserve">
     <value>총 {0}건 · {1}</value>
   </data>
-  <data name="Dashboard_UsageHeader" xml:space="preserve">
-    <value>최근 {0}일 토큰 사용량</value>
-  </data>
   <data name="Dashboard_Usage" xml:space="preserve">
     <value>사용량</value>
   </data>
@@ -185,9 +182,6 @@
   </data>
   <data name="Auth_NotInstalled" xml:space="preserve">
     <value>설치되지 않음</value>
-  </data>
-  <data name="Auth_ExpiresAt" xml:space="preserve">
-    <value>{0} 이후 재로그인 필요</value>
   </data>
   <data name="Auth_NoExpiry" xml:space="preserve">
     <value>만료 정보 없음</value>
@@ -246,9 +240,6 @@
   </data>
   <data name="Sessions_IncludeArchived" xml:space="preserve">
     <value>아카이브 포함</value>
-  </data>
-  <data name="Sessions_ApplyFilter" xml:space="preserve">
-    <value>필터 적용</value>
   </data>
   <data name="Sessions_RowMeta" xml:space="preserve">
     <value>{0} · {1} · {2} · 사용자 {3} · 어시스턴트 {4}</value>
@@ -708,5 +699,150 @@
   </data>
   <data name="Crash_LogPath" xml:space="preserve">
     <value>로그: {0}</value>
+  </data>
+  <!-- Dashboard·사용량 (2차 정리) -->
+  <data name="Number_Thousand" xml:space="preserve">
+    <value>{0:N1}K</value>
+  </data>
+  <data name="Number_Million" xml:space="preserve">
+    <value>{0:N1}M</value>
+  </data>
+  <data name="Number_Billion" xml:space="preserve">
+    <value>{0:N2}B</value>
+  </data>
+  <data name="Auth_ExpiresIn" xml:space="preserve">
+    <value>{0:yyyy-MM-dd}까지 · {1}일 남음</value>
+  </data>
+  <data name="Auth_ExpiresToday" xml:space="preserve">
+    <value>{0:yyyy-MM-dd}까지 · 오늘 만료</value>
+  </data>
+  <data name="Auth_ReLogin" xml:space="preserve">
+    <value>다시 로그인</value>
+  </data>
+  <data name="Dashboard_StatSessions" xml:space="preserve">
+    <value>세션</value>
+  </data>
+  <data name="Dashboard_StatSize" xml:space="preserve">
+    <value>총 용량</value>
+  </data>
+  <data name="Dashboard_StatTokens" xml:space="preserve">
+    <value>최근 {0}일 토큰</value>
+  </data>
+  <data name="Dashboard_OpenSessions" xml:space="preserve">
+    <value>세션 보기</value>
+  </data>
+  <data name="Dashboard_ToolStatusHint" xml:space="preserve">
+    <value>토큰 값은 화면·로그·파일에 쓰지 않습니다</value>
+  </data>
+  <data name="Usage_PriceHint" xml:space="preserve">
+    <value>단가표가 비어 있어 추정 비용이 0입니다. Settings의 단가표에 모델 단가를 넣으세요.</value>
+  </data>
+  <data name="Usage_OpenSettings" xml:space="preserve">
+    <value>단가표 열기</value>
+  </data>
+  <data name="Usage_Empty" xml:space="preserve">
+    <value>이 기간에 기록된 사용량이 없습니다.</value>
+  </data>
+  <data name="Usage_ProjectColumn" xml:space="preserve">
+    <value>프로젝트</value>
+  </data>
+  <data name="Usage_ModelColumn" xml:space="preserve">
+    <value>모델</value>
+  </data>
+  <data name="Usage_TokensColumn" xml:space="preserve">
+    <value>토큰</value>
+  </data>
+  <data name="Usage_ShareColumn" xml:space="preserve">
+    <value>비중</value>
+  </data>
+  <data name="Usage_CostColumn" xml:space="preserve">
+    <value>추정 비용</value>
+  </data>
+  <!-- Sessions (2차 정리) -->
+  <data name="Sessions_Title" xml:space="preserve">
+    <value>세션</value>
+  </data>
+  <data name="Sessions_Projects" xml:space="preserve">
+    <value>프로젝트</value>
+  </data>
+  <data name="Sessions_ListHeader" xml:space="preserve">
+    <value>세션 목록</value>
+  </data>
+  <data name="Sessions_NoPrompt" xml:space="preserve">
+    <value>(첫 메시지 없음)</value>
+  </data>
+  <data name="Sessions_EmptyList" xml:space="preserve">
+    <value>조건에 맞는 세션이 없습니다. 필터를 넓혀 보세요.</value>
+  </data>
+  <data name="Sessions_PickHint" xml:space="preserve">
+    <value>왼쪽에서 세션을 고르면 대화 내용이 여기 보입니다.</value>
+  </data>
+  <data name="Sessions_CheckedCount" xml:space="preserve">
+    <value>{0}건 선택됨</value>
+  </data>
+  <data name="Sessions_SelectMenu" xml:space="preserve">
+    <value>골라 체크</value>
+  </data>
+  <!-- 2차 정리 (Terminal·RuleMaker·Settings) -->
+  <data name="Terminal_Title" xml:space="preserve">
+    <value>터미널 열기</value>
+  </data>
+  <data name="Terminal_Preview" xml:space="preserve">
+    <value>실행될 명령</value>
+  </data>
+  <data name="Terminal_NoRecent" xml:space="preserve">
+    <value>최근 폴더가 없습니다. 위에서 폴더를 고르세요.</value>
+  </data>
+  <data name="Terminal_LastCommand" xml:space="preserve">
+    <value>마지막 실행</value>
+  </data>
+  <data name="Terminal_Launch" xml:space="preserve">
+    <value>실행</value>
+  </data>
+  <data name="RuleMaker_Title" xml:space="preserve">
+    <value>규칙 만들기</value>
+  </data>
+  <data name="RuleMaker_Add" xml:space="preserve">
+    <value>추가</value>
+  </data>
+  <data name="RuleMaker_Wrap" xml:space="preserve">
+    <value>감싸기</value>
+  </data>
+  <data name="RuleMaker_MoveUp" xml:space="preserve">
+    <value>위로</value>
+  </data>
+  <data name="RuleMaker_MoveDown" xml:space="preserve">
+    <value>아래로</value>
+  </data>
+  <data name="RuleMaker_PreviewEmpty" xml:space="preserve">
+    <value>행동을 하나 넣으면 미리보기가 채워집니다.</value>
+  </data>
+  <data name="RuleMaker_SelectedNodeHint" xml:space="preserve">
+    <value>트리에서 고른 노드에 적용됩니다.</value>
+  </data>
+  <data name="Settings_Title" xml:space="preserve">
+    <value>설정</value>
+  </data>
+  <data name="Settings_Reset" xml:space="preserve">
+    <value>되돌리기</value>
+  </data>
+  <data name="Settings_PriceEmpty" xml:space="preserve">
+    <value>단가가 아직 없습니다. 모델을 추가해 100만 토큰당 단가를 넣으세요.</value>
+  </data>
+  <!-- 왼쪽 이동 메뉴 -->
+  <data name="Nav_Dashboard" xml:space="preserve">
+    <value>요약</value>
+  </data>
+  <data name="Nav_Terminal" xml:space="preserve">
+    <value>터미널</value>
+  </data>
+  <data name="Nav_Sessions" xml:space="preserve">
+    <value>세션</value>
+  </data>
+  <data name="Nav_RuleMaker" xml:space="preserve">
+    <value>규칙</value>
+  </data>
+  <data name="Nav_Settings" xml:space="preserve">
+    <value>설정</value>
   </data>
 </root>

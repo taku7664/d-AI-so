@@ -54,6 +54,12 @@ public sealed partial class SettingsViewModel : ObservableObject
     /// <summary>모델별 단가.</summary>
     public ObservableCollection<PriceRowViewModel> Prices { get; } = [];
 
+    /// <summary>단가 줄이 하나라도 있는가.</summary>
+    public bool HasPrices => Prices.Count > 0;
+
+    /// <summary>단가가 비었는가. 안내 문구를 띄운다.</summary>
+    public bool HasNoPrices => Prices.Count == 0;
+
     /// <summary>세션 루트를 비웠을 때 쓰이는 기본값.</summary>
     public string DefaultSessionHome => ProviderHome.FromUserProfile().Directory;
 
@@ -91,6 +97,8 @@ public sealed partial class SettingsViewModel : ObservableObject
         {
             Prices.Add(PriceRowViewModel.From(model, price));
         }
+
+        NotifyPriceState();
     }
 
     /// <summary>값을 설정 파일에 쓴다.</summary>
@@ -123,7 +131,17 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     /// <summary>단가 행을 추가한다.</summary>
     [RelayCommand]
-    public void AddPrice() => Prices.Add(new PriceRowViewModel());
+    public void AddPrice()
+    {
+        Prices.Add(new PriceRowViewModel());
+        NotifyPriceState();
+    }
+
+    private void NotifyPriceState()
+    {
+        OnPropertyChanged(nameof(HasPrices));
+        OnPropertyChanged(nameof(HasNoPrices));
+    }
 
     /// <summary>단가 행을 지운다.</summary>
     [RelayCommand]
@@ -132,6 +150,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         if (row is not null)
         {
             Prices.Remove(row);
+            NotifyPriceState();
         }
     }
 

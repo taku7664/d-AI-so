@@ -4,6 +4,9 @@ using CommunityToolkit.Mvvm.Input;
 using Daiso.App.Services;
 using Daiso.Core;
 using Daiso.App.Strings;
+using Microsoft.UI;
+using Microsoft.UI.Xaml.Media;
+using Windows.UI;
 
 namespace Daiso.App.ViewModels;
 
@@ -66,8 +69,17 @@ public sealed partial class DashboardViewModel : ObservableObject
     public string SessionSummaryText =>
         UiStrings.Format("Dashboard_SessionSummary", SessionCount, TotalSizeText);
 
+    /// <summary>세션 수 (단위 포함).</summary>
+    public string SessionCountText => UiStrings.Format("Sessions_Count", SessionCount);
+
+    /// <summary>최근 사용량 총합. 줄여 쓴 값.</summary>
+    public string RecentTokensText => Formats.Tokens(RecentUsage.Total);
+
+    /// <summary>최근 사용량 총합의 정확한 값. ToolTip용.</summary>
+    public string RecentTokensExact => Formats.Exact(RecentUsage.Total);
+
     /// <summary>사용량 카드 제목.</summary>
-    public string UsageHeaderText => UiStrings.Format("Dashboard_UsageHeader", UsageDayCount);
+    public string UsageHeaderText => UiStrings.Format("Dashboard_StatTokens", UsageDayCount);
 
     /// <summary>도구 상태와 세션·사용량 요약을 다시 읽는다.</summary>
     [RelayCommand]
@@ -107,6 +119,9 @@ public sealed partial class DashboardViewModel : ObservableObject
             OnPropertyChanged(nameof(TotalSizeText));
             OnPropertyChanged(nameof(RecentUsageText));
             OnPropertyChanged(nameof(SessionSummaryText));
+            OnPropertyChanged(nameof(SessionCountText));
+            OnPropertyChanged(nameof(RecentTokensText));
+            OnPropertyChanged(nameof(RecentTokensExact));
         }
         finally
         {
@@ -167,13 +182,13 @@ public sealed partial class ToolCardViewModel : ObservableObject
     /// <summary>부가 정보. MCP 커넥터 이름, 구독 등급 등.</summary>
     public ObservableCollection<string> Extras { get; } = [];
 
-    /// <summary>상태 배지.</summary>
-    public string Badge => State switch
+    /// <summary>상태 점 색. 초록·주황·빨강.</summary>
+    public Brush StateBrush => new SolidColorBrush(State switch
     {
-        AuthState.LoggedIn => "🟢",
-        AuthState.ExpiringSoon => "🟡",
-        _ => "🔴",
-    };
+        AuthState.LoggedIn => Color.FromArgb(255, 16, 137, 62),
+        AuthState.ExpiringSoon => Color.FromArgb(255, 191, 122, 0),
+        _ => Color.FromArgb(255, 196, 43, 28),
+    });
 
     /// <summary>상태 설명.</summary>
     public string StateText => State switch
@@ -188,10 +203,15 @@ public sealed partial class ToolCardViewModel : ObservableObject
     public string InstalledText =>
         UiStrings.Get(IsInstalled ? "Auth_Installed" : "Auth_NotInstalled");
 
-    /// <summary>재로그인 필요 시각 문구.</summary>
-    public string ExpiresText => SessionExpiresAt is { } at
-        ? UiStrings.Format("Auth_ExpiresAt", at.ToLocalTime())
-        : UiStrings.Get("Auth_NoExpiry");
+    /// <summary>재로그인까지 남은 기간. 날짜와 남은 일수를 함께 보여준다.</summary>
+    public string ExpiresText => Formats.Expiry(SessionExpiresAt);
+
+    /// <summary>부가 정보가 있을 때만 접이식 영역을 보여준다.</summary>
+    public bool HasExtras => Extras.Count > 0;
+
+    /// <summary>버튼 문구. 이미 로그인돼 있으면 "다시 로그인".</summary>
+    public string LoginLabel =>
+        UiStrings.Get(State == AuthState.Missing ? "Dashboard_Login" : "Auth_ReLogin");
 
     /// <summary>로그인이 필요한 상태인지. 버튼 강조에 쓴다.</summary>
     public bool NeedsLogin => State is AuthState.Missing or AuthState.Expired or AuthState.ExpiringSoon;
@@ -213,10 +233,12 @@ public sealed partial class ToolCardViewModel : ObservableObject
             Extras.Add(extra);
         }
 
-        OnPropertyChanged(nameof(Badge));
+        OnPropertyChanged(nameof(StateBrush));
         OnPropertyChanged(nameof(StateText));
         OnPropertyChanged(nameof(InstalledText));
         OnPropertyChanged(nameof(ExpiresText));
         OnPropertyChanged(nameof(NeedsLogin));
+        OnPropertyChanged(nameof(HasExtras));
+        OnPropertyChanged(nameof(LoginLabel));
     }
 }

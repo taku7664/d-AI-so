@@ -11,6 +11,7 @@ Claude Code와 Codex CLI를 Windows에서 함께 다루는 WinUI 3 앱이다. �
 - 무엇을 만드는가: [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md)
 - 어떻게 나누고 연결하는가: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 - 목표와 완료 기준: [docs/GOAL.md](docs/GOAL.md)
+- 화면 시나리오와 검증 기록: [docs/UX_SCENARIOS.md](docs/UX_SCENARIOS.md)
 
 ## 화면
 

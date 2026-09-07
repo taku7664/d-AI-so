@@ -5,6 +5,8 @@ using CommunityToolkit.Mvvm.Input;
 using Daiso.App.Services;
 using Daiso.App.Strings;
 using Daiso.Core;
+using Microsoft.UI.Xaml.Media;
+using Windows.UI;
 
 namespace Daiso.App.ViewModels;
 
@@ -105,6 +107,30 @@ public sealed partial class SessionsViewModel : ObservableObject
         UiStrings.Get("Sessions_Period30"),
         UiStrings.Get("Sessions_Period90"),
     ];
+
+    /// <summary>체크된 세션 수.</summary>
+    public int CheckedCount => Sessions.Count(row => row.IsChecked);
+
+    /// <summary>지울 대상이 있는가. 파괴적인 버튼의 활성 조건.</summary>
+    public bool HasChecked => CheckedCount > 0;
+
+    /// <summary>선택 개수 문구.</summary>
+    public string CheckedText => UiStrings.Format("Sessions_CheckedCount", CheckedCount);
+
+    /// <summary>목록에 보여줄 세션이 있는가.</summary>
+    public bool HasSessions => Sessions.Count > 0;
+
+    /// <summary>목록이 비었는가. 빈 상태 안내를 띄운다.</summary>
+    public bool IsListEmpty => Sessions.Count == 0;
+
+    /// <summary>가운데 목록 제목에 붙이는 건수.</summary>
+    public string SessionCountText => UiStrings.Format("Sessions_Count", Sessions.Count);
+
+    /// <summary>세션을 골랐는가.</summary>
+    public bool HasSelectedSession => SelectedSession is not null;
+
+    /// <summary>아무것도 고르지 않았는가. 안내 문구를 띄운다.</summary>
+    public bool NoSelection => SelectedSession is null;
 
     /// <summary>검색 결과가 있는지.</summary>
     public bool HasSearchResults => SearchResults.Count > 0;
@@ -419,27 +445,98 @@ public sealed partial class SessionsViewModel : ObservableObject
             Projects.Add(new ProjectGroupViewModel(group.Key, [.. group]));
         }
 
+        DisambiguateProjectNames();
+
         SelectedProject = Projects.FirstOrDefault(project =>
             string.Equals(project.Path, previous, StringComparison.OrdinalIgnoreCase))
             ?? Projects.FirstOrDefault();
     }
 
-    private void ApplyProjectSelection()
+    /// <summary>
+    /// 폴더 이름만 보여주면 `TASK-1` 같은 이름이 여러 개 겹친다.
+    /// 겹치는 것만 상위 폴더를 앞에 붙여 목록에서 구분되게 한다.
+    /// </summary>
+    private void DisambiguateProjectNames()
     {
-        Sessions.Clear();
-
-        if (SelectedProject is null)
+        foreach (var sameName in Projects.GroupBy(project => project.DisplayName))
         {
-            return;
-        }
+            if (sameName.Count() < 2)
+            {
+                continue;
+            }
 
-        foreach (var session in SelectedProject.Sessions.OrderByDescending(session => session.ModifiedAt))
-        {
-            Sessions.Add(new SessionRowViewModel(session));
+            foreach (var project in sameName)
+            {
+                var parent = Path.GetFileName(Path.GetDirectoryName(project.Path.TrimEnd('\\')) ?? string.Empty);
+
+                if (parent.Length > 0)
+                {
+                    project.DisambiguatedName = $"{parent} / {project.DisplayName}";
+                }
+            }
         }
     }
 
+    private void ApplyProjectSelection()
+    {
+        foreach (var old in Sessions)
+        {
+            old.CheckedChanged -= OnRowCheckedChanged;
+        }
+
+        Sessions.Clear();
+
+        if (SelectedProject is not null)
+        {
+            foreach (var session in SelectedProject.Sessions.OrderByDescending(session => session.ModifiedAt))
+            {
+                var row = new SessionRowViewModel(session);
+                row.CheckedChanged += OnRowCheckedChanged;
+                Sessions.Add(row);
+            }
+        }
+
+        NotifyChecked();
+        OnPropertyChanged(nameof(HasSessions));
+        OnPropertyChanged(nameof(IsListEmpty));
+        OnPropertyChanged(nameof(SessionCountText));
+    }
+
     partial void OnSelectedProjectChanged(ProjectGroupViewModel? value) => ApplyProjectSelection();
+
+    // 필터를 바꾸면 바로 적용한다. 따로 "적용" 버튼을 누르지 않는다.
+    partial void OnToolFilterIndexChanged(int value) => ReloadForFilter();
+
+    partial void OnPeriodFilterIndexChanged(int value) => ReloadForFilter();
+
+    partial void OnOrphansOnlyChanged(bool value) => ReloadForFilter();
+
+    partial void OnIncludeArchivedChanged(bool value) => ReloadForFilter();
+
+    partial void OnMinSizeMegabytesChanged(double value) => ReloadForFilter();
+
+    partial void OnSelectedSessionChanged(SessionRowViewModel? value)
+    {
+        OnPropertyChanged(nameof(HasSelectedSession));
+        OnPropertyChanged(nameof(NoSelection));
+    }
+
+    private void ReloadForFilter()
+    {
+        if (!IsBusy)
+        {
+            _ = ApplyFiltersCommand.ExecuteAsync(null);
+        }
+    }
+
+    private void OnRowCheckedChanged(object? sender, EventArgs e) => NotifyChecked();
+
+    private void NotifyChecked()
+    {
+        OnPropertyChanged(nameof(CheckedCount));
+        OnPropertyChanged(nameof(HasChecked));
+        OnPropertyChanged(nameof(CheckedText));
+    }
 }
 
 /// <summary>삭제 미리보기 요약.</summary>
@@ -469,7 +566,12 @@ public sealed class ProjectGroupViewModel
     public bool IsOrphan =>
         Path == SessionsViewModel.UnknownProject || !Directory.Exists(Path);
 
-    public string DisplayName => Path == SessionsViewModel.UnknownProject
+    /// <summary>같은 이름이 여럿일 때 목록에서 구분하도록 상위 폴더까지 붙인 이름.</summary>
+    public string? DisambiguatedName { get; set; }
+
+    public string DisplayName => DisambiguatedName ?? DefaultDisplayName;
+
+    private string DefaultDisplayName => Path == SessionsViewModel.UnknownProject
         ? UiStrings.Get("Common_Unknown")
         : System.IO.Path.GetFileName(Path.TrimEnd('\\'));
 
@@ -483,6 +585,11 @@ public sealed partial class SessionRowViewModel : ObservableObject
 {
     [ObservableProperty]
     private bool isChecked;
+
+    /// <summary>체크가 바뀌면 목록 쪽에서 선택 개수를 다시 센다.</summary>
+    public event EventHandler? CheckedChanged;
+
+    partial void OnIsCheckedChanged(bool value) => CheckedChanged?.Invoke(this, EventArgs.Empty);
 
     public SessionRowViewModel(SessionInfo session) => Session = session;
 
@@ -509,9 +616,86 @@ public sealed partial class SessionRowViewModel : ObservableObject
 
     public string FirstPromptText => Session.FirstPrompt?.Replace('\n', ' ') ?? string.Empty;
 
+    /// <summary>
+    /// 목록에 보이는 제목. 슬래시 명령으로 시작한 세션은 첫 프롬프트가 `&lt;command-name&gt;` 같은
+    /// 원문이라 그대로 두면 읽히지 않는다. 태그를 걷어내고 한 줄로 만든다.
+    /// </summary>
+    public string TitleText
+    {
+        get
+        {
+            var cleaned = CleanPrompt(Session.FirstPrompt);
+
+            return cleaned.Length > 0 ? cleaned : UiStrings.Get("Sessions_NoPrompt");
+        }
+    }
+
+    /// <summary>도구 한 글자. 목록에서 아이콘 자리에 쓴다.</summary>
+    public string ToolInitial => Session.Tool == ToolKind.Claude ? "C" : "X";
+
+    /// <summary>도구 색. Claude 보라, Codex 회색.</summary>
+    public Brush ToolBrush => new SolidColorBrush(Session.Tool == ToolKind.Claude
+        ? Color.FromArgb(255, 122, 90, 248)
+        : Color.FromArgb(255, 96, 104, 120));
+
+    /// <summary>세션 id 앞 8자. 전체 값은 ToolTip에 둔다.</summary>
+    public string IdShort => Session.Id.Length <= 8 ? Session.Id : Session.Id[..8];
+
+    /// <summary>배지가 하나라도 있는가.</summary>
+    public bool HasBadges => Badges.Length > 0;
+
     public bool IsOrphan => Session.ProjectPath is null || !Directory.Exists(Session.ProjectPath);
 
     /// <summary>배지 문구. 실행 중·아카이브·고아.</summary>
+    /// <summary>태그·연속 공백을 걷어낸 한 줄짜리 프롬프트.</summary>
+    private static string CleanPrompt(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return string.Empty;
+        }
+
+        var builder = new System.Text.StringBuilder(raw.Length);
+        var depth = 0;
+        var lastWasSpace = false;
+
+        foreach (var ch in raw)
+        {
+            if (ch == '<')
+            {
+                depth++;
+                continue;
+            }
+
+            if (ch == '>' && depth > 0)
+            {
+                depth--;
+                continue;
+            }
+
+            if (depth > 0)
+            {
+                continue;
+            }
+
+            if (char.IsWhiteSpace(ch))
+            {
+                if (!lastWasSpace && builder.Length > 0)
+                {
+                    builder.Append(' ');
+                    lastWasSpace = true;
+                }
+
+                continue;
+            }
+
+            builder.Append(ch);
+            lastWasSpace = false;
+        }
+
+        return builder.ToString().Trim();
+    }
+
     public string Badges => string.Join(
         " ",
         new[]

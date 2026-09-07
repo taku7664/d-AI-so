@@ -25,6 +25,14 @@ public sealed partial class DashboardPage : Page
     /// <summary>사용량 탭.</summary>
     public UsageViewModel Usage { get; }
 
+    /// <summary>세션 목록으로 보낸다.</summary>
+    private void OnGoToSessionsClick(object sender, RoutedEventArgs e) => Go("Sessions");
+
+    /// <summary>단가표를 넣을 수 있는 설정으로 보낸다.</summary>
+    private void OnGoToPricesClick(object sender, RoutedEventArgs e) => Go("Settings");
+
+    private static void Go(string tag) => (App.MainWindow as ShellWindow)?.NavigateTo(tag);
+
     private async void OnLoginClick(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement { DataContext: ToolCardViewModel card })

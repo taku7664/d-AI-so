@@ -156,6 +156,14 @@ public sealed partial class RuleMakerViewModel : ObservableObject
         RefreshLibrary();
     }
 
+    /// <summary>미리보기에 보여줄 내용이 아직 없는가. 빈 껍데기 대신 안내를 띄운다.</summary>
+    public bool PreviewIsEmpty =>
+        Global.All(action => string.IsNullOrWhiteSpace(action.Text))
+        && Rules.All(rule => rule.Actions.All(action => string.IsNullOrWhiteSpace(action.Text)));
+
+    /// <summary>미리보기에 보여줄 내용이 있는가.</summary>
+    public bool PreviewHasContent => !PreviewIsEmpty;
+
     /// <summary>입력란의 경로로 연동한다.</summary>
     [RelayCommand]
     public void LinkToTypedProject()
@@ -250,6 +258,9 @@ public sealed partial class RuleMakerViewModel : ObservableObject
         {
             MarkdownPreview = UiStrings.Format("RuleMaker_PreviewFailed", ex.Message);
         }
+
+        OnPropertyChanged(nameof(PreviewIsEmpty));
+        OnPropertyChanged(nameof(PreviewHasContent));
     }
 
     /// <summary>편집 내용을 Core 모델로 만든다. 검증은 하지 않는다.</summary>
@@ -412,7 +423,10 @@ public sealed partial class RuleEditViewModel : ObservableObject
         : string.Empty;
 
     /// <summary>목록에 보여줄 요약.</summary>
-    public string Summary => UiStrings.Format("RuleMaker_RuleSummary", ConditionPreview, Actions.Count);
+    public string Summary => UiStrings.Format(
+        "RuleMaker_RuleSummary",
+        ConditionPreview.Length > 0 ? ConditionPreview : UiStrings.Get("RuleMaker_EmptyCondition"),
+        Actions.Count);
 
     /// <summary>Core 모델에서 만든다.</summary>
     public static RuleEditViewModel From(Rule rule, IMarkdownRuleRenderer renderer)

@@ -11,6 +11,7 @@
 | `docs/ARCHITECTURE.md` | 계층·모델·인터페이스 시그니처의 **정본**. 코드가 이를 따른다 | 코드보다 **먼저** 고치고, 커밋 메시지에 이유를 남긴다 |
 | `docs/GOAL.md` | 목표·단계(Step)·완료 기준 | 단계 범위가 바뀔 때 |
 | `README.md` | 빌드·실행·CLI·확인 기록 | 확인 결과가 바뀔 때 |
+| `docs/UX_SCENARIOS.md` | 사용자 시나리오와 화면 검증 기록 | 화면을 고칠 때 |
 | `CLAUDE.md` | 커밋 규칙 (한글 한 줄, `타입: 내용`) | — |
 | `samples/PROJECT_RULES.daiso` | .daiso 정본 샘플 | — |
 | `docs/screenshots/` | README가 참조하는 화면 5장 | — |
@@ -23,6 +24,7 @@
 - **Stage 2 (Step 8–16)**: WinUI 3 앱 5개 페이지 + 사용량 탭 + Context Doctor 탭. 게이트 통과
 - **REQ §7 마이그레이션**: `CLAUDE.md` ↔ `AGENTS.md` 좌우 diff·방향 선택·import 인라인 전개 (Core·Infrastructure·CLI·RuleMaker 버튼)
 - **화면 문구 로컬라이징**: 노출 문구 205개를 `Strings/ko-KR/Resources.resw` 하나로 모으고 키로만 참조 (ARCHITECTURE §6.1). 문체는 존댓말로 통일
+- **UI/UX 2차 정리**: 시나리오 10개를 직접 따라가며 잘림·여백·위계 문제를 고쳤다 (`docs/UX_SCENARIOS.md`, 규칙은 ARCHITECTURE §6.2)
 - 빌드 경고 0 / 오류 0, 테스트 254건 + Slow 2건 통과 (2026-09-08)
 - 완성 상태 6항목 확인 결과는 README "수동 확인 체크리스트"에 있다
 

@@ -187,4 +187,13 @@ public sealed class ContextFileViewModel
         File.Exists ? UiStrings.Format("Common_Chars", File.Content.Length) : "-";
 
     public string Summary => $"{OrderText} {Mark} {CharsText}  [{File.Kind}]  {File.Path}";
+
+    /// <summary>있는 파일은 체크, 없는 파일은 빈 동그라미.</summary>
+    public string StateGlyph => File.Exists ? "\uE73E" : "\uE739";
+
+    /// <summary>없는 파일은 옅게 보여 눈에 덜 걸리게 한다.</summary>
+    public double Dim => File.Exists ? 1.0 : 0.45;
+
+    /// <summary>경로. 목록에서는 한 줄로 자르고 전체는 ToolTip에 둔다.</summary>
+    public string PathText => File.Path;
 }

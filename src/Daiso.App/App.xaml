@@ -7,6 +7,80 @@
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
             </ResourceDictionary.MergedDictionaries>
+
+            <!--
+                화면 공통 규칙. (ARCHITECTURE §6.2)
+                간격은 4의 배수, 본문 폭은 1280까지, 카드는 모서리 8.
+            -->
+            <x:Double x:Key="ContentMaxWidth">1280</x:Double>
+            <Thickness x:Key="PagePadding">24,20,24,20</Thickness>
+
+            <!-- 카드: 페이지 안의 한 덩어리 -->
+            <Style x:Key="CardBorder" TargetType="Border">
+                <Setter Property="Padding" Value="20" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+                <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            </Style>
+
+            <!-- 알림용 옅은 판 (안내·빈 상태) -->
+            <Style x:Key="NoticeBorder" TargetType="Border">
+                <Setter Property="Padding" Value="16,12" />
+                <Setter Property="CornerRadius" Value="6" />
+                <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
+            </Style>
+
+            <!-- 상태 알약 (로그인됨 / 실행 중 …) -->
+            <Style x:Key="PillBorder" TargetType="Border">
+                <Setter Property="Padding" Value="8,2" />
+                <Setter Property="CornerRadius" Value="10" />
+                <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+            </Style>
+
+            <!-- 페이지 제목 · 부제 -->
+            <Style x:Key="PageTitleText" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="24" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            </Style>
+
+            <Style x:Key="PageSubtitleText" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="13" />
+                <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+                <Setter Property="TextWrapping" Value="Wrap" />
+            </Style>
+
+            <!-- 카드 제목 -->
+            <Style x:Key="SectionTitleText" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="16" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+            </Style>
+
+            <!-- 덜 중요한 설명 -->
+            <Style x:Key="MutedText" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+                <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            </Style>
+
+            <!-- 경로·id처럼 글자 폭이 일정해야 읽히는 값 -->
+            <Style x:Key="MonoText" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="Consolas" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+                <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            </Style>
+
+            <!-- 표의 숫자: 오른쪽 정렬 + 고정 폭 -->
+            <Style x:Key="NumberText" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="Consolas" />
+                <Setter Property="FontSize" Value="13" />
+                <Setter Property="HorizontalAlignment" Value="Right" />
+                <Setter Property="HorizontalTextAlignment" Value="Right" />
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
