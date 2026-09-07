@@ -276,7 +276,7 @@ d-AI-so/
 ├─ docs/
 │  ├─ REQUIREMENTS.md
 │  ├─ ARCHITECTURE.md
-│  └─ GOAL-phase1.md
+│  └─ GOAL.md
 └─ samples/
    └─ PROJECT_RULES.daiso
 ```

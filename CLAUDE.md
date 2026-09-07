@@ -3,7 +3,7 @@
 ## 문서
 - 요구사항: `docs/REQUIREMENTS.md`
 - 아키텍처: `docs/ARCHITECTURE.md` (인터페이스·파싱 규칙의 정본. 코드가 이를 따른다)
-- 진행 목표: `docs/GOAL-phase*.md`
+- 목표·완료 기준: `docs/GOAL.md`
 
 ## 커밋
 
