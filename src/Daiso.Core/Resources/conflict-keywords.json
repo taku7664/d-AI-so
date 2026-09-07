@@ -1,0 +1,17 @@
+{
+  "$comment": "상반되는 지시를 찾는 키워드 짝. 소문자 정규화된 줄에 대해 부분 문자열로 맞춘다.",
+  "pairs": [
+    { "left": "한국어", "right": "english", "reason": "응답 언어 지시가 서로 다르다" },
+    { "left": "한글", "right": "영어", "reason": "응답 언어 지시가 서로 다르다" },
+    { "left": "korean", "right": "english", "reason": "응답 언어 지시가 서로 다르다" },
+    { "left": "항상", "right": "절대", "reason": "같은 대상에 대해 강제와 금지가 함께 있을 수 있다" },
+    { "left": "always", "right": "never", "reason": "같은 대상에 대해 강제와 금지가 함께 있을 수 있다" },
+    { "left": "필수", "right": "금지", "reason": "같은 대상에 대해 강제와 금지가 함께 있을 수 있다" },
+    { "left": "must", "right": "must not", "reason": "같은 대상에 대해 강제와 금지가 함께 있을 수 있다" },
+    { "left": "커밋", "right": "커밋하지", "reason": "커밋 지시가 서로 다르다" },
+    { "left": "테스트를 작성", "right": "테스트를 작성하지", "reason": "테스트 작성 지시가 서로 다르다" },
+    { "left": "주석을 남긴다", "right": "주석을 남기지", "reason": "주석 지시가 서로 다르다" },
+    { "left": "tab", "right": "space", "reason": "들여쓰기 지시가 서로 다르다" },
+    { "left": "탭", "right": "스페이스", "reason": "들여쓰기 지시가 서로 다르다" }
+  ]
+}

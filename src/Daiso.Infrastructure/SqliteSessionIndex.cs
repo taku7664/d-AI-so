@@ -42,11 +42,17 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
         CreateSchema();
     }
 
-    /// <summary>기본 인덱스 파일 위치.</summary>
-    public static string DefaultDatabasePath => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "d-AI-so",
-        "index.db");
+    /// <summary>인덱스 위치를 바꾸는 환경 변수. 디스크가 빠듯한 머신에서 다른 드라이브로 옮길 때 쓴다.</summary>
+    public const string DatabasePathVariable = "DAISO_INDEX_DB";
+
+    /// <summary>기본 인덱스 파일 위치. <see cref="DatabasePathVariable"/>이 있으면 그 값을 쓴다.</summary>
+    public static string DefaultDatabasePath =>
+        Environment.GetEnvironmentVariable(DatabasePathVariable) is { Length: > 0 } overridden
+            ? overridden
+            : Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "d-AI-so",
+                "index.db");
 
     public void Dispose() => _connection.Dispose();
 

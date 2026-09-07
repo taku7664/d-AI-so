@@ -69,8 +69,24 @@ public sealed class CodexSessionParsingTests
     {
         var messages = await Read(Fixtures.CodexPath("rollout-legacy.jsonl"));
 
-        messages.Should().ContainSingle(m => m.Role == MessageRole.System)
-            .Which.Text.Should().Be("더미 개발자 지시문");
+        messages.Where(m => m.Role == MessageRole.System).Select(m => m.Text)
+            .Should().Contain("더미 개발자 지시문");
+    }
+
+    [Fact]
+    public async Task A_response_item_user_role_is_a_system_injection_not_a_prompt()
+    {
+        var path = Fixtures.CodexPath("rollout-legacy.jsonl");
+
+        var messages = await Read(path);
+        var info = await _provider.ReadSessionInfoAsync(path, default);
+
+        // 사람 입력은 event_msg.user_message로만 온다. 주입된 목록은 카운트에 들어가면 안 된다.
+        messages.Should().Contain(m =>
+            m.Role == MessageRole.System && m.Text == "더미 시스템 주입 목록");
+        messages.Should().NotContain(m =>
+            m.Role == MessageRole.User && m.Text == "더미 시스템 주입 목록");
+        info.UserMessageCount.Should().Be(2);
     }
 
     [Fact]

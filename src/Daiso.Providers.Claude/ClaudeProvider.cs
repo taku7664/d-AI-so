@@ -68,7 +68,8 @@ public sealed class ClaudeProvider : IProvider, IUsageReader
         patterns.Add(Path.Combine(dir, ".claude", "rules", "*.md"));
         patterns.Add(Path.Combine(dir, RulesPresetFile));
 
-        return patterns;
+        // 홈 폴더가 상위 폴더에도 들어 있으면 같은 경로가 두 번 나온다. 로드 순서를 지키며 한 번만 남긴다.
+        return patterns.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
     }
 
     /// <inheritdoc />

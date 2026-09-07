@@ -140,8 +140,10 @@ internal sealed class CodexRecordParser
         return payload.Prop("role").Text() switch
         {
             "assistant" => Empty() with { Messages = Assistant(at, text) },
-            "user" => Empty() with { Messages = [new SessionMessage(at, MessageRole.User, text, false)] },
-            "developer" or "system" => Empty() with
+
+            // response_item의 user 역할은 사람 입력이 아니라 시스템 주입(AGENTS 지시문, 플러그인 목록 등)이다.
+            // 사람이 실제로 입력한 것은 event_msg.user_message / item_completed.UserMessage로 온다.
+            "user" or "developer" or "system" => Empty() with
             {
                 Messages = [new SessionMessage(at, MessageRole.System, text, false)],
             },
