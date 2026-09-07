@@ -43,6 +43,7 @@ Windows에서 실행되는 WinUI 3 앱 **d-AI-so**가 다음을 모두 할 수 �
 
 ### Step 1. 솔루션 골격
 - 프로젝트 8개 생성, 참조 연결(ARCH 1절 의존 방향), 패키지 추가
+- **주의**: 이 머신의 .NET SDK는 10.x다. 템플릿이 net10.0으로 생성되므로 각 csproj의 `TargetFramework`를 ARCH 1절 표대로 net8.0 계열로 고칠 것. 필요하면 `global.json`으로 SDK 롤포워드 고정
 - `Directory.Build.props`: `Nullable=enable`, `TreatWarningsAsErrors=true`, `LangVersion=latest`
 - Core 어셈블리가 `System.IO.File`/`Directory`/`Process`를 참조하지 않음을 리플렉션으로 확인하는 테스트 1개
 - `.gitignore` (bin/obj, .omc/, *.user)
