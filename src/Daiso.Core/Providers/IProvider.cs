@@ -1,0 +1,34 @@
+namespace Daiso.Core;
+
+/// <summary>
+/// AI CLI 도구 하나를 다루는 어댑터. 구현은 Daiso.Providers.* 에 있다. (ARCHITECTURE §3.2)
+/// </summary>
+public interface IProvider
+{
+    ToolKind Kind { get; }
+
+    /// <summary>실행 파일 이름. npm 셸(.cmd)만 사용한다.</summary>
+    string ExecutableName { get; }
+
+    /// <summary>도구가 읽는 프로젝트 지시문 파일 이름. "CLAUDE.md" | "AGENTS.md".</summary>
+    string RulesFileName { get; }
+
+    /// <summary>컨텍스트로 로드되는 파일 경로를 로드 순서대로 돌려준다. (ARCHITECTURE §4.4)</summary>
+    IReadOnlyList<string> ContextFilePatterns(string projectDir);
+
+    Task<bool> IsInstalledAsync(CancellationToken ct);
+
+    Task<AuthStatus> GetAuthStatusAsync(CancellationToken ct);
+
+    /// <summary>세션 메타만 훑는다. 본문은 파싱하지 않는다.</summary>
+    IAsyncEnumerable<SessionInfo> EnumerateSessionsAsync(CancellationToken ct);
+
+    /// <summary>본문을 스캔해 카운트·사용량까지 채운다.</summary>
+    Task<SessionInfo> ReadSessionInfoAsync(string filePath, CancellationToken ct);
+
+    /// <summary><paramref name="fromByteOffset"/>부터 이어 읽는다. jsonl은 append-only다.</summary>
+    IAsyncEnumerable<SessionMessage> ReadMessagesAsync(string filePath, long fromByteOffset, CancellationToken ct);
+
+    /// <summary>세션을 이어서 열기 위한 명령 인자. "--resume &lt;id&gt;" | "resume &lt;id&gt;".</summary>
+    string BuildResumeArguments(SessionInfo session);
+}
