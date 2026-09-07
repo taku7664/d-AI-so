@@ -148,6 +148,13 @@ public sealed record ContextFile(string Path, string Kind, string Content, bool 
 public sealed record DuplicateLine(string NormalizedText, IReadOnlyList<string> Files);
 public sealed record ConflictHint(string FileA, string LineA, string FileB, string LineB, string Reason);
 
+public sealed record ProjectFacts(       // REQUIREMENTS 5.3 부가 정보
+    string ProjectPath,
+    IReadOnlyList<string> Settings,
+    int SkillCount, int AgentCount, int CommandCount,
+    bool HasMcpJson,
+    string? GitBranch, string? GitCommit);
+
 public sealed record ContextReport(
     ToolKind Tool,                  // 도구별로 읽는 파일이 다르므로 리포트도 도구별
     IReadOnlyList<ContextFile> Files,
@@ -255,6 +262,13 @@ public interface ITerminalLauncher
 public interface IContextInspector       // 파일 읽기 + IContextAnalyzer 호출
 {
     Task<ContextReport> InspectAsync(ToolKind tool, string projectDir, CancellationToken ct);
+}
+
+// REQUIREMENTS 5.3의 부가 정보(settings 요약, skills/agents/commands 수, .mcp.json, git 브랜치·커밋).
+// git 명령을 실행하지 않고 .git 안의 파일만 읽는다.
+public interface IProjectFactsReader
+{
+    Task<ProjectFacts> ReadAsync(string projectDir, CancellationToken ct);
 }
 
 public interface ISessionExporter

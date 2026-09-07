@@ -71,6 +71,7 @@ public partial class App : Application
             new ContextInspector(
                 provider.GetRequiredService<IEnumerable<IProvider>>(),
                 provider.GetRequiredService<IContextAnalyzer>()));
+        services.AddSingleton<IProjectFactsReader, ProjectFactsReader>();
         services.AddSingleton<ISessionExporter>(provider =>
             new MarkdownSessionExporter(provider.GetRequiredService<IEnumerable<IProvider>>()));
         services.AddSingleton<ISessionIndex>(provider =>
@@ -87,6 +88,7 @@ public partial class App : Application
         services.AddSingleton<DashboardViewModel>();
         services.AddSingleton<TerminalViewModel>();
         services.AddSingleton<SessionsViewModel>();
+        services.AddSingleton<ContextDoctorViewModel>();
         services.AddSingleton<RuleMakerViewModel>();
         services.AddSingleton<SettingsViewModel>();
 

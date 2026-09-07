@@ -13,6 +13,7 @@ public sealed partial class SessionsPage : Page
     {
         InitializeComponent();
         ViewModel = App.Services.GetRequiredService<SessionsViewModel>();
+        Doctor = App.Services.GetRequiredService<ContextDoctorViewModel>();
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
 
         Loaded += async (_, _) => await ViewModel.LoadCommand.ExecuteAsync(null);
@@ -20,11 +21,24 @@ public sealed partial class SessionsPage : Page
 
     public SessionsViewModel ViewModel { get; }
 
+    /// <summary>오른쪽 컨텍스트 탭.</summary>
+    public ContextDoctorViewModel Doctor { get; }
+
     private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(SessionsViewModel.HasSearchResults))
+        switch (e.PropertyName)
         {
-            RebuildSearchTree();
+            case nameof(SessionsViewModel.HasSearchResults):
+                RebuildSearchTree();
+                break;
+
+            // 프로젝트를 바꾸면 컨텍스트 리포트도 그 폴더로 맞춘다.
+            case nameof(SessionsViewModel.SelectedProject):
+                _ = Doctor.SetProjectAsync(ViewModel.SelectedProject?.Path);
+                break;
+
+            default:
+                break;
         }
     }
 
