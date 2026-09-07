@@ -84,7 +84,7 @@
                 <!-- 일별 -->
                 <Border Style="{StaticResource CardBorder}" Visibility="{x:Bind Usage.HasData, Mode=OneWay}">
                     <StackPanel Spacing="10">
-                        <TextBlock Text="{loc:Str Key=Dashboard_Daily}" Style="{StaticResource SectionTitleText}" />
+                        <TextBlock Text="{loc:Str Key=Usage_Daily}" Style="{StaticResource SectionTitleText}" />
 
                         <ItemsControl ItemsSource="{x:Bind Usage.Days}">
                             <ItemsControl.ItemTemplate>
@@ -129,7 +129,7 @@
                 <!-- 프로젝트별 -->
                 <Border Style="{StaticResource CardBorder}" Visibility="{x:Bind Usage.HasData, Mode=OneWay}">
                     <StackPanel Spacing="10">
-                        <TextBlock Text="{loc:Str Key=Dashboard_TopProjects}" Style="{StaticResource SectionTitleText}" />
+                        <TextBlock Text="{loc:Str Key=Usage_TopProjects}" Style="{StaticResource SectionTitleText}" />
 
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
@@ -185,7 +185,7 @@
                 <!-- 모델별 -->
                 <Border Style="{StaticResource CardBorder}" Visibility="{x:Bind Usage.HasData, Mode=OneWay}">
                     <StackPanel Spacing="10">
-                        <TextBlock Text="{loc:Str Key=Dashboard_ByModel}" Style="{StaticResource SectionTitleText}" />
+                        <TextBlock Text="{loc:Str Key=Usage_ByModel}" Style="{StaticResource SectionTitleText}" />
 
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>

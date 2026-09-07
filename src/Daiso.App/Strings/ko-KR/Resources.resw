@@ -142,13 +142,13 @@
   <data name="Dashboard_SessionSummary" xml:space="preserve">
     <value>총 {0}건 · {1}</value>
   </data>
-  <data name="Dashboard_Daily" xml:space="preserve">
+  <data name="Usage_Daily" xml:space="preserve">
     <value>일별</value>
   </data>
-  <data name="Dashboard_TopProjects" xml:space="preserve">
+  <data name="Usage_TopProjects" xml:space="preserve">
     <value>프로젝트별 상위 10</value>
   </data>
-  <data name="Dashboard_ByModel" xml:space="preserve">
+  <data name="Usage_ByModel" xml:space="preserve">
     <value>모델별</value>
   </data>
   <data name="Dashboard_CostNote" xml:space="preserve">

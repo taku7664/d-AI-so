@@ -487,7 +487,7 @@ Apply(projectDir, direction, dryRun)
 
 ## 6. App 구성
 
-- Shell: `NavigationView` 5 항목 → Dashboard, Terminal, Sessions, RuleMaker, Settings
+- Shell: `NavigationView` 6 항목 → Dashboard(요약), Usage(사용량), Terminal(터미널), Sessions(세션), RuleMaker(규칙), Settings(설정)
 - 페이지별 ViewModel 1개, `ObservableObject` + `RelayCommand`
 - DI: `App.xaml.cs`에서 등록. Provider는 `IEnumerable<IProvider>`로 주입
 - 설정: `%LOCALAPPDATA%\d-AI-so\settings.json` (최근 폴더, 최근 .daiso, 단가표, 정리 규칙)
