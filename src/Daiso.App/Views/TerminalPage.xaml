@@ -36,15 +36,19 @@
                             Text="{x:Bind ViewModel.WorkingDirectory, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                             PlaceholderText="{loc:Str Key=Terminal_FolderPath}" />
 
-                        <Button
+                        <muxc:DropDownButton
                             Grid.Column="1"
-                            AutomationProperties.AutomationId="PickFolderButton"
-                            Click="OnPickFolderClick">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <FontIcon Glyph="&#xE8B7;" FontSize="14" />
-                                <TextBlock Text="{loc:Str Key=Common_PickFolder}" />
-                            </StackPanel>
-                        </Button>
+                            AutomationProperties.AutomationId="ProjectPickerButton">
+                            <muxc:DropDownButton.Content>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon Glyph="&#xE8B7;" FontSize="14" />
+                                    <TextBlock Text="{loc:Str Key=Common_KnownProjects}" />
+                                </StackPanel>
+                            </muxc:DropDownButton.Content>
+                            <muxc:DropDownButton.Flyout>
+                                <MenuFlyout x:Name="ProjectFlyout" Opening="OnProjectFlyoutOpening" />
+                            </muxc:DropDownButton.Flyout>
+                        </muxc:DropDownButton>
                     </Grid>
 
                     <TextBlock Text="{loc:Str Key=Terminal_RecentFolders}" Style="{StaticResource MutedText}" />

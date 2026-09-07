@@ -128,16 +128,20 @@
                     AutomationProperties.AutomationId="ProjectDirBox"
                     Text="{x:Bind ViewModel.ProjectDirectory, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-                <Button
+                <muxc:DropDownButton
                     Grid.Column="1"
                     VerticalAlignment="Bottom"
-                    AutomationProperties.AutomationId="BrowseProjectButton"
-                    Click="OnBrowseProjectClick">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon Glyph="&#xE8B7;" FontSize="14" />
-                        <TextBlock Text="{loc:Str Key=Common_PickFolder}" />
-                    </StackPanel>
-                </Button>
+                    AutomationProperties.AutomationId="ProjectPickerButton">
+                    <muxc:DropDownButton.Content>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE8B7;" FontSize="14" />
+                            <TextBlock Text="{loc:Str Key=Common_KnownProjects}" />
+                        </StackPanel>
+                    </muxc:DropDownButton.Content>
+                    <muxc:DropDownButton.Flyout>
+                        <MenuFlyout x:Name="ProjectFlyout" Opening="OnProjectFlyoutOpening" />
+                    </muxc:DropDownButton.Flyout>
+                </muxc:DropDownButton>
 
                 <Button
                     Grid.Column="2"

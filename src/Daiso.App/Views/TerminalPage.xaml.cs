@@ -1,3 +1,5 @@
+using Daiso.App.Services;
+using Daiso.App.Strings;
 using Daiso.App.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
@@ -15,6 +17,48 @@ public sealed partial class TerminalPage : Page
     }
 
     public TerminalViewModel ViewModel { get; }
+
+    /// <summary>
+    /// 앱이 아는 프로젝트를 목록으로 보여준다. 세션 인덱스·최근 폴더에 있는 폴더라
+    /// 대화상자를 열 필요가 없다. 목록에 없는 폴더만 "다른 폴더 고르기"로 간다.
+    /// </summary>
+    private async void OnProjectFlyoutOpening(object? sender, object e)
+    {
+        await ViewModel.LoadProjectChoicesAsync();
+
+        ProjectFlyout.Items.Clear();
+
+        var labels = Formats.Labels([.. ViewModel.ProjectChoices]);
+
+        for (var i = 0; i < ViewModel.ProjectChoices.Count; i++)
+        {
+            var path = ViewModel.ProjectChoices[i];
+            var item = new MenuFlyoutItem
+            {
+                Text = labels[i],
+                Icon = new FontIcon { Glyph = "", FontSize = 14 },
+            };
+
+            ToolTipService.SetToolTip(item, path);
+            item.Click += (_, _) => ViewModel.SetFolder(path);
+            ProjectFlyout.Items.Add(item);
+        }
+
+        if (ProjectFlyout.Items.Count == 0)
+        {
+            ProjectFlyout.Items.Add(new MenuFlyoutItem
+            {
+                Text = UiStrings.Get("Common_NoKnownProjects"),
+                IsEnabled = false,
+            });
+        }
+
+        ProjectFlyout.Items.Add(new MenuFlyoutSeparator());
+
+        var browse = new MenuFlyoutItem { Text = UiStrings.Get("Common_BrowseOther") };
+        browse.Click += (_, _) => OnPickFolderClick(browse, new RoutedEventArgs());
+        ProjectFlyout.Items.Add(browse);
+    }
 
     private async void OnPickFolderClick(object sender, RoutedEventArgs e)
     {

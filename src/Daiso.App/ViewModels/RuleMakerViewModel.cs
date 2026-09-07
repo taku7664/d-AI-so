@@ -15,6 +15,7 @@ public sealed partial class RuleMakerViewModel : ObservableObject
     private readonly IMarkdownRuleRenderer _renderer;
     private readonly IReadOnlyList<IProvider> _providers;
     private readonly ISettingsStore _settings;
+    private readonly KnownProjects _knownProjects;
 
     [ObservableProperty]
     private string presetName = UiStrings.Get("RuleMaker_NewPresetName");
@@ -43,8 +44,11 @@ public sealed partial class RuleMakerViewModel : ObservableObject
         IRulePresetSerializer serializer,
         IMarkdownRuleRenderer renderer,
         IEnumerable<IProvider> providers,
-        ISettingsStore settings)
+        ISettingsStore settings,
+        KnownProjects knownProjects)
     {
+        ArgumentNullException.ThrowIfNull(knownProjects);
+
         ArgumentNullException.ThrowIfNull(ruleFiles);
         ArgumentNullException.ThrowIfNull(serializer);
         ArgumentNullException.ThrowIfNull(renderer);
@@ -56,6 +60,8 @@ public sealed partial class RuleMakerViewModel : ObservableObject
         _renderer = renderer;
         _providers = providers.ToList();
         _settings = settings;
+
+        _knownProjects = knownProjects;
 
         RecentFiles = new ObservableCollection<string>(_settings.Current.RecentRuleFiles);
         Refresh();
@@ -154,6 +160,22 @@ public sealed partial class RuleMakerViewModel : ObservableObject
 
         Save(path);
         RefreshLibrary();
+    }
+
+    /// <summary>앱이 이미 아는 프로젝트 폴더. 대화상자 없이 여기서 고른다.</summary>
+    public ObservableCollection<string> ProjectChoices { get; } = [];
+
+    /// <summary>인덱스·최근 폴더에서 프로젝트 목록을 다시 읽는다.</summary>
+    public async Task LoadProjectChoicesAsync(CancellationToken ct = default)
+    {
+        var known = await _knownProjects.ListAsync(ct).ConfigureAwait(true);
+
+        ProjectChoices.Clear();
+
+        foreach (var path in known)
+        {
+            ProjectChoices.Add(path);
+        }
     }
 
     /// <summary>미리보기에 보여줄 내용이 아직 없는가. 빈 껍데기 대신 안내를 띄운다.</summary>

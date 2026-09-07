@@ -1,10 +1,11 @@
+using Daiso.App.Services;
+using Daiso.App.Strings;
 using Daiso.App.ViewModels;
 using Daiso.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Windows.Storage.Pickers;
-using Daiso.App.Strings;
 
 namespace Daiso.App.Views;
 
@@ -157,8 +158,47 @@ public sealed partial class RuleMakerPage : Page
         }
     }
 
-    /// <summary>프로젝트 폴더를 대화상자로 고른다. 고르기만 하고 파일은 건드리지 않는다.</summary>
-    private async void OnBrowseProjectClick(object sender, RoutedEventArgs e) => await PickProjectAsync();
+    /// <summary>
+    /// 앱이 아는 프로젝트를 목록으로 보여준다. 세션 인덱스에 있는 폴더라 대화상자를 열 필요가 없다.
+    /// 목록에 없는 폴더만 "다른 폴더 고르기"로 간다.
+    /// </summary>
+    private async void OnProjectFlyoutOpening(object? sender, object e)
+    {
+        await ViewModel.LoadProjectChoicesAsync();
+
+        ProjectFlyout.Items.Clear();
+
+        var labels = Formats.Labels([.. ViewModel.ProjectChoices]);
+
+        for (var i = 0; i < ViewModel.ProjectChoices.Count; i++)
+        {
+            var path = ViewModel.ProjectChoices[i];
+            var item = new MenuFlyoutItem
+            {
+                Text = labels[i],
+                Icon = new FontIcon { Glyph = "\uE8B7", FontSize = 14 },
+            };
+
+            ToolTipService.SetToolTip(item, path);
+            item.Click += (_, _) => ViewModel.ProjectDirectory = path;
+            ProjectFlyout.Items.Add(item);
+        }
+
+        if (ProjectFlyout.Items.Count == 0)
+        {
+            ProjectFlyout.Items.Add(new MenuFlyoutItem
+            {
+                Text = UiStrings.Get("Common_NoKnownProjects"),
+                IsEnabled = false,
+            });
+        }
+
+        ProjectFlyout.Items.Add(new MenuFlyoutSeparator());
+
+        var browse = new MenuFlyoutItem { Text = UiStrings.Get("Common_BrowseOther") };
+        browse.Click += async (_, _) => await PickProjectAsync();
+        ProjectFlyout.Items.Add(browse);
+    }
 
     private async Task<string?> PickProjectAsync()
     {

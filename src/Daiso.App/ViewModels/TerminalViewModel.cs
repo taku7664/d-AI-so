@@ -13,6 +13,7 @@ public sealed partial class TerminalViewModel : ObservableObject
     private readonly IReadOnlyList<IProvider> _providers;
     private readonly ITerminalLauncher _launcher;
     private readonly ISettingsStore _settings;
+    private readonly KnownProjects _knownProjects;
 
     [ObservableProperty]
     private string? workingDirectory;
@@ -26,8 +27,11 @@ public sealed partial class TerminalViewModel : ObservableObject
     public TerminalViewModel(
         IEnumerable<IProvider> providers,
         ITerminalLauncher launcher,
-        ISettingsStore settings)
+        ISettingsStore settings,
+        KnownProjects knownProjects)
     {
+        ArgumentNullException.ThrowIfNull(knownProjects);
+
         ArgumentNullException.ThrowIfNull(providers);
         ArgumentNullException.ThrowIfNull(launcher);
         ArgumentNullException.ThrowIfNull(settings);
@@ -36,8 +40,26 @@ public sealed partial class TerminalViewModel : ObservableObject
         _launcher = launcher;
         _settings = settings;
 
+        _knownProjects = knownProjects;
+
         RecentFolders = new ObservableCollection<string>(_settings.Current.RecentFolders);
         WorkingDirectory = RecentFolders.FirstOrDefault();
+    }
+
+    /// <summary>앱이 이미 아는 프로젝트 폴더. 대화상자 없이 여기서 고른다.</summary>
+    public ObservableCollection<string> ProjectChoices { get; } = [];
+
+    /// <summary>인덱스·최근 폴더에서 프로젝트 목록을 다시 읽는다.</summary>
+    public async Task LoadProjectChoicesAsync(CancellationToken ct = default)
+    {
+        var known = await _knownProjects.ListAsync(ct).ConfigureAwait(true);
+
+        ProjectChoices.Clear();
+
+        foreach (var path in known)
+        {
+            ProjectChoices.Add(path);
+        }
     }
 
     /// <summary>최근에 연 폴더. 최신 것이 앞. 최대 10개.</summary>

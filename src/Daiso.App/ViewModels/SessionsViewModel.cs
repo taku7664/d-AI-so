@@ -452,28 +452,14 @@ public sealed partial class SessionsViewModel : ObservableObject
             ?? Projects.FirstOrDefault();
     }
 
-    /// <summary>
-    /// 폴더 이름만 보여주면 `TASK-1` 같은 이름이 여러 개 겹친다.
-    /// 겹치는 것만 상위 폴더를 앞에 붙여 목록에서 구분되게 한다.
-    /// </summary>
+    /// <summary>겹치는 프로젝트 이름은 상위 폴더까지 붙여 구분한다. 규칙은 Formats에 하나만 둔다.</summary>
     private void DisambiguateProjectNames()
     {
-        foreach (var sameName in Projects.GroupBy(project => project.DisplayName))
+        var labels = Formats.Labels([.. Projects.Select(project => project.Path)]);
+
+        for (var i = 0; i < Projects.Count; i++)
         {
-            if (sameName.Count() < 2)
-            {
-                continue;
-            }
-
-            foreach (var project in sameName)
-            {
-                var parent = Path.GetFileName(Path.GetDirectoryName(project.Path.TrimEnd('\\')) ?? string.Empty);
-
-                if (parent.Length > 0)
-                {
-                    project.DisambiguatedName = $"{parent} / {project.DisplayName}";
-                }
-            }
+            Projects[i].DisambiguatedName = labels[i];
         }
     }
 

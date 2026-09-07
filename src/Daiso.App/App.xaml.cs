@@ -91,6 +91,7 @@ public partial class App : Application
         // App
         services.AddSingleton<ISettingsStore, SettingsStore>();
         services.AddSingleton<IndexService>();
+        services.AddSingleton<KnownProjects>();
 
         services.AddSingleton<ShellViewModel>();
         services.AddSingleton<DashboardViewModel>();

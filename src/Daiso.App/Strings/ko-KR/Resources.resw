@@ -855,4 +855,14 @@
   <data name="Dashboard_ResumeHere" xml:space="preserve">
     <value>이어서 열기</value>
   </data>
+  <!-- 아는 프로젝트에서 고르기 -->
+  <data name="Common_KnownProjects" xml:space="preserve">
+    <value>아는 프로젝트</value>
+  </data>
+  <data name="Common_NoKnownProjects" xml:space="preserve">
+    <value>인덱스에 프로젝트가 없습니다</value>
+  </data>
+  <data name="Common_BrowseOther" xml:space="preserve">
+    <value>다른 폴더 고르기…</value>
+  </data>
 </root>
