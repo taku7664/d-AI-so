@@ -208,6 +208,42 @@
                     </StackPanel>
                 </Border>
 
+                <!-- 단축키: 알려주지 않으면 아무도 모른다 -->
+                <Border Style="{StaticResource CardBorder}">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="{loc:Str Key=Settings_Shortcuts}" Style="{StaticResource SectionTitleText}" />
+
+                        <Grid ColumnSpacing="16" RowSpacing="6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="160" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Str Key=Settings_ShortcutNav}" Style="{StaticResource MonoText}" />
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{loc:Str Key=Settings_ShortcutNavWhat}" Style="{StaticResource MutedText}" />
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="{loc:Str Key=Settings_ShortcutSearch}" Style="{StaticResource MonoText}" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{loc:Str Key=Settings_ShortcutSearchWhat}" Style="{StaticResource MutedText}" />
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="{loc:Str Key=Settings_ShortcutEsc}" Style="{StaticResource MonoText}" />
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{loc:Str Key=Settings_ShortcutEscWhat}" Style="{StaticResource MutedText}" />
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="{loc:Str Key=Settings_ShortcutRefresh}" Style="{StaticResource MonoText}" />
+                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{loc:Str Key=Settings_ShortcutRefreshWhat}" Style="{StaticResource MutedText}" />
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="{loc:Str Key=Settings_ShortcutSave}" Style="{StaticResource MonoText}" />
+                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{loc:Str Key=Settings_ShortcutSaveWhat}" Style="{StaticResource MutedText}" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
                 <!-- 표시와 인덱스 -->
                 <Border Style="{StaticResource CardBorder}">
                     <StackPanel Spacing="12">

@@ -15,11 +15,11 @@ Claude Code와 Codex CLI를 Windows에서 함께 다루는 WinUI 3 앱이다. �
 
 ## 화면
 
-| Sessions (프로젝트 트리·세션 목록·상세) | Context Doctor |
+| Sessions (프로젝트 · 세션 목록 · 대화) | Context Doctor |
 |---|---|
 | ![Sessions](docs/screenshots/sessions.png) | ![Context Doctor](docs/screenshots/context-doctor.png) |
 
-| RuleMaker (조건 트리 + 실시간 미리보기) | 사용량 |
+| RuleMaker (조건 트리 + 실시간 미리보기) | 사용량 (별도 화면) |
 |---|---|
 | ![RuleMaker](docs/screenshots/rulemaker.png) | ![Usage](docs/screenshots/usage.png) |
 
@@ -32,7 +32,7 @@ Claude Code와 Codex CLI를 Windows에서 함께 다루는 WinUI 3 앱이다. �
 | `src/Daiso.Providers.Claude` | net8.0 | Claude Code 세션·인증 파서 |
 | `src/Daiso.Providers.Codex` | net8.0 | Codex 세션·인증 파서 (구형·신형 형식 모두) |
 | `src/Daiso.Infrastructure` | net8.0-windows | SQLite 인덱스, 파일 IO, 터미널 실행, 휴지통, 로그 마스킹 |
-| `src/Daiso.App` | net8.0-windows10.0.19041 | WinUI 3 앱 (unpackaged). 파싱·파일 로직 없음 |
+| `src/Daiso.App` | net8.0-windows10.0.19041 | WinUI 3 앱 (unpackaged). 파싱·파일 로직 없음. 화면 6개: 요약·사용량·터미널·세션·규칙·설정 |
 | `tools/Daiso.Cli` | net8.0-windows | 검증용 콘솔 (`daiso`) |
 | `tests/Daiso.Core.Tests` | net8.0 | Core 단위 테스트 |
 | `tests/Daiso.Providers.Tests` | net8.0 | Provider 파서·인증 테스트 (fixture 기반) |
@@ -93,7 +93,7 @@ dotnet test Daiso.sln --filter "Category=Slow"
 | 대상 | 결과 |
 |---|---|
 | `dotnet build Daiso.sln` | 경고 0, 오류 0 |
-| `Daiso.Core.Tests` | 115건 통과 |
+| `Daiso.Core.Tests` | 112건 통과 |
 | `Daiso.Providers.Tests` | 70건 통과 |
 | `Daiso.Infrastructure.Tests` | 69건 통과 |
 | `Category=Slow` (20MB 스트리밍) | 2건 통과 |
@@ -116,6 +116,7 @@ dotnet run --project tools/Daiso.Cli -- auth
 | `daiso rules roundtrip <path>` | `.daiso` 직렬화 안정성 검사 |
 | `daiso rules install <projectDir>` | 폴더의 `CLAUDE.md`/`AGENTS.md`에 daiso 마커 블록을 넣거나 갱신 |
 | `daiso rules migrate <projectDir> [--to claude\|codex] [--apply]` | `CLAUDE.md` ↔ `AGENTS.md` 좌우 diff. `--apply` 없이는 미리보기만 |
+| `daiso refresh` | 세션 인덱스를 갱신한다 (앱 없이 확인할 때) |
 | `daiso doctor <dir> [--tool claude\|codex]` | 폴더의 컨텍스트 파일 목록·글자 수·중복 줄·충돌 후보 |
 | `daiso export <sessionId> <out.md>` | 세션을 마크다운으로 내보내기 |
 
@@ -162,6 +163,19 @@ DAISO_INDEX_DB=F:\daiso\index.db dotnet run --project tools/Daiso.Cli -- session
 
 다른 언어를 넣을 때는 `Strings/<태그>/Resources.resw`를 추가하고 `Daiso.App.csproj`의 `PRIResource`에 등록한다.
 코드는 손대지 않는다. 자세한 규칙은 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) §6.1에 있다.
+
+## 단축키
+
+| 키 | 하는 일 |
+|---|---|
+| `Ctrl+1` ~ `Ctrl+6` | 왼쪽 메뉴 순서대로 이동 (요약·사용량·터미널·세션·규칙·설정) |
+| `Ctrl+F` | 세션 검색란으로 |
+| `Esc` | 검색 지우기 |
+| `F5` | 세션 목록 다시 읽기 |
+| `Ctrl+S` / `Ctrl+O` | 규칙 저장 / 열기 |
+
+앱 안에서는 설정 → 단축키 카드에서 같은 표를 볼 수 있다.
+창은 1024×700보다 작아지지 않는다 (목록과 상세를 나란히 두는 화면이라 그 아래로는 쓸 수 없다).
 
 ## 안전 규칙
 

@@ -394,6 +394,8 @@ RefreshAsync
   → messages_fts 삽입, usage_daily 갱신, last_offset = 파일 끝
 ```
 - SQLite: `%LOCALAPPDATA%\d-AI-so\index.db`
+- **읽기와 쓰기는 연결을 나눈다.** 목록·검색·사용량은 호출마다 새 연결을 열고, 갱신·재구축은 전용 연결 + 세마포어로 직렬화한다.
+  하나의 연결을 화면과 배경 갱신이 같이 쓰면 리더가 겹쳐 `IndexOutOfRange`로 깨진다 (WAL이라 읽기는 쓰기를 기다리지 않는다)
 - `messages_fts`: FTS5, **`tokenize='trigram'`**. 3글자 미만 검색어는 `LIKE` 폴백
 - `usage_daily(date, tool, project, model, input, output, cache_create, cache_read)`. Codex는 누적값이라 세션 단위로 **덮어쓰기**(세션 StartedAt 날짜에 귀속), Claude는 메시지 timestamp 날짜별 **합산**
 
@@ -494,7 +496,13 @@ Apply(projectDir, direction, dryRun)
 - 저장·연동처럼 결과가 파일로 남는 버튼은 **저장할 수 있을 때만 활성**이다 (RuleMaker `CanSave`)
 - 사람이 남긴 빈 입력 줄은 저장에서 버린다. 빈 줄 하나로 저장이 막히면 이유를 알기 어렵다
 - 저장 실패는 사람 말로 알린다. 줄·열은 **파일을 열다 실패했을 때만** 보여준다
-- 조건 트리는 AND · OR만 만든다. `not`은 형식에는 남지만 UI로는 만들지 않는다 (REQUIREMENTS §6.3 참고)
+- 조건 트리는 AND · OR만 만든다 (부정은 문장으로 쓴다. REQUIREMENTS §6.3)
+- 창은 **1024×700보다 작아지지 않는다** (`OverlappedPresenter.PreferredMinimum*`). 목록·상세를 나란히 두는 화면이라 그 아래로는 못 쓴다
+- 고정 폭 열은 하나만 둔다 (상세 400). 나머지는 `*` + `MinWidth`. 좁은 창에서 가운데 열이 짜부라지는 구성을 만들지 않는다
+- 자주 쓰지 않는 필터·옵션은 팝오버에 넣어 한 줄이 넘치지 않게 한다
+- 왼쪽 메뉴 항목과 페이지 제목은 같은 말을 쓴다. 메뉴 안에 같은 이름의 탭을 또 두지 않는다
+- 인덱싱이 끝나면 목록·요약을 자동으로 다시 읽는다. 사람이 "다시 읽기"를 눌러야 최신이 되는 화면을 만들지 않는다
+- 단축키는 설정의 "단축키" 카드에 적는다. 알려주지 않는 단축키는 없는 것과 같다
 
 **테마** — 설정의 테마는 고른 즉시 적용한다 (`SettingsViewModel.ThemeChanged` → `ShellWindow.ApplyTheme`).
 - `System`: `MicaBackdrop` + 배경 없음. OS 테마를 따른다

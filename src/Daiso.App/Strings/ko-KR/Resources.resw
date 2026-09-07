@@ -130,9 +130,6 @@
   </data>
 
   <!-- ── Dashboard ──────────────────────────────────────────────────────── -->
-  <data name="Dashboard_Summary" xml:space="preserve">
-    <value>요약</value>
-  </data>
   <data name="Dashboard_ToolStatus" xml:space="preserve">
     <value>도구 상태</value>
   </data>
@@ -144,9 +141,6 @@
   </data>
   <data name="Dashboard_SessionSummary" xml:space="preserve">
     <value>총 {0}건 · {1}</value>
-  </data>
-  <data name="Dashboard_Usage" xml:space="preserve">
-    <value>사용량</value>
   </data>
   <data name="Dashboard_Daily" xml:space="preserve">
     <value>일별</value>
@@ -297,9 +291,6 @@
   </data>
   <data name="Sessions_SearchResult" xml:space="preserve">
     <value>'{0}' 결과 {1}건</value>
-  </data>
-  <data name="Sessions_TimelineLimit" xml:space="preserve">
-    <value>타임라인은 앞 {0}건만 보여줍니다</value>
   </data>
   <data name="Sessions_ResumeStatus" xml:space="preserve">
     <value>{0} {1} 실행</value>
@@ -750,9 +741,6 @@
   <data name="Sessions_Title" xml:space="preserve">
     <value>세션</value>
   </data>
-  <data name="Sessions_Projects" xml:space="preserve">
-    <value>프로젝트</value>
-  </data>
   <data name="Sessions_ListHeader" xml:space="preserve">
     <value>세션 목록</value>
   </data>
@@ -860,16 +848,10 @@
   <data name="Sessions_ProjectFilter" xml:space="preserve">
     <value>프로젝트</value>
   </data>
-  <data name="Sessions_AllProjects" xml:space="preserve">
-    <value>전체 프로젝트</value>
-  </data>
   <data name="Sessions_SearchTitle" xml:space="preserve">
     <value>검색 결과</value>
   </data>
   <!-- Sessions 표시 옵션 -->
-  <data name="Sessions_ViewOptions" xml:space="preserve">
-    <value>표시 옵션</value>
-  </data>
   <data name="Sessions_MoreFilters" xml:space="preserve">
     <value>필터</value>
   </data>
@@ -925,5 +907,39 @@
   <!-- 세션 개요 -->
   <data name="Sessions_Overview" xml:space="preserve">
     <value>프로젝트 {0}개 · 세션 {1}건</value>
+  </data>
+  <!-- 단축키 안내 -->
+  <data name="Settings_Shortcuts" xml:space="preserve">
+    <value>단축키</value>
+  </data>
+  <data name="Settings_ShortcutNav" xml:space="preserve">
+    <value>Ctrl+1 ~ Ctrl+6</value>
+  </data>
+  <data name="Settings_ShortcutNavWhat" xml:space="preserve">
+    <value>왼쪽 메뉴 순서대로 이동</value>
+  </data>
+  <data name="Settings_ShortcutSearch" xml:space="preserve">
+    <value>Ctrl+F</value>
+  </data>
+  <data name="Settings_ShortcutSearchWhat" xml:space="preserve">
+    <value>세션 검색란으로</value>
+  </data>
+  <data name="Settings_ShortcutEsc" xml:space="preserve">
+    <value>Esc</value>
+  </data>
+  <data name="Settings_ShortcutEscWhat" xml:space="preserve">
+    <value>검색 지우기</value>
+  </data>
+  <data name="Settings_ShortcutRefresh" xml:space="preserve">
+    <value>F5</value>
+  </data>
+  <data name="Settings_ShortcutRefreshWhat" xml:space="preserve">
+    <value>세션 목록 다시 읽기</value>
+  </data>
+  <data name="Settings_ShortcutSave" xml:space="preserve">
+    <value>Ctrl+S / Ctrl+O</value>
+  </data>
+  <data name="Settings_ShortcutSaveWhat" xml:space="preserve">
+    <value>규칙 저장 / 열기</value>
   </data>
 </root>
