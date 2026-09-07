@@ -176,7 +176,7 @@ public sealed partial class RuleMakerPage : Page
             var item = new MenuFlyoutItem
             {
                 Text = labels[i],
-                Icon = new FontIcon { Glyph = "\uE8B7", FontSize = 14 },
+                Icon = new SymbolIcon(Symbol.Folder),
             };
 
             ToolTipService.SetToolTip(item, path);

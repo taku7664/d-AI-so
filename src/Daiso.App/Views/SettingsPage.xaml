@@ -50,7 +50,7 @@
                                     AutomationProperties.Name="{loc:Str Key=Common_PickFolder}"
                                     ToolTipService.ToolTip="{loc:Str Key=Common_PickFolder}"
                                     Click="OnPickSessionHomeClick">
-                                    <FontIcon Glyph="&#xE8B7;" FontSize="14" />
+                                    <SymbolIcon Symbol="Folder" />
                                 </Button>
                             </Grid>
 

@@ -358,7 +358,22 @@
                                 <ItemsControl ItemsSource="{x:Bind ViewModel.Timeline}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate x:DataType="vm:MessageViewModel">
-                                            <StackPanel Margin="0,0,0,12">
+                                            <Grid Margin="0,0,0,12" ColumnSpacing="8">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <Rectangle
+                                                    Grid.Column="0"
+                                                    Width="3"
+                                                    RadiusX="1.5"
+                                                    RadiusY="1.5"
+                                                    VerticalAlignment="Stretch"
+                                                    Fill="{ThemeResource AccentFillColorDefaultBrush}"
+                                                    Visibility="{x:Bind UserBarVisibility}" />
+
+                                                <StackPanel Grid.Column="1">
                                                 <StackPanel Visibility="{x:Bind PlainVisibility}" Spacing="3">
                                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                                         <Border Style="{StaticResource PillBorder}">
@@ -396,7 +411,8 @@
                                                         TextWrapping="Wrap"
                                                         IsTextSelectionEnabled="True" />
                                                 </Expander>
-                                            </StackPanel>
+                                                </StackPanel>
+                                            </Grid>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>

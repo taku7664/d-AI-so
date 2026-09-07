@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 using Windows.UI;
@@ -192,12 +193,24 @@ public sealed partial class ShellWindow : Window
         }
     }
 
+    /// <summary>목록과 상세를 나란히 보는 화면이라 이보다 좁으면 쓸 수 없다.</summary>
+    private const int MinimumWidth = 1024;
+
+    private const int MinimumHeight = 700;
+
     private void RestoreWindowSize()
     {
-        var width = Math.Max(800, _settings.Current.WindowWidth);
-        var height = Math.Max(600, _settings.Current.WindowHeight);
+        var width = Math.Max(MinimumWidth, _settings.Current.WindowWidth);
+        var height = Math.Max(MinimumHeight, _settings.Current.WindowHeight);
 
         AppWindow.Resize(new Windows.Graphics.SizeInt32(width, height));
+
+        // 사용자가 더 줄이지 못하게 창 자체의 하한을 준다. 레이아웃이 깨질 구간을 없앤다.
+        if (AppWindow.Presenter is OverlappedPresenter presenter)
+        {
+            presenter.PreferredMinimumWidth = MinimumWidth;
+            presenter.PreferredMinimumHeight = MinimumHeight;
+        }
     }
 
     /// <summary>설정에서 테마를 바꾸면 창이 바로 따라간다.</summary>

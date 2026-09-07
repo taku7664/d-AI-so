@@ -805,6 +805,11 @@ public sealed class MessageViewModel
     /// <summary>어시스턴트 말인가. 역할 알약 색을 다르게 해 한눈에 구분한다.</summary>
     public bool IsAssistant => Message.Role == MessageRole.Assistant;
 
+    /// <summary>사람이 한 말에만 왼쪽 강조 바를 세운다. 눈으로 턴을 가르는 표시다.</summary>
+    public Microsoft.UI.Xaml.Visibility UserBarVisibility => Message.Role == MessageRole.User
+        ? Microsoft.UI.Xaml.Visibility.Visible
+        : Microsoft.UI.Xaml.Visibility.Collapsed;
+
     /// <summary>
     /// 화면에 보여줄 본문. 슬래시 명령 메시지는 `&lt;command-name&gt;` 같은 태그로 감싸여 오므로
     /// 태그만 걷어낸다. 그 밖의 본문은 원문 그대로 둔다.

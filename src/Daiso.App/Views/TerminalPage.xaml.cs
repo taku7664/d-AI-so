@@ -36,7 +36,7 @@ public sealed partial class TerminalPage : Page
             var item = new MenuFlyoutItem
             {
                 Text = labels[i],
-                Icon = new FontIcon { Glyph = "", FontSize = 14 },
+                Icon = new SymbolIcon(Symbol.Folder),
             };
 
             ToolTipService.SetToolTip(item, path);
