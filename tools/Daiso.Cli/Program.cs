@@ -168,7 +168,7 @@ internal static class Commands
                     return 4;
                 }
 
-                store.Apply(target, provider);
+                store.Apply(target, provider, await provider.GetAuthStatusAsync(CancellationToken.None));
                 Console.WriteLine($"되돌렸다: [{kind}] {name}. 새로 여는 터미널부터 적용된다");
                 return 0;
 

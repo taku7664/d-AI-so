@@ -113,7 +113,7 @@ public sealed partial class DashboardPage : Page
 
         try
         {
-            Profiles.Apply(row);
+            Profiles.Apply(row, await ViewModel.ReadAuthStatusAsync(row.Profile.Tool));
             await ViewModel.LoadCommand.ExecuteAsync(null);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)

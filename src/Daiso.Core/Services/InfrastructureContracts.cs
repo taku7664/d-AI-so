@@ -38,7 +38,11 @@ public interface IAuthProfileStore
     /// <summary>
     /// 프로필을 현재 자리로 되돌린다. 되돌리기 전에 지금 상태를 자동으로 보관한다.
     /// </summary>
-    void Apply(AuthProfile profile, IProvider provider);
+    /// <param name="current">
+    /// 지금 로그인 상태. 보관해 둘 "직전 상태"에 어느 계정이었는지 적어 두는 데만 쓴다.
+    /// 없으면 계정 없이 시각만 남는다.
+    /// </param>
+    void Apply(AuthProfile profile, IProvider provider, AuthStatus? current);
 
     /// <summary>프로필을 지운다.</summary>
     void Remove(AuthProfile profile);

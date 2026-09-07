@@ -133,7 +133,7 @@ public sealed class AuthProfileStore : IAuthProfileStore
     }
 
     /// <inheritdoc />
-    public void Apply(AuthProfile profile, IProvider provider)
+    public void Apply(AuthProfile profile, IProvider provider, AuthStatus? current)
     {
         ArgumentNullException.ThrowIfNull(profile);
         ArgumentNullException.ThrowIfNull(provider);
@@ -164,7 +164,7 @@ public sealed class AuthProfileStore : IAuthProfileStore
         }
 
         // 지금 상태를 "직전 상태"로 남긴다. 되돌리기를 한 번 더 누르면 서로 맞바뀐다.
-        BackupCurrent(provider);
+        BackupCurrent(provider, current);
 
         foreach (var (target, bytes) in payload)
         {
@@ -194,7 +194,7 @@ public sealed class AuthProfileStore : IAuthProfileStore
     }
 
     /// <summary>지금 로그인 파일을 "직전 상태"로 남긴다. 로그인이 없으면 조용히 넘어간다.</summary>
-    private void BackupCurrent(IProvider provider)
+    private void BackupCurrent(IProvider provider, AuthStatus? current)
     {
         var required = provider.AuthFiles.FirstOrDefault(file => file.Required);
 
@@ -216,10 +216,10 @@ public sealed class AuthProfileStore : IAuthProfileStore
             JsonSerializer.Serialize(new MetaRow(
                 PreviousProfileName,
                 provider.Kind.ToString(),
-                null,
-                null,
+                current?.AccountLabel,
+                current?.Email,
                 DateTimeOffset.UtcNow.ToString("O", CultureInfo.InvariantCulture),
-                null),
+                current?.SessionExpiresAt?.ToString("O", CultureInfo.InvariantCulture)),
                 JsonOptions),
             new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
     }

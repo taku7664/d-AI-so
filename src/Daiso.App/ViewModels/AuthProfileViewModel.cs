@@ -71,12 +71,13 @@ public sealed partial class AuthProfileViewModel : ObservableObject
     }
 
     /// <summary>고른 프로필을 현재 로그인으로 되돌린다.</summary>
-    public void Apply(AuthProfileRowViewModel row)
+    /// <param name="current">지금 로그인 상태. "직전 상태"에 어느 계정이었는지 남기는 데 쓴다.</param>
+    public void Apply(AuthProfileRowViewModel row, AuthStatus? current)
     {
         ArgumentNullException.ThrowIfNull(row);
 
         var provider = _providers.First(item => item.Kind == row.Profile.Tool);
-        _store.Apply(row.Profile, provider);
+        _store.Apply(row.Profile, provider, current);
 
         Reload();
         StatusText = UiStrings.Format("AuthProfile_Applied", row.Profile.Name);

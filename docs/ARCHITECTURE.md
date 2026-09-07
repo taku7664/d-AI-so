@@ -470,8 +470,9 @@ Apply(projectDir, direction, dryRun)
   → provider.AuthFiles 를 읽어 각 파일을 DPAPI(CurrentUser)로 암호화해 보관
   → meta.json 에는 표시용 값만 (도구, 계정 라벨, 이메일, 저장 시각, 재로그인 시각)
 
-전환  IAuthProfileStore.Apply(profile, provider)
+전환  IAuthProfileStore.Apply(profile, provider, current)
   → 먼저 현재 파일을 "직전 상태" 프로필로 자동 저장 (되돌릴 수 있게)
+     current(지금 AuthStatus)를 함께 넘겨 "직전 상태"에도 계정 이름을 남긴다
   → 프로필의 파일을 복호화해 원래 경로에 바이트 그대로 기록
 
 보관 위치  %LOCALAPPDATA%\d-AI-so\profiles\{tool}\{name}```
@@ -479,6 +480,7 @@ Apply(projectDir, direction, dryRun)
 - **토큰 값은 meta.json·화면·로그·예외 어디에도 넣지 않는다.** 암호화된 파일 안에만 있다
 - DPAPI는 현재 Windows 사용자 계정으로만 풀린다. 파일을 다른 PC로 옮겨도 열리지 않는다
 - 인증 파일을 **쓰는 것은 이 흐름뿐이다.** 그 밖의 모든 코드에서 인증 파일은 계속 읽기 전용이다 (§7.1)
+- "직전 상태"에도 **어느 계정이었는지 적는다.** 되돌리기가 어디로 가는지 모르면 누를 수 없다
 - 전환은 도구가 실행 중이어도 막지 않는다. 다만 이미 떠 있는 세션은 그대로이고, 새로 여는 터미널부터 바뀐다고 화면에서 알린다
 
 ---

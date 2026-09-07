@@ -94,7 +94,7 @@ public sealed class AuthProfileStoreTests : IDisposable
         var profile = _store.Save("회사 계정", _provider, Status());
 
         WriteLogin("""{"claudeAiOauth":{"accessToken":"other"}}""");
-        _store.Apply(profile, _provider);
+        _store.Apply(profile, _provider, current: null);
 
         File.ReadAllText(Path.Combine(_home, ".credentials.json"), Encoding.UTF8).Should().Be(Credentials);
     }
@@ -108,12 +108,12 @@ public sealed class AuthProfileStoreTests : IDisposable
         const string Personal = """{"claudeAiOauth":{"accessToken":"personal"}}""";
         WriteLogin(Personal);
 
-        _store.Apply(saved, _provider);
+        _store.Apply(saved, _provider, Status("개인 계정 · pro", "me@home.example"));
 
         var previous = _store.List()
             .Should().Contain(profile => profile.Name == AuthProfileStore.PreviousProfileName).Subject;
 
-        _store.Apply(previous, _provider);
+        _store.Apply(previous, _provider, current: null);
         File.ReadAllText(Path.Combine(_home, ".credentials.json"), Encoding.UTF8).Should().Be(Personal);
     }
 
@@ -126,7 +126,7 @@ public sealed class AuthProfileStoreTests : IDisposable
         var profile = _store.Save("회사 계정", _provider, Status());
 
         File.Delete(Path.Combine(_home, ".claude.json"));
-        _store.Apply(profile, _provider);
+        _store.Apply(profile, _provider, current: null);
 
         File.Exists(Path.Combine(_home, ".claude.json")).Should().BeTrue();
     }
@@ -142,7 +142,7 @@ public sealed class AuthProfileStoreTests : IDisposable
         _store.List().Should().ContainSingle();
 
         WriteLogin("something else");
-        _store.Apply(second, _provider);
+        _store.Apply(second, _provider, current: null);
 
         File.ReadAllText(Path.Combine(_home, ".credentials.json"), Encoding.UTF8)
             .Should().Contain("newer");
@@ -167,9 +167,25 @@ public sealed class AuthProfileStoreTests : IDisposable
         var profile = _store.Save("a/b:c*계정", _provider, Status());
 
         WriteLogin("other");
-        _store.Apply(profile, _provider);
+        _store.Apply(profile, _provider, current: null);
 
         File.ReadAllText(Path.Combine(_home, ".credentials.json"), Encoding.UTF8).Should().Be(Credentials);
+    }
+
+    [Fact]
+    public void The_previous_state_says_which_account_it_holds()
+    {
+        WriteLogin(Credentials);
+        var saved = _store.Save("회사 계정", _provider, Status());
+
+        WriteLogin("""{"claudeAiOauth":{"accessToken":"personal"}}""");
+        _store.Apply(saved, _provider, Status("개인 계정 · pro", "me@home.example"));
+
+        var previous = _store.List()
+            .Single(profile => profile.Name == AuthProfileStore.PreviousProfileName);
+
+        previous.AccountLabel.Should().Be("개인 계정 · pro");
+        previous.Email.Should().Be("me@home.example");
     }
 
     private void WriteLogin(string content) =>

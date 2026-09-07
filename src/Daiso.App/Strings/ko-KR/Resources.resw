@@ -965,13 +965,13 @@
     <value>{0} · 저장 {1:yyyy-MM-dd HH:mm}</value>
   </data>
   <data name="AuthProfile_Saved" xml:space="preserve">
-    <value>{0} 프로필로 저장했습니다</value>
+    <value>‘{0}’(으)로 저장했습니다</value>
   </data>
   <data name="AuthProfile_Applied" xml:space="preserve">
-    <value>{0} 계정으로 바꿨습니다. 새로 여는 터미널부터 적용됩니다</value>
+    <value>‘{0}’(으)로 바꿨습니다. 새로 여는 터미널부터 적용됩니다</value>
   </data>
   <data name="AuthProfile_Removed" xml:space="preserve">
-    <value>{0} 프로필을 지웠습니다</value>
+    <value>‘{0}’을(를) 지웠습니다</value>
   </data>
   <data name="AuthProfile_SaveFailed" xml:space="preserve">
     <value>저장할 수 없음</value>
