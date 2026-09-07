@@ -466,6 +466,19 @@ Apply(projectDir, direction, dryRun)
 - 설정: `%LOCALAPPDATA%\d-AI-so\settings.json` (최근 폴더, 최근 .daiso, 단가표, 정리 규칙)
 - 장시간 작업(인덱싱)은 `IProgress<T>` + `CancellationToken`, UI 스레드 차단 금지
 
+### 6.1 화면 문구 (로컬라이징)
+
+- 사람이 읽는 문구는 **코드에 직접 쓰지 않는다**. 키로만 참조한다
+  - XAML: `Text="{loc:Str Key=Dashboard_ToolStatus}"`
+  - C#: `UiStrings.Get("...")`, 서식이 있으면 `UiStrings.Format("...", args)`
+- 값의 정본은 `src/Daiso.App/Strings/ko-KR/Resources.resw` 하나다. 이 파일은 두 가지로 들어간다
+  - `PRIResource` → Windows 리소스(`resources.pri`). 언어 폴더를 추가하면 OS 언어에 따라 골라 쓴다
+  - `EmbeddedResource` → 어셈블리에 함께 담아 **폴백**으로 읽는다
+- 조회 순서: MRT(`ResourceManager`) → 어셈블리에 담긴 `.resw` 파싱 → 키 문자열.
+  unpackaged 실행에서 MRT가 없더라도 화면 문구가 비지 않게 하려는 순서다
+- 문체는 **존댓말**로 통일한다 (`~습니다`, `~하세요`). 로그·CLI·문서는 평서체를 그대로 쓴다
+- 다른 언어를 넣을 때는 `Strings/<태그>/Resources.resw`를 추가하고 `PRIResource`에 등록하면 된다. 코드는 손대지 않는다
+
 ---
 
 ## 7. 불변 규칙

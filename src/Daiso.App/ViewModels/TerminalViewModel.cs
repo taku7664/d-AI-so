@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Daiso.App.Services;
 using Daiso.Core;
+using Daiso.App.Strings;
 
 namespace Daiso.App.ViewModels;
 
@@ -96,7 +97,7 @@ public sealed partial class TerminalViewModel : ObservableObject
     {
         if (WorkingDirectory is not { Length: > 0 } directory)
         {
-            LastCommand = "폴더를 먼저 고르세요";
+            LastCommand = UiStrings.Get("Terminal_PickFolderFirst");
             return;
         }
 

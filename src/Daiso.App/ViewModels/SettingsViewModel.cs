@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using Daiso.App.Services;
 using Daiso.Infrastructure;
 using Daiso.Providers.Common;
+using Daiso.App.Strings;
 
 namespace Daiso.App.ViewModels;
 
@@ -43,7 +44,12 @@ public sealed partial class SettingsViewModel : ObservableObject
     }
 
     /// <summary>테마 항목.</summary>
-    public IReadOnlyList<string> Themes { get; } = ["시스템", "라이트", "다크"];
+    public IReadOnlyList<string> Themes { get; } =
+    [
+        UiStrings.Get("Settings_ThemeSystem"),
+        UiStrings.Get("Settings_ThemeLight"),
+        UiStrings.Get("Settings_ThemeDark"),
+    ];
 
     /// <summary>모델별 단가.</summary>
     public ObservableCollection<PriceRowViewModel> Prices { get; } = [];
@@ -55,11 +61,12 @@ public sealed partial class SettingsViewModel : ObservableObject
     public string DefaultIndexDatabasePath => SqliteSessionIndex.DefaultDatabasePath;
 
     /// <summary>설정 파일 위치.</summary>
-    public string SettingsFilePath => (_settings as SettingsStore)?.Path ?? "(알 수 없음)";
+    public string SettingsFilePath =>
+        (_settings as SettingsStore)?.Path ?? UiStrings.Get("Common_Unknown");
 
     /// <summary>세션 루트나 인덱스 경로를 바꾸면 다시 시작해야 적용된다.</summary>
     public string RestartNotice =>
-        "세션 루트와 인덱스 경로는 앱을 다시 시작하면 적용된다. 나머지는 즉시 적용된다.";
+        UiStrings.Get("Settings_RestartNotice");
 
     /// <summary>파일에서 값을 다시 읽는다.</summary>
     [RelayCommand]
@@ -111,7 +118,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         }
 
         _settings.Save();
-        StatusText = $"{SettingsFilePath} 에 저장했다";
+        StatusText = UiStrings.Format("Settings_Saved", SettingsFilePath);
     }
 
     /// <summary>단가 행을 추가한다.</summary>
@@ -132,7 +139,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     public async Task RebuildIndexAsync()
     {
-        StatusText = "인덱스를 다시 만든다 …";
+        StatusText = UiStrings.Get("Settings_Rebuilding");
         await _indexService.RebuildAsync().ConfigureAwait(true);
         StatusText = _indexService.Status.Display;
     }

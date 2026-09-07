@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Daiso.Core;
+using Daiso.App.Strings;
 
 namespace Daiso.App.ViewModels;
 
@@ -57,7 +58,7 @@ public sealed partial class ContextDoctorViewModel : ObservableObject
     public string SelectedFileContent => SelectedFile?.File.Content ?? string.Empty;
 
     /// <summary>총 글자 수 표시 문구.</summary>
-    public string TotalCharsText => $"총 {TotalChars:N0}자";
+    public string TotalCharsText => UiStrings.Format("Context_TotalChars", TotalChars);
 
     /// <summary>프로젝트를 바꾸고 다시 검사한다.</summary>
     public Task SetProjectAsync(string? projectDir)
@@ -79,7 +80,7 @@ public sealed partial class ContextDoctorViewModel : ObservableObject
 
         if (ProjectPath is not { Length: > 0 } directory)
         {
-            StatusText = "프로젝트를 먼저 고르세요";
+            StatusText = UiStrings.Get("Context_PickProjectFirst");
             NotifyDerived();
             return;
         }
@@ -115,8 +116,13 @@ public sealed partial class ContextDoctorViewModel : ObservableObject
             await LoadFactsAsync(directory, ct).ConfigureAwait(true);
 
             StatusText =
-                $"{tool} · 파일 {Files.Count(file => file.File.Exists)}/{Files.Count} · "
-                + $"중복 {Duplicates.Count} · 충돌 후보 {Conflicts.Count}";
+                UiStrings.Format(
+                    "Context_Summary",
+                    tool,
+                    Files.Count(file => file.File.Exists),
+                    Files.Count,
+                    Duplicates.Count,
+                    Conflicts.Count);
 
             SelectedFile = Files.FirstOrDefault(file => file.File.Exists);
         }
@@ -136,12 +142,20 @@ public sealed partial class ContextDoctorViewModel : ObservableObject
             Facts.Add(line);
         }
 
-        Facts.Add($"skills {facts.SkillCount} · agents {facts.AgentCount} · commands {facts.CommandCount}");
-        Facts.Add($".mcp.json: {(facts.HasMcpJson ? "있음" : "없음")}");
+        Facts.Add(UiStrings.Format(
+            "Context_Facts",
+            facts.SkillCount,
+            facts.AgentCount,
+            facts.CommandCount));
+        Facts.Add(UiStrings.Format(
+            "Context_Mcp",
+            UiStrings.Get(facts.HasMcpJson ? "Common_Present" : "Common_Absent")));
 
         Facts.Add(facts.GitBranch is { } branch
-            ? $"git: {branch}{(facts.GitCommit is { } commit ? $" @ {commit}" : string.Empty)}"
-            : "git: 없음");
+            ? UiStrings.Format(
+                "Context_Git",
+                branch + (facts.GitCommit is { } commit ? $" @ {commit}" : string.Empty))
+            : UiStrings.Get("Context_GitNone"));
     }
 
     private void NotifyDerived()
@@ -169,7 +183,8 @@ public sealed class ContextFileViewModel
 
     public string Name => System.IO.Path.GetFileName(File.Path);
 
-    public string CharsText => File.Exists ? $"{File.Content.Length:N0}자" : "-";
+    public string CharsText =>
+        File.Exists ? UiStrings.Format("Common_Chars", File.Content.Length) : "-";
 
     public string Summary => $"{OrderText} {Mark} {CharsText}  [{File.Kind}]  {File.Path}";
 }

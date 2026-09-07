@@ -5,6 +5,7 @@ using Daiso.Infrastructure;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Daiso.App.Strings;
 
 namespace Daiso.App.Services;
 
@@ -68,17 +69,19 @@ public sealed class CrashReporter
             }
 
             var body =
-                $"{SensitiveTextMasker.MaskSensitive(exception?.Message) ?? "알 수 없는 오류"}\n\n"
-                + (path is null ? "로그를 쓰지 못했다." : $"로그: {path}");
+                $"{SensitiveTextMasker.MaskSensitive(exception?.Message) ?? UiStrings.Get("Crash_UnknownError")}\n\n"
+                + (path is null
+                    ? UiStrings.Get("Crash_LogWriteFailed")
+                    : UiStrings.Format("Crash_LogPath", path));
 
             try
             {
                 await new ContentDialog
                 {
                     XamlRoot = xamlRoot,
-                    Title = "문제가 생겼다",
+                    Title = UiStrings.Get("Crash_Title"),
                     Content = new TextBlock { Text = body, TextWrapping = TextWrapping.Wrap },
-                    CloseButtonText = "닫기",
+                    CloseButtonText = UiStrings.Get("Common_Close"),
                 }.ShowAsync();
             }
             catch (Exception ex) when (ex is InvalidOperationException or COMException)

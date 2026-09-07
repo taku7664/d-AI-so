@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Daiso.App.Services;
 using Daiso.Core;
+using Daiso.App.Strings;
 
 namespace Daiso.App.ViewModels;
 
@@ -16,7 +17,7 @@ public sealed partial class RuleMakerViewModel : ObservableObject
     private readonly ISettingsStore _settings;
 
     [ObservableProperty]
-    private string presetName = "새 규칙";
+    private string presetName = UiStrings.Get("RuleMaker_NewPresetName");
 
     [ObservableProperty]
     private string? description;
@@ -87,14 +88,14 @@ public sealed partial class RuleMakerViewModel : ObservableObject
     [RelayCommand]
     public void New()
     {
-        PresetName = "새 규칙";
+        PresetName = UiStrings.Get("RuleMaker_NewPresetName");
         Description = null;
         CurrentPath = null;
         Global.Clear();
         Rules.Clear();
         AddGlobalAction();
         AddRule();
-        StatusText = "새 규칙을 만들었다";
+        StatusText = UiStrings.Get("RuleMaker_Created");
         Refresh();
     }
 
@@ -106,7 +107,7 @@ public sealed partial class RuleMakerViewModel : ObservableObject
         Load(_ruleFiles.Load(path));
         CurrentPath = path;
         RememberRecent(path);
-        StatusText = $"{path} 를 열었다";
+        StatusText = UiStrings.Format("RuleMaker_Opened", path);
     }
 
     /// <summary>현재 편집 내용을 파일로 쓴다.</summary>
@@ -120,7 +121,7 @@ public sealed partial class RuleMakerViewModel : ObservableObject
         _ruleFiles.Save(preset, path);
         CurrentPath = path;
         RememberRecent(path);
-        StatusText = $"{path} 에 저장했다";
+        StatusText = UiStrings.Format("RuleMaker_Saved", path);
     }
 
     /// <summary>프리셋 라이브러리 목록을 다시 읽는다.</summary>
@@ -161,7 +162,7 @@ public sealed partial class RuleMakerViewModel : ObservableObject
     {
         if (ProjectDirectory is not { Length: > 0 } directory)
         {
-            StatusText = "프로젝트 폴더 경로를 먼저 넣으세요";
+            StatusText = UiStrings.Get("RuleMaker_NeedProjectPath");
             return;
         }
 
@@ -178,7 +179,7 @@ public sealed partial class RuleMakerViewModel : ObservableObject
         _ruleFiles.EnsureInstruction(projectDir, _providers);
 
         ProjectDirectory = projectDir;
-        StatusText = $"{projectDir} 에 규칙과 지시문 블록을 넣었다";
+        StatusText = UiStrings.Format("RuleMaker_Linked", projectDir);
     }
 
     // ── Global 행동 ──────────────────────────────────────────────────────
@@ -247,7 +248,7 @@ public sealed partial class RuleMakerViewModel : ObservableObject
         }
         catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
         {
-            MarkdownPreview = $"미리보기를 만들 수 없다: {ex.Message}";
+            MarkdownPreview = UiStrings.Format("RuleMaker_PreviewFailed", ex.Message);
         }
     }
 
@@ -411,7 +412,7 @@ public sealed partial class RuleEditViewModel : ObservableObject
         : string.Empty;
 
     /// <summary>목록에 보여줄 요약.</summary>
-    public string Summary => $"{ConditionPreview} → 행동 {Actions.Count}개";
+    public string Summary => UiStrings.Format("RuleMaker_RuleSummary", ConditionPreview, Actions.Count);
 
     /// <summary>Core 모델에서 만든다.</summary>
     public static RuleEditViewModel From(Rule rule, IMarkdownRuleRenderer renderer)

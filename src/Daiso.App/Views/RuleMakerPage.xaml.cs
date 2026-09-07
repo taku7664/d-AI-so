@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Windows.Storage.Pickers;
+using Daiso.App.Strings;
 
 namespace Daiso.App.Views;
 
@@ -97,7 +98,7 @@ public sealed partial class RuleMakerPage : Page
             SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
             SuggestedFileName = InstructionTemplate.DefaultRulesFileName,
         };
-        picker.FileTypeChoices.Add("daiso 규칙", [".daiso"]);
+        picker.FileTypeChoices.Add(UiStrings.Get("RuleMaker_FileTypeLabel"), [".daiso"]);
         Attach(picker);
 
         if (await picker.PickSaveFileAsync() is { } file)
@@ -152,8 +153,27 @@ public sealed partial class RuleMakerPage : Page
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            await ShowAsync("연동할 수 없음", ex.Message);
+            await ShowAsync(UiStrings.Get("RuleMaker_LinkFailed"), ex.Message);
         }
+    }
+
+    /// <summary>프로젝트 폴더를 대화상자로 고른다. 고르기만 하고 파일은 건드리지 않는다.</summary>
+    private async void OnBrowseProjectClick(object sender, RoutedEventArgs e) => await PickProjectAsync();
+
+    private async Task<string?> PickProjectAsync()
+    {
+        var picker = new FolderPicker { SuggestedStartLocation = PickerLocationId.ComputerFolder };
+        picker.FileTypeFilter.Add("*");
+        Attach(picker);
+
+        if (await picker.PickSingleFolderAsync() is not { } folder)
+        {
+            return null;
+        }
+
+        ViewModel.ProjectDirectory = folder.Path;
+
+        return folder.Path;
     }
 
     // ── 지시문 마이그레이션 (REQUIREMENTS §7) ────────────────────────────
@@ -161,10 +181,15 @@ public sealed partial class RuleMakerPage : Page
     /// <summary>좌우 diff를 보여 주고 방향을 고르게 한다. 고르기 전에는 아무것도 쓰지 않는다.</summary>
     private async void OnMigrateClick(object sender, RoutedEventArgs e)
     {
+        // 경로가 비어 있으면 바로 폴더 선택 대화상자를 띄운다.
         if (ViewModel.ProjectDirectory is not { Length: > 0 } directory)
         {
-            await ShowAsync("프로젝트 폴더가 필요하다", "머리말의 '프로젝트 폴더'에 경로를 넣고 다시 눌러라");
-            return;
+            if (await PickProjectAsync() is not { Length: > 0 } picked)
+            {
+                return;
+            }
+
+            directory = picked;
         }
 
         var migration = App.Services.GetRequiredService<MigrationViewModel>();
@@ -175,18 +200,18 @@ public sealed partial class RuleMakerPage : Page
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            await ShowAsync("읽을 수 없음", ex.Message);
+            await ShowAsync(UiStrings.Get("RuleMaker_ReadFailed"), ex.Message);
             return;
         }
 
         var dialog = new ContentDialog
         {
             XamlRoot = XamlRoot,
-            Title = "CLAUDE.md ↔ AGENTS.md",
+            Title = UiStrings.Get("Migration_DialogTitle"),
             Content = BuildMigrationView(migration),
-            PrimaryButtonText = "CLAUDE.md → AGENTS.md",
-            SecondaryButtonText = "AGENTS.md → CLAUDE.md",
-            CloseButtonText = "닫기",
+            PrimaryButtonText = UiStrings.Get("Migration_ToCodex"),
+            SecondaryButtonText = UiStrings.Get("Migration_ToClaude"),
+            CloseButtonText = UiStrings.Get("Common_Close"),
             IsPrimaryButtonEnabled = migration.CanMigrateToCodex,
             IsSecondaryButtonEnabled = migration.CanMigrateToClaude,
             DefaultButton = ContentDialogButton.Close,
@@ -212,12 +237,14 @@ public sealed partial class RuleMakerPage : Page
             var target = result.Target == ToolKind.Claude ? "CLAUDE.md" : "AGENTS.md";
 
             await ShowAsync(
-                $"{target} 를 갱신했다",
-                result.Warnings.Count == 0 ? "경고 없음" : string.Join('\n', result.Warnings));
+                UiStrings.Format("Migration_Updated", target),
+                result.Warnings.Count == 0
+                    ? UiStrings.Get("Migration_NoWarnings")
+                    : string.Join('\n', result.Warnings));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
         {
-            await ShowAsync("옮길 수 없음", ex.Message);
+            await ShowAsync(UiStrings.Get("Migration_Failed"), ex.Message);
         }
     }
 
@@ -233,7 +260,7 @@ public sealed partial class RuleMakerPage : Page
 
         panel.Children.Add(new TextBlock
         {
-            Text = "왼쪽 CLAUDE.md, 오른쪽 AGENTS.md. daiso 마커 블록은 비교에서 뺀다",
+            Text = UiStrings.Get("Migration_DiffHint"),
             Style = Application.Current.Resources["CaptionTextBlockStyle"] as Style,
         });
 
@@ -262,7 +289,11 @@ public sealed partial class RuleMakerPage : Page
 
         if (RecentFlyout.Items.Count == 0)
         {
-            RecentFlyout.Items.Add(new MenuFlyoutItem { Text = "최근 파일 없음", IsEnabled = false });
+            RecentFlyout.Items.Add(new MenuFlyoutItem
+            {
+                Text = UiStrings.Get("RuleMaker_NoRecent"),
+                IsEnabled = false,
+            });
         }
     }
 
@@ -270,7 +301,7 @@ public sealed partial class RuleMakerPage : Page
     {
         LibraryFlyout.Items.Clear();
 
-        var save = new MenuFlyoutItem { Text = "라이브러리에 저장" };
+        var save = new MenuFlyoutItem { Text = UiStrings.Get("RuleMaker_SaveToLibrary") };
         save.Click += async (_, _) =>
         {
             try
@@ -308,7 +339,7 @@ public sealed partial class RuleMakerPage : Page
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            await ShowAsync("열 수 없음", ex.Message);
+            await ShowAsync(UiStrings.Get("RuleMaker_OpenFailed"), ex.Message);
         }
     }
 
@@ -502,8 +533,8 @@ public sealed partial class RuleMakerPage : Page
     }
 
     private Task ShowParseErrorAsync(RuleParseException ex) => ShowAsync(
-        "규칙을 저장할 수 없다",
-        $"line {ex.Line}, column {ex.Column}\n\n{ex.Detail}");
+        UiStrings.Get("RuleMaker_SaveFailed"),
+        UiStrings.Format("RuleMaker_ParseErrorBody", ex.Line, ex.Column, ex.Detail));
 
     private Task ShowAsync(string title, string body) => new ContentDialog
     {

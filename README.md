@@ -147,6 +147,21 @@ DAISO_INDEX_DB=F:\daiso\index.db dotnet run --project tools/Daiso.Cli -- session
 - 앱 아이콘: 제목줄·작업 표시줄에 표시
 - 예외 로그: `%LOCALAPPDATA%\d-AI-so\logs\`에 남기며, 기록 전에 토큰 형태 문자열을 `[REDACTED]`로 가린다 (단위 테스트 10건)
 
+## 화면 문구
+
+앱의 노출 문구는 코드에 직접 쓰지 않고 키로 참조한다. 정본은 한 파일이다.
+
+| 항목 | 내용 |
+|---|---|
+| 문구 파일 | `src/Daiso.App/Strings/ko-KR/Resources.resw` |
+| XAML | `Text="{loc:Str Key=Dashboard_ToolStatus}"` |
+| C# | `UiStrings.Get("...")`, 서식은 `UiStrings.Format("...", 인자)` |
+| 조회 순서 | Windows 리소스(MRT) → 어셈블리에 담긴 같은 `.resw` → 키 문자열 |
+| 문체 | 존댓말 (`~습니다`, `~하세요`). 로그·CLI·문서는 평서체 |
+
+다른 언어를 넣을 때는 `Strings/<태그>/Resources.resw`를 추가하고 `Daiso.App.csproj`의 `PRIResource`에 등록한다.
+코드는 손대지 않는다. 자세한 규칙은 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) §6.1에 있다.
+
 ## 안전 규칙
 
 - CLI가 만든 파일(`.credentials.json`, `.claude.json`, `auth.json`, 세션 jsonl)은 읽기 전용으로 다룬다

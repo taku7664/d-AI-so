@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Daiso.Core;
+using Daiso.App.Strings;
 
 namespace Daiso.App.ViewModels;
 
@@ -58,8 +59,8 @@ public sealed partial class MigrationViewModel : ObservableObject
         CanMigrateToCodex = plan.Claude.Exists;
         CanMigrateToClaude = plan.Codex.Exists;
         StatusText = plan.CanMigrate
-            ? $"{Diff.Count(l => l.Kind != DiffKind.Same)}줄 다름"
-            : "두 파일이 모두 없다";
+            ? UiStrings.Format("Migration_DiffCount", Diff.Count(l => l.Kind != DiffKind.Same))
+            : UiStrings.Get("Migration_BothMissing");
     }
 
     /// <summary>고른 방향으로 대상 파일 하나를 쓴다.</summary>
@@ -67,15 +68,15 @@ public sealed partial class MigrationViewModel : ObservableObject
     {
         if (ProjectDirectory is not { Length: > 0 } directory)
         {
-            throw new InvalidOperationException("프로젝트 폴더를 먼저 지정해라");
+            throw new InvalidOperationException(UiStrings.Get("Migration_NeedProject"));
         }
 
         var result = _service.Apply(directory, direction, dryRun: false);
         var target = result.Target == ToolKind.Claude ? "CLAUDE.md" : "AGENTS.md";
 
         StatusText = result.Warnings.Count == 0
-            ? $"{target} 를 갱신했다"
-            : $"{target} 를 갱신했다 (경고 {result.Warnings.Count}건)";
+            ? UiStrings.Format("Migration_Updated", target)
+            : UiStrings.Format("Migration_UpdatedWithWarnings", target, result.Warnings.Count);
 
         Inspect(directory);
 

@@ -1,7 +1,8 @@
 <Page
     x:Class="Daiso.App.Views.TerminalPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:loc="using:Daiso.App.Strings">
 
     <ScrollViewer Padding="24">
         <StackPanel Spacing="18" MaxWidth="900">
@@ -10,7 +11,7 @@
 
             <!-- 폴더 -->
             <StackPanel Spacing="8">
-                <TextBlock Text="작업 폴더" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                <TextBlock Text="{loc:Str Key=Terminal_WorkFolder}" Style="{ThemeResource BodyStrongTextBlockStyle}" />
 
                 <Grid ColumnSpacing="8">
                     <Grid.ColumnDefinitions>
@@ -21,12 +22,12 @@
                     <TextBox
                         Grid.Column="0"
                         Text="{x:Bind ViewModel.WorkingDirectory, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                        PlaceholderText="폴더 경로" />
+                        PlaceholderText="{loc:Str Key=Terminal_FolderPath}" />
 
-                    <Button Grid.Column="1" Content="폴더 고르기" Click="OnPickFolderClick" />
+                    <Button Grid.Column="1" Content="{loc:Str Key=Common_PickFolder}" Click="OnPickFolderClick" />
                 </Grid>
 
-                <TextBlock Text="최근 폴더" Style="{ThemeResource CaptionTextBlockStyle}" Opacity="0.8" />
+                <TextBlock Text="{loc:Str Key=Terminal_RecentFolders}" Style="{ThemeResource CaptionTextBlockStyle}" Opacity="0.8" />
 
                 <ListView
                     ItemsSource="{x:Bind ViewModel.RecentFolders}"
@@ -43,13 +44,13 @@
 
             <!-- 인자 -->
             <StackPanel Spacing="8">
-                <TextBlock Text="옵션 인자" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                <TextBlock Text="{loc:Str Key=Terminal_OptionArgs}" Style="{ThemeResource BodyStrongTextBlockStyle}" />
 
                 <TextBox
                     Text="{x:Bind ViewModel.Arguments, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                    PlaceholderText="예: --continue" />
+                    PlaceholderText="{loc:Str Key=Terminal_ArgsPlaceholder}" />
 
-                <TextBlock Text="Claude 프리셋" Style="{ThemeResource CaptionTextBlockStyle}" Opacity="0.8" />
+                <TextBlock Text="{loc:Str Key=Terminal_ClaudePresets}" Style="{ThemeResource CaptionTextBlockStyle}" Opacity="0.8" />
                 <ItemsControl ItemsSource="{x:Bind ViewModel.ClaudePresets}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -65,7 +66,7 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
-                <TextBlock Text="Codex 프리셋" Style="{ThemeResource CaptionTextBlockStyle}" Opacity="0.8" />
+                <TextBlock Text="{loc:Str Key=Terminal_CodexPresets}" Style="{ThemeResource CaptionTextBlockStyle}" Opacity="0.8" />
                 <ItemsControl ItemsSource="{x:Bind ViewModel.CodexPresets}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -85,12 +86,12 @@
             <!-- 실행 -->
             <StackPanel Orientation="Horizontal" Spacing="10">
                 <Button
-                    Content="Claude 열기"
+                    Content="{loc:Str Key=Terminal_OpenClaude}"
                     Style="{ThemeResource AccentButtonStyle}"
                     Command="{x:Bind ViewModel.LaunchClaudeCommand}"
                     IsEnabled="{x:Bind ViewModel.CanLaunch, Mode=OneWay}" />
                 <Button
-                    Content="Codex 열기"
+                    Content="{loc:Str Key=Terminal_OpenCodex}"
                     Command="{x:Bind ViewModel.LaunchCodexCommand}"
                     IsEnabled="{x:Bind ViewModel.CanLaunch, Mode=OneWay}" />
             </StackPanel>
@@ -102,7 +103,7 @@
                 TextWrapping="Wrap" />
 
             <TextBlock
-                Text="claude / codex 는 npm 셸(.cmd)이라 항상 pwsh · powershell · cmd 로 감싸 실행한다. wt.exe가 있으면 그 안에서 연다."
+                Text="{loc:Str Key=Terminal_ShellNote}"
                 Style="{ThemeResource CaptionTextBlockStyle}"
                 Opacity="0.6"
                 TextWrapping="Wrap" />

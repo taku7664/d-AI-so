@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Daiso.App.Services;
 using Daiso.Core;
+using Daiso.App.Strings;
 
 namespace Daiso.App.ViewModels;
 
@@ -54,9 +55,19 @@ public sealed partial class DashboardViewModel : ObservableObject
     public string TotalSizeText => FormatSize(TotalSizeBytes);
 
     /// <summary>최근 사용량 요약 문구.</summary>
-    public string RecentUsageText =>
-        $"입력 {RecentUsage.Input:N0} · 출력 {RecentUsage.Output:N0} · "
-        + $"캐시 쓰기 {RecentUsage.CacheCreate:N0} · 캐시 읽기 {RecentUsage.CacheRead:N0}";
+    public string RecentUsageText => UiStrings.Format(
+        "Dashboard_UsageBreakdown",
+        RecentUsage.Input,
+        RecentUsage.Output,
+        RecentUsage.CacheCreate,
+        RecentUsage.CacheRead);
+
+    /// <summary>세션 수와 총 용량 한 줄.</summary>
+    public string SessionSummaryText =>
+        UiStrings.Format("Dashboard_SessionSummary", SessionCount, TotalSizeText);
+
+    /// <summary>사용량 카드 제목.</summary>
+    public string UsageHeaderText => UiStrings.Format("Dashboard_UsageHeader", UsageDayCount);
 
     /// <summary>도구 상태와 세션·사용량 요약을 다시 읽는다.</summary>
     [RelayCommand]
@@ -95,6 +106,7 @@ public sealed partial class DashboardViewModel : ObservableObject
 
             OnPropertyChanged(nameof(TotalSizeText));
             OnPropertyChanged(nameof(RecentUsageText));
+            OnPropertyChanged(nameof(SessionSummaryText));
         }
         finally
         {
@@ -166,19 +178,20 @@ public sealed partial class ToolCardViewModel : ObservableObject
     /// <summary>상태 설명.</summary>
     public string StateText => State switch
     {
-        AuthState.LoggedIn => "로그인됨",
-        AuthState.ExpiringSoon => "곧 만료",
-        AuthState.Expired => "만료됨",
-        _ => "로그인 정보 없음",
+        AuthState.LoggedIn => UiStrings.Get("Auth_LoggedIn"),
+        AuthState.ExpiringSoon => UiStrings.Get("Auth_ExpiringSoon"),
+        AuthState.Expired => UiStrings.Get("Auth_Expired"),
+        _ => UiStrings.Get("Auth_NoInfo"),
     };
 
     /// <summary>설치 여부 문구.</summary>
-    public string InstalledText => IsInstalled ? "설치됨" : "설치되지 않음";
+    public string InstalledText =>
+        UiStrings.Get(IsInstalled ? "Auth_Installed" : "Auth_NotInstalled");
 
     /// <summary>재로그인 필요 시각 문구.</summary>
     public string ExpiresText => SessionExpiresAt is { } at
-        ? $"{at.ToLocalTime():yyyy-MM-dd HH:mm} 이후 재로그인 필요"
-        : "만료 정보 없음";
+        ? UiStrings.Format("Auth_ExpiresAt", at.ToLocalTime())
+        : UiStrings.Get("Auth_NoExpiry");
 
     /// <summary>로그인이 필요한 상태인지. 버튼 강조에 쓴다.</summary>
     public bool NeedsLogin => State is AuthState.Missing or AuthState.Expired or AuthState.ExpiringSoon;

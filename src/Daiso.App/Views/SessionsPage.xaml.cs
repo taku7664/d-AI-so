@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Windows.Storage.Pickers;
 using Windows.System;
+using Daiso.App.Strings;
 
 namespace Daiso.App.Views;
 
@@ -140,45 +141,51 @@ public sealed partial class SessionsPage : Page
 
         if (preview.Count == 0)
         {
-            await ShowAsync("삭제할 세션 없음", "먼저 세션을 선택하세요.");
+            await ShowAsync(
+                UiStrings.Get("Sessions_NoSelection"),
+                UiStrings.Get("Sessions_SelectFirst"));
             return;
         }
 
         var skipped = preview.ActiveSessionIds.Count > 0
-            ? $"\n\n실행 중이라 제외되는 세션 {preview.ActiveSessionIds.Count}건:\n"
-                + string.Join("\n", preview.ActiveSessionIds)
+            ? "\n\n" + UiStrings.Format("Sessions_ActiveExcluded", preview.ActiveSessionIds.Count)
+                + "\n" + string.Join("\n", preview.ActiveSessionIds)
             : string.Empty;
 
-        var body =
-            $"선택 {preview.Count}건\n"
-            + $"회수 용량 {DashboardViewModel.FormatSize(preview.ReclaimBytes)}\n"
-            + $"방식: {(permanent ? "영구 삭제" : "휴지통으로 이동")}"
+        var body = UiStrings.Format(
+            "Sessions_DeletePreviewBody",
+            preview.Count,
+            DashboardViewModel.FormatSize(preview.ReclaimBytes),
+            UiStrings.Get(permanent ? "Common_PermanentDelete" : "Sessions_MoveToRecycleBin"))
             + skipped;
 
-        if (!await ConfirmAsync(permanent ? "영구 삭제 미리보기" : "삭제 미리보기", body, "계속"))
+        if (!await ConfirmAsync(
+            UiStrings.Get(permanent ? "Sessions_PermanentPreviewTitle" : "Sessions_DeletePreviewTitle"),
+            body,
+            UiStrings.Get("Common_Continue")))
         {
             return;
         }
 
         if (permanent && !await ConfirmAsync(
-            "정말 영구 삭제할까요?",
-            "휴지통을 거치지 않으므로 되돌릴 수 없다.",
-            "영구 삭제"))
+            UiStrings.Get("Sessions_ConfirmPermanentTitle"),
+            UiStrings.Get("Sessions_ConfirmPermanentBody"),
+            UiStrings.Get("Common_PermanentDelete")))
         {
             return;
         }
 
         var result = await ViewModel.DeleteCheckedAsync(permanent);
 
-        var report = $"삭제 {result.Deleted.Count}건";
+        var report = UiStrings.Format("Sessions_DeletedCount", result.Deleted.Count);
         if (result.Skipped.Count > 0)
         {
-            report += "\n\n건너뜀:\n" + string.Join(
+            report += "\n\n" + UiStrings.Get("Sessions_SkippedHeader") + "\n" + string.Join(
                 "\n",
                 result.Skipped.Select(item => $"{Path.GetFileName(item.Path)} — {item.Reason}"));
         }
 
-        await ShowAsync("삭제 결과", report);
+        await ShowAsync(UiStrings.Get("Sessions_DeleteResultTitle"), report);
     }
 
     private Task ShowAsync(string title, string body) => new ContentDialog
@@ -186,7 +193,7 @@ public sealed partial class SessionsPage : Page
         XamlRoot = XamlRoot,
         Title = title,
         Content = new TextBlock { Text = body, TextWrapping = TextWrapping.Wrap },
-        CloseButtonText = "닫기",
+        CloseButtonText = UiStrings.Get("Common_Close"),
     }.ShowAsync().AsTask();
 
     private async Task<bool> ConfirmAsync(string title, string body, string primary)
@@ -197,7 +204,7 @@ public sealed partial class SessionsPage : Page
             Title = title,
             Content = new TextBlock { Text = body, TextWrapping = TextWrapping.Wrap },
             PrimaryButtonText = primary,
-            CloseButtonText = "취소",
+            CloseButtonText = UiStrings.Get("Common_Cancel"),
             DefaultButton = ContentDialogButton.Close,
         };
 

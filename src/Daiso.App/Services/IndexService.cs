@@ -1,4 +1,5 @@
 using Daiso.Core;
+using Daiso.App.Strings;
 
 namespace Daiso.App.Services;
 
@@ -28,11 +29,14 @@ public sealed class IndexService
 
     /// <summary>바뀐 세션만 이어 읽는다. 이미 돌고 있으면 그대로 둔다.</summary>
     public Task RefreshAsync(CancellationToken ct = default) =>
-        RunAsync("세션 인덱스 갱신", (progress, token) => _index.RefreshAsync(token), ct);
+        RunAsync(UiStrings.Get("Index_RefreshLabel"), (progress, token) => _index.RefreshAsync(token), ct);
 
     /// <summary>처음부터 다시 만든다.</summary>
     public Task RebuildAsync(CancellationToken ct = default) =>
-        RunAsync("세션 인덱스 재구축", (progress, token) => _index.RebuildAsync(progress, token), ct);
+        RunAsync(
+            UiStrings.Get("Index_RebuildLabel"),
+            (progress, token) => _index.RebuildAsync(progress, token),
+            ct);
 
     private async Task RunAsync(
         string label,
@@ -53,15 +57,15 @@ public sealed class IndexService
 
             await work(progress, ct).ConfigureAwait(false);
 
-            Report(new IndexStatus(false, $"{label} 완료", 0, 0, null));
+            Report(new IndexStatus(false, UiStrings.Format("Index_Done", label), 0, 0, null));
         }
         catch (OperationCanceledException)
         {
-            Report(new IndexStatus(false, $"{label} 취소", 0, 0, null));
+            Report(new IndexStatus(false, UiStrings.Format("Index_Canceled", label), 0, 0, null));
         }
         catch (Exception ex)
         {
-            Report(new IndexStatus(false, $"{label} 실패: {ex.Message}", 0, 0, null));
+            Report(new IndexStatus(false, UiStrings.Format("Index_Failed", label, ex.Message), 0, 0, null));
         }
         finally
         {
@@ -84,7 +88,7 @@ public sealed class IndexService
 /// <param name="CurrentFile">지금 읽는 파일.</param>
 public sealed record IndexStatus(bool IsRunning, string Message, int Done, int Total, string? CurrentFile)
 {
-    public static readonly IndexStatus Idle = new(false, "준비됨", 0, 0, null);
+    public static readonly IndexStatus Idle = new(false, UiStrings.Get("Index_Idle"), 0, 0, null);
 
     /// <summary>0~100. 전체 개수를 모르면 0.</summary>
     public double Percent => Total > 0 ? Math.Min(100, Done * 100.0 / Total) : 0;

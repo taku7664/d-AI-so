@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Daiso.Core;
+using Daiso.App.Strings;
 
 namespace Daiso.App.ViewModels;
 
@@ -39,7 +40,7 @@ public sealed partial class ConditionNodeViewModel : ObservableObject
     /// <summary>트리에 보여줄 라벨.</summary>
     public string Label => Kind switch
     {
-        ConditionNodeKind.Leaf => Text.Length == 0 ? "(빈 조건)" : Text,
+        ConditionNodeKind.Leaf => Text.Length == 0 ? UiStrings.Get("RuleMaker_EmptyCondition") : Text,
         ConditionNodeKind.And => "AND",
         ConditionNodeKind.Or => "OR",
         _ => "NOT",

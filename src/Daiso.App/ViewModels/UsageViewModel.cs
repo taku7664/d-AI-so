@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Daiso.App.Services;
 using Daiso.Core;
+using Daiso.App.Strings;
 
 namespace Daiso.App.ViewModels;
 
@@ -42,7 +43,12 @@ public sealed partial class UsageViewModel : ObservableObject
     }
 
     /// <summary>기간 선택 항목.</summary>
-    public IReadOnlyList<string> Periods { get; } = ["7일", "30일", "전체"];
+    public IReadOnlyList<string> Periods { get; } =
+    [
+        UiStrings.Get("Usage_Period7"),
+        UiStrings.Get("Usage_Period30"),
+        UiStrings.All,
+    ];
 
     /// <summary>일별 막대.</summary>
     public ObservableCollection<UsageDayViewModel> Days { get; } = [];
@@ -54,7 +60,7 @@ public sealed partial class UsageViewModel : ObservableObject
     public ObservableCollection<UsageRowViewModel> ByModel { get; } = [];
 
     /// <summary>비용은 항상 추정임을 밝힌다.</summary>
-    public string EstimatedCostText => $"추정 비용 ${EstimatedCost:N2} (단가표 기반)";
+    public string EstimatedCostText => UiStrings.Format("Usage_EstimatedCost", EstimatedCost);
 
     /// <summary>인덱스에서 사용량을 다시 읽는다.</summary>
     [RelayCommand]
@@ -80,7 +86,7 @@ public sealed partial class UsageViewModel : ObservableObject
             _summary = await _indexService.Index.GetUsageAsync(from, to, ct).ConfigureAwait(true);
             Recalculate();
 
-            StatusText = $"{from:yyyy-MM-dd} ~ {to:yyyy-MM-dd} · {Days.Count}일";
+            StatusText = UiStrings.Format("Usage_Range", from, to, Days.Count);
         }
         finally
         {
@@ -161,8 +167,12 @@ public sealed class UsageDayViewModel
     public string TotalText => $"{Day.Usage.Total:N0}";
 
     public string Detail =>
-        $"in {Day.Usage.Input:N0} · out {Day.Usage.Output:N0} · "
-        + $"cw {Day.Usage.CacheCreate:N0} · cr {Day.Usage.CacheRead:N0}";
+        UiStrings.Format(
+            "Usage_DayBreakdown",
+            Day.Usage.Input,
+            Day.Usage.Output,
+            Day.Usage.CacheCreate,
+            Day.Usage.CacheRead);
 }
 
 /// <summary>프로젝트별·모델별 한 줄.</summary>
@@ -188,7 +198,8 @@ public sealed class UsageRowViewModel
 
     public string PercentText => $"{Percent:N1}%";
 
-    public string CostText => Cost > 0 ? $"${Cost:N2} (추정)" : "단가 미설정";
+    public string CostText =>
+        Cost > 0 ? UiStrings.Format("Usage_CostEstimate", Cost) : UiStrings.Get("Usage_NoPrice");
 
     public string ShortLabel => Label.Length <= 60 ? Label : "…" + Label[^60..];
 }
