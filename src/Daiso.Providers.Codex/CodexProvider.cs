@@ -6,7 +6,7 @@ using Daiso.Providers.Common;
 namespace Daiso.Providers.Codex;
 
 /// <summary>Codex CLI 어댑터. (ARCHITECTURE §4.2)</summary>
-public sealed class CodexProvider : IProvider
+public sealed class CodexProvider : IProvider, IUsageReader
 {
     private const string RulesFile = "AGENTS.md";
     private const string RulesPresetFile = "PROJECT_RULES.daiso";
@@ -201,6 +201,45 @@ public sealed class CodexProvider : IProvider
     {
         ArgumentNullException.ThrowIfNull(session);
         return $"resume {session.Id}";
+    }
+
+    /// <inheritdoc />
+    /// <remarks>Codex의 token_count는 세션 누적값이라 날짜별로 더하면 중복된다.</remarks>
+    public bool UsageIsAdditive => false;
+
+    /// <inheritdoc />
+    public async IAsyncEnumerable<UsageDay> ReadUsageAsync(
+        string filePath,
+        long fromByteOffset,
+        DateOnly sessionDate,
+        [EnumeratorCancellation] CancellationToken ct)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+
+        var parser = new CodexRecordParser();
+        TokenUsage? cumulative = null;
+        string? model = null;
+
+        await foreach (var line in JsonlReader.ReadLinesAsync(filePath, fromByteOffset, ct).ConfigureAwait(false))
+        {
+            var record = parser.Parse(line);
+            if (record is null)
+            {
+                continue;
+            }
+
+            model ??= record.Model;
+
+            if (record.CumulativeUsage is { } usage)
+            {
+                cumulative = usage;
+            }
+        }
+
+        if (cumulative is { } total)
+        {
+            yield return new UsageDay(sessionDate, total with { Model = model });
+        }
     }
 
     private async Task<SessionInfo> ReadMetaAsync(string filePath, bool isArchived, CancellationToken ct)

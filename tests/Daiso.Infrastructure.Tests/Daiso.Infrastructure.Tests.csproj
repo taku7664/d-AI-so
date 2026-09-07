@@ -23,6 +23,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- fixture 폴더 준비 코드는 Providers.Tests와 한 파일을 공유한다 -->
+    <Compile Include="..\Daiso.Providers.Tests\Fixtures.cs" Link="Fixtures.cs" />
+    <Content Include="..\fixtures\**\*" LinkBase="fixtures" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="Xunit" />
     <Using Include="FluentAssertions" />
   </ItemGroup>

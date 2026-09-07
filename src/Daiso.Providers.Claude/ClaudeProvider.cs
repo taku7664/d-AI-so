@@ -7,7 +7,7 @@ using Daiso.Providers.Common;
 namespace Daiso.Providers.Claude;
 
 /// <summary>Claude Code CLI 어댑터. (ARCHITECTURE §4.1)</summary>
-public sealed class ClaudeProvider : IProvider
+public sealed class ClaudeProvider : IProvider, IUsageReader
 {
     private const string RulesFile = "CLAUDE.md";
     private const string LocalRulesFile = "CLAUDE.local.md";
@@ -217,6 +217,44 @@ public sealed class ClaudeProvider : IProvider
     {
         ArgumentNullException.ThrowIfNull(session);
         return $"--resume {session.Id}";
+    }
+
+    /// <inheritdoc />
+    /// <remarks>Claude는 메시지마다 usage가 붙으므로 날짜별로 더한다.</remarks>
+    public bool UsageIsAdditive => true;
+
+    /// <inheritdoc />
+    public async IAsyncEnumerable<UsageDay> ReadUsageAsync(
+        string filePath,
+        long fromByteOffset,
+        DateOnly sessionDate,
+        [EnumeratorCancellation] CancellationToken ct)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+
+        var byDay = new Dictionary<DateOnly, TokenUsage>();
+
+        await foreach (var line in JsonlReader.ReadLinesAsync(filePath, fromByteOffset, ct).ConfigureAwait(false))
+        {
+            var record = ClaudeRecordParser.Parse(line);
+            if (record?.Usage is not { } usage)
+            {
+                continue;
+            }
+
+            var date = DateOnly.FromDateTime((record.Timestamp ?? default).UtcDateTime);
+            if (date == default)
+            {
+                date = sessionDate;
+            }
+
+            byDay[date] = byDay.TryGetValue(date, out var existing) ? existing.Add(usage) : usage;
+        }
+
+        foreach (var (date, usage) in byDay.OrderBy(pair => pair.Key))
+        {
+            yield return new UsageDay(date, usage);
+        }
     }
 
     /// <summary>본문을 훑지 않고 파일 앞부분에서만 메타를 읽는다.</summary>
