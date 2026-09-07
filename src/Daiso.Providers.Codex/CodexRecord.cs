@@ -1,0 +1,211 @@
+using System.Text;
+using System.Text.Json;
+using Daiso.Core;
+using Daiso.Providers.Common;
+
+namespace Daiso.Providers.Codex;
+
+/// <summary>rollout jsonl 한 줄에서 뽑아낸 것. (ARCHITECTURE §4.2)</summary>
+internal sealed record CodexRecord(
+    string? SessionId,
+    string? Cwd,
+    string? CliVersion,
+    DateTimeOffset? Timestamp,
+    string? Model,
+    TokenUsage? CumulativeUsage,
+    IReadOnlyList<SessionMessage> Messages);
+
+/// <summary>
+/// rollout jsonl 줄을 <see cref="CodexRecord"/>로 바꾼다.
+/// 구형(0.147 이하)과 신형(0.153 이상) 형식을 모두 인식한다. <c>cli_version</c>으로 분기하지 않는다.
+/// </summary>
+internal sealed class CodexRecordParser
+{
+    private static readonly IReadOnlyList<SessionMessage> NoMessages = [];
+
+    /// <summary>
+    /// 같은 응답이 event_msg.agent_message와 response_item 양쪽에 남는 경우가 있다.
+    /// 바로 앞서 낸 어시스턴트 텍스트와 같으면 건너뛴다. (ARCHITECTURE §4.2 중복 방지)
+    /// </summary>
+    private string? _lastAssistantText;
+
+    /// <summary>파싱할 수 없거나 무시 대상이면 Messages가 빈 레코드를 돌려준다.</summary>
+    internal CodexRecord? Parse(string line)
+    {
+        using var document = JsonHelpers.TryParseLine(line);
+        if (document?.RootElement is not { ValueKind: JsonValueKind.Object } root)
+        {
+            return null;
+        }
+
+        var at = root.Prop("timestamp").Timestamp() ?? default;
+        var type = root.Prop("type").Text();
+        var payload = root.Prop("payload");
+
+        return type switch
+        {
+            "session_meta" => Meta(payload, root),
+            "event_msg" => EventMessage(payload, at),
+            "response_item" => ResponseItem(payload, at),
+            "turn_context" => Empty() with
+            {
+                Cwd = payload.Prop("cwd").Text(),
+                Model = payload.Prop("model").Text(),
+            },
+            "compacted" => Empty() with { Messages = Compacted(payload, at) },
+            _ => Empty(),
+        };
+    }
+
+    private static CodexRecord Empty() => new(null, null, null, null, null, null, NoMessages);
+
+    private static CodexRecord Meta(JsonElement? payload, JsonElement root) => new(
+        payload.Prop("id").Text() ?? payload.Prop("session_id").Text(),
+        payload.Prop("cwd").Text(),
+        payload.Prop("cli_version").Text(),
+        payload.Prop("timestamp").Timestamp() ?? root.Prop("timestamp").Timestamp(),
+        null,
+        null,
+        NoMessages);
+
+    private CodexRecord EventMessage(JsonElement? payload, DateTimeOffset at)
+    {
+        switch (payload.Prop("type").Text())
+        {
+            // 구형 사용자 메시지
+            case "user_message" when payload.Prop("message").Text() is { } message:
+                return Empty() with { Messages = [new SessionMessage(at, MessageRole.User, message, false)] };
+
+            // 구형 어시스턴트 메시지
+            case "agent_message" when payload.Prop("message").Text() is { } message:
+                return Empty() with { Messages = Assistant(at, message) };
+
+            // 신형: 완료된 항목이 종류별로 하나씩 실린다
+            case "item_completed":
+                return ItemCompleted(payload.Prop("item"), at);
+
+            case "token_count":
+                return Empty() with { CumulativeUsage = TotalUsage(payload.Prop("info")) };
+
+            case "thread_settings_applied":
+                return Empty() with
+                {
+                    Model = payload.Path("thread_settings", "model").Text(),
+                };
+
+            default:
+                return Empty();
+        }
+    }
+
+    private CodexRecord ItemCompleted(JsonElement? item, DateTimeOffset at)
+    {
+        switch (item.Prop("type").Text())
+        {
+            case "UserMessage" when ItemText(item) is { } text:
+                return Empty() with { Messages = [new SessionMessage(at, MessageRole.User, text, false)] };
+
+            case "AssistantMessage" or "AgentMessage" when ItemText(item) is { } text:
+                return Empty() with { Messages = Assistant(at, text) };
+
+            default:
+                return Empty();
+        }
+    }
+
+    private CodexRecord ResponseItem(JsonElement? payload, DateTimeOffset at)
+    {
+        switch (payload.Prop("type").Text())
+        {
+            case "agent_message" when payload.Prop("message").Text() is { } message:
+                return Empty() with { Messages = Assistant(at, message) };
+
+            case "message":
+                return Message(payload, at);
+
+            // reasoning, function_call*, custom_tool_call* 등은 인덱스에 넣지 않는다
+            default:
+                return Empty();
+        }
+    }
+
+    private CodexRecord Message(JsonElement? payload, DateTimeOffset at)
+    {
+        var text = ItemText(payload);
+        if (text is null)
+        {
+            return Empty();
+        }
+
+        return payload.Prop("role").Text() switch
+        {
+            "assistant" => Empty() with { Messages = Assistant(at, text) },
+            "user" => Empty() with { Messages = [new SessionMessage(at, MessageRole.User, text, false)] },
+            "developer" or "system" => Empty() with
+            {
+                Messages = [new SessionMessage(at, MessageRole.System, text, false)],
+            },
+            _ => Empty(),
+        };
+    }
+
+    private IReadOnlyList<SessionMessage> Assistant(DateTimeOffset at, string text)
+    {
+        if (string.Equals(_lastAssistantText, text, StringComparison.Ordinal))
+        {
+            return NoMessages;
+        }
+
+        _lastAssistantText = text;
+        return [new SessionMessage(at, MessageRole.Assistant, text, false)];
+    }
+
+    private static IReadOnlyList<SessionMessage> Compacted(JsonElement? payload, DateTimeOffset at)
+    {
+        var text = payload.Prop("message").Text()
+            ?? payload.Prop("summary").Text()
+            ?? ItemText(payload);
+
+        return text is null
+            ? NoMessages
+            : [new SessionMessage(at, MessageRole.System, text, false)];
+    }
+
+    /// <summary>`content[]`의 text 블록을 이어붙인다. 신형은 `type`이 "text" 또는 "Text"다.</summary>
+    private static string? ItemText(JsonElement? item)
+    {
+        var builder = new StringBuilder();
+
+        foreach (var block in item.Prop("content").Items())
+        {
+            if (block.Prop("text").Text() is { } text)
+            {
+                if (builder.Length > 0)
+                {
+                    builder.Append('\n');
+                }
+
+                builder.Append(text);
+            }
+        }
+
+        return builder.Length == 0 ? null : builder.ToString();
+    }
+
+    /// <summary>`info.total_token_usage`는 세션 누적값이다. info가 null인 레코드가 있다.</summary>
+    private static TokenUsage? TotalUsage(JsonElement? info)
+    {
+        var total = info.Prop("total_token_usage");
+        if (total is not { ValueKind: JsonValueKind.Object })
+        {
+            return null;
+        }
+
+        return new TokenUsage(
+            total.Prop("input_tokens").NumberOrZero(),
+            total.Prop("output_tokens").NumberOrZero(),
+            total.Prop("cache_write_input_tokens").NumberOrZero(),
+            total.Prop("cached_input_tokens").NumberOrZero(),
+            null);
+    }
+}

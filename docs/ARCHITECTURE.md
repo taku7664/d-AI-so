@@ -19,11 +19,13 @@
 ```
 
 의존 방향: `App → Core ← Providers`, `App → Core ← Infrastructure`, `Infrastructure → Providers`(세션 인덱스가 Provider를 사용).
+`Providers.Claude`/`Providers.Codex` → `Providers.Common`. Common은 Core만 참조한다 (§4.3 공용 코드가 Core 순수성 규칙을 지킬 수 없어 별도 어셈블리로 둔다).
 Core는 YamlDotNet 외에 아무것도 참조하지 않는다.
 
 | 프로젝트 | TFM | 주요 패키지 |
 |---|---|---|
 | Daiso.Core | net8.0 | YamlDotNet |
+| Daiso.Providers.Common | net8.0 | (없음) — 두 Provider가 공유하는 경로 정규화·jsonl 스트리밍·JWT exp 판독 |
 | Daiso.Providers.Claude / .Codex | net8.0 | System.Text.Json |
 | Daiso.Infrastructure | net8.0-windows | Microsoft.Data.Sqlite (SQLitePCLRaw.bundle_e_sqlite3, FTS5 포함), Microsoft.VisualBasic (휴지통) |
 | Daiso.App | net8.0-windows10.0.19041 | Microsoft.WindowsAppSDK, CommunityToolkit.Mvvm, Microsoft.Extensions.DependencyInjection |
@@ -316,7 +318,7 @@ public sealed record ExportOptions(bool IncludeToolCalls = true, bool IncludeSys
   - 모델: `event_msg.thread_settings_applied.thread_settings.model` 또는 `turn_context.payload.model`
 - resume: `codex resume <id>`
 
-### 4.3 경로 정규화 (`ProjectPathNormalizer`, Providers 공용)
+### 4.3 경로 정규화 (`ProjectPathNormalizer`, `Daiso.Providers.Common`)
 - `Path.GetFullPath` 후 드라이브 문자 대문자, 끝 구분자 제거, `\` 통일
 - 그룹핑·필터·OrphansOnly 판정은 정규화 값으로만
 

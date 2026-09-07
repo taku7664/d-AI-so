@@ -2,12 +2,11 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <RootNamespace>Daiso.Providers.Claude</RootNamespace>
+    <RootNamespace>Daiso.Providers.Common</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Daiso.Core\Daiso.Core.csproj" />
-    <ProjectReference Include="..\Daiso.Providers.Common\Daiso.Providers.Common.csproj" />
   </ItemGroup>
 
 </Project>

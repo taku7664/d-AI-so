@@ -1,0 +1,6 @@
+{
+  "OPENAI_API_KEY": "DUMMY_TOKEN_API_KEY",
+  "auth_mode": "apikey",
+  "last_refresh": null,
+  "tokens": null
+}

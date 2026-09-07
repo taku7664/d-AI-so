@@ -1,0 +1,10 @@
+{"timestamp": "2026-09-01T00:00:00.000Z", "type": "session_meta", "payload": {"id": "01a99999-8888-7777-6666-555555555555", "session_id": "01a99999-8888-7777-6666-555555555555", "cwd": "C:\\Fixture\\Project", "timestamp": "2026-09-01T00:00:00.000Z", "cli_version": "0.153.0"}}
+{"timestamp": "2026-09-01T00:00:00.000Z", "type": "world_state", "payload": {"full": true, "state": {"agents_md": {"text": "더미 AGENTS 전문 오염 문자열"}}}}
+{"timestamp": "2026-09-01T00:00:00.000Z", "type": "event_msg", "payload": {"type": "thread_settings_applied", "thread_settings": {"model": "gpt-5.1-codex"}}}
+{"timestamp": "2026-09-01T00:01:00.000Z", "type": "event_msg", "payload": {"type": "item_completed", "item": {"type": "UserMessage", "id": "u1", "content": [{"type": "text", "text": "더미 질문 1"}]}}}
+{"timestamp": "2026-09-01T00:02:00.000Z", "type": "event_msg", "payload": {"type": "item_completed", "item": {"type": "AgentMessage", "id": "a1", "content": [{"type": "Text", "text": "더미 응답 1"}]}}}
+{"timestamp": "2026-09-01T00:02:00.000Z", "type": "response_item", "payload": {"type": "message", "role": "assistant", "content": [{"type": "output_text", "text": "더미 응답 1"}]}}
+{"timestamp": "2026-09-01T00:03:00.000Z", "type": "event_msg", "payload": {"type": "item_completed", "item": {"type": "CommandExecution", "id": "e1", "command": ["pwsh", "-Command", "Get-Date"]}}}
+{"timestamp": "2026-09-01T00:04:00.000Z", "type": "event_msg", "payload": {"type": "token_count", "info": null}}
+{"timestamp": "2026-09-01T00:05:00.000Z", "type": "event_msg", "payload": {"type": "token_count", "info": {"total_token_usage": {"input_tokens": 300, "cached_input_tokens": 90, "cache_write_input_tokens": 15, "output_tokens": 60, "total_tokens": 465}}}}
+{"timestamp": "2026-09-01T00:06:00.000Z", "type": "event_msg", "payload": {"type": "item_completed", "item": {"type": "UserMessage", "id": "u2", "content": [{"type": "text", "text": "더미 질문 2"}]}}}

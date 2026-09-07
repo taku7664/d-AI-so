@@ -1,0 +1,7 @@
+{
+  "oauthAccount": {
+    "emailAddress": "fixture@example.test",
+    "displayName": "Fixture User",
+    "organizationName": "Fixture Org"
+  }
+}

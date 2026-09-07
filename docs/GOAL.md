@@ -31,18 +31,19 @@ Windows에서 실행되는 WinUI 3 앱 **d-AI-so**가 다음을 모두 할 수 �
 결과물: `dotnet build` / `dotnet test` 통과 솔루션 + 검증용 콘솔 `Daiso.Cli`.
 
 ### 범위
-1. `Daiso.sln`, 프로젝트 8개: Core, Providers.Claude, Providers.Codex, Infrastructure, Cli, Core.Tests, Providers.Tests, Infrastructure.Tests
+1. `Daiso.sln`, 프로젝트 9개: Core, Providers.Common, Providers.Claude, Providers.Codex, Infrastructure, Cli, Core.Tests, Providers.Tests, Infrastructure.Tests
 2. `Daiso.Core`: 모델(ARCH 2절), 순수 인터페이스(3.1) 구현 — `RulePresetSerializer`, `RuleValidator`, `MarkdownRuleRenderer`, `InstructionMarkerWriter`, `InstructionTemplate`, `ContextAnalyzer`
-3. `Daiso.Providers.Claude` / `.Codex`: `IProvider` 구현(ARCH 4절), 공용 `ProjectPathNormalizer`
-4. `Daiso.Infrastructure`: `RuleFileService`, `SqliteSessionIndex`, `RecycleBinFileDisposer`, `WindowsTerminalLauncher`, `ContextInspector`, `MarkdownSessionExporter`
-5. `tools/Daiso.Cli` 서브커맨드:
+3. `Daiso.Providers.Common`: `ProjectPathNormalizer`, `JsonlReader`, `JwtExpiry` 등 두 Provider 공용 코드
+4. `Daiso.Providers.Claude` / `.Codex`: `IProvider` 구현(ARCH 4절)
+5. `Daiso.Infrastructure`: `RuleFileService`, `SqliteSessionIndex`, `RecycleBinFileDisposer`, `WindowsTerminalLauncher`, `ContextInspector`, `MarkdownSessionExporter`
+6. `tools/Daiso.Cli` 서브커맨드:
    `auth` · `sessions [--tool claude|codex] [--include-archived]` · `search <query>` · `usage --days N` · `rules render <path>` · `rules roundtrip <path>` · `rules install <projectDir>` · `doctor <dir> [--tool claude|codex]` · `export <sessionId> <out.md>`
-6. 테스트 3개 프로젝트 (ARCH 8절 표 전부)
+7. 테스트 3개 프로젝트 (ARCH 8절 표 전부)
 
 제외: WinUI, 세션 삭제 CLI 명령(Disposer 구현은 포함), CLAUDE.md/AGENTS.md 마이그레이션.
 
 ### Step 1. 솔루션 골격
-- 프로젝트 8개 생성, 참조 연결(ARCH 1절 의존 방향), 패키지 추가
+- 프로젝트 9개 생성, 참조 연결(ARCH 1절 의존 방향), 패키지 추가
 - **주의**: 이 머신의 .NET SDK는 10.x다. 템플릿이 net10.0으로 생성되므로 각 csproj의 `TargetFramework`를 ARCH 1절 표대로 net8.0 계열로 고칠 것. 필요하면 `global.json`으로 SDK 롤포워드 고정
 - `Directory.Build.props`: `Nullable=enable`, `TreatWarningsAsErrors=true`, `LangVersion=latest`
 - Core 어셈블리가 `System.IO.File`/`Directory`/`Process`를 참조하지 않음을 리플렉션으로 확인하는 테스트 1개
@@ -175,7 +176,7 @@ Windows에서 실행되는 WinUI 3 앱 **d-AI-so**가 다음을 모두 할 수 �
 - 커밋은 Step 단위, 메시지는 `CLAUDE.md` 규칙
 
 ## 산출물 체크리스트
-- [ ] Stage 1: 8개 프로젝트 빌드(경고 0), 테스트 3종 통과, Slow 1회 통과, fixture(Claude 1+, Codex 구형·신형), CLI 9개 실행 확인
+- [ ] Stage 1: 9개 프로젝트 빌드(경고 0), 테스트 3종 통과, Slow 1회 통과, fixture(Claude 1+, Codex 구형·신형), CLI 9개 실행 확인
 - [ ] Stage 2: Daiso.App 실행, 페이지 5개, 완성 상태 6항목 수동 확인
 - [ ] README (빌드·테스트·실행·확인 기록)
 - [ ] Step별 커밋 16개
