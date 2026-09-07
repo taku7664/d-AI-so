@@ -13,12 +13,17 @@ namespace Daiso.App;
 /// <summary>앱 진입점. DI 컨테이너를 만들고 Shell 창을 띄운다. (ARCHITECTURE §6)</summary>
 public partial class App : Application
 {
+    private readonly CrashReporter _crashReporter;
+
     private Window? _window;
 
     public App()
     {
         InitializeComponent();
         Services = BuildServices();
+
+        _crashReporter = new CrashReporter(Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread());
+        _crashReporter.Hook(this);
     }
 
     /// <summary>화면에서 ViewModel을 꺼내 쓰는 통로.</summary>
@@ -31,6 +36,7 @@ public partial class App : Application
     {
         _window = Services.GetRequiredService<ShellWindow>();
         MainWindow = _window;
+        _crashReporter.Attach(_window);
         _window.Activate();
     }
 

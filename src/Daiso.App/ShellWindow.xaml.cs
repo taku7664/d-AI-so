@@ -29,6 +29,7 @@ public sealed partial class ShellWindow : Window
 
         ApplyTheme();
         RestoreWindowSize();
+        ApplyIcon();
 
         Navigate("Dashboard");
         _viewModel.StartBackgroundRefresh();
@@ -78,6 +79,17 @@ public sealed partial class ShellWindow : Window
             "Dark" => ElementTheme.Dark,
             _ => ElementTheme.Default,
         };
+    }
+
+    /// <summary>제목줄과 작업 표시줄 아이콘.</summary>
+    private void ApplyIcon()
+    {
+        var icon = Path.Combine(AppContext.BaseDirectory, "Assets", "daiso.ico");
+
+        if (File.Exists(icon))
+        {
+            AppWindow.SetIcon(icon);
+        }
     }
 
     private void RestoreWindowSize()

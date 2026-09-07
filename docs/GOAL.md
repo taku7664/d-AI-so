@@ -176,7 +176,7 @@ Windows에서 실행되는 WinUI 3 앱 **d-AI-so**가 다음을 모두 할 수 �
 - 커밋은 Step 단위, 메시지는 `CLAUDE.md` 규칙
 
 ## 산출물 체크리스트
-- [ ] Stage 1: 9개 프로젝트 빌드(경고 0), 테스트 3종 통과, Slow 1회 통과, fixture(Claude 1+, Codex 구형·신형), CLI 9개 실행 확인
-- [ ] Stage 2: Daiso.App 실행, 페이지 5개, 완성 상태 6항목 수동 확인
-- [ ] README (빌드·테스트·실행·확인 기록)
-- [ ] Step별 커밋 16개
+- [x] Stage 1: 9개 프로젝트 빌드(경고 0), 테스트 3종 통과, Slow 1회 통과, fixture(Claude 1+, Codex 구형·신형), CLI 9개 실행 확인
+- [x] Stage 2: Daiso.App 실행, 페이지 5개, 완성 상태 6항목 수동 확인
+- [x] README (빌드·테스트·실행·확인 기록)
+- [x] Step별 커밋 (Stage 1 · Stage 2 전 단계)
