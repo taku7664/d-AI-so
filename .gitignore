@@ -1,0 +1,25 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+artifacts/
+
+# Visual Studio / Rider / VS Code
+.vs/
+.idea/
+*.user
+*.suo
+*.userprefs
+*.DotSettings.user
+
+# Tooling
+.omc/
+
+# Test / coverage
+[Tt]est[Rr]esult*/
+*.coverage
+*.coveragexml
+
+# Local
+*.db
+*.db-shm
+*.db-wal
