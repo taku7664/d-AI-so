@@ -492,6 +492,10 @@ Apply(projectDir, direction, dryRun)
 - 목록의 한 줄은 **한 줄로 끝낸다** (`TextTrimming`). 전체 값은 ToolTip
 - 파괴적인 버튼(삭제)은 대상이 없으면 비활성이다
 - 빈 상태는 흰 판을 두지 않고 `NoticeBorder`로 다음에 할 일을 알려 준다
+- 저장·연동처럼 결과가 파일로 남는 버튼은 **저장할 수 있을 때만 활성**이다 (RuleMaker `CanSave`)
+- 사람이 남긴 빈 입력 줄은 저장에서 버린다. 빈 줄 하나로 저장이 막히면 이유를 알기 어렵다
+- 저장 실패는 사람 말로 알린다. 줄·열은 **파일을 열다 실패했을 때만** 보여준다
+- 조건 트리는 AND · OR만 만든다. `not`은 형식에는 남지만 UI로는 만들지 않는다 (REQUIREMENTS §6.3 참고)
 
 **테마** — 설정의 테마는 고른 즉시 적용한다 (`SettingsViewModel.ThemeChanged` → `ShellWindow.ApplyTheme`).
 - `System`: `MicaBackdrop` + 배경 없음. OS 테마를 따른다

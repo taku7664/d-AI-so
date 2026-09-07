@@ -50,6 +50,7 @@
                     Label="{loc:Str Key=Common_Save}"
                     Icon="Save"
                     AutomationProperties.AutomationId="SaveButton"
+                    IsEnabled="{x:Bind ViewModel.CanSave, Mode=OneWay}"
                     Click="OnSaveClick">
                     <muxc:AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="S" />
@@ -67,6 +68,7 @@
                         Label="{loc:Str Key=RuleMaker_SaveAs}"
                         Icon="SaveLocal"
                         AutomationProperties.AutomationId="SaveAsButton"
+                        IsEnabled="{x:Bind ViewModel.CanSave, Mode=OneWay}"
                         Click="OnSaveAsClick" />
                     <muxc:AppBarButton
                         Label="{loc:Str Key=RuleMaker_Recent}"
@@ -88,6 +90,7 @@
                         Label="{loc:Str Key=RuleMaker_LinkProject}"
                         Icon="Link"
                         AutomationProperties.AutomationId="LinkButton"
+                        IsEnabled="{x:Bind ViewModel.CanSave, Mode=OneWay}"
                         Click="OnLinkClick" />
                 </muxc:CommandBar.SecondaryCommands>
             </muxc:CommandBar>
@@ -149,6 +152,7 @@
                     VerticalAlignment="Bottom"
                     Style="{ThemeResource AccentButtonStyle}"
                     AutomationProperties.AutomationId="LinkTypedButton"
+                    IsEnabled="{x:Bind ViewModel.CanSave, Mode=OneWay}"
                     Click="OnLinkTypedClick" />
             </Grid>
         </StackPanel>
@@ -317,7 +321,6 @@
                                             <MenuFlyoutItem Text="{loc:Str Key=RuleMaker_AddLeaf}" AutomationProperties.AutomationId="AddLeafButton" Click="OnAddLeafClick" />
                                             <MenuFlyoutItem Text="{loc:Str Key=RuleMaker_AddAnd}" Click="OnAddAndClick" />
                                             <MenuFlyoutItem Text="{loc:Str Key=RuleMaker_AddOr}" Click="OnAddOrClick" />
-                                            <MenuFlyoutItem Text="{loc:Str Key=RuleMaker_AddNot}" Click="OnAddNotClick" />
                                         </MenuFlyout>
                                     </muxc:DropDownButton.Flyout>
                                 </muxc:DropDownButton>
@@ -330,7 +333,6 @@
                                         <MenuFlyout>
                                             <MenuFlyoutItem Text="{loc:Str Key=RuleMaker_WrapAnd}" AutomationProperties.AutomationId="WrapAndButton" Click="OnWrapAndClick" />
                                             <MenuFlyoutItem Text="{loc:Str Key=RuleMaker_WrapOr}" Click="OnWrapOrClick" />
-                                            <MenuFlyoutItem Text="{loc:Str Key=RuleMaker_WrapNot}" Click="OnWrapNotClick" />
                                         </MenuFlyout>
                                     </muxc:DropDownButton.Flyout>
                                 </muxc:DropDownButton>

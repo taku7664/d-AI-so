@@ -177,6 +177,9 @@ rules:
 | `description` | string? | 설명 |
 | `global` | Action[] | 조건 없는 행동 |
 | `rules[].when` | Condition | 문자열(리프) 또는 `{and: [..]}` / `{or: [..]}` / `{not: ..}` 중 하나. 중첩 가능 |
+
+> `not`은 **파일 형식에서는 계속 지원**하지만(기존 파일 호환) RuleMaker UI에서는 만들지 않는다.
+> 조건이 자유 문장이라 `테스트 코드가 아닐 때`처럼 말로 쓰는 편이 읽기 쉽고, 트리 편집 버튼도 줄어든다.
 | `rules[].then` | Action[] | 행동 목록 |
 | `Action.action` | string | 행동 문장 |
 | `Action.priority` | MUST \| SHOULD \| MAY | 생략 시 SHOULD |

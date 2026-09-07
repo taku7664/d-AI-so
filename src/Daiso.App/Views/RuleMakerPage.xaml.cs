@@ -75,7 +75,7 @@ public sealed partial class RuleMakerPage : Page
         }
         catch (RuleParseException ex)
         {
-            await ShowParseErrorAsync(ex);
+            await ShowFileParseErrorAsync(ex);
         }
     }
 
@@ -375,7 +375,7 @@ public sealed partial class RuleMakerPage : Page
         }
         catch (RuleParseException ex)
         {
-            await ShowParseErrorAsync(ex);
+            await ShowFileParseErrorAsync(ex);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -448,8 +448,6 @@ public sealed partial class RuleMakerPage : Page
 
     private void OnAddOrClick(object sender, RoutedEventArgs e) => AddNode(ConditionNodeKind.Or);
 
-    private void OnAddNotClick(object sender, RoutedEventArgs e) => AddNode(ConditionNodeKind.Not);
-
     /// <summary>연산자 노드에는 자식으로, 리프 옆에는 형제로 넣는다.</summary>
     private void AddNode(ConditionNodeKind kind)
     {
@@ -484,8 +482,6 @@ public sealed partial class RuleMakerPage : Page
     private void OnWrapAndClick(object sender, RoutedEventArgs e) => Wrap(ConditionNodeKind.And);
 
     private void OnWrapOrClick(object sender, RoutedEventArgs e) => Wrap(ConditionNodeKind.Or);
-
-    private void OnWrapNotClick(object sender, RoutedEventArgs e) => Wrap(ConditionNodeKind.Not);
 
     private void Wrap(ConditionNodeKind kind)
     {
@@ -572,8 +568,17 @@ public sealed partial class RuleMakerPage : Page
         }
     }
 
+    /// <summary>
+    /// 저장 실패는 사람 말로 알린다. 사용자는 YAML을 직접 쓴 적이 없으니 줄·열은 도움이 안 된다.
+    /// (파일을 열다 실패한 경우는 <see cref="ShowFileParseErrorAsync"/>에서 위치를 보여준다.)
+    /// </summary>
     private Task ShowParseErrorAsync(RuleParseException ex) => ShowAsync(
         UiStrings.Get("RuleMaker_SaveFailed"),
+        UiStrings.Format("RuleMaker_SaveFailedBody", ex.Detail));
+
+    /// <summary>파일을 열다 만난 오류. 이때는 줄·열이 실제로 도움이 된다.</summary>
+    private Task ShowFileParseErrorAsync(RuleParseException ex) => ShowAsync(
+        UiStrings.Get("RuleMaker_OpenFailed"),
         UiStrings.Format("RuleMaker_ParseErrorBody", ex.Line, ex.Column, ex.Detail));
 
     private Task ShowAsync(string title, string body) => new ContentDialog

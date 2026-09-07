@@ -283,15 +283,30 @@ public sealed partial class RuleMakerViewModel : ObservableObject
 
         OnPropertyChanged(nameof(PreviewIsEmpty));
         OnPropertyChanged(nameof(PreviewHasContent));
+        OnPropertyChanged(nameof(CanSave));
     }
 
-    /// <summary>편집 내용을 Core 모델로 만든다. 검증은 하지 않는다.</summary>
+    /// <summary>
+    /// 편집 내용을 Core 모델로 만든다. 스키마 검증은 하지 않는다.
+    /// 사람이 남겨 둔 **빈 줄은 버린다**. 빈 줄 하나 때문에 저장이 막히면 이유를 알기 어렵다.
+    /// </summary>
     public RulePreset BuildPreset() => new(
         RuleValidator.SupportedSchemaVersion,
         PresetName,
         string.IsNullOrWhiteSpace(Description) ? null : Description,
-        [.. Global.Select(action => action.ToAction())],
-        [.. Rules.Select(rule => rule.ToRule())]);
+        [.. Global.Where(HasText).Select(action => action.ToAction())],
+        [.. Rules.Where(CanSaveRule).Select(rule => rule.ToRule())]);
+
+    /// <summary>저장할 수 있는 상태인가. 이름과 행동이 하나는 있어야 한다.</summary>
+    public bool CanSave =>
+        !string.IsNullOrWhiteSpace(PresetName)
+        && (Global.Any(HasText) || Rules.Any(CanSaveRule));
+
+    private static bool HasText(ActionEditViewModel action) => !string.IsNullOrWhiteSpace(action.Text);
+
+    /// <summary>조건과 행동이 모두 채워진 규칙만 저장한다.</summary>
+    private static bool CanSaveRule(RuleEditViewModel rule) =>
+        rule.Actions.Any(HasText) && rule.ConditionPreview.Length > 0;
 
     /// <summary>직렬화 → 파싱을 거쳐 스키마 검증까지 통과한 모델.</summary>
     /// <exception cref="RuleParseException">검증 실패. line/column을 담고 있다.</exception>

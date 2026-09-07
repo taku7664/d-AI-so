@@ -865,4 +865,13 @@
   <data name="Common_BrowseOther" xml:space="preserve">
     <value>다른 폴더 고르기…</value>
   </data>
+  <!-- 저장 가능 상태 -->
+  <data name="RuleMaker_NothingToSave" xml:space="preserve">
+    <value>저장할 내용이 없습니다. 행동을 하나 이상 넣으세요</value>
+  </data>
+  <data name="RuleMaker_SaveFailedBody" xml:space="preserve">
+    <value>규칙을 다시 확인해 주세요.
+
+{0}</value>
+  </data>
 </root>
