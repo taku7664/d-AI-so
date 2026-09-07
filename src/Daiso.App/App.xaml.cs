@@ -4,6 +4,7 @@ using Daiso.Core;
 using Daiso.Infrastructure;
 using Daiso.Providers.Claude;
 using Daiso.Providers.Codex;
+using Daiso.Providers.Common;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 
@@ -48,9 +49,19 @@ public partial class App : Application
         services.AddSingleton<IInstructionTemplate, InstructionTemplate>();
         services.AddSingleton<IContextAnalyzer, ContextAnalyzer>();
 
-        // Providers
-        services.AddSingleton<IProvider, ClaudeProvider>();
-        services.AddSingleton<IProvider, CodexProvider>();
+        // Providers — 세션 루트는 설정으로 바꿀 수 있다 (삭제 검증용 더미 폴더 등)
+        services.AddSingleton(provider =>
+        {
+            var overridden = provider.GetRequiredService<ISettingsStore>().Current.SessionHomeOverride;
+
+            return string.IsNullOrWhiteSpace(overridden)
+                ? ProviderHome.FromUserProfile()
+                : new ProviderHome(overridden);
+        });
+        services.AddSingleton<IProvider>(provider =>
+            new ClaudeProvider(provider.GetRequiredService<ProviderHome>(), new ProcessProbe()));
+        services.AddSingleton<IProvider>(provider =>
+            new CodexProvider(provider.GetRequiredService<ProviderHome>()));
 
         // Infrastructure
         services.AddSingleton<IRuleFileService, RuleFileService>();

@@ -20,7 +20,7 @@
 
                     <TextBox
                         Grid.Column="0"
-                        Text="{x:Bind ViewModel.WorkingDirectory, Mode=TwoWay}"
+                        Text="{x:Bind ViewModel.WorkingDirectory, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                         PlaceholderText="폴더 경로" />
 
                     <Button Grid.Column="1" Content="폴더 고르기" Click="OnPickFolderClick" />
@@ -46,7 +46,7 @@
                 <TextBlock Text="옵션 인자" Style="{ThemeResource BodyStrongTextBlockStyle}" />
 
                 <TextBox
-                    Text="{x:Bind ViewModel.Arguments, Mode=TwoWay}"
+                    Text="{x:Bind ViewModel.Arguments, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                     PlaceholderText="예: --continue" />
 
                 <TextBlock Text="Claude 프리셋" Style="{ThemeResource CaptionTextBlockStyle}" Opacity="0.8" />

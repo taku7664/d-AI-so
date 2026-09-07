@@ -12,6 +12,12 @@ public sealed class AppSettings
     /// <summary>인덱스 DB 위치를 바꿀 때만 채운다. null이면 기본 위치.</summary>
     public string? IndexDatabasePath { get; set; }
 
+    /// <summary>
+    /// 세션을 찾는 기준 폴더. null이면 %USERPROFILE%.
+    /// 삭제 기능을 더미 폴더로 검증할 때 여기를 바꾼다.
+    /// </summary>
+    public string? SessionHomeOverride { get; set; }
+
     /// <summary>테마. "System" | "Light" | "Dark".</summary>
     public string Theme { get; set; } = "System";
 
