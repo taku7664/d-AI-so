@@ -8,7 +8,7 @@
     <ScrollViewer Padding="{StaticResource PagePadding}" VerticalScrollBarVisibility="Auto">
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" MaxWidth="900" />
+                <ColumnDefinition Width="*" MaxWidth="{StaticResource ContentMaxWidth}" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0" Spacing="16" Margin="0,0,0,20">
@@ -33,6 +33,7 @@
                             Grid.Column="0"
                             AutomationProperties.AutomationId="WorkingDirBox"
                             AutomationProperties.Name="{loc:Str Key=Terminal_FolderPath}"
+                            FontFamily="Consolas"
                             Text="{x:Bind ViewModel.WorkingDirectory, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                             PlaceholderText="{loc:Str Key=Terminal_FolderPath}" />
 

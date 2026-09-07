@@ -39,9 +39,15 @@
 
                                 <TextBox
                                     Grid.Column="0"
-                                    Header="{loc:Str Key=Settings_SessionHome}"
+                                    FontFamily="Consolas"
                                     AutomationProperties.AutomationId="SessionHomeBox"
-                                    Text="{x:Bind ViewModel.SessionHomeOverride, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                    Text="{x:Bind ViewModel.SessionHomeOverride, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                    <TextBox.Header>
+                                        <TextBlock
+                                            Text="{loc:Str Key=Settings_SessionHome}"
+                                            FontFamily="{ThemeResource ContentControlThemeFontFamily}" />
+                                    </TextBox.Header>
+                                </TextBox>
 
                                 <Button
                                     Grid.Column="1"
@@ -53,19 +59,42 @@
 
                             <TextBlock Style="{StaticResource MutedText}">
                                 <Run Text="{loc:Str Key=Common_DefaultPrefix}" />
-                                <Run Text="{x:Bind ViewModel.DefaultSessionHome}" />
+                                <Run FontFamily="Consolas" Text="{x:Bind ViewModel.DefaultSessionHome}" />
                             </TextBlock>
                         </StackPanel>
 
                         <StackPanel Spacing="4">
-                            <TextBox
-                                Header="{loc:Str Key=Settings_IndexPath}"
-                                AutomationProperties.AutomationId="IndexPathBox"
-                                Text="{x:Bind ViewModel.IndexDatabasePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <Grid ColumnSpacing="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBox
+                                    Grid.Column="0"
+                                    FontFamily="Consolas"
+                                    AutomationProperties.AutomationId="IndexPathBox"
+                                    Text="{x:Bind ViewModel.IndexDatabasePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                    <TextBox.Header>
+                                        <TextBlock
+                                            Text="{loc:Str Key=Settings_IndexPath}"
+                                            FontFamily="{ThemeResource ContentControlThemeFontFamily}" />
+                                    </TextBox.Header>
+                                </TextBox>
+
+                                <!-- 위 칸과 오른쪽 끝을 맞추려고 같은 크기의 자리만 둔다 -->
+                                <Button
+                                    Grid.Column="1"
+                                    VerticalAlignment="Bottom"
+                                    Opacity="0"
+                                    IsTabStop="False"
+                                    IsHitTestVisible="False"
+                                    Content="{loc:Str Key=Common_PickFolder}" />
+                            </Grid>
 
                             <TextBlock Style="{StaticResource MutedText}">
                                 <Run Text="{loc:Str Key=Common_DefaultPrefix}" />
-                                <Run Text="{x:Bind ViewModel.DefaultIndexDatabasePath}" />
+                                <Run FontFamily="Consolas" Text="{x:Bind ViewModel.DefaultIndexDatabasePath}" />
                             </TextBlock>
                         </StackPanel>
                     </StackPanel>
@@ -265,8 +294,32 @@
 
                         <TextBlock
                             Style="{StaticResource MutedText}"
+                            FontFamily="Consolas"
                             Text="{x:Bind ViewModel.SettingsFilePath}"
                             ToolTipService.ToolTip="{x:Bind ViewModel.SettingsFilePath}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- 정보 · 개인정보 -->
+                <Border Style="{StaticResource CardBorder}">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="{loc:Str Key=About_Title}" Style="{StaticResource SectionTitleText}" />
+
+                        <TextBlock
+                            AutomationProperties.AutomationId="AboutVersion"
+                            Text="{x:Bind ViewModel.AppVersion}"
+                            Style="{StaticResource MutedText}" />
+
+                        <TextBlock Text="{loc:Str Key=About_Privacy}" Style="{StaticResource PageSubtitleText}" />
+
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="{loc:Str Key=About_WhereTitle}" Style="{StaticResource MutedText}" />
+                            <TextBlock Text="{x:Bind ViewModel.SettingsFilePath}" Style="{StaticResource MonoText}" TextWrapping="Wrap" />
+                            <TextBlock Text="{x:Bind ViewModel.DefaultIndexDatabasePath}" Style="{StaticResource MonoText}" TextWrapping="Wrap" />
+                            <TextBlock Text="{x:Bind ViewModel.ProfilesPath}" Style="{StaticResource MonoText}" TextWrapping="Wrap" />
+                        </StackPanel>
+
+                        <TextBlock Text="{loc:Str Key=About_Credits}" Style="{StaticResource MutedText}" TextWrapping="Wrap" />
                     </StackPanel>
                 </Border>
 

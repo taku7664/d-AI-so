@@ -4,6 +4,8 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <Version>1.0.0</Version>
+    <Product>d-AI-so</Product>
     <RootNamespace>Daiso.App</RootNamespace>
     <AssemblyName>d-AI-so</AssemblyName>
     <UseWinUI>true</UseWinUI>

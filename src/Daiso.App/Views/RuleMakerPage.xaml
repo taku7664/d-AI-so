@@ -21,11 +21,10 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <TextBlock
-                Grid.Column="0"
-                VerticalAlignment="Center"
-                Text="{loc:Str Key=RuleMaker_Title}"
-                Style="{StaticResource PageTitleText}" />
+            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                <TextBlock Text="{loc:Str Key=RuleMaker_Title}" Style="{StaticResource PageTitleText}" />
+                <TextBlock Text="{loc:Str Key=RuleMaker_Subtitle}" Style="{StaticResource PageSubtitleText}" />
+            </StackPanel>
 
             <muxc:CommandBar
                 Grid.Column="1"
@@ -159,8 +158,8 @@
         <!-- 본문 -->
         <Grid Grid.Row="2" ColumnSpacing="14">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="420" />
+                <ColumnDefinition Width="2*" MinWidth="480" />
+                <ColumnDefinition Width="*" MinWidth="240" />
             </Grid.ColumnDefinitions>
 
             <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
@@ -203,6 +202,7 @@
 
                                             <TextBox
                                                 Grid.Column="0"
+                                                MinWidth="180"
                                                 PlaceholderText="{loc:Str Key=RuleMaker_ActionPlaceholder}"
                                                 Text="{x:Bind Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -387,7 +387,7 @@
                             <Border Style="{StaticResource NoticeBorder}">
                                 <TextBlock
                                     AutomationProperties.AutomationId="ConditionPreview"
-                                    Text="{x:Bind ViewModel.SelectedRule.ConditionPreview, Mode=OneWay}"
+                                    Text="{x:Bind ViewModel.SelectedRule.ConditionPreviewLine, Mode=OneWay}"
                                     Style="{StaticResource MonoText}"
                                     Foreground="{ThemeResource TextFillColorPrimaryBrush}"
                                     TextTrimming="None"
@@ -428,6 +428,7 @@
 
                                             <TextBox
                                                 Grid.Column="0"
+                                                MinWidth="180"
                                                 PlaceholderText="{loc:Str Key=RuleMaker_ActionPlaceholder}"
                                                 Text="{x:Bind Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 

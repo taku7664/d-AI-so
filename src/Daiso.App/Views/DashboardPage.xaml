@@ -228,6 +228,7 @@
 
                         <ItemsControl
                             AutomationProperties.AutomationId="ProfileList"
+                            Visibility="{x:Bind Profiles.HasProfiles, Mode=OneWay}"
                             ItemsSource="{x:Bind Profiles.Profiles}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="vm:AuthProfileRowViewModel">

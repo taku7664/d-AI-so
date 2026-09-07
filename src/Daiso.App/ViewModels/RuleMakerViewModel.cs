@@ -461,6 +461,12 @@ public sealed partial class RuleEditViewModel : ObservableObject
             ? markdown.Describe(condition)
             : string.Empty;
 
+    /// <summary>조건식 상자에 보여줄 줄. 조건이 없으면 무엇을 하면 되는지 알려준다.</summary>
+    public string ConditionPreviewLine =>
+        ConditionPreview.Length > 0
+            ? UiStrings.Format("RuleMaker_ConditionLine", ConditionPreview)
+            : UiStrings.Get("RuleMaker_ConditionLineEmpty");
+
     /// <summary>목록에 보여줄 요약.</summary>
     public string Summary => UiStrings.Format(
         "RuleMaker_RuleSummary",
@@ -500,6 +506,7 @@ public sealed partial class RuleEditViewModel : ObservableObject
     public void NotifyChanged()
     {
         OnPropertyChanged(nameof(ConditionPreview));
+        OnPropertyChanged(nameof(ConditionPreviewLine));
         OnPropertyChanged(nameof(Summary));
         Changed?.Invoke(this, EventArgs.Empty);
     }

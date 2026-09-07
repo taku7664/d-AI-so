@@ -73,6 +73,14 @@ public sealed partial class SettingsViewModel : ObservableObject
     public string SettingsFilePath =>
         (_settings as SettingsStore)?.Path ?? UiStrings.Get("Common_Unknown");
 
+    /// <summary>앱 판 번호. 정보 카드에 쓴다.</summary>
+    public string AppVersion => UiStrings.Format(
+        "About_Version",
+        typeof(SettingsViewModel).Assembly.GetName().Version?.ToString(3) ?? "1.0.0");
+
+    /// <summary>로그인 프로필 보관 위치. 무엇이 이 PC 어디에 남는지 밝힌다.</summary>
+    public string ProfilesPath => AuthProfileStore.DefaultRoot;
+
     /// <summary>세션 루트나 인덱스 경로를 바꾸면 다시 시작해야 적용된다.</summary>
     public string RestartNotice =>
         UiStrings.Get("Settings_RestartNotice");
