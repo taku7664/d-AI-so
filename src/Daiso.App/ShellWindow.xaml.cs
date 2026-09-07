@@ -72,6 +72,7 @@ public sealed partial class ShellWindow : Window
     {
         var page = tag switch
         {
+            "Usage" => typeof(UsagePage),
             "Terminal" => typeof(TerminalPage),
             "Sessions" => typeof(SessionsPage),
             "RuleMaker" => typeof(RuleMakerPage),

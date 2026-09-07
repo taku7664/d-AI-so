@@ -52,6 +52,11 @@
                         <FontIcon Glyph="&#xE80F;" />
                     </muxc:NavigationViewItem.Icon>
                 </muxc:NavigationViewItem>
+                <muxc:NavigationViewItem Content="{loc:Str Key=Nav_Usage}" Tag="Usage" AutomationProperties.AutomationId="NavUsage">
+                    <muxc:NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE9D2;" />
+                    </muxc:NavigationViewItem.Icon>
+                </muxc:NavigationViewItem>
                 <muxc:NavigationViewItem Content="{loc:Str Key=Nav_Terminal}" Tag="Terminal" AutomationProperties.AutomationId="NavTerminal">
                     <muxc:NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE756;" />

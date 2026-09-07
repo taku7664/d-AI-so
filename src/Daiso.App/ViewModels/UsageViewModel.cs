@@ -119,10 +119,23 @@ public sealed partial class UsageViewModel : ObservableObject
         }
 
         var projectTotal = _summary.ByProject.Sum(entry => entry.Value.Total);
+        var top = _summary.ByProject
+            .OrderByDescending(entry => entry.Value.Total)
+            .Take(10)
+            .ToList();
 
-        foreach (var entry in _summary.ByProject.OrderByDescending(entry => entry.Value.Total).Take(10))
+        // 이름이 겹치는 프로젝트는 상위 폴더까지 붙여 구분한다 (세션 화면과 같은 규칙)
+        var labels = Formats.Labels([.. top.Select(entry => entry.Key)]);
+
+        for (var i = 0; i < top.Count; i++)
         {
-            TopProjects.Add(new UsageRowViewModel(entry.Key, entry.Value, projectTotal, 0, isPath: true));
+            TopProjects.Add(new UsageRowViewModel(
+                top[i].Key,
+                top[i].Value,
+                projectTotal,
+                0,
+                isPath: true,
+                displayName: labels[i]));
         }
 
         var modelTotal = _summary.ByModel.Sum(entry => entry.Value.Total);
@@ -192,10 +205,17 @@ public sealed class UsageDayViewModel
 /// <summary>프로젝트별·모델별 한 줄.</summary>
 public sealed class UsageRowViewModel
 {
-    public UsageRowViewModel(string label, TokenUsage usage, long total, decimal cost, bool isPath = false)
+    public UsageRowViewModel(
+        string label,
+        TokenUsage usage,
+        long total,
+        decimal cost,
+        bool isPath = false,
+        string? displayName = null)
     {
         Label = label;
         IsPath = isPath;
+        DisplayName = displayName;
         Usage = usage;
         Percent = total > 0 ? usage.Total * 100.0 / total : 0;
         Cost = cost;
@@ -216,8 +236,11 @@ public sealed class UsageRowViewModel
 
     public string TotalExact => Formats.Exact(Usage.Total);
 
-    /// <summary>목록에 크게 보일 이름. 경로면 마지막 폴더만.</summary>
-    public string PrimaryText => IsPath ? Formats.FolderName(Label) : Label;
+    /// <summary>겹치는 이름을 구분한 표시 이름. 없으면 규칙대로 만든다.</summary>
+    public string? DisplayName { get; }
+
+    /// <summary>목록에 크게 보일 이름. 경로면 폴더 이름(겹치면 상위 폴더까지).</summary>
+    public string PrimaryText => DisplayName ?? (IsPath ? Formats.FolderName(Label) : Label);
 
     /// <summary>보조 설명. 경로일 때만 전체 경로를 옅게 보여준다.</summary>
     public string SecondaryText => IsPath ? Label : string.Empty;

@@ -6,504 +6,264 @@
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
     xmlns:vm="using:Daiso.App.ViewModels">
 
-    <muxc:Pivot Padding="24,10,24,0">
+    <ScrollViewer Padding="{StaticResource PagePadding}" VerticalScrollBarVisibility="Auto">
+            <StackPanel
+                Spacing="16"
+                HorizontalAlignment="Left"
+                MaxWidth="{StaticResource ContentMaxWidth}"
+                Margin="0,4,0,20">
 
-        <!-- ── 요약 ─────────────────────────────────────────────────────── -->
-        <muxc:PivotItem Header="{loc:Str Key=Dashboard_Summary}">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <StackPanel
-                    Spacing="16"
-                    HorizontalAlignment="Left"
-                    MaxWidth="{StaticResource ContentMaxWidth}"
-                    Margin="0,4,0,20">
+                <!-- 제목 · 행동 -->
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
 
-                    <!-- 제목 · 행동 -->
-                    <Grid ColumnSpacing="12">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Spacing="2">
+                        <TextBlock Text="{loc:Str Key=Dashboard_Title}" Style="{StaticResource PageTitleText}" />
+                        <TextBlock Text="{loc:Str Key=Dashboard_ToolStatusHint}" Style="{StaticResource PageSubtitleText}" />
+                    </StackPanel>
 
-                        <StackPanel Grid.Column="0" Spacing="2">
-                            <TextBlock Text="{loc:Str Key=Dashboard_ToolStatus}" Style="{StaticResource PageTitleText}" />
-                            <TextBlock Text="{loc:Str Key=Dashboard_ToolStatusHint}" Style="{StaticResource PageSubtitleText}" />
+                    <Button
+                        Grid.Column="1"
+                        VerticalAlignment="Top"
+                        AutomationProperties.AutomationId="DashboardReloadButton"
+                        Command="{x:Bind ViewModel.LoadCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE72C;" FontSize="14" />
+                            <TextBlock Text="{loc:Str Key=Common_Reload}" />
                         </StackPanel>
+                    </Button>
+                </Grid>
 
-                        <Button
-                            Grid.Column="1"
-                            VerticalAlignment="Top"
-                            AutomationProperties.AutomationId="DashboardReloadButton"
-                            Command="{x:Bind ViewModel.LoadCommand}">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <FontIcon Glyph="&#xE72C;" FontSize="14" />
-                                <TextBlock Text="{loc:Str Key=Common_Reload}" />
-                            </StackPanel>
-                        </Button>
-                    </Grid>
+                <muxc:ProgressBar
+                    IsIndeterminate="True"
+                    Visibility="{x:Bind ViewModel.IsBusy, Mode=OneWay}" />
 
-                    <muxc:ProgressBar
-                        IsIndeterminate="True"
-                        Visibility="{x:Bind ViewModel.IsBusy, Mode=OneWay}" />
+                <TextBlock Text="{loc:Str Key=Dashboard_ToolStatus}" Style="{StaticResource SectionTitleText}" />
 
-                    <!-- 도구 카드 -->
-                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.Tools}">
-                        <ItemsRepeater.Layout>
-                            <UniformGridLayout
-                                MinItemWidth="380"
-                                MinRowSpacing="16"
-                                MinColumnSpacing="16"
-                                ItemsStretch="Fill" />
-                        </ItemsRepeater.Layout>
+                <!-- 도구 카드: 항상 두 개라 폭을 똑같이 나눈다 -->
+                <ItemsRepeater ItemsSource="{x:Bind ViewModel.Tools}">
+                    <ItemsRepeater.Layout>
+                        <UniformGridLayout
+                            MinItemWidth="360"
+                            MaximumRowsOrColumns="2"
+                            MinRowSpacing="16"
+                            MinColumnSpacing="16"
+                            ItemsStretch="Fill" />
+                    </ItemsRepeater.Layout>
 
-                        <ItemsRepeater.ItemTemplate>
-                            <DataTemplate x:DataType="vm:ToolCardViewModel">
-                                <Border Style="{StaticResource CardBorder}">
-                                    <StackPanel Spacing="12">
+                    <ItemsRepeater.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ToolCardViewModel">
+                            <Border Style="{StaticResource CardBorder}">
+                                <StackPanel Spacing="12">
 
-                                        <!-- 제목 줄: 점 · 이름 · 상태 알약 -->
-                                        <Grid ColumnSpacing="10">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
+                                    <!-- 제목 줄: 점 · 이름 · 상태 알약 -->
+                                    <Grid ColumnSpacing="10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
 
-                                            <Ellipse
-                                                Grid.Column="0"
-                                                Width="10"
-                                                Height="10"
-                                                VerticalAlignment="Center"
-                                                Fill="{x:Bind StateBrush, Mode=OneWay}" />
+                                        <Ellipse
+                                            Grid.Column="0"
+                                            Width="10"
+                                            Height="10"
+                                            VerticalAlignment="Center"
+                                            Fill="{x:Bind StateBrush, Mode=OneWay}" />
 
+                                        <TextBlock
+                                            Grid.Column="1"
+                                            Text="{x:Bind Title}"
+                                            Style="{StaticResource SectionTitleText}" />
+
+                                        <Border Grid.Column="2" Style="{StaticResource PillBorder}">
+                                            <TextBlock Text="{x:Bind StateText, Mode=OneWay}" FontSize="12" />
+                                        </Border>
+                                    </Grid>
+
+                                    <!-- 계정 -->
+                                    <StackPanel Spacing="3">
+                                        <TextBlock
+                                            Text="{x:Bind AccountLabel, Mode=OneWay}"
+                                            Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                            TextTrimming="CharacterEllipsis"
+                                            ToolTipService.ToolTip="{x:Bind AccountLabel, Mode=OneWay}" />
+                                        <TextBlock
+                                            Text="{x:Bind Email, Mode=OneWay}"
+                                            Style="{StaticResource MutedText}" />
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <FontIcon
+                                                Glyph="&#xE823;"
+                                                FontSize="12"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                                             <TextBlock
-                                                Grid.Column="1"
-                                                Text="{x:Bind Title}"
-                                                Style="{StaticResource SectionTitleText}" />
-
-                                            <Border Grid.Column="2" Style="{StaticResource PillBorder}">
-                                                <TextBlock Text="{x:Bind StateText, Mode=OneWay}" FontSize="12" />
-                                            </Border>
-                                        </Grid>
-
-                                        <!-- 계정 -->
-                                        <StackPanel Spacing="3">
-                                            <TextBlock
-                                                Text="{x:Bind AccountLabel, Mode=OneWay}"
-                                                Style="{ThemeResource BodyStrongTextBlockStyle}"
-                                                TextTrimming="CharacterEllipsis"
-                                                ToolTipService.ToolTip="{x:Bind AccountLabel, Mode=OneWay}" />
-                                            <TextBlock
-                                                Text="{x:Bind Email, Mode=OneWay}"
-                                                Style="{StaticResource MutedText}" />
-                                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                                <FontIcon
-                                                    Glyph="&#xE823;"
-                                                    FontSize="12"
-                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                                                <TextBlock
-                                                    Text="{x:Bind ExpiresText, Mode=OneWay}"
-                                                    Style="{StaticResource MutedText}" />
-                                            </StackPanel>
-                                            <TextBlock
-                                                Text="{x:Bind InstalledText, Mode=OneWay}"
+                                                Text="{x:Bind ExpiresText, Mode=OneWay}"
                                                 Style="{StaticResource MutedText}" />
                                         </StackPanel>
+                                        <TextBlock
+                                            Text="{x:Bind InstalledText, Mode=OneWay}"
+                                            Style="{StaticResource MutedText}" />
+                                    </StackPanel>
 
-                                        <Expander
-                                            Header="{loc:Str Key=Common_Extras}"
-                                            HorizontalAlignment="Stretch"
-                                            Visibility="{x:Bind HasExtras, Mode=OneWay}">
-                                            <ItemsControl ItemsSource="{x:Bind Extras}">
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate x:DataType="x:String">
-                                                        <TextBlock
-                                                            Text="{x:Bind}"
-                                                            Style="{StaticResource MutedText}"
-                                                            TextTrimming="None"
-                                                            TextWrapping="Wrap" />
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-                                        </Expander>
+                                    <Expander
+                                        Header="{loc:Str Key=Common_Extras}"
+                                        HorizontalAlignment="Stretch"
+                                        Visibility="{x:Bind HasExtras, Mode=OneWay}">
+                                        <ItemsControl ItemsSource="{x:Bind Extras}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="x:String">
+                                                    <TextBlock
+                                                        Text="{x:Bind}"
+                                                        Style="{StaticResource MutedText}"
+                                                        TextTrimming="None"
+                                                        TextWrapping="Wrap" />
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Expander>
+
+                                    <Button
+                                        Content="{x:Bind LoginLabel, Mode=OneWay}"
+                                        HorizontalAlignment="Left"
+                                        Visibility="{x:Bind NeedsLogin, Mode=OneWay}"
+                                        Click="OnLoginClick"
+                                        DataContext="{x:Bind}" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsRepeater.ItemTemplate>
+                </ItemsRepeater>
+
+                <!-- 세션 요약 -->
+                <Border Style="{StaticResource CardBorder}">
+                    <StackPanel Spacing="14">
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock
+                                Grid.Column="0"
+                                Text="{loc:Str Key=Dashboard_Sessions}"
+                                Style="{StaticResource SectionTitleText}" />
+
+                            <HyperlinkButton
+                                Grid.Column="1"
+                                Content="{loc:Str Key=Dashboard_OpenSessions}"
+                                AutomationProperties.AutomationId="GoToSessionsButton"
+                                Click="OnGoToSessionsClick" />
+                        </Grid>
+
+                        <Grid ColumnSpacing="28" AutomationProperties.AutomationId="SessionSummary">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" Spacing="2">
+                                <TextBlock Text="{loc:Str Key=Dashboard_StatSessions}" Style="{StaticResource MutedText}" />
+                                <TextBlock
+                                    Text="{x:Bind ViewModel.SessionCount, Mode=OneWay}"
+                                    FontSize="22"
+                                    FontWeight="SemiBold" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Spacing="2">
+                                <TextBlock Text="{loc:Str Key=Dashboard_StatSize}" Style="{StaticResource MutedText}" />
+                                <TextBlock
+                                    Text="{x:Bind ViewModel.TotalSizeText, Mode=OneWay}"
+                                    FontSize="22"
+                                    FontWeight="SemiBold" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Spacing="2">
+                                <TextBlock Text="{x:Bind ViewModel.UsageHeaderText}" Style="{StaticResource MutedText}" />
+                                <TextBlock
+                                    Text="{x:Bind ViewModel.RecentTokensText, Mode=OneWay}"
+                                    FontSize="22"
+                                    FontWeight="SemiBold"
+                                    ToolTipService.ToolTip="{x:Bind ViewModel.RecentTokensExact, Mode=OneWay}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock
+                            Text="{x:Bind ViewModel.RecentUsageText, Mode=OneWay}"
+                            Style="{StaticResource MutedText}"
+                            TextTrimming="None"
+                            TextWrapping="Wrap"
+                            ToolTipService.ToolTip="{x:Bind ViewModel.RecentUsageExact, Mode=OneWay}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- 최근 세션 -->
+                <Border Style="{StaticResource CardBorder}">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="{loc:Str Key=Dashboard_Recent}" Style="{StaticResource SectionTitleText}" />
+
+                        <Border
+                            Style="{StaticResource NoticeBorder}"
+                            Visibility="{x:Bind ViewModel.HasNoRecentSessions, Mode=OneWay}">
+                            <TextBlock Text="{loc:Str Key=Dashboard_RecentEmpty}" Style="{StaticResource PageSubtitleText}" />
+                        </Border>
+
+                        <ItemsControl
+                            AutomationProperties.AutomationId="RecentSessionList"
+                            ItemsSource="{x:Bind ViewModel.RecentSessions}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:RecentSessionViewModel">
+                                    <Grid ColumnSpacing="12" Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <Border
+                                            Grid.Column="0"
+                                            Width="24"
+                                            Height="24"
+                                            CornerRadius="12"
+                                            VerticalAlignment="Center"
+                                            Background="{x:Bind ToolBrush}">
+                                            <TextBlock
+                                                Text="{x:Bind ToolInitial}"
+                                                Foreground="White"
+                                                FontSize="11"
+                                                FontWeight="SemiBold"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center" />
+                                        </Border>
+
+                                        <StackPanel Grid.Column="1" Spacing="1">
+                                            <TextBlock
+                                                Text="{x:Bind ProjectText}"
+                                                Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                                TextWrapping="NoWrap"
+                                                TextTrimming="CharacterEllipsis"
+                                                ToolTipService.ToolTip="{x:Bind PathText}" />
+                                            <TextBlock Text="{x:Bind MetaText}" Style="{StaticResource MutedText}" />
+                                        </StackPanel>
 
                                         <Button
-                                            Content="{x:Bind LoginLabel, Mode=OneWay}"
-                                            HorizontalAlignment="Left"
-                                            Visibility="{x:Bind NeedsLogin, Mode=OneWay}"
-                                            Click="OnLoginClick"
-                                            DataContext="{x:Bind}" />
-                                    </StackPanel>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsRepeater.ItemTemplate>
-                    </ItemsRepeater>
+                                            Grid.Column="2"
+                                            AutomationProperties.Name="{loc:Str Key=Dashboard_ResumeHere}"
+                                            ToolTipService.ToolTip="{loc:Str Key=Dashboard_ResumeHere}"
+                                            Click="OnResumeRecentClick"
+                                            DataContext="{x:Bind}">
+                                            <FontIcon Glyph="&#xE768;" FontSize="13" />
+                                        </Button>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
 
-                    <!-- 세션 요약 -->
-                    <Border Style="{StaticResource CardBorder}">
-                        <StackPanel Spacing="14">
-                            <Grid ColumnSpacing="12">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-
-                                <TextBlock
-                                    Grid.Column="0"
-                                    Text="{loc:Str Key=Dashboard_Sessions}"
-                                    Style="{StaticResource SectionTitleText}" />
-
-                                <HyperlinkButton
-                                    Grid.Column="1"
-                                    Content="{loc:Str Key=Dashboard_OpenSessions}"
-                                    AutomationProperties.AutomationId="GoToSessionsButton"
-                                    Click="OnGoToSessionsClick" />
-                            </Grid>
-
-                            <Grid ColumnSpacing="28" AutomationProperties.AutomationId="SessionSummary">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-
-                                <StackPanel Grid.Column="0" Spacing="2">
-                                    <TextBlock Text="{loc:Str Key=Dashboard_StatSessions}" Style="{StaticResource MutedText}" />
-                                    <TextBlock
-                                        Text="{x:Bind ViewModel.SessionCount, Mode=OneWay}"
-                                        FontSize="22"
-                                        FontWeight="SemiBold" />
-                                </StackPanel>
-
-                                <StackPanel Grid.Column="1" Spacing="2">
-                                    <TextBlock Text="{loc:Str Key=Dashboard_StatSize}" Style="{StaticResource MutedText}" />
-                                    <TextBlock
-                                        Text="{x:Bind ViewModel.TotalSizeText, Mode=OneWay}"
-                                        FontSize="22"
-                                        FontWeight="SemiBold" />
-                                </StackPanel>
-
-                                <StackPanel Grid.Column="2" Spacing="2">
-                                    <TextBlock Text="{x:Bind ViewModel.UsageHeaderText}" Style="{StaticResource MutedText}" />
-                                    <TextBlock
-                                        Text="{x:Bind ViewModel.RecentTokensText, Mode=OneWay}"
-                                        FontSize="22"
-                                        FontWeight="SemiBold"
-                                        ToolTipService.ToolTip="{x:Bind ViewModel.RecentTokensExact, Mode=OneWay}" />
-                                </StackPanel>
-                            </Grid>
-
-                            <TextBlock
-                                Text="{x:Bind ViewModel.RecentUsageText, Mode=OneWay}"
-                                Style="{StaticResource MutedText}"
-                                TextTrimming="None"
-                                TextWrapping="Wrap"
-                                ToolTipService.ToolTip="{x:Bind ViewModel.RecentUsageExact, Mode=OneWay}" />
-                        </StackPanel>
-                    </Border>
-
-                    <!-- 최근 세션 -->
-                    <Border Style="{StaticResource CardBorder}">
-                        <StackPanel Spacing="12">
-                            <TextBlock Text="{loc:Str Key=Dashboard_Recent}" Style="{StaticResource SectionTitleText}" />
-
-                            <Border
-                                Style="{StaticResource NoticeBorder}"
-                                Visibility="{x:Bind ViewModel.HasNoRecentSessions, Mode=OneWay}">
-                                <TextBlock Text="{loc:Str Key=Dashboard_RecentEmpty}" Style="{StaticResource PageSubtitleText}" />
-                            </Border>
-
-                            <ItemsControl
-                                AutomationProperties.AutomationId="RecentSessionList"
-                                ItemsSource="{x:Bind ViewModel.RecentSessions}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:RecentSessionViewModel">
-                                        <Grid ColumnSpacing="12" Margin="0,0,0,10">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-
-                                            <Border
-                                                Grid.Column="0"
-                                                Width="24"
-                                                Height="24"
-                                                CornerRadius="12"
-                                                VerticalAlignment="Center"
-                                                Background="{x:Bind ToolBrush}">
-                                                <TextBlock
-                                                    Text="{x:Bind ToolInitial}"
-                                                    Foreground="White"
-                                                    FontSize="11"
-                                                    FontWeight="SemiBold"
-                                                    HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center" />
-                                            </Border>
-
-                                            <StackPanel Grid.Column="1" Spacing="1">
-                                                <TextBlock
-                                                    Text="{x:Bind ProjectText}"
-                                                    Style="{ThemeResource BodyStrongTextBlockStyle}"
-                                                    TextWrapping="NoWrap"
-                                                    TextTrimming="CharacterEllipsis"
-                                                    ToolTipService.ToolTip="{x:Bind PathText}" />
-                                                <TextBlock Text="{x:Bind MetaText}" Style="{StaticResource MutedText}" />
-                                            </StackPanel>
-
-                                            <Button
-                                                Grid.Column="2"
-                                                Content="{loc:Str Key=Dashboard_ResumeHere}"
-                                                Click="OnResumeRecentClick"
-                                                DataContext="{x:Bind}" />
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </Border>
-
-                </StackPanel>
-            </ScrollViewer>
-        </muxc:PivotItem>
-
-        <!-- ── 사용량 ───────────────────────────────────────────────────── -->
-        <muxc:PivotItem Header="{loc:Str Key=Dashboard_Usage}">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <StackPanel
-                    Spacing="16"
-                    HorizontalAlignment="Left"
-                    MaxWidth="{StaticResource ContentMaxWidth}"
-                    Margin="0,4,0,20">
-
-                    <!-- 제목 · 기간 -->
-                    <Grid ColumnSpacing="12">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-
-                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                            <TextBlock
-                                AutomationProperties.AutomationId="UsageStatus"
-                                Text="{x:Bind Usage.StatusText, Mode=OneWay}"
-                                Style="{StaticResource PageSubtitleText}" />
-                        </StackPanel>
-
-                        <ComboBox
-                            Grid.Column="1"
-                            Width="120"
-                            VerticalAlignment="Top"
-                            AutomationProperties.AutomationId="UsagePeriodCombo"
-                            AutomationProperties.Name="{loc:Str Key=Common_Period}"
-                            ItemsSource="{x:Bind Usage.Periods}"
-                            SelectedIndex="{x:Bind Usage.PeriodIndex, Mode=TwoWay}" />
-
-                        <Button
-                            Grid.Column="2"
-                            VerticalAlignment="Top"
-                            AutomationProperties.AutomationId="UsageReloadButton"
-                            AutomationProperties.Name="{loc:Str Key=Common_Reload}"
-                            Command="{x:Bind Usage.LoadCommand}">
-                            <FontIcon Glyph="&#xE72C;" FontSize="14" />
-                        </Button>
-                    </Grid>
-
-                    <!-- 추정 비용 -->
-                    <Border Style="{StaticResource CardBorder}">
-                        <StackPanel Spacing="10">
-                            <TextBlock
-                                AutomationProperties.AutomationId="UsageCost"
-                                Text="{x:Bind Usage.EstimatedCostText, Mode=OneWay}"
-                                FontSize="20"
-                                FontWeight="SemiBold" />
-
-                            <muxc:InfoBar
-                                IsOpen="{x:Bind Usage.NeedsPrices, Mode=OneWay}"
-                                IsClosable="False"
-                                Severity="Informational"
-                                Message="{loc:Str Key=Usage_PriceHint}">
-                                <muxc:InfoBar.ActionButton>
-                                    <Button
-                                        Content="{loc:Str Key=Usage_OpenSettings}"
-                                        AutomationProperties.AutomationId="GoToPricesButton"
-                                        Click="OnGoToPricesClick" />
-                                </muxc:InfoBar.ActionButton>
-                            </muxc:InfoBar>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- 비어 있을 때 -->
-                    <Border
-                        Style="{StaticResource NoticeBorder}"
-                        Visibility="{x:Bind Usage.IsEmpty, Mode=OneWay}">
-                        <TextBlock Text="{loc:Str Key=Usage_Empty}" Style="{StaticResource PageSubtitleText}" />
-                    </Border>
-
-                    <!-- 일별 -->
-                    <Border Style="{StaticResource CardBorder}" Visibility="{x:Bind Usage.HasData, Mode=OneWay}">
-                        <StackPanel Spacing="10">
-                            <TextBlock Text="{loc:Str Key=Dashboard_Daily}" Style="{StaticResource SectionTitleText}" />
-
-                            <ItemsControl ItemsSource="{x:Bind Usage.Days}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:UsageDayViewModel">
-                                        <Grid ColumnSpacing="12" Margin="0,0,0,6">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="56" />
-                                                <ColumnDefinition Width="360" />
-                                                <ColumnDefinition Width="90" />
-                                                <ColumnDefinition Width="*" />
-                                            </Grid.ColumnDefinitions>
-
-                                            <TextBlock
-                                                Grid.Column="0"
-                                                Text="{x:Bind DateText}"
-                                                Style="{StaticResource MutedText}"
-                                                VerticalAlignment="Center" />
-
-                                            <Rectangle
-                                                Grid.Column="1"
-                                                Height="12"
-                                                HorizontalAlignment="Left"
-                                                RadiusX="6"
-                                                RadiusY="6"
-                                                Width="{x:Bind BarWidth}"
-                                                Fill="{ThemeResource AccentFillColorDefaultBrush}"
-                                                ToolTipService.ToolTip="{x:Bind Detail}" />
-
-                                            <TextBlock
-                                                Grid.Column="2"
-                                                Text="{x:Bind TotalText}"
-                                                Style="{StaticResource NumberText}"
-                                                VerticalAlignment="Center"
-                                                ToolTipService.ToolTip="{x:Bind TotalExact}" />
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- 프로젝트별 -->
-                    <Border Style="{StaticResource CardBorder}" Visibility="{x:Bind Usage.HasData, Mode=OneWay}">
-                        <StackPanel Spacing="10">
-                            <TextBlock Text="{loc:Str Key=Dashboard_TopProjects}" Style="{StaticResource SectionTitleText}" />
-
-                            <Grid ColumnSpacing="12">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="100" />
-                                    <ColumnDefinition Width="70" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{loc:Str Key=Usage_ProjectColumn}" Style="{StaticResource MutedText}" />
-                                <TextBlock Grid.Column="1" Text="{loc:Str Key=Usage_TokensColumn}" Style="{StaticResource MutedText}" HorizontalTextAlignment="Right" />
-                                <TextBlock Grid.Column="2" Text="{loc:Str Key=Usage_ShareColumn}" Style="{StaticResource MutedText}" HorizontalTextAlignment="Right" />
-                            </Grid>
-
-                            <ItemsControl ItemsSource="{x:Bind Usage.TopProjects}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:UsageRowViewModel">
-                                        <Grid ColumnSpacing="12" Margin="0,0,0,8">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="100" />
-                                                <ColumnDefinition Width="70" />
-                                            </Grid.ColumnDefinitions>
-
-                                            <StackPanel Grid.Column="0" Spacing="1">
-                                                <TextBlock
-                                                    Text="{x:Bind PrimaryText}"
-                                                    TextTrimming="CharacterEllipsis"
-                                                    ToolTipService.ToolTip="{x:Bind Label}" />
-                                                <TextBlock
-                                                    Text="{x:Bind SecondaryText}"
-                                                    Style="{StaticResource MonoText}"
-                                                    Visibility="{x:Bind HasSecondary}" />
-                                            </StackPanel>
-
-                                            <TextBlock
-                                                Grid.Column="1"
-                                                Text="{x:Bind TotalText}"
-                                                Style="{StaticResource NumberText}"
-                                                VerticalAlignment="Center"
-                                                ToolTipService.ToolTip="{x:Bind TotalExact}" />
-
-                                            <TextBlock
-                                                Grid.Column="2"
-                                                Text="{x:Bind PercentText}"
-                                                Style="{StaticResource NumberText}"
-                                                VerticalAlignment="Center" />
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- 모델별 -->
-                    <Border Style="{StaticResource CardBorder}" Visibility="{x:Bind Usage.HasData, Mode=OneWay}">
-                        <StackPanel Spacing="10">
-                            <TextBlock Text="{loc:Str Key=Dashboard_ByModel}" Style="{StaticResource SectionTitleText}" />
-
-                            <Grid ColumnSpacing="12">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="100" />
-                                    <ColumnDefinition Width="70" />
-                                    <ColumnDefinition Width="110" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{loc:Str Key=Usage_ModelColumn}" Style="{StaticResource MutedText}" />
-                                <TextBlock Grid.Column="1" Text="{loc:Str Key=Usage_TokensColumn}" Style="{StaticResource MutedText}" HorizontalTextAlignment="Right" />
-                                <TextBlock Grid.Column="2" Text="{loc:Str Key=Usage_ShareColumn}" Style="{StaticResource MutedText}" HorizontalTextAlignment="Right" />
-                                <TextBlock Grid.Column="3" Text="{loc:Str Key=Usage_CostColumn}" Style="{StaticResource MutedText}" HorizontalTextAlignment="Right" />
-                            </Grid>
-
-                            <ItemsControl ItemsSource="{x:Bind Usage.ByModel}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:UsageRowViewModel">
-                                        <Grid ColumnSpacing="12" Margin="0,0,0,6">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="100" />
-                                                <ColumnDefinition Width="70" />
-                                                <ColumnDefinition Width="110" />
-                                            </Grid.ColumnDefinitions>
-
-                                            <TextBlock
-                                                Grid.Column="0"
-                                                Text="{x:Bind PrimaryText}"
-                                                TextTrimming="CharacterEllipsis"
-                                                VerticalAlignment="Center" />
-                                            <TextBlock
-                                                Grid.Column="1"
-                                                Text="{x:Bind TotalText}"
-                                                Style="{StaticResource NumberText}"
-                                                VerticalAlignment="Center"
-                                                ToolTipService.ToolTip="{x:Bind TotalExact}" />
-                                            <TextBlock
-                                                Grid.Column="2"
-                                                Text="{x:Bind PercentText}"
-                                                Style="{StaticResource NumberText}"
-                                                VerticalAlignment="Center" />
-                                            <TextBlock
-                                                Grid.Column="3"
-                                                Text="{x:Bind CostText}"
-                                                Style="{StaticResource NumberText}"
-                                                VerticalAlignment="Center" />
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </Border>
-
-                    <TextBlock
-                        Text="{loc:Str Key=Dashboard_CostNote}"
-                        Style="{StaticResource PageSubtitleText}" />
-
-                </StackPanel>
-            </ScrollViewer>
-        </muxc:PivotItem>
-    </muxc:Pivot>
+            </StackPanel>
+        </ScrollViewer>
 </Page>

@@ -79,6 +79,8 @@
                 Header="{loc:Str Key=Sessions_ProjectFilter}"
                 MinWidth="220"
                 MaxWidth="300"
+                IsEnabled="{x:Bind ViewModel.CanPickProject, Mode=OneWay}"
+                ToolTipService.ToolTip="{loc:Str Key=Sessions_SearchScopeHint}"
                 AutomationProperties.AutomationId="ProjectCombo"
                 ItemsSource="{x:Bind ViewModel.Projects}"
                 SelectedItem="{x:Bind ViewModel.SelectedProject, Mode=TwoWay}">

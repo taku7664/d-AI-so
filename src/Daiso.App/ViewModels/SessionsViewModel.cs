@@ -29,6 +29,7 @@ public sealed partial class SessionsViewModel : ObservableObject
     private readonly ISettingsStore _settings;
 
     private List<SessionInfo> _allSessions = [];
+    private int _searchHitCount;
 
     [ObservableProperty]
     private bool isBusy;
@@ -123,8 +124,19 @@ public sealed partial class SessionsViewModel : ObservableObject
     /// <summary>목록이 비었는가. 빈 상태 안내를 띄운다.</summary>
     public bool IsListEmpty => Sessions.Count == 0;
 
-    /// <summary>목록 제목에 붙이는 건수.</summary>
-    public string SessionCountText => UiStrings.Format("Sessions_Count", Sessions.Count);
+    /// <summary>
+    /// 목록 제목 옆 건수. 검색 중이면 결과 수를 보여준다.
+    /// (검색 중에 프로젝트의 세션 수를 보여주면 숫자가 서로 안 맞아 보인다)
+    /// </summary>
+    public string SessionCountText => HasSearchResults
+        ? UiStrings.Format("Sessions_HitCount", _searchHitCount)
+        : UiStrings.Format("Sessions_Count", Sessions.Count);
+
+    /// <summary>검색 중인가. 프로젝트 필터를 잠그는 데 쓴다.</summary>
+    public bool IsSearching => HasSearchResults;
+
+    /// <summary>검색 중이 아닌가. 프로젝트 필터 활성 조건.</summary>
+    public bool CanPickProject => !HasSearchResults;
 
     /// <summary>목록 제목. 검색 중이면 검색 결과임을 밝힌다.</summary>
     public string ListHeaderText =>
@@ -214,6 +226,7 @@ public sealed partial class SessionsViewModel : ObservableObject
                 SearchResults.Add(project);
             }
 
+            _searchHitCount = hits.Count;
             StatusText = UiStrings.Format("Sessions_SearchResult", query, hits.Count);
         }
         finally
@@ -229,13 +242,20 @@ public sealed partial class SessionsViewModel : ObservableObject
     {
         SearchQuery = null;
         SearchResults.Clear();
+        _searchHitCount = 0;
         NotifySearchVisibility();
+
+        // 검색을 지웠으면 상태 문구도 목록 기준으로 되돌린다.
+        StatusText = UiStrings.Format("Sessions_Count", _allSessions.Count);
     }
 
     private void NotifySearchVisibility()
     {
         OnPropertyChanged(nameof(HasSearchResults));
         OnPropertyChanged(nameof(ListHeaderText));
+        OnPropertyChanged(nameof(SessionCountText));
+        OnPropertyChanged(nameof(IsSearching));
+        OnPropertyChanged(nameof(CanPickProject));
         OnPropertyChanged(nameof(ProjectListVisibility));
         OnPropertyChanged(nameof(SearchTreeVisibility));
     }
@@ -751,7 +771,9 @@ public sealed class SearchProjectViewModel
 
     public ObservableCollection<SearchSessionViewModel> Sessions { get; } = [];
 
-    public string Summary => UiStrings.Format("Sessions_HitProject", Path, Sessions.Count);
+    /// <summary>트리에 보여줄 이름. 경로 전체는 길어서 폴더 이름만 쓴다.</summary>
+    public string Summary =>
+        UiStrings.Format("Sessions_HitProject", Formats.FolderName(Path), Sessions.Count);
 }
 
 /// <summary>검색 결과 트리의 세션 노드.</summary>
