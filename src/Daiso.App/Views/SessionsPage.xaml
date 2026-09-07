@@ -76,6 +76,20 @@
         <!-- 필터 (바꾸면 바로 적용) -->
         <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="12">
             <ComboBox
+                Header="{loc:Str Key=Sessions_ProjectFilter}"
+                MinWidth="220"
+                MaxWidth="300"
+                AutomationProperties.AutomationId="ProjectCombo"
+                ItemsSource="{x:Bind ViewModel.Projects}"
+                SelectedItem="{x:Bind ViewModel.SelectedProject, Mode=TwoWay}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ProjectGroupViewModel">
+                        <TextBlock Text="{x:Bind ComboLabel}" ToolTipService.ToolTip="{x:Bind Path}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+
+            <ComboBox
                 Header="{loc:Str Key=Common_Tool}"
                 Width="120"
                 AutomationProperties.AutomationId="ToolFilterCombo"
@@ -89,25 +103,45 @@
                 ItemsSource="{x:Bind ViewModel.PeriodFilters}"
                 SelectedIndex="{x:Bind ViewModel.PeriodFilterIndex, Mode=TwoWay}" />
 
-            <NumberBox
-                Header="{loc:Str Key=Sessions_MinSize}"
-                Width="150"
-                Minimum="0"
-                SpinButtonPlacementMode="Compact"
-                AutomationProperties.AutomationId="MinSizeBox"
-                Value="{x:Bind ViewModel.MinSizeMegabytes, Mode=TwoWay}" />
-
-            <CheckBox
-                Content="{loc:Str Key=Sessions_OrphanOnly}"
+            <!-- 자주 안 쓰는 필터는 팝오버로. 좁은 창에서 한 줄이 넘치지 않게 한다 -->
+            <muxc:DropDownButton
                 VerticalAlignment="Bottom"
-                AutomationProperties.AutomationId="OrphansOnlyCheck"
-                IsChecked="{x:Bind ViewModel.OrphansOnly, Mode=TwoWay}" />
+                AutomationProperties.AutomationId="MoreFiltersButton">
+                <muxc:DropDownButton.Content>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE71C;" FontSize="13" />
+                        <TextBlock Text="{loc:Str Key=Sessions_MoreFilters}" />
+                    </StackPanel>
+                </muxc:DropDownButton.Content>
+                <muxc:DropDownButton.Flyout>
+                    <Flyout>
+                        <StackPanel Spacing="12" MinWidth="240">
+                            <NumberBox
+                                Header="{loc:Str Key=Sessions_MinSize}"
+                                Minimum="0"
+                                SpinButtonPlacementMode="Compact"
+                                AutomationProperties.AutomationId="MinSizeBox"
+                                Value="{x:Bind ViewModel.MinSizeMegabytes, Mode=TwoWay}" />
 
-            <CheckBox
-                Content="{loc:Str Key=Sessions_IncludeArchived}"
-                VerticalAlignment="Bottom"
-                AutomationProperties.AutomationId="IncludeArchivedCheck"
-                IsChecked="{x:Bind ViewModel.IncludeArchived, Mode=TwoWay}" />
+                            <CheckBox
+                                Content="{loc:Str Key=Sessions_OrphanOnly}"
+                                AutomationProperties.AutomationId="OrphansOnlyCheck"
+                                IsChecked="{x:Bind ViewModel.OrphansOnly, Mode=TwoWay}" />
+
+                            <CheckBox
+                                Content="{loc:Str Key=Sessions_IncludeArchived}"
+                                AutomationProperties.AutomationId="IncludeArchivedCheck"
+                                IsChecked="{x:Bind ViewModel.IncludeArchived, Mode=TwoWay}" />
+
+                            <Button
+                                Content="{loc:Str Key=Sessions_ResetFilters}"
+                                HorizontalAlignment="Left"
+                                AutomationProperties.AutomationId="ResetFiltersButton"
+                                Command="{x:Bind ViewModel.ResetFiltersCommand}" />
+                        </StackPanel>
+                    </Flyout>
+                </muxc:DropDownButton.Flyout>
+            </muxc:DropDownButton>
 
             <muxc:ProgressRing
                 Width="18"
@@ -120,57 +154,12 @@
         <!-- 본문: 프로젝트 · 세션 · 상세 -->
         <Grid Grid.Row="2" ColumnSpacing="14">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="290" />
-                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" MinWidth="320" />
                 <ColumnDefinition Width="400" />
             </Grid.ColumnDefinitions>
 
-            <!-- 왼쪽 -->
+            <!-- 목록 (일반 목록 또는 검색 결과 트리) -->
             <Border Grid.Column="0" Style="{StaticResource CardBorder}" Padding="0">
-                <Grid RowSpacing="0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-
-                    <TextBlock
-                        Grid.Row="0"
-                        Margin="16,14,16,8"
-                        Style="{StaticResource SectionTitleText}"
-                        Text="{loc:Str Key=Sessions_Projects}" />
-
-                    <Grid Grid.Row="1">
-                        <ListView
-                            x:Name="ProjectList"
-                            AutomationProperties.AutomationId="ProjectList"
-                            ItemsSource="{x:Bind ViewModel.Projects}"
-                            SelectedItem="{x:Bind ViewModel.SelectedProject, Mode=TwoWay}"
-                            Visibility="{x:Bind ViewModel.ProjectListVisibility, Mode=OneWay}">
-                            <ListView.ItemTemplate>
-                                <DataTemplate x:DataType="vm:ProjectGroupViewModel">
-                                    <StackPanel Padding="0,7" Spacing="2" ToolTipService.ToolTip="{x:Bind Path}">
-                                        <TextBlock
-                                            Text="{x:Bind DisplayName}"
-                                            Style="{ThemeResource BodyStrongTextBlockStyle}"
-                                            TextWrapping="NoWrap"
-                                            TextTrimming="CharacterEllipsis" />
-                                        <TextBlock Text="{x:Bind Summary}" Style="{StaticResource MutedText}" />
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
-
-                        <muxc:TreeView
-                            x:Name="SearchTree"
-                            SelectionMode="Single"
-                            ItemInvoked="OnSearchItemInvoked"
-                            Visibility="{x:Bind ViewModel.SearchTreeVisibility, Mode=OneWay}" />
-                    </Grid>
-                </Grid>
-            </Border>
-
-            <!-- 가운데 -->
-            <Border Grid.Column="1" Style="{StaticResource CardBorder}" Padding="0">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -186,7 +175,7 @@
                         <TextBlock
                             Grid.Column="0"
                             Style="{StaticResource SectionTitleText}"
-                            Text="{loc:Str Key=Sessions_ListHeader}" />
+                            Text="{x:Bind ViewModel.ListHeaderText, Mode=OneWay}" />
 
                         <TextBlock
                             Grid.Column="1"
@@ -196,8 +185,16 @@
                     </Grid>
 
                     <Grid Grid.Row="1">
+                        <muxc:TreeView
+                            x:Name="SearchTree"
+                            Padding="8,0,8,8"
+                            SelectionMode="Single"
+                            ItemInvoked="OnSearchItemInvoked"
+                            Visibility="{x:Bind ViewModel.SearchTreeVisibility, Mode=OneWay}" />
+
                         <ListView
                             AutomationProperties.AutomationId="SessionList"
+                            Visibility="{x:Bind ViewModel.ProjectListVisibility, Mode=OneWay}"
                             ItemsSource="{x:Bind ViewModel.Sessions}"
                             SelectedItem="{x:Bind ViewModel.SelectedSession, Mode=TwoWay}"
                             SelectionChanged="OnSessionSelectionChanged">
@@ -278,7 +275,7 @@
             </Border>
 
             <!-- 오른쪽: 상세 · 컨텍스트 -->
-            <Border Grid.Column="2" Style="{StaticResource CardBorder}" Padding="4,0,4,4">
+            <Border Grid.Column="1" Style="{StaticResource CardBorder}" Padding="4,0,4,4">
                 <muxc:Pivot Padding="8,4,8,0">
 
                     <muxc:PivotItem Header="{loc:Str Key=Sessions_Detail}">

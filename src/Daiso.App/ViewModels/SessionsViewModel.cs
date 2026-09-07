@@ -123,8 +123,12 @@ public sealed partial class SessionsViewModel : ObservableObject
     /// <summary>목록이 비었는가. 빈 상태 안내를 띄운다.</summary>
     public bool IsListEmpty => Sessions.Count == 0;
 
-    /// <summary>가운데 목록 제목에 붙이는 건수.</summary>
+    /// <summary>목록 제목에 붙이는 건수.</summary>
     public string SessionCountText => UiStrings.Format("Sessions_Count", Sessions.Count);
+
+    /// <summary>목록 제목. 검색 중이면 검색 결과임을 밝힌다.</summary>
+    public string ListHeaderText =>
+        UiStrings.Get(HasSearchResults ? "Sessions_SearchTitle" : "Sessions_ListHeader");
 
     /// <summary>세션을 골랐는가.</summary>
     public bool HasSelectedSession => SelectedSession is not null;
@@ -231,6 +235,7 @@ public sealed partial class SessionsViewModel : ObservableObject
     private void NotifySearchVisibility()
     {
         OnPropertyChanged(nameof(HasSearchResults));
+        OnPropertyChanged(nameof(ListHeaderText));
         OnPropertyChanged(nameof(ProjectListVisibility));
         OnPropertyChanged(nameof(SearchTreeVisibility));
     }
@@ -345,6 +350,17 @@ public sealed partial class SessionsViewModel : ObservableObject
         {
             IsBusy = false;
         }
+    }
+
+    /// <summary>필터를 기본값으로 되돌린다.</summary>
+    [RelayCommand]
+    public void ResetFilters()
+    {
+        ToolFilterIndex = 0;
+        PeriodFilterIndex = 0;
+        MinSizeMegabytes = 0;
+        OrphansOnly = false;
+        IncludeArchived = true;
     }
 
     /// <summary>규칙에 맞는 세션을 골라 체크한다. (N일 이상 / 고아 / N MB 초과)</summary>
@@ -564,6 +580,9 @@ public sealed class ProjectGroupViewModel
     public string Summary =>
         UiStrings.Format("Sessions_ProjectSummary", Count, DashboardViewModel.FormatSize(TotalBytes))
         + (IsOrphan ? UiStrings.Get("Sessions_OrphanSuffix") : string.Empty);
+
+    /// <summary>드롭다운 한 줄. 이름과 건수를 함께 보여준다.</summary>
+    public string ComboLabel => $"{DisplayName}  ·  {Summary}";
 }
 
 /// <summary>세션 목록 한 줄. (REQUIREMENTS §5.1 열)</summary>

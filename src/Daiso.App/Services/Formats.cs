@@ -75,9 +75,12 @@ public static class Formats
             {
                 var parts = segments[index];
 
-                labels[index] = ancestor is { } level && parts.Length > level
-                    ? $"{parts[^(level + 1)]} / {labels[index]}"
-                    : paths[index];
+                // 어느 단계에서도 갈리지 않으면(사실상 같은 폴더) 이름만 둔다.
+                // 전체 경로를 목록에 뿌리면 목록이 경로로 뒤덮인다. 전체 값은 ToolTip에 있다.
+                if (ancestor is { } level && parts.Length > level)
+                {
+                    labels[index] = $"{parts[^(level + 1)]} / {labels[index]}";
+                }
             }
         }
 

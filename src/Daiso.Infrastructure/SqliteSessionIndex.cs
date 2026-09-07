@@ -16,7 +16,15 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
     private const int SnippetRadius = 40;
 
     private readonly IReadOnlyList<IProvider> _providers;
+
+    /// <summary>쓰기 전용 연결. 갱신·재구축만 쓴다.</summary>
     private readonly SqliteConnection _connection;
+
+    /// <summary>쓰기는 한 번에 하나만. 목록·검색은 각자 연결을 열어 기다리지 않는다.</summary>
+    private readonly SemaphoreSlim _writeGate = new(1, 1);
+
+    /// <summary>읽기용 연결 문자열. WAL이라 쓰기 중에도 읽을 수 있다.</summary>
+    private readonly string _connectionString;
 
     public SqliteSessionIndex(IEnumerable<IProvider> providers, string databasePath)
     {
@@ -31,13 +39,14 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
             Directory.CreateDirectory(directory);
         }
 
-        _connection = new SqliteConnection(new SqliteConnectionStringBuilder
+        _connectionString = new SqliteConnectionStringBuilder
         {
             DataSource = databasePath,
             Mode = SqliteOpenMode.ReadWriteCreate,
             Cache = SqliteCacheMode.Private,
-        }.ToString());
+        }.ToString();
 
+        _connection = new SqliteConnection(_connectionString);
         _connection.Open();
         CreateSchema();
     }
@@ -54,60 +63,94 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
                 "d-AI-so",
                 "index.db");
 
-    public void Dispose() => _connection.Dispose();
+    public void Dispose()
+    {
+        _connection.Dispose();
+        _writeGate.Dispose();
+    }
+
+    /// <summary>
+    /// 읽기용 연결을 새로 연다.
+    /// 하나의 연결을 화면과 배경 갱신이 같이 쓰면 리더가 겹쳐 깨진다 (IndexOutOfRange).
+    /// </summary>
+    private SqliteConnection OpenRead()
+    {
+        var connection = new SqliteConnection(_connectionString);
+        connection.Open();
+
+        return connection;
+    }
 
     /// <inheritdoc />
     public async Task RebuildAsync(IProgress<IndexProgress> progress, CancellationToken ct)
     {
-        Execute("DELETE FROM messages_fts; DELETE FROM sessions; DELETE FROM usage_daily;");
+        await _writeGate.WaitAsync(ct).ConfigureAwait(false);
 
-        var sessions = await CollectAsync(ct).ConfigureAwait(false);
-        var done = 0;
-
-        foreach (var (provider, session) in sessions)
+        try
         {
-            ct.ThrowIfCancellationRequested();
-            progress?.Report(new IndexProgress(done, sessions.Count, session.FilePath));
+            Execute("DELETE FROM messages_fts; DELETE FROM sessions; DELETE FROM usage_daily;");
 
-            await IndexAsync(provider, session, fromOffset: 0, previous: null, ct).ConfigureAwait(false);
-            done++;
+            var sessions = await CollectAsync(ct).ConfigureAwait(false);
+            var done = 0;
+
+            foreach (var (provider, session) in sessions)
+            {
+                ct.ThrowIfCancellationRequested();
+                progress?.Report(new IndexProgress(done, sessions.Count, session.FilePath));
+
+                await IndexAsync(provider, session, fromOffset: 0, previous: null, ct).ConfigureAwait(false);
+                done++;
+            }
+
+            progress?.Report(new IndexProgress(done, sessions.Count, string.Empty));
         }
-
-        progress?.Report(new IndexProgress(done, sessions.Count, string.Empty));
+        finally
+        {
+            _writeGate.Release();
+        }
     }
 
     /// <inheritdoc />
     public async Task RefreshAsync(CancellationToken ct)
     {
-        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        await _writeGate.WaitAsync(ct).ConfigureAwait(false);
 
-        foreach (var provider in _providers)
+        try
         {
-            await foreach (var session in provider.EnumerateSessionsAsync(ct).ConfigureAwait(false))
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var provider in _providers)
             {
-                ct.ThrowIfCancellationRequested();
-                seen.Add(session.FilePath);
-
-                var previous = ReadRow(session.FilePath);
-
-                // 크기·수정 시각이 같으면 파일을 열지 않는다.
-                if (previous is not null
-                    && previous.SizeBytes == session.SizeBytes
-                    && previous.ModifiedAt == session.ModifiedAt)
+                await foreach (var session in provider.EnumerateSessionsAsync(ct).ConfigureAwait(false))
                 {
-                    UpdateLiveFlags(session);
-                    continue;
+                    ct.ThrowIfCancellationRequested();
+                    seen.Add(session.FilePath);
+
+                    var previous = ReadRow(session.FilePath);
+
+                    // 크기·수정 시각이 같으면 파일을 열지 않는다.
+                    if (previous is not null
+                        && previous.SizeBytes == session.SizeBytes
+                        && previous.ModifiedAt == session.ModifiedAt)
+                    {
+                        UpdateLiveFlags(session);
+                        continue;
+                    }
+
+                    // 커진 파일은 이전 오프셋부터, 줄어들었거나 새 파일은 처음부터 읽는다.
+                    var append = previous is not null && session.SizeBytes > previous.SizeBytes;
+                    var offset = append ? previous!.LastOffset : 0;
+
+                    await IndexAsync(provider, session, offset, append ? previous : null, ct).ConfigureAwait(false);
                 }
-
-                // 커진 파일은 이전 오프셋부터, 줄어들었거나 새 파일은 처음부터 읽는다.
-                var append = previous is not null && session.SizeBytes > previous.SizeBytes;
-                var offset = append ? previous!.LastOffset : 0;
-
-                await IndexAsync(provider, session, offset, append ? previous : null, ct).ConfigureAwait(false);
             }
-        }
 
-        RemoveMissing(seen);
+            RemoveMissing(seen);
+        }
+        finally
+        {
+            _writeGate.Release();
+        }
     }
 
     /// <inheritdoc />
@@ -116,7 +159,8 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
         ArgumentNullException.ThrowIfNull(filter);
         ct.ThrowIfCancellationRequested();
 
-        using var command = _connection.CreateCommand();
+        using var connection = OpenRead();
+        using var command = connection.CreateCommand();
         var where = new List<string>();
 
         if (filter.Tool is { } tool)
@@ -186,9 +230,11 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
             return Task.FromResult<IReadOnlyList<SearchHit>>([]);
         }
 
+        using var connection = OpenRead();
+
         return Task.FromResult(trimmed.Length >= TrigramMinimumLength
-            ? SearchWithFts(trimmed)
-            : SearchWithLike(trimmed));
+            ? SearchWithFts(connection, trimmed)
+            : SearchWithLike(connection, trimmed));
     }
 
     /// <inheritdoc />
@@ -196,7 +242,8 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
     {
         ct.ThrowIfCancellationRequested();
 
-        using var command = _connection.CreateCommand();
+        using var connection = OpenRead();
+        using var command = connection.CreateCommand();
         command.CommandText = """
             SELECT date, project, model, input, output, cache_create, cache_read
             FROM usage_daily
@@ -508,9 +555,9 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
 
     // ── 검색 ─────────────────────────────────────────────────────────────
 
-    private IReadOnlyList<SearchHit> SearchWithFts(string query)
+    private static IReadOnlyList<SearchHit> SearchWithFts(SqliteConnection connection, string query)
     {
-        using var command = _connection.CreateCommand();
+        using var command = connection.CreateCommand();
         command.CommandText = $"""
             SELECT {SessionColumns.Replace("sessions.", "s.", StringComparison.Ordinal)},
                    m.at, m.role, m.text
@@ -524,9 +571,9 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
         return ReadHits(command, query);
     }
 
-    private IReadOnlyList<SearchHit> SearchWithLike(string query)
+    private static IReadOnlyList<SearchHit> SearchWithLike(SqliteConnection connection, string query)
     {
-        using var command = _connection.CreateCommand();
+        using var command = connection.CreateCommand();
         command.CommandText = $"""
             SELECT {SessionColumns.Replace("sessions.", "s.", StringComparison.Ordinal)},
                    m.at, m.role, m.text

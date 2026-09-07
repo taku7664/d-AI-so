@@ -16,6 +16,7 @@ internal static class Program
           daiso auth
           daiso sessions [--tool claude|codex] [--include-archived]
           daiso search <query>
+          daiso refresh
           daiso usage --days N
           daiso rules render <path>
           daiso rules roundtrip <path>
@@ -42,6 +43,7 @@ internal static class Program
                 "auth" => await Commands.AuthAsync().ConfigureAwait(false),
                 "sessions" => await Commands.SessionsAsync(args).ConfigureAwait(false),
                 "search" => await Commands.SearchAsync(args).ConfigureAwait(false),
+                "refresh" => await Commands.RefreshAsync().ConfigureAwait(false),
                 "usage" => await Commands.UsageAsync(args).ConfigureAwait(false),
                 "rules" => await Commands.RulesAsync(args).ConfigureAwait(false),
                 "doctor" => await Commands.DoctorAsync(args).ConfigureAwait(false),
@@ -135,6 +137,19 @@ internal static class Commands
         {
             Console.WriteLine($"  … 그 밖에 {sessions.Count - 50}건");
         }
+
+        return 0;
+    }
+
+    /// <summary>인덱스를 갱신한다. 앱 없이 확인할 때 쓴다.</summary>
+    internal static async Task<int> RefreshAsync()
+    {
+        using var index = await OpenIndexAsync().ConfigureAwait(false);
+
+        await index.RefreshAsync(default).ConfigureAwait(false);
+
+        var sessions = await index.ListAsync(SessionFilter.All, default).ConfigureAwait(false);
+        Console.WriteLine($"갱신 완료. 세션 {sessions.Count}건");
 
         return 0;
     }
