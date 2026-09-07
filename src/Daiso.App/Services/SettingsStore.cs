@@ -8,6 +8,9 @@ public interface ISettingsStore
 {
     AppSettings Current { get; }
 
+    /// <summary>설정이 저장될 때마다 발생한다. 단가표 변경 즉시 재계산에 쓴다.</summary>
+    event EventHandler? Changed;
+
     /// <summary>지금 값을 디스크에 쓴다.</summary>
     void Save();
 }
@@ -34,6 +37,9 @@ public sealed class SettingsStore : ISettingsStore
     }
 
     /// <inheritdoc />
+    public event EventHandler? Changed;
+
+    /// <inheritdoc />
     public AppSettings Current { get; private set; }
 
     /// <summary>설정 파일 경로.</summary>
@@ -56,6 +62,8 @@ public sealed class SettingsStore : ISettingsStore
         {
             // 설정을 못 써도 앱은 계속 돌아가야 한다.
         }
+
+        Changed?.Invoke(this, EventArgs.Empty);
     }
 
     private static AppSettings Load(string path)

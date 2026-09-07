@@ -86,6 +86,7 @@ public partial class App : Application
 
         services.AddSingleton<ShellViewModel>();
         services.AddSingleton<DashboardViewModel>();
+        services.AddSingleton<UsageViewModel>();
         services.AddSingleton<TerminalViewModel>();
         services.AddSingleton<SessionsViewModel>();
         services.AddSingleton<ContextDoctorViewModel>();

@@ -11,11 +11,19 @@ public sealed partial class DashboardPage : Page
     {
         InitializeComponent();
         ViewModel = App.Services.GetRequiredService<DashboardViewModel>();
+        Usage = App.Services.GetRequiredService<UsageViewModel>();
 
-        Loaded += async (_, _) => await ViewModel.LoadCommand.ExecuteAsync(null);
+        Loaded += async (_, _) =>
+        {
+            await ViewModel.LoadCommand.ExecuteAsync(null);
+            await Usage.LoadCommand.ExecuteAsync(null);
+        };
     }
 
     public DashboardViewModel ViewModel { get; }
+
+    /// <summary>사용량 탭.</summary>
+    public UsageViewModel Usage { get; }
 
     private async void OnLoginClick(object sender, RoutedEventArgs e)
     {

@@ -1,11 +1,210 @@
 <Page
     x:Class="Daiso.App.Views.SettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:Daiso.App.ViewModels">
+
     <ScrollViewer Padding="24">
-        <StackPanel Spacing="12">
+        <StackPanel Spacing="18" MaxWidth="1000">
+
             <TextBlock Text="Settings" Style="{ThemeResource TitleTextBlockStyle}" />
-            <TextBlock Text="준비 중" Style="{ThemeResource BodyTextBlockStyle}" Opacity="0.7" />
+
+            <TextBlock
+                Text="{x:Bind ViewModel.RestartNotice}"
+                Style="{ThemeResource CaptionTextBlockStyle}"
+                Opacity="0.75"
+                TextWrapping="Wrap" />
+
+            <!-- 경로 -->
+            <Border
+                Padding="16"
+                CornerRadius="8"
+                BorderThickness="1"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="경로" Style="{ThemeResource SubtitleTextBlockStyle}" />
+
+                    <TextBox
+                        Header="세션 루트 재정의 (비우면 기본값)"
+                        AutomationProperties.AutomationId="SessionHomeBox"
+                        Text="{x:Bind ViewModel.SessionHomeOverride, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBlock
+                        Style="{ThemeResource CaptionTextBlockStyle}"
+                        Opacity="0.7"
+                        TextWrapping="Wrap">
+                        <Run Text="기본값:" />
+                        <Run Text="{x:Bind ViewModel.DefaultSessionHome}" />
+                    </TextBlock>
+
+                    <TextBox
+                        Header="인덱스 DB 경로 (비우면 기본값)"
+                        AutomationProperties.AutomationId="IndexPathBox"
+                        Text="{x:Bind ViewModel.IndexDatabasePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBlock
+                        Style="{ThemeResource CaptionTextBlockStyle}"
+                        Opacity="0.7"
+                        TextWrapping="Wrap">
+                        <Run Text="기본값:" />
+                        <Run Text="{x:Bind ViewModel.DefaultIndexDatabasePath}" />
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <!-- 정리 규칙 -->
+            <Border
+                Padding="16"
+                CornerRadius="8"
+                BorderThickness="1"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="정리 규칙 기본값" Style="{ThemeResource SubtitleTextBlockStyle}" />
+
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <NumberBox
+                            Header="이 일수보다 오래된 세션"
+                            Width="220"
+                            Minimum="0"
+                            SpinButtonPlacementMode="Compact"
+                            AutomationProperties.AutomationId="OlderThanBox"
+                            Value="{x:Bind ViewModel.CleanupOlderThanDays, Mode=TwoWay}" />
+
+                        <NumberBox
+                            Header="이 크기(MB)를 넘는 세션"
+                            Width="220"
+                            Minimum="0"
+                            SpinButtonPlacementMode="Compact"
+                            AutomationProperties.AutomationId="LargerThanBox"
+                            Value="{x:Bind ViewModel.CleanupLargerThanMegabytes, Mode=TwoWay}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- 단가표 -->
+            <Border
+                Padding="16"
+                CornerRadius="8"
+                BorderThickness="1"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+                <StackPanel Spacing="10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="단가표 (100만 토큰당 USD)" Style="{ThemeResource SubtitleTextBlockStyle}" />
+                            <TextBlock
+                                Text="비용은 이 표로 계산한 추정치다. 단가가 없는 모델은 0으로 둔다."
+                                Style="{ThemeResource CaptionTextBlockStyle}"
+                                Opacity="0.7" />
+                        </StackPanel>
+
+                        <Button
+                            Grid.Column="1"
+                            Content="모델 추가"
+                            VerticalAlignment="Center"
+                            AutomationProperties.AutomationId="AddPriceButton"
+                            Command="{x:Bind ViewModel.AddPriceCommand}" />
+                    </Grid>
+
+                    <ItemsControl ItemsSource="{x:Bind ViewModel.Prices}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:PriceRowViewModel">
+                                <Grid ColumnSpacing="8" Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="110" />
+                                        <ColumnDefinition Width="110" />
+                                        <ColumnDefinition Width="110" />
+                                        <ColumnDefinition Width="110" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBox
+                                        Grid.Column="0"
+                                        PlaceholderText="모델 이름"
+                                        Text="{x:Bind Model, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                                    <NumberBox
+                                        Grid.Column="1"
+                                        PlaceholderText="입력"
+                                        Minimum="0"
+                                        Value="{x:Bind InputPerMillion, Mode=TwoWay}" />
+                                    <NumberBox
+                                        Grid.Column="2"
+                                        PlaceholderText="출력"
+                                        Minimum="0"
+                                        Value="{x:Bind OutputPerMillion, Mode=TwoWay}" />
+                                    <NumberBox
+                                        Grid.Column="3"
+                                        PlaceholderText="캐시 쓰기"
+                                        Minimum="0"
+                                        Value="{x:Bind CacheWritePerMillion, Mode=TwoWay}" />
+                                    <NumberBox
+                                        Grid.Column="4"
+                                        PlaceholderText="캐시 읽기"
+                                        Minimum="0"
+                                        Value="{x:Bind CacheReadPerMillion, Mode=TwoWay}" />
+
+                                    <Button
+                                        Grid.Column="5"
+                                        Content="삭제"
+                                        Click="OnRemovePriceClick"
+                                        DataContext="{x:Bind}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- 테마·인덱스 -->
+            <Border
+                Padding="16"
+                CornerRadius="8"
+                BorderThickness="1"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="표시와 인덱스" Style="{ThemeResource SubtitleTextBlockStyle}" />
+
+                    <ComboBox
+                        Header="테마"
+                        Width="200"
+                        AutomationProperties.AutomationId="ThemeCombo"
+                        ItemsSource="{x:Bind ViewModel.Themes}"
+                        SelectedIndex="{x:Bind ViewModel.ThemeIndex, Mode=TwoWay}" />
+
+                    <Button
+                        Content="인덱스 재구축"
+                        HorizontalAlignment="Left"
+                        AutomationProperties.AutomationId="RebuildIndexButton"
+                        Command="{x:Bind ViewModel.RebuildIndexCommand}" />
+                </StackPanel>
+            </Border>
+
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <Button
+                    Content="저장"
+                    Style="{ThemeResource AccentButtonStyle}"
+                    AutomationProperties.AutomationId="SaveSettingsButton"
+                    Command="{x:Bind ViewModel.SaveCommand}" />
+                <Button
+                    Content="다시 읽기"
+                    AutomationProperties.AutomationId="ReloadSettingsButton"
+                    Command="{x:Bind ViewModel.LoadCommand}" />
+            </StackPanel>
+
+            <TextBlock
+                AutomationProperties.AutomationId="SettingsStatus"
+                Text="{x:Bind ViewModel.StatusText, Mode=OneWay}"
+                Style="{ThemeResource CaptionTextBlockStyle}"
+                TextWrapping="Wrap" />
+
         </StackPanel>
     </ScrollViewer>
 </Page>
