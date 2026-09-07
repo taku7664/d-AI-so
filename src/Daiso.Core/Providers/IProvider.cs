@@ -31,4 +31,10 @@ public interface IProvider
 
     /// <summary>세션을 이어서 열기 위한 명령 인자. "--resume &lt;id&gt;" | "resume &lt;id&gt;".</summary>
     string BuildResumeArguments(SessionInfo session);
+
+    /// <summary>
+    /// 로그인 상태를 이루는 파일. 프로필 저장·전환이 이 목록만 다룬다. (ARCHITECTURE §5.7)
+    /// 값은 읽지 않고 바이트로만 옮긴다.
+    /// </summary>
+    IReadOnlyList<AuthFile> AuthFiles { get; }
 }

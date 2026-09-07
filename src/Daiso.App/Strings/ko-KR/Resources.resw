@@ -942,4 +942,53 @@
   <data name="Settings_ShortcutSaveWhat" xml:space="preserve">
     <value>규칙 저장 / 열기</value>
   </data>
+  <!-- 로그인 프로필 (ARCHITECTURE §5.7) -->
+  <data name="AuthProfile_Title" xml:space="preserve">
+    <value>로그인 프로필</value>
+  </data>
+  <data name="AuthProfile_Hint" xml:space="preserve">
+    <value>지금 로그인 상태를 이름 붙여 두면 계정을 오갈 때 다시 로그인하지 않아도 됩니다. 저장한 정보는 이 PC의 사용자 계정으로만 풀 수 있게 암호화됩니다.</value>
+  </data>
+  <data name="AuthProfile_Empty" xml:space="preserve">
+    <value>저장한 프로필이 없습니다. 지금 로그인한 계정을 저장해 두세요.</value>
+  </data>
+  <data name="AuthProfile_SaveCurrent" xml:space="preserve">
+    <value>지금 로그인 저장</value>
+  </data>
+  <data name="AuthProfile_NamePlaceholder" xml:space="preserve">
+    <value>프로필 이름 (예: 회사 계정)</value>
+  </data>
+  <data name="AuthProfile_Use" xml:space="preserve">
+    <value>이 계정으로</value>
+  </data>
+  <data name="AuthProfile_Detail" xml:space="preserve">
+    <value>{0} · 저장 {1:yyyy-MM-dd HH:mm}</value>
+  </data>
+  <data name="AuthProfile_Saved" xml:space="preserve">
+    <value>{0} 프로필로 저장했습니다</value>
+  </data>
+  <data name="AuthProfile_Applied" xml:space="preserve">
+    <value>{0} 계정으로 바꿨습니다. 새로 여는 터미널부터 적용됩니다</value>
+  </data>
+  <data name="AuthProfile_Removed" xml:space="preserve">
+    <value>{0} 프로필을 지웠습니다</value>
+  </data>
+  <data name="AuthProfile_SaveFailed" xml:space="preserve">
+    <value>저장할 수 없음</value>
+  </data>
+  <data name="AuthProfile_ApplyFailed" xml:space="preserve">
+    <value>바꿀 수 없음</value>
+  </data>
+  <data name="AuthProfile_ConfirmRemove" xml:space="preserve">
+    <value>{0} 프로필을 지울까요?</value>
+  </data>
+  <data name="AuthProfile_ConfirmRemoveBody" xml:space="preserve">
+    <value>저장해 둔 로그인 정보가 사라집니다. 지금 로그인한 계정은 그대로입니다.</value>
+  </data>
+  <data name="AuthProfile_SaveTitle" xml:space="preserve">
+    <value>지금 로그인 저장</value>
+  </data>
+  <data name="AuthProfile_SaveBody" xml:space="preserve">
+    <value>어느 도구의 로그인을 저장할까요?</value>
+  </data>
 </root>

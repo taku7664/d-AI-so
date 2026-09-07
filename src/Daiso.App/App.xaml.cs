@@ -71,6 +71,7 @@ public partial class App : Application
 
         // Infrastructure
         services.AddSingleton<IRuleFileService, RuleFileService>();
+        services.AddSingleton<IAuthProfileStore, AuthProfileStore>();
         services.AddSingleton<IInstructionMigrationService>(provider =>
             new InstructionMigrationService(provider.GetServices<IProvider>()));
         services.AddSingleton<IFileDisposer, RecycleBinFileDisposer>();
@@ -101,6 +102,7 @@ public partial class App : Application
         services.AddSingleton<ContextDoctorViewModel>();
         services.AddSingleton<RuleMakerViewModel>();
         services.AddSingleton<MigrationViewModel>();
+        services.AddSingleton<AuthProfileViewModel>();
         services.AddSingleton<SettingsViewModel>();
 
         services.AddSingleton<ShellWindow>();

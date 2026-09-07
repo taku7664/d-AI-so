@@ -102,6 +102,10 @@ public sealed partial class DashboardViewModel : ObservableObject
     /// <summary>사용량 카드 제목.</summary>
     public string UsageHeaderText => UiStrings.Format("Dashboard_StatTokens", UsageDayCount);
 
+    /// <summary>지금 로그인 상태를 다시 읽는다. 프로필 저장에 쓴다.</summary>
+    public Task<AuthStatus> ReadAuthStatusAsync(ToolKind tool, CancellationToken ct = default) =>
+        _providers.First(provider => provider.Kind == tool).GetAuthStatusAsync(ct);
+
     /// <summary>최근 세션을 Terminal 화면에 채워 둔다. 실행은 사람이 누른다.</summary>
     public void PrepareResume(SessionInfo session)
     {

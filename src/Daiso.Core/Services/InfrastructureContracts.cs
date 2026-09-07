@@ -23,6 +23,27 @@ public interface IInstructionMigrationService
     MigrationResult Apply(string projectDir, MigrationDirection direction, bool dryRun);
 }
 
+/// <summary>
+/// 로그인 상태를 이름 붙여 보관하고 되돌린다. (ARCHITECTURE §5.7)
+/// 구현은 Daiso.Infrastructure. 파일 내용은 이 PC의 사용자 계정으로만 풀리게 암호화해 둔다.
+/// </summary>
+public interface IAuthProfileStore
+{
+    /// <summary>보관 중인 프로필. 최근에 저장한 것이 앞.</summary>
+    IReadOnlyList<AuthProfile> List();
+
+    /// <summary>지금 로그인 상태를 이름 붙여 저장한다. 같은 이름이면 덮어쓴다.</summary>
+    AuthProfile Save(string name, IProvider provider, AuthStatus status);
+
+    /// <summary>
+    /// 프로필을 현재 자리로 되돌린다. 되돌리기 전에 지금 상태를 자동으로 보관한다.
+    /// </summary>
+    void Apply(AuthProfile profile, IProvider provider);
+
+    /// <summary>프로필을 지운다.</summary>
+    void Remove(AuthProfile profile);
+}
+
 /// <summary>세션 파일 정리. 실행 중 세션은 거부한다. (ARCHITECTURE §5.5)</summary>
 public interface IFileDisposer
 {

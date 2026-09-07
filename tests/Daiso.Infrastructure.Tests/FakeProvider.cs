@@ -20,8 +20,14 @@ internal sealed class FakeProvider : IProvider, IUsageReader
     /// <summary>열거할 세션. 테스트가 자유롭게 바꾼다.</summary>
     internal List<SessionInfo> Sessions { get; } = [];
 
+    /// <summary>로그인 파일. 프로필 저장·전환 테스트가 채운다.</summary>
+    internal List<AuthFile> Credentials { get; } = [];
+
     /// <summary>`ReadMessagesAsync`가 호출된 (경로, 오프셋) 기록.</summary>
     internal List<(string Path, long Offset)> MessageReads { get; } = [];
+
+    /// <inheritdoc />
+    public IReadOnlyList<AuthFile> AuthFiles => Credentials;
 
     /// <inheritdoc />
     public ToolKind Kind { get; }

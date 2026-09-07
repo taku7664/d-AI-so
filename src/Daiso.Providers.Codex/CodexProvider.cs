@@ -72,6 +72,10 @@ public sealed class CodexProvider : IProvider, IUsageReader
     }
 
     /// <inheritdoc />
+    public IReadOnlyList<AuthFile> AuthFiles =>
+        [new AuthFile(Path.Combine(ConfigDirectory, "auth.json"), Required: true)];
+
+    /// <inheritdoc />
     public async Task<AuthStatus> GetAuthStatusAsync(CancellationToken ct)
     {
         var authJson = await ReadTextOrNullAsync(Path.Combine(ConfigDirectory, "auth.json"), ct)

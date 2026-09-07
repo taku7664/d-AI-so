@@ -246,7 +246,11 @@ public interface IProvider
     Task<SessionInfo> ReadSessionInfoAsync(string filePath, CancellationToken ct); // 본문 스캔해 카운트·usage 채움
     IAsyncEnumerable<SessionMessage> ReadMessagesAsync(string filePath, long fromByteOffset, CancellationToken ct);
     string BuildResumeArguments(SessionInfo session);   // "--resume <id>" | "resume <id>"
+
+    IReadOnlyList<AuthFile> AuthFiles { get; }   // 로그인 상태를 이루는 파일 (§5.7 프로필)
 }
+
+public sealed record AuthFile(string Path, bool Required);
 ```
 
 ### 3.3 Infrastructure
@@ -456,6 +460,26 @@ Apply(projectDir, direction, dryRun)
 ```
 - 원본 파일은 읽기만 한다. 쓰는 것은 **대상 파일 하나**뿐이다
 - import 전개는 대상이 Codex일 때만. 실패한 import는 줄을 그대로 두고 경고에 남긴다
+
+### 5.7 로그인 프로필 (계정 백업·전환)
+
+여러 계정을 오가는 사람이 매번 다시 로그인하지 않도록, **지금 로그인 상태를 이름 붙여 보관했다가 되돌린다.**
+
+```
+저장  IAuthProfileStore.Save(name, provider, status)
+  → provider.AuthFiles 를 읽어 각 파일을 DPAPI(CurrentUser)로 암호화해 보관
+  → meta.json 에는 표시용 값만 (도구, 계정 라벨, 이메일, 저장 시각, 재로그인 시각)
+
+전환  IAuthProfileStore.Apply(profile, provider)
+  → 먼저 현재 파일을 "직전 상태" 프로필로 자동 저장 (되돌릴 수 있게)
+  → 프로필의 파일을 복호화해 원래 경로에 바이트 그대로 기록
+
+보관 위치  %LOCALAPPDATA%\d-AI-so\profiles\{tool}\{name}```
+
+- **토큰 값은 meta.json·화면·로그·예외 어디에도 넣지 않는다.** 암호화된 파일 안에만 있다
+- DPAPI는 현재 Windows 사용자 계정으로만 풀린다. 파일을 다른 PC로 옮겨도 열리지 않는다
+- 인증 파일을 **쓰는 것은 이 흐름뿐이다.** 그 밖의 모든 코드에서 인증 파일은 계속 읽기 전용이다 (§7.1)
+- 전환은 도구가 실행 중이어도 막지 않는다. 다만 이미 떠 있는 세션은 그대로이고, 새로 여는 터미널부터 바뀐다고 화면에서 알린다
 
 ---
 

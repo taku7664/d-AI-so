@@ -80,6 +80,14 @@ public sealed class ClaudeProvider : IProvider, IUsageReader
     }
 
     /// <inheritdoc />
+    /// <remarks>`.credentials.json`이 로그인 자체이고, `.claude.json`은 계정 표시·설정이다.</remarks>
+    public IReadOnlyList<AuthFile> AuthFiles =>
+    [
+        new AuthFile(Path.Combine(ConfigDirectory, ".credentials.json"), Required: true),
+        new AuthFile(_home.Combine(".claude.json"), Required: false),
+    ];
+
+    /// <inheritdoc />
     public async Task<AuthStatus> GetAuthStatusAsync(CancellationToken ct)
     {
         var credentials = await ReadTextOrNullAsync(

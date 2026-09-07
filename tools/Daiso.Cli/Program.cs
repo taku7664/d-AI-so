@@ -14,6 +14,10 @@ internal static class Program
 
         사용법:
           daiso auth
+          daiso auth save <이름> --tool claude|codex
+          daiso auth use <이름> --tool claude|codex
+          daiso auth list
+          daiso auth remove <이름> --tool claude|codex
           daiso sessions [--tool claude|codex] [--include-archived]
           daiso search <query>
           daiso refresh
@@ -40,7 +44,7 @@ internal static class Program
         {
             return args[0] switch
             {
-                "auth" => await Commands.AuthAsync().ConfigureAwait(false),
+                "auth" => await Commands.AuthAsync(args).ConfigureAwait(false),
                 "sessions" => await Commands.SessionsAsync(args).ConfigureAwait(false),
                 "search" => await Commands.SearchAsync(args).ConfigureAwait(false),
                 "refresh" => await Commands.RefreshAsync().ConfigureAwait(false),
@@ -85,8 +89,13 @@ internal static class Commands
     private static IReadOnlyList<IProvider> Providers { get; } =
         [new ClaudeProvider(), new CodexProvider()];
 
-    internal static async Task<int> AuthAsync()
+    internal static async Task<int> AuthAsync(string[] args)
     {
+        if (args.Length > 1)
+        {
+            return await AuthProfileAsync(args).ConfigureAwait(false);
+        }
+
         foreach (var provider in Providers)
         {
             var installed = await provider.IsInstalledAsync(default).ConfigureAwait(false);
@@ -108,6 +117,79 @@ internal static class Commands
         }
 
         return 0;
+    }
+
+    /// <summary>로그인 프로필. 여러 계정을 오갈 때 지금 상태를 이름 붙여 두고 되돌린다. (ARCHITECTURE §5.7)</summary>
+    private static async Task<int> AuthProfileAsync(string[] args)
+    {
+        var store = new AuthProfileStore();
+        var sub = args[1];
+
+        if (string.Equals(sub, "list", StringComparison.Ordinal))
+        {
+            var profiles = store.List();
+            Console.WriteLine($"프로필 {profiles.Count}개");
+
+            foreach (var profile in profiles)
+            {
+                Console.WriteLine(
+                    $"  {profile.Tool,-6} {profile.Name,-20} {profile.AccountLabel ?? "-"}"
+                    + $"  (저장 {profile.SavedAt.ToLocalTime():yyyy-MM-dd HH:mm})");
+            }
+
+            return 0;
+        }
+
+        if (args.Length < 3)
+        {
+            Console.Error.WriteLine("사용법: daiso auth save|use|remove <이름> --tool claude|codex");
+            return 2;
+        }
+
+        var name = args[2];
+        var kind = ToolOption(args) ?? ToolKind.Claude;
+        var provider = Providers.First(item => item.Kind == kind);
+
+        switch (sub)
+        {
+            case "save":
+                var status = await provider.GetAuthStatusAsync(default).ConfigureAwait(false);
+                var saved = store.Save(name, provider, status);
+                Console.WriteLine($"저장했다: [{saved.Tool}] {saved.Name} — {saved.AccountLabel ?? "계정 정보 없음"}");
+                return 0;
+
+            case "use":
+                var target = store.List().FirstOrDefault(item =>
+                    item.Tool == kind && string.Equals(item.Name, name, StringComparison.OrdinalIgnoreCase));
+
+                if (target is null)
+                {
+                    Console.Error.WriteLine($"그런 프로필이 없다: [{kind}] {name}");
+                    return 4;
+                }
+
+                store.Apply(target, provider);
+                Console.WriteLine($"되돌렸다: [{kind}] {name}. 새로 여는 터미널부터 적용된다");
+                return 0;
+
+            case "remove":
+                var doomed = store.List().FirstOrDefault(item =>
+                    item.Tool == kind && string.Equals(item.Name, name, StringComparison.OrdinalIgnoreCase));
+
+                if (doomed is null)
+                {
+                    Console.Error.WriteLine($"그런 프로필이 없다: [{kind}] {name}");
+                    return 4;
+                }
+
+                store.Remove(doomed);
+                Console.WriteLine($"지웠다: [{kind}] {name}");
+                return 0;
+
+            default:
+                Console.Error.WriteLine($"알 수 없는 auth 하위 명령: {sub}");
+                return 2;
+        }
     }
 
     internal static async Task<int> SessionsAsync(string[] args)

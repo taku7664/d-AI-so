@@ -200,6 +200,94 @@
                     </StackPanel>
                 </Border>
 
+                <!-- 로그인 프로필 -->
+                <Border Style="{StaticResource CardBorder}">
+                    <StackPanel Spacing="12">
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" Spacing="2">
+                                <TextBlock Text="{loc:Str Key=AuthProfile_Title}" Style="{StaticResource SectionTitleText}" />
+                                <TextBlock Text="{loc:Str Key=AuthProfile_Hint}" Style="{StaticResource PageSubtitleText}" />
+                            </StackPanel>
+
+                            <Button
+                                Grid.Column="1"
+                                VerticalAlignment="Top"
+                                Content="{loc:Str Key=AuthProfile_SaveCurrent}"
+                                AutomationProperties.AutomationId="SaveProfileButton"
+                                Click="OnSaveProfileClick" />
+                        </Grid>
+
+                        <Border Style="{StaticResource NoticeBorder}" Visibility="{x:Bind Profiles.IsEmpty, Mode=OneWay}">
+                            <TextBlock Text="{loc:Str Key=AuthProfile_Empty}" Style="{StaticResource PageSubtitleText}" />
+                        </Border>
+
+                        <ItemsControl
+                            AutomationProperties.AutomationId="ProfileList"
+                            ItemsSource="{x:Bind Profiles.Profiles}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:AuthProfileRowViewModel">
+                                    <Grid ColumnSpacing="12" Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <Border
+                                            Grid.Column="0"
+                                            Width="24"
+                                            Height="24"
+                                            CornerRadius="12"
+                                            VerticalAlignment="Center"
+                                            Background="{x:Bind ToolBrush}">
+                                            <TextBlock
+                                                Text="{x:Bind ToolInitial}"
+                                                Foreground="White"
+                                                FontSize="11"
+                                                FontWeight="SemiBold"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center" />
+                                        </Border>
+
+                                        <StackPanel Grid.Column="1" Spacing="1">
+                                            <TextBlock
+                                                Text="{x:Bind Name}"
+                                                Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                                TextWrapping="NoWrap"
+                                                TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{x:Bind Detail}" Style="{StaticResource MutedText}" />
+                                        </StackPanel>
+
+                                        <Button
+                                            Grid.Column="2"
+                                            Content="{loc:Str Key=AuthProfile_Use}"
+                                            AutomationProperties.AutomationId="UseProfileButton"
+                                            Click="OnUseProfileClick"
+                                            DataContext="{x:Bind}" />
+
+                                        <Button
+                                            Grid.Column="3"
+                                            Content="{loc:Str Key=Common_Delete}"
+                                            Click="OnRemoveProfileClick"
+                                            DataContext="{x:Bind}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <TextBlock
+                            AutomationProperties.AutomationId="ProfileStatus"
+                            Text="{x:Bind Profiles.StatusText, Mode=OneWay}"
+                            Style="{StaticResource MutedText}" />
+                    </StackPanel>
+                </Border>
+
                 <!-- 최근 세션 -->
                 <Border Style="{StaticResource CardBorder}">
                     <StackPanel Spacing="12">

@@ -70,6 +70,7 @@ dotnet run --project src/Daiso.App -p:Platform=x64
 | `%LOCALAPPDATA%\d-AI-so\settings.json` | 최근 폴더·최근 파일, 단가표, 정리 규칙, 테마, 창 크기 |
 | `%LOCALAPPDATA%\d-AI-so\index.db` | 세션 인덱스 (Settings에서 경로 변경 가능) |
 | `%LOCALAPPDATA%\d-AI-so\presets\*.daiso` | 프리셋 라이브러리 |
+| `%LOCALAPPDATA%\d-AI-so\profiles\` | 로그인 프로필. 인증 파일은 DPAPI로 암호화(이 PC의 이 사용자만 복호화), 표시용 `meta.json`에는 토큰 없음 |
 | `%LOCALAPPDATA%\d-AI-so\logs\crash-*.log` | 예외 로그 (토큰 마스킹 적용) |
 
 > 인덱스는 세션 본문의 사용자·어시스턴트 텍스트를 담으므로 세션이 많으면 수백 MB가 될 수 있다.
@@ -95,7 +96,7 @@ dotnet test Daiso.sln --filter "Category=Slow"
 | `dotnet build Daiso.sln` | 경고 0, 오류 0 |
 | `Daiso.Core.Tests` | 112건 통과 |
 | `Daiso.Providers.Tests` | 70건 통과 |
-| `Daiso.Infrastructure.Tests` | 69건 통과 |
+| `Daiso.Infrastructure.Tests` | 79건 통과 |
 | `Category=Slow` (20MB 스트리밍) | 2건 통과 |
 
 ## CLI
@@ -117,6 +118,10 @@ dotnet run --project tools/Daiso.Cli -- auth
 | `daiso rules install <projectDir>` | 폴더의 `CLAUDE.md`/`AGENTS.md`에 daiso 마커 블록을 넣거나 갱신 |
 | `daiso rules migrate <projectDir> [--to claude\|codex] [--apply]` | `CLAUDE.md` ↔ `AGENTS.md` 좌우 diff. `--apply` 없이는 미리보기만 |
 | `daiso refresh` | 세션 인덱스를 갱신한다 (앱 없이 확인할 때) |
+| `daiso auth list` | 보관한 로그인 프로필 목록 |
+| `daiso auth save <이름> --tool claude\|codex` | 지금 로그인 상태를 이름 붙여 보관 |
+| `daiso auth use <이름> --tool claude\|codex` | 보관한 계정으로 되돌리기 (직전 상태는 자동 보관) |
+| `daiso auth remove <이름> --tool claude\|codex` | 프로필 삭제 |
 | `daiso doctor <dir> [--tool claude\|codex]` | 폴더의 컨텍스트 파일 목록·글자 수·중복 줄·충돌 후보 |
 | `daiso export <sessionId> <out.md>` | 세션을 마크다운으로 내보내기 |
 
@@ -177,10 +182,22 @@ DAISO_INDEX_DB=F:\daiso\index.db dotnet run --project tools/Daiso.Cli -- session
 앱 안에서는 설정 → 단축키 카드에서 같은 표를 볼 수 있다.
 창은 1024×700보다 작아지지 않는다 (목록과 상세를 나란히 두는 화면이라 그 아래로는 쓸 수 없다).
 
+## 로그인 프로필 (계정 여러 개 쓸 때)
+
+요약 화면의 **로그인 프로필** 카드에서 지금 로그인 상태를 이름 붙여 보관해 두었다가, 나중에 그 계정으로 되돌린다.
+매번 다시 로그인하지 않아도 된다.
+
+- 보관: `지금 로그인 저장` → 도구 고르고 이름 입력
+- 전환: 목록에서 `이 계정으로`. 되돌리기 **전에 지금 상태가 `직전 상태`로 자동 보관**되므로 한 번 더 누르면 원래대로 돌아온다
+- 이미 열려 있는 터미널 세션은 그대로다. **새로 여는 터미널부터** 바뀐 계정이 적용된다
+- 저장된 인증 파일은 DPAPI로 암호화되어 이 PC의 이 사용자 계정에서만 풀린다. 다른 PC로 복사해도 열리지 않는다
+- 검증용으로 보관 위치를 바꾸려면 `DAISO_PROFILES_DIR` 환경 변수를 쓴다
+
 ## 안전 규칙
 
 - CLI가 만든 파일(`.credentials.json`, `.claude.json`, `auth.json`, 세션 jsonl)은 읽기 전용으로 다룬다
-- 인증 토큰·API 키 값은 화면·로그·파일·예외 메시지에 쓰지 않는다
+- 인증 토큰·API 키 값은 화면·로그·예외 메시지에 쓰지 않는다.
+  로그인 프로필만이 인증 파일을 다루는데, 값을 읽지 않고 암호화한 바이트로만 옮긴다
 - `CLAUDE.md` / `AGENTS.md` 수정은 `<!-- daiso:start -->` ~ `<!-- daiso:end -->` 블록 안으로만 한다.
   블록 밖은 개행 문자까지 그대로 둔다
 - 세션 삭제는 기본 휴지통, 실행 중 세션은 거부한다

@@ -239,6 +239,7 @@ rules:
 | **세션 Markdown 내보내기** | 같은 파서로 시간순 `**User:** / **Assistant:**` 블록 생성, 도구 호출은 접힌 코드블록, 시스템 이벤트 제외 옵션 |
 | **토큰 사용량 통계** | Claude: assistant 줄의 `message.usage`(input/output/cache_creation/cache_read, model) 메시지 날짜별 합산, `<synthetic>` 모델 제외. Codex: `token_count.total_token_usage` 누적값의 마지막 non-null을 세션 시작 날짜에 귀속. 인덱싱 시 함께 집계. 일별 막대, 프로젝트별 상위, 모델별 비율. 비용은 사용자 수정 가능한 단가표로 추정 |
 | **CLAUDE.md ↔ AGENTS.md 마이그레이션** | 한쪽만 있으면 생성, 둘 다 있으면 좌우 diff 후 방향 선택. Claude 전용 `@import`는 인라인 전개 + 경고. daiso 마커 블록은 양쪽 동일 유지 |
+| **로그인 프로필 (계정 백업·전환)** | 지금 로그인 상태를 이름 붙여 보관하고 필요할 때 되돌린다. 파일은 DPAPI(현재 Windows 사용자)로 암호화해 두고, 표시용 정보에는 토큰을 담지 않는다. 되돌리기 전 현재 상태를 자동 보관해 한 번 더 누르면 서로 맞바뀐다 |
 | settings.json 권한·훅 GUI 편집기 | 후순위(선택). permissions.allow/deny, hooks를 목록 UI로 편집 + 스키마 검증 |
 
 제외: MCP 서버 뷰어, 트레이 만료 알림, Provider 플러그인 구조.
