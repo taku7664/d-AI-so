@@ -27,7 +27,7 @@ public sealed class MarkdownRuleRendererTests
 
             마이그레이션 계획을 먼저 작성한다 (MUST)
 
-            ### !테스트 코드
+            ### 테스트 코드가 아닐 때
 
             공개 함수에 XML 주석을 남긴다 (MAY)
 
@@ -83,23 +83,6 @@ public sealed class MarkdownRuleRendererTests
     }
 
     [Fact]
-    public void A_composite_inside_a_not_is_always_parenthesized()
-    {
-        var condition = new NotCondition(
-            new AndCondition([new LeafCondition("A"), new LeafCondition("B")]));
-
-        _renderer.Describe(condition).Should().Be("!(A & B)");
-    }
-
-    [Fact]
-    public void A_not_inside_a_not_needs_no_parentheses()
-    {
-        var condition = new NotCondition(new NotCondition(new LeafCondition("A")));
-
-        _renderer.Describe(condition).Should().Be("!!A");
-    }
-
-    [Fact]
     public void A_leaf_containing_operator_characters_is_quoted()
     {
         var condition = new OrCondition([
@@ -121,17 +104,6 @@ public sealed class MarkdownRuleRendererTests
         ]);
 
         _renderer.Describe(condition).Should().Be("A & B & C");
-    }
-
-    [Fact]
-    public void A_not_inside_an_and_needs_no_parentheses()
-    {
-        var condition = new AndCondition([
-            new LeafCondition("A"),
-            new NotCondition(new LeafCondition("B")),
-        ]);
-
-        _renderer.Describe(condition).Should().Be("A & !B");
     }
 
     [Fact]

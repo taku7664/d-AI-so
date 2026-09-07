@@ -141,13 +141,7 @@ public sealed class RuleValidator
 
         if (!RuleKeys.ConditionOperators.Contains(key, StringComparer.Ordinal))
         {
-            throw Error(keyNode, $"알 수 없는 조건 연산자 '{key}'. 허용: and, or, not");
-        }
-
-        if (string.Equals(key, RuleKeys.Not, StringComparison.Ordinal))
-        {
-            ValidateCondition(valueNode);
-            return;
+            throw Error(keyNode, $"알 수 없는 조건 연산자 '{key}'. 허용: and, or");
         }
 
         var items = RequireSequence(valueNode, $"'{key}' 값은 목록이어야 한다");

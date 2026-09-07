@@ -162,7 +162,7 @@ rules:
         priority: MUST
 
   - when:
-      not: 테스트 코드
+      테스트 코드가 아닐 때
     then:
       - action: 공개 함수에 XML 주석을 남긴다
         priority: MAY
@@ -176,10 +176,10 @@ rules:
 | `name` | string | 프리셋 이름 (`##` 제목) |
 | `description` | string? | 설명 |
 | `global` | Action[] | 조건 없는 행동 |
-| `rules[].when` | Condition | 문자열(리프) 또는 `{and: [..]}` / `{or: [..]}` / `{not: ..}` 중 하나. 중첩 가능 |
+| `rules[].when` | Condition | 문자열(리프) 또는 `{and: [..]}` / `{or: [..]}` 중 하나. 중첩 가능 |
 
-> `not`은 **파일 형식에서는 계속 지원**하지만(기존 파일 호환) RuleMaker UI에서는 만들지 않는다.
-> 조건이 자유 문장이라 `테스트 코드가 아닐 때`처럼 말로 쓰는 편이 읽기 쉽고, 트리 편집 버튼도 줄어든다.
+> 부정은 **형식에서 지원하지 않는다.** 조건이 자유 문장이라 `테스트 코드가 아닐 때`처럼 말로 쓰면 되고,
+> 연산자를 하나 줄이면 트리 편집·미리보기·검증이 모두 단순해진다. `not:` 키가 있는 파일은 알 수 없는 연산자로 거부된다.
 | `rules[].then` | Action[] | 행동 목록 |
 | `Action.action` | string | 행동 문장 |
 | `Action.priority` | MUST \| SHOULD \| MAY | 생략 시 SHOULD |
@@ -247,7 +247,7 @@ rules:
 
 ## 8. 결정 사항
 
-1. `.daiso` 본문은 **구조형 YAML** (6.3, and/or/not 트리). 마크다운 양식은 미리보기 전용.
+1. `.daiso` 본문은 **구조형 YAML** (6.3, and/or 트리). 부정은 문장으로 쓴다. 마크다운 양식은 미리보기 전용.
 2. Priority: MUST / SHOULD / MAY (생략 시 SHOULD).
 3. Codex 규칙 파일은 `AGENTS.md`.
 4. 세션 삭제 기본은 휴지통 이동.

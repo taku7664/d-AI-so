@@ -444,10 +444,6 @@ public sealed partial class RuleMakerPage : Page
 
     private void OnAddLeafClick(object sender, RoutedEventArgs e) => AddNode(ConditionNodeKind.Leaf);
 
-    private void OnAddAndClick(object sender, RoutedEventArgs e) => AddNode(ConditionNodeKind.And);
-
-    private void OnAddOrClick(object sender, RoutedEventArgs e) => AddNode(ConditionNodeKind.Or);
-
     /// <summary>연산자 노드에는 자식으로, 리프 옆에는 형제로 넣는다.</summary>
     private void AddNode(ConditionNodeKind kind)
     {
@@ -483,6 +479,11 @@ public sealed partial class RuleMakerPage : Page
 
     private void OnWrapOrClick(object sender, RoutedEventArgs e) => Wrap(ConditionNodeKind.Or);
 
+    /// <summary>
+    /// 고른 줄을 AND/OR로 감싼다. 감싼 직후 **빈 줄 하나를 같이 넣는다.**
+    /// 자식이 하나뿐인 그룹은 의미가 없어서, 트리에는 그룹이 보이는데 수식에는 안 나오는
+    /// 어긋남이 생기기 때문이다.
+    /// </summary>
     private void Wrap(ConditionNodeKind kind)
     {
         if (ViewModel.SelectedRule is not { } rule || SelectedNode is not { } selected)
@@ -491,6 +492,7 @@ public sealed partial class RuleMakerPage : Page
         }
 
         var wrapper = selected.WrapIn(kind);
+        wrapper.Add(ConditionNodeViewModel.Leaf(string.Empty));
 
         if (wrapper.Parent is null)
         {

@@ -62,7 +62,6 @@ public sealed class MarkdownRuleRenderer : IMarkdownRuleRenderer
     private static string Describe(Condition condition, Condition? parent) => condition switch
     {
         LeafCondition leaf => Quote(leaf.Text),
-        NotCondition not => "!" + Describe(not.Item, not),
         AndCondition and => Group(Join(and.Items, and, " & "), and, parent),
         OrCondition or => Group(Join(or.Items, or, " | "), or, parent),
         _ => throw new ArgumentOutOfRangeException(nameof(condition), condition, "알 수 없는 조건 종류"),
@@ -71,14 +70,10 @@ public sealed class MarkdownRuleRenderer : IMarkdownRuleRenderer
     private static string Join(IReadOnlyList<Condition> items, Condition parent, string separator) =>
         string.Join(separator, items.Select(item => Describe(item, parent)));
 
-    /// <summary>
-    /// 부모와 연산자가 다른 복합(and/or) 자식은 괄호로 감싼다.
-    /// not의 자식이 and/or면 항상 감싼다. not 자체는 전위 단항이라 감싸지 않는다 (`!!A`).
-    /// </summary>
+    /// <summary>부모와 연산자가 다른 복합(and/or) 자식은 괄호로 감싼다.</summary>
     private static string Group(string rendered, Condition self, Condition? parent) => parent switch
     {
         null => rendered,
-        NotCondition => $"({rendered})",
         _ when parent.GetType() != self.GetType() => $"({rendered})",
         _ => rendered,
     };

@@ -439,6 +439,7 @@ public sealed partial class RuleEditViewModel : ObservableObject
 
         _renderer = renderer;
         Root = root ?? ConditionNodeViewModel.Leaf(string.Empty);
+        Root.Changed += OnRootChanged;
         Roots.Add(Root);
     }
 
@@ -455,9 +456,10 @@ public sealed partial class RuleEditViewModel : ObservableObject
     public ObservableCollection<ActionEditViewModel> Actions { get; } = [];
 
     /// <summary>트리 아래 한 줄 미리보기. `A &amp; (B | C)` 형태.</summary>
-    public string ConditionPreview => _renderer is MarkdownRuleRenderer markdown
-        ? markdown.Describe(Root.ToCondition())
-        : string.Empty;
+    public string ConditionPreview =>
+        _renderer is MarkdownRuleRenderer markdown && Root.ToCondition() is { } condition
+            ? markdown.Describe(condition)
+            : string.Empty;
 
     /// <summary>목록에 보여줄 요약.</summary>
     public string Summary => UiStrings.Format(
@@ -486,7 +488,9 @@ public sealed partial class RuleEditViewModel : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(root);
 
+        Root.Changed -= OnRootChanged;
         Root = root;
+        Root.Changed += OnRootChanged;
         Roots.Clear();
         Roots.Add(root);
         NotifyChanged();
@@ -500,10 +504,19 @@ public sealed partial class RuleEditViewModel : ObservableObject
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>Core 모델로 되돌린다.</summary>
-    public Rule ToRule() => new(
-        Root.ToCondition(),
-        Actions.Count == 0
-            ? [new RuleAction(string.Empty)]
-            : [.. Actions.Select(action => action.ToAction())]);
+    /// <summary>
+    /// Core 모델로 되돌린다. 조건이 비어 있으면 저장할 수 없는 규칙이라
+    /// <see cref="InvalidOperationException"/>을 던진다. (저장 쪽에서 미리 걸러낸다)
+    /// </summary>
+    public Rule ToRule()
+    {
+        var condition = Root.ToCondition()
+            ?? throw new InvalidOperationException("조건이 비어 있는 규칙은 저장할 수 없다");
+
+        return new Rule(
+            condition,
+            [.. Actions.Where(action => !string.IsNullOrWhiteSpace(action.Text)).Select(action => action.ToAction())]);
+    }
+
+    private void OnRootChanged(object? sender, EventArgs e) => NotifyChanged();
 }

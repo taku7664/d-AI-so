@@ -55,7 +55,6 @@ public abstract record Condition;
 public sealed record LeafCondition(string Text) : Condition;
 public sealed record AndCondition(IReadOnlyList<Condition> Items) : Condition;
 public sealed record OrCondition(IReadOnlyList<Condition> Items) : Condition;
-public sealed record NotCondition(Condition Item) : Condition;
 ```
 
 > **동등성 주의**: record의 기본 `Equals`는 `IReadOnlyList` 멤버를 참조 비교한다. 모델 비교는 반드시 `RulePresetSerializer.Serialize()` 결과 문자열 비교로 한다. (테스트 기준도 동일)

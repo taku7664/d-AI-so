@@ -11,7 +11,6 @@ public enum ConditionNodeKind
     Leaf,
     And,
     Or,
-    Not,
 }
 
 /// <summary>
@@ -31,7 +30,10 @@ public sealed partial class ConditionNodeViewModel : ObservableObject
         this.text = text;
     }
 
-    /// <summary>하위 노드. Leaf는 비어 있고, Not은 최대 하나다.</summary>
+    /// <summary>이 노드나 하위가 바뀌었다. 규칙이 미리보기를 다시 그리도록 위로 전달한다.</summary>
+    public event EventHandler? Changed;
+
+    /// <summary>하위 노드. Leaf는 비어 있다.</summary>
     public ObservableCollection<ConditionNodeViewModel> Children { get; } = [];
 
     /// <summary>부모 노드. 루트는 null.</summary>
@@ -42,8 +44,7 @@ public sealed partial class ConditionNodeViewModel : ObservableObject
     {
         ConditionNodeKind.Leaf => Text.Length == 0 ? UiStrings.Get("RuleMaker_EmptyCondition") : Text,
         ConditionNodeKind.And => "AND",
-        ConditionNodeKind.Or => "OR",
-        _ => "NOT",
+        _ => "OR",
     };
 
     /// <summary>리프인지. 텍스트 편집란 표시에 쓴다.</summary>
@@ -54,12 +55,7 @@ public sealed partial class ConditionNodeViewModel : ObservableObject
         IsLeaf ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
 
     /// <summary>하위 노드를 더 받을 수 있는지.</summary>
-    public bool CanAcceptChild => Kind switch
-    {
-        ConditionNodeKind.And or ConditionNodeKind.Or => true,
-        ConditionNodeKind.Not => Children.Count == 0,
-        _ => false,
-    };
+    public bool CanAcceptChild => Kind is ConditionNodeKind.And or ConditionNodeKind.Or;
 
     /// <summary>샘플 트리를 만들 때 쓰는 도우미.</summary>
     public static ConditionNodeViewModel Leaf(string text) => new(ConditionNodeKind.Leaf, text);
@@ -74,11 +70,6 @@ public sealed partial class ConditionNodeViewModel : ObservableObject
             case LeafCondition leaf:
                 return Leaf(leaf.Text);
 
-            case NotCondition not:
-                var notNode = new ConditionNodeViewModel(ConditionNodeKind.Not);
-                notNode.Add(FromCondition(not.Item));
-                return notNode;
-
             case AndCondition and:
                 return Operator(ConditionNodeKind.And, and.Items);
 
@@ -90,15 +81,31 @@ public sealed partial class ConditionNodeViewModel : ObservableObject
         }
     }
 
-    /// <summary>편집용 트리를 Core 모델로 되돌린다. 비어 있는 연산자는 리프로 대체된다.</summary>
-    public Condition ToCondition() => Kind switch
+    /// <summary>
+    /// 편집용 트리를 Core 모델로 되돌린다.
+    /// **비어 있는 것은 없는 것으로 본다.** 빈 리프·자식 없는 연산자는 null이고,
+    /// 자식이 하나뿐인 연산자는 그 자식을 그대로 쓴다. (`A & B & ()` 같은 미리보기를 막는다)
+    /// </summary>
+    public Condition? ToCondition()
     {
-        ConditionNodeKind.Leaf => new LeafCondition(Text),
-        ConditionNodeKind.Not => new NotCondition(
-            Children.Count > 0 ? Children[0].ToCondition() : new LeafCondition(Text)),
-        ConditionNodeKind.And => new AndCondition(Items()),
-        _ => new OrCondition(Items()),
-    };
+        if (Kind == ConditionNodeKind.Leaf)
+        {
+            return Text.Trim().Length == 0 ? null : new LeafCondition(Text.Trim());
+        }
+
+        var items = Children
+            .Select(child => child.ToCondition())
+            .Where(condition => condition is not null)
+            .Select(condition => condition!)
+            .ToList();
+
+        return items.Count switch
+        {
+            0 => null,
+            1 => items[0],
+            _ => Kind == ConditionNodeKind.And ? new AndCondition(items) : new OrCondition(items),
+        };
+    }
 
     /// <summary>자식을 붙이고 부모를 기록한다.</summary>
     public void Add(ConditionNodeViewModel child)
@@ -226,20 +233,27 @@ public sealed partial class ConditionNodeViewModel : ObservableObject
         return node;
     }
 
-    private IReadOnlyList<Condition> Items() =>
-        Children.Count == 0
-            ? [new LeafCondition(Text)]
-            : [.. Children.Select(child => child.ToCondition())];
-
     private void Notify()
     {
         OnPropertyChanged(nameof(CanAcceptChild));
         OnPropertyChanged(nameof(Label));
         OnPropertyChanged(nameof(IsLeaf));
         OnPropertyChanged(nameof(LeafVisibility));
+        Bubble();
+    }
+
+    /// <summary>루트까지 알린다. 규칙 쪽에서 미리보기를 다시 만든다.</summary>
+    private void Bubble()
+    {
+        Changed?.Invoke(this, EventArgs.Empty);
+        Parent?.Bubble();
     }
 
     partial void OnKindChanged(ConditionNodeKind value) => Notify();
 
-    partial void OnTextChanged(string value) => OnPropertyChanged(nameof(Label));
+    partial void OnTextChanged(string value)
+    {
+        OnPropertyChanged(nameof(Label));
+        Bubble();
+    }
 }

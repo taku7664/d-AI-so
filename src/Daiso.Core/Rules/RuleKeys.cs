@@ -17,10 +17,9 @@ internal static class RuleKeys
 
     internal const string And = "and";
     internal const string Or = "or";
-    internal const string Not = "not";
 
     internal static readonly string[] TopLevel = [Daiso, Name, Description, Global, Rules];
     internal static readonly string[] RuleLevel = [When, Then];
     internal static readonly string[] ActionLevel = [Action, PriorityKey];
-    internal static readonly string[] ConditionOperators = [And, Or, Not];
+    internal static readonly string[] ConditionOperators = [And, Or];
 }

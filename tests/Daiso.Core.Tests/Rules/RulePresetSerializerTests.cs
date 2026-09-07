@@ -36,8 +36,7 @@ public sealed class RulePresetSerializerTests
         var or = and.Items[1].Should().BeOfType<OrCondition>().Subject;
         or.Items.Should().Equal(new LeafCondition("public API 변경"), new LeafCondition("DB 스키마 변경"));
 
-        var not = preset.Rules[2].When.Should().BeOfType<NotCondition>().Subject;
-        not.Item.Should().Be(new LeafCondition("테스트 코드"));
+        preset.Rules[2].When.Should().Be(new LeafCondition("테스트 코드가 아닐 때"));
     }
 
     [Fact]
@@ -137,7 +136,7 @@ public sealed class RulePresetSerializerTests
             new Rule(
                 new AndCondition([
                     new LeafCondition("A"),
-                    new OrCondition([new LeafCondition("B"), new NotCondition(new NotCondition(new LeafCondition("C")))]),
+                    new OrCondition([new LeafCondition("B"), new LeafCondition("C")]),
                 ]),
                 [new RuleAction("행동", Priority.Must)]),
         ]);

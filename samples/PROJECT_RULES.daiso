@@ -27,7 +27,7 @@ rules:
         priority: MUST
 
   - when:
-      not: 테스트 코드
+      테스트 코드가 아닐 때
     then:
       - action: 공개 함수에 XML 주석을 남긴다
         priority: MAY

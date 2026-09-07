@@ -449,25 +449,13 @@
     <value>조건 트리</value>
   </data>
   <data name="RuleMaker_AddLeaf" xml:space="preserve">
-    <value>리프 추가</value>
-  </data>
-  <data name="RuleMaker_AddAnd" xml:space="preserve">
-    <value>AND 추가</value>
-  </data>
-  <data name="RuleMaker_AddOr" xml:space="preserve">
-    <value>OR 추가</value>
-  </data>
-  <data name="RuleMaker_AddNot" xml:space="preserve">
-    <value>NOT 추가</value>
+    <value>조건 추가</value>
   </data>
   <data name="RuleMaker_WrapAnd" xml:space="preserve">
     <value>AND로 감싸기</value>
   </data>
   <data name="RuleMaker_WrapOr" xml:space="preserve">
     <value>OR로 감싸기</value>
-  </data>
-  <data name="RuleMaker_WrapNot" xml:space="preserve">
-    <value>NOT로 감싸기</value>
   </data>
   <data name="RuleMaker_DeleteNode" xml:space="preserve">
     <value>노드 삭제</value>
@@ -802,9 +790,6 @@
   <data name="RuleMaker_Title" xml:space="preserve">
     <value>규칙 만들기</value>
   </data>
-  <data name="RuleMaker_Add" xml:space="preserve">
-    <value>추가</value>
-  </data>
   <data name="RuleMaker_Wrap" xml:space="preserve">
     <value>감싸기</value>
   </data>
@@ -816,9 +801,6 @@
   </data>
   <data name="RuleMaker_PreviewEmpty" xml:space="preserve">
     <value>행동을 하나 넣으면 미리보기가 채워집니다.</value>
-  </data>
-  <data name="RuleMaker_SelectedNodeHint" xml:space="preserve">
-    <value>트리에서 고른 노드에 적용됩니다.</value>
   </data>
   <data name="Settings_Title" xml:space="preserve">
     <value>설정</value>
@@ -866,12 +848,12 @@
     <value>다른 폴더 고르기…</value>
   </data>
   <!-- 저장 가능 상태 -->
-  <data name="RuleMaker_NothingToSave" xml:space="preserve">
-    <value>저장할 내용이 없습니다. 행동을 하나 이상 넣으세요</value>
-  </data>
   <data name="RuleMaker_SaveFailedBody" xml:space="preserve">
     <value>규칙을 다시 확인해 주세요.
 
 {0}</value>
+  </data>
+  <data name="RuleMaker_TreeHint" xml:space="preserve">
+    <value>고른 줄 옆에 조건이 붙습니다. 묶으려면 감싸기를 쓰세요.</value>
   </data>
 </root>

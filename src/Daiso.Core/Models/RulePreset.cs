@@ -39,4 +39,3 @@ public sealed record AndCondition(IReadOnlyList<Condition> Items) : Condition;
 public sealed record OrCondition(IReadOnlyList<Condition> Items) : Condition;
 
 /// <summary>하위 조건의 부정.</summary>
-public sealed record NotCondition(Condition Item) : Condition;

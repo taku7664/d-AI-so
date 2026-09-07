@@ -135,11 +135,6 @@ public sealed class RulePresetSerializer : IRulePresetSerializer
         var first = map.Children.First();
         var op = ((YamlScalarNode)first.Key).Value;
 
-        if (string.Equals(op, RuleKeys.Not, StringComparison.Ordinal))
-        {
-            return new NotCondition(BuildCondition(first.Value));
-        }
-
         var items = ((YamlSequenceNode)first.Value).Children.Select(BuildCondition).ToList();
         return string.Equals(op, RuleKeys.And, StringComparison.Ordinal)
             ? new AndCondition(items)
@@ -190,7 +185,6 @@ public sealed class RulePresetSerializer : IRulePresetSerializer
         LeafCondition leaf => Text(leaf.Text),
         AndCondition and => Operator(RuleKeys.And, and.Items),
         OrCondition or => Operator(RuleKeys.Or, or.Items),
-        NotCondition not => new YamlMappingNode { { Key(RuleKeys.Not), ConditionNode(not.Item) } },
         _ => throw new ArgumentOutOfRangeException(nameof(condition), condition, "알 수 없는 조건 종류"),
     };
 

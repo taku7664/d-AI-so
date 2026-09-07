@@ -344,22 +344,20 @@ public sealed class RuleValidatorTests
     }
 
     [Fact]
-    public void A_not_inside_a_not_is_allowed()
+    public void The_not_operator_is_rejected()
     {
-        var preset = _serializer.Parse("""
+        // 부정은 형식에서 지원하지 않는다. 문장으로 쓴다. (REQUIREMENTS §6.3)
+        var act = () => _serializer.Parse("""
             daiso: 1
             name: P
             rules:
               - when:
-                  not:
-                    not: A
+                  not: A
                 then:
                   - action: 행동
             """);
 
-        var outer = preset.Rules[0].When.Should().BeOfType<NotCondition>().Subject;
-        var inner = outer.Item.Should().BeOfType<NotCondition>().Subject;
-        inner.Item.Should().Be(new LeafCondition("A"));
+        act.Should().Throw<RuleParseException>().Which.Detail.Should().Contain("not");
     }
 
     [Fact]
