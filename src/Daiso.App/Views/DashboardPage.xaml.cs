@@ -33,6 +33,18 @@ public sealed partial class DashboardPage : Page
 
     private static void Go(string tag) => (App.MainWindow as ShellWindow)?.NavigateTo(tag);
 
+    /// <summary>최근 세션을 Terminal 화면에 채워 넣고 그 화면으로 보낸다.</summary>
+    private void OnResumeRecentClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: RecentSessionViewModel row })
+        {
+            return;
+        }
+
+        ViewModel.PrepareResume(row.Session);
+        Go("Terminal");
+    }
+
     private async void OnLoginClick(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement { DataContext: ToolCardViewModel card })

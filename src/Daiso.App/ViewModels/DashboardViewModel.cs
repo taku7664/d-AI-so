@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using Daiso.App.Services;
 using Daiso.Core;
 using Daiso.App.Strings;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI;
 using Microsoft.UI.Xaml.Media;
 using Windows.UI;
@@ -48,6 +49,18 @@ public sealed partial class DashboardViewModel : ObservableObject
             _providers.Select(provider => new ToolCardViewModel(provider.Kind)));
     }
 
+    /// <summary>요약에 보여줄 최근 세션 수.</summary>
+    private const int RecentSessionCount = 5;
+
+    /// <summary>가장 최근에 손댄 세션 몇 건. 바로 이어서 열 수 있다.</summary>
+    public ObservableCollection<RecentSessionViewModel> RecentSessions { get; } = [];
+
+    /// <summary>최근 세션이 있는가.</summary>
+    public bool HasRecentSessions => RecentSessions.Count > 0;
+
+    /// <summary>최근 세션이 없는가. 첫 실행 안내에 쓴다.</summary>
+    public bool HasNoRecentSessions => RecentSessions.Count == 0;
+
     /// <summary>도구 카드. Claude, Codex 순서.</summary>
     public ObservableCollection<ToolCardViewModel> Tools { get; }
 
@@ -60,10 +73,18 @@ public sealed partial class DashboardViewModel : ObservableObject
     /// <summary>최근 사용량 요약 문구.</summary>
     public string RecentUsageText => UiStrings.Format(
         "Dashboard_UsageBreakdown",
-        RecentUsage.Input,
-        RecentUsage.Output,
-        RecentUsage.CacheCreate,
-        RecentUsage.CacheRead);
+        Formats.Tokens(RecentUsage.Input),
+        Formats.Tokens(RecentUsage.Output),
+        Formats.Tokens(RecentUsage.CacheCreate),
+        Formats.Tokens(RecentUsage.CacheRead));
+
+    /// <summary>같은 내용의 정확한 값. ToolTip에 쓴다.</summary>
+    public string RecentUsageExact => UiStrings.Format(
+        "Dashboard_UsageBreakdown",
+        Formats.Exact(RecentUsage.Input),
+        Formats.Exact(RecentUsage.Output),
+        Formats.Exact(RecentUsage.CacheCreate),
+        Formats.Exact(RecentUsage.CacheRead));
 
     /// <summary>세션 수와 총 용량 한 줄.</summary>
     public string SessionSummaryText =>
@@ -80,6 +101,19 @@ public sealed partial class DashboardViewModel : ObservableObject
 
     /// <summary>사용량 카드 제목.</summary>
     public string UsageHeaderText => UiStrings.Format("Dashboard_StatTokens", UsageDayCount);
+
+    /// <summary>최근 세션을 Terminal 화면에 채워 둔다. 실행은 사람이 누른다.</summary>
+    public void PrepareResume(SessionInfo session)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+
+        var provider = _providers.First(item => item.Kind == session.Tool);
+        var terminal = App.Services.GetRequiredService<TerminalViewModel>();
+
+        terminal.PrepareResume(
+            session.ProjectPath ?? string.Empty,
+            provider.BuildResumeArguments(session));
+    }
 
     /// <summary>도구 상태와 세션·사용량 요약을 다시 읽는다.</summary>
     [RelayCommand]
@@ -109,6 +143,18 @@ public sealed partial class DashboardViewModel : ObservableObject
             SessionCount = sessions.Count;
             TotalSizeBytes = sessions.Sum(session => session.SizeBytes);
 
+            RecentSessions.Clear();
+
+            foreach (var session in sessions
+                .OrderByDescending(session => session.ModifiedAt)
+                .Take(RecentSessionCount))
+            {
+                RecentSessions.Add(new RecentSessionViewModel(session));
+            }
+
+            OnPropertyChanged(nameof(HasRecentSessions));
+            OnPropertyChanged(nameof(HasNoRecentSessions));
+
             var to = DateOnly.FromDateTime(DateTime.UtcNow);
             var usage = await _indexService.Index
                 .GetUsageAsync(to.AddDays(-(UsageDays - 1)), to, ct)
@@ -118,6 +164,7 @@ public sealed partial class DashboardViewModel : ObservableObject
 
             OnPropertyChanged(nameof(TotalSizeText));
             OnPropertyChanged(nameof(RecentUsageText));
+            OnPropertyChanged(nameof(RecentUsageExact));
             OnPropertyChanged(nameof(SessionSummaryText));
             OnPropertyChanged(nameof(SessionCountText));
             OnPropertyChanged(nameof(RecentTokensText));
@@ -152,6 +199,32 @@ public sealed partial class DashboardViewModel : ObservableObject
         < 1024L * 1024 * 1024 => $"{bytes / (1024.0 * 1024):N1} MB",
         _ => $"{bytes / (1024.0 * 1024 * 1024):N2} GB",
     };
+}
+
+/// <summary>요약 화면의 최근 세션 한 줄.</summary>
+public sealed class RecentSessionViewModel
+{
+    public RecentSessionViewModel(SessionInfo session) => Session = session;
+
+    public SessionInfo Session { get; }
+
+    /// <summary>도구 한 글자.</summary>
+    public string ToolInitial => Session.Tool == ToolKind.Claude ? "C" : "X";
+
+    /// <summary>도구 색.</summary>
+    public Brush ToolBrush => new SolidColorBrush(Session.Tool == ToolKind.Claude
+        ? Color.FromArgb(255, 122, 90, 248)
+        : Color.FromArgb(255, 96, 104, 120));
+
+    /// <summary>프로젝트 이름. 경로 전체는 ToolTip에 둔다.</summary>
+    public string ProjectText => Formats.FolderName(Session.ProjectPath);
+
+    /// <summary>전체 경로.</summary>
+    public string PathText => Session.ProjectPath ?? string.Empty;
+
+    /// <summary>시각과 용량.</summary>
+    public string MetaText =>
+        $"{Session.ModifiedAt.ToLocalTime():yyyy-MM-dd HH:mm} · {DashboardViewModel.FormatSize(Session.SizeBytes)}";
 }
 
 /// <summary>도구 하나의 카드 상태. 토큰 값은 어떤 속성에도 담지 않는다. (ARCHITECTURE §7.1)</summary>

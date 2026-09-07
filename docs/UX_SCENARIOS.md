@@ -84,7 +84,11 @@
 | RuleMaker | 빈 규칙 미리보기가 `###` 껍데기를 보여주던 것을 안내 문구로 바꿨다. 규칙 요약은 `(빈 조건) → 행동 1개`처럼 조건 없음을 밝힌다 |
 | Dashboard | 만료를 `2026-10-03까지 · 25일 남음`으로. 로그인돼 있으면 로그인 버튼을 숨기고, 상태는 색 점 + 알약으로 |
 | Dashboard | 세션 요약을 숫자 3개(세션·용량·토큰)로 크게. `세션 보기` 링크로 목록으로 보낸다 |
-| 전체 | 아이콘 버튼에 `AutomationProperties.Name`과 ToolTip을 달았다. Ctrl+S·Ctrl+O(RuleMaker), Ctrl+F·F5(Sessions) |
+| 전체 | 아이콘 버튼에 `AutomationProperties.Name`과 ToolTip을 달았다. Ctrl+S·Ctrl+O(RuleMaker), Ctrl+F(검색란 포커스)·F5(Sessions) |
+| Dashboard | 아래 절반이 비어 있던 자리에 `최근 세션` 5건을 넣고, 각 줄에서 바로 `이어서 열기`(Terminal에 인자를 채워 이동)를 할 수 있게 했다 |
+| 전체 | 상태 바는 보여줄 내용이 없으면 숨긴다. 빈 줄이 화면 아래를 먹지 않게 |
+| Sessions | 목록이 비었을 때 안내 안에 `목록 새로 읽기` 버튼을 둔다 |
+| Dashboard | 사용량 내역도 줄여 쓴다(`입력 1.03B · 출력 16.8M`). 정확한 값은 ToolTip |
 
 ## 2차 검증 (수정 후)
 

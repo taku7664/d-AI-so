@@ -76,6 +76,15 @@ public sealed partial class SessionsPage : Page
         }
     }
 
+    /// <summary>Ctrl+F는 검색란으로 커서를 옮긴다.</summary>
+    private void OnFocusSearchInvoked(
+        Microsoft.UI.Xaml.Input.KeyboardAccelerator sender,
+        Microsoft.UI.Xaml.Input.KeyboardAcceleratorInvokedEventArgs args)
+    {
+        SearchBox.Focus(FocusState.Programmatic);
+        args.Handled = true;
+    }
+
     private async void OnSearchKeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
     {
         if (e.Key == VirtualKey.Enter)

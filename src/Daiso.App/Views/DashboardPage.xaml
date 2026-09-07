@@ -196,7 +196,69 @@
                                 Text="{x:Bind ViewModel.RecentUsageText, Mode=OneWay}"
                                 Style="{StaticResource MutedText}"
                                 TextTrimming="None"
-                                TextWrapping="Wrap" />
+                                TextWrapping="Wrap"
+                                ToolTipService.ToolTip="{x:Bind ViewModel.RecentUsageExact, Mode=OneWay}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 최근 세션 -->
+                    <Border Style="{StaticResource CardBorder}">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="{loc:Str Key=Dashboard_Recent}" Style="{StaticResource SectionTitleText}" />
+
+                            <Border
+                                Style="{StaticResource NoticeBorder}"
+                                Visibility="{x:Bind ViewModel.HasNoRecentSessions, Mode=OneWay}">
+                                <TextBlock Text="{loc:Str Key=Dashboard_RecentEmpty}" Style="{StaticResource PageSubtitleText}" />
+                            </Border>
+
+                            <ItemsControl
+                                AutomationProperties.AutomationId="RecentSessionList"
+                                ItemsSource="{x:Bind ViewModel.RecentSessions}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:RecentSessionViewModel">
+                                        <Grid ColumnSpacing="12" Margin="0,0,0,10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <Border
+                                                Grid.Column="0"
+                                                Width="24"
+                                                Height="24"
+                                                CornerRadius="12"
+                                                VerticalAlignment="Center"
+                                                Background="{x:Bind ToolBrush}">
+                                                <TextBlock
+                                                    Text="{x:Bind ToolInitial}"
+                                                    Foreground="White"
+                                                    FontSize="11"
+                                                    FontWeight="SemiBold"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center" />
+                                            </Border>
+
+                                            <StackPanel Grid.Column="1" Spacing="1">
+                                                <TextBlock
+                                                    Text="{x:Bind ProjectText}"
+                                                    Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                                    TextWrapping="NoWrap"
+                                                    TextTrimming="CharacterEllipsis"
+                                                    ToolTipService.ToolTip="{x:Bind PathText}" />
+                                                <TextBlock Text="{x:Bind MetaText}" Style="{StaticResource MutedText}" />
+                                            </StackPanel>
+
+                                            <Button
+                                                Grid.Column="2"
+                                                Content="{loc:Str Key=Dashboard_ResumeHere}"
+                                                Click="OnResumeRecentClick"
+                                                DataContext="{x:Bind}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </StackPanel>
                     </Border>
 

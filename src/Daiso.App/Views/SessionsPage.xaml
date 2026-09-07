@@ -7,6 +7,10 @@
     xmlns:vm="using:Daiso.App.ViewModels">
 
     <Grid Padding="{StaticResource PagePadding}" RowSpacing="14">
+        <Grid.KeyboardAccelerators>
+            <KeyboardAccelerator Modifiers="Control" Key="F" Invoked="OnFocusSearchInvoked" />
+        </Grid.KeyboardAccelerators>
+
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -31,6 +35,7 @@
             </StackPanel>
 
             <TextBox
+                x:Name="SearchBox"
                 Grid.Column="1"
                 VerticalAlignment="Top"
                 Margin="0,4,0,0"
@@ -46,9 +51,6 @@
                     ToolTipService.ToolTip="{loc:Str Key=Common_Search}"
                     Style="{ThemeResource AccentButtonStyle}"
                     Command="{x:Bind ViewModel.SearchCommand}">
-                    <Button.KeyboardAccelerators>
-                        <KeyboardAccelerator Modifiers="Control" Key="F" />
-                    </Button.KeyboardAccelerators>
                     <FontIcon Glyph="&#xE721;" FontSize="14" />
                 </Button>
                 <Button
@@ -262,7 +264,14 @@
                             Margin="16"
                             VerticalAlignment="Top"
                             Visibility="{x:Bind ViewModel.IsListEmpty, Mode=OneWay}">
-                            <TextBlock Text="{loc:Str Key=Sessions_EmptyList}" Style="{StaticResource PageSubtitleText}" />
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="{loc:Str Key=Sessions_EmptyList}" Style="{StaticResource PageSubtitleText}" />
+                                <Button
+                                    Content="{loc:Str Key=Sessions_ReloadList}"
+                                    HorizontalAlignment="Left"
+                                    AutomationProperties.AutomationId="EmptyReloadButton"
+                                    Command="{x:Bind ViewModel.LoadCommand}" />
+                            </StackPanel>
                         </Border>
                     </Grid>
                 </Grid>

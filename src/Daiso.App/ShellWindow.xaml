@@ -58,6 +58,7 @@
         </muxc:NavigationView>
 
         <Border
+            x:Name="StatusBar"
             Grid.Row="1"
             Padding="12,6"
             BorderThickness="0,1,0,0"

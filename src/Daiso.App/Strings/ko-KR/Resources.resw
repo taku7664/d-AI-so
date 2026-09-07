@@ -161,7 +161,7 @@
     <value>비용은 Settings의 단가표로 계산한 추정치입니다. 단가가 없는 모델은 0으로 둡니다.</value>
   </data>
   <data name="Dashboard_UsageBreakdown" xml:space="preserve">
-    <value>입력 {0:N0} · 출력 {1:N0} · 캐시 쓰기 {2:N0} · 캐시 읽기 {3:N0}</value>
+    <value>입력 {0} · 출력 {1} · 캐시 쓰기 {2} · 캐시 읽기 {3}</value>
   </data>
 
   <!-- ── 로그인 상태 ────────────────────────────────────────────────────── -->
@@ -844,5 +844,15 @@
   </data>
   <data name="Nav_Settings" xml:space="preserve">
     <value>설정</value>
+  </data>
+  <!-- Dashboard 최근 세션 -->
+  <data name="Dashboard_Recent" xml:space="preserve">
+    <value>최근 세션</value>
+  </data>
+  <data name="Dashboard_RecentEmpty" xml:space="preserve">
+    <value>아직 인덱스에 세션이 없습니다. 세션 화면에서 목록을 다시 읽어 보세요.</value>
+  </data>
+  <data name="Dashboard_ResumeHere" xml:space="preserve">
+    <value>이어서 열기</value>
   </data>
 </root>

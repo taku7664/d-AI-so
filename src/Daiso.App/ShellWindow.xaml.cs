@@ -81,6 +81,10 @@ public sealed partial class ShellWindow : Window
 
     private void ApplyStatus()
     {
+        // 보여줄 상태가 없으면 바 자체를 숨긴다. 빈 줄이 화면 아래를 먹지 않게.
+        var hasStatus = !string.IsNullOrWhiteSpace(_viewModel.StatusMessage) || _viewModel.IsIndexing;
+        StatusBar.Visibility = hasStatus ? Visibility.Visible : Visibility.Collapsed;
+
         StatusText.Text = _viewModel.StatusMessage;
         StatusProgress.Visibility = _viewModel.IsIndexing ? Visibility.Visible : Visibility.Collapsed;
         StatusProgress.IsIndeterminate = _viewModel.StatusPercent <= 0;
