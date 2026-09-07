@@ -892,4 +892,30 @@
   <data name="Usage_Title" xml:space="preserve">
     <value>사용량</value>
   </data>
+  <!-- 세션 타임라인 상태 -->
+  <data name="Sessions_TimelineLoading" xml:space="preserve">
+    <value>대화를 읽는 중입니다…</value>
+  </data>
+  <data name="Sessions_TimelineEmpty" xml:space="preserve">
+    <value>이 세션에는 보여줄 메시지가 없습니다.</value>
+  </data>
+  <!-- 세션 상세 (대화 중심) -->
+  <data name="Role_User" xml:space="preserve">
+    <value>사용자</value>
+  </data>
+  <data name="Role_Assistant" xml:space="preserve">
+    <value>어시스턴트</value>
+  </data>
+  <data name="Role_Tool" xml:space="preserve">
+    <value>도구</value>
+  </data>
+  <data name="Role_System" xml:space="preserve">
+    <value>시스템</value>
+  </data>
+  <data name="Sessions_ShowToolCalls" xml:space="preserve">
+    <value>도구 호출 보기</value>
+  </data>
+  <data name="Sessions_TimelineTruncated" xml:space="preserve">
+    <value>앞 {0}건만 보여줍니다. 전체는 Markdown으로 내보내 보세요.</value>
+  </data>
 </root>

@@ -251,6 +251,7 @@
 
                                         <Button
                                             Grid.Column="2"
+                                            AutomationProperties.AutomationId="ResumeRecentButton"
                                             AutomationProperties.Name="{loc:Str Key=Dashboard_ResumeHere}"
                                             ToolTipService.ToolTip="{loc:Str Key=Dashboard_ResumeHere}"
                                             Click="OnResumeRecentClick"

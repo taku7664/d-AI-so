@@ -355,7 +355,7 @@
                                 CanDragItems="True"
                                 AllowDrop="True"
                                 CanReorderItems="True"
-                                MinHeight="160"
+                                MinHeight="120"
                                 DragItemsCompleted="OnTreeDragCompleted">
                                 <muxc:TreeView.ItemTemplate>
                                     <DataTemplate x:DataType="vm:ConditionNodeViewModel">

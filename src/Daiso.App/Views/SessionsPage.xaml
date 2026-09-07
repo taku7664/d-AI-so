@@ -284,6 +284,7 @@
                         <Grid RowSpacing="10">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                                 <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
 
@@ -303,17 +304,57 @@
                                     AutomationProperties.AutomationId="ExportButton"
                                     IsEnabled="{x:Bind ViewModel.HasSelectedSession, Mode=OneWay}"
                                     Click="OnExportClick" />
+
                             </StackPanel>
 
-                            <Border
+                            <CheckBox
                                 Grid.Row="1"
+                                Content="{loc:Str Key=Sessions_ShowToolCalls}"
+                                AutomationProperties.AutomationId="ShowToolCallsCheck"
+                                IsChecked="{x:Bind ViewModel.ShowToolCalls, Mode=TwoWay}" />
+
+                            <Border
+                                Grid.Row="2"
                                 Style="{StaticResource NoticeBorder}"
                                 VerticalAlignment="Top"
                                 Visibility="{x:Bind ViewModel.NoSelection, Mode=OneWay}">
                                 <TextBlock Text="{loc:Str Key=Sessions_PickHint}" Style="{StaticResource PageSubtitleText}" />
                             </Border>
 
-                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <StackPanel
+                                Grid.Row="2"
+                                Spacing="10"
+                                Orientation="Horizontal"
+                                VerticalAlignment="Top"
+                                Visibility="{x:Bind ViewModel.IsTimelineLoading, Mode=OneWay}">
+                                <muxc:ProgressRing Width="18" Height="18" IsActive="True" />
+                                <TextBlock
+                                    Text="{loc:Str Key=Sessions_TimelineLoading}"
+                                    Style="{StaticResource PageSubtitleText}"
+                                    VerticalAlignment="Center" />
+                            </StackPanel>
+
+                            <Border
+                                Grid.Row="2"
+                                Style="{StaticResource NoticeBorder}"
+                                VerticalAlignment="Top"
+                                Visibility="{x:Bind ViewModel.IsTimelineEmpty, Mode=OneWay}">
+                                <TextBlock Text="{loc:Str Key=Sessions_TimelineEmpty}" Style="{StaticResource PageSubtitleText}" />
+                            </Border>
+
+                            <ScrollViewer
+                                Grid.Row="2"
+                                VerticalScrollBarVisibility="Auto"
+                                Visibility="{x:Bind ViewModel.HasTimeline, Mode=OneWay}">
+                                <StackPanel Spacing="10">
+                                    <Border
+                                        Style="{StaticResource NoticeBorder}"
+                                        Visibility="{x:Bind ViewModel.IsTimelineTruncated, Mode=OneWay}">
+                                        <TextBlock
+                                            Text="{x:Bind ViewModel.TimelineTruncatedText}"
+                                            Style="{StaticResource PageSubtitleText}" />
+                                    </Border>
+
                                 <ItemsControl ItemsSource="{x:Bind ViewModel.Timeline}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate x:DataType="vm:MessageViewModel">
@@ -321,7 +362,10 @@
                                                 <StackPanel Visibility="{x:Bind PlainVisibility}" Spacing="3">
                                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                                         <Border Style="{StaticResource PillBorder}">
-                                                            <TextBlock Text="{x:Bind RoleText}" FontSize="11" />
+                                                            <TextBlock
+                                                                Text="{x:Bind RoleText}"
+                                                                FontSize="11"
+                                                                FontWeight="SemiBold" />
                                                         </Border>
                                                         <TextBlock
                                                             Text="{x:Bind TimeText}"
@@ -329,7 +373,7 @@
                                                             VerticalAlignment="Center" />
                                                     </StackPanel>
                                                     <TextBlock
-                                                        Text="{x:Bind Text}"
+                                                        Text="{x:Bind DisplayText}"
                                                         Style="{ThemeResource BodyTextBlockStyle}"
                                                         TextWrapping="Wrap"
                                                         IsTextSelectionEnabled="True" />
@@ -346,7 +390,7 @@
                                                         </TextBlock>
                                                     </Expander.Header>
                                                     <TextBlock
-                                                        Text="{x:Bind Text}"
+                                                        Text="{x:Bind DisplayText}"
                                                         Style="{StaticResource MonoText}"
                                                         TextTrimming="None"
                                                         TextWrapping="Wrap"
@@ -356,6 +400,7 @@
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
+                                </StackPanel>
                             </ScrollViewer>
                         </Grid>
                     </muxc:PivotItem>

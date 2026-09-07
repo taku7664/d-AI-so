@@ -34,6 +34,21 @@ public sealed partial class SessionsViewModel : ObservableObject
     [ObservableProperty]
     private bool isBusy;
 
+    /// <summary>선택한 세션의 대화를 읽고 있는가. 큰 세션은 몇 초 걸린다.</summary>
+    [ObservableProperty]
+    private bool isTimelineLoading;
+
+    /// <summary>
+    /// 도구 호출·시스템 메시지도 보여줄지.
+    /// 기본은 끈다. 켜면 사람과 모델의 대화가 도구 호출에 밀려 안 보인다.
+    /// </summary>
+    [ObservableProperty]
+    private bool showToolCalls;
+
+    /// <summary>타임라인이 잘렸는가. 상세 패널에서 알려준다.</summary>
+    [ObservableProperty]
+    private bool isTimelineTruncated;
+
     [ObservableProperty]
     private string? searchQuery;
 
@@ -144,6 +159,16 @@ public sealed partial class SessionsViewModel : ObservableObject
 
     /// <summary>세션을 골랐는가.</summary>
     public bool HasSelectedSession => SelectedSession is not null;
+
+    /// <summary>대화가 하나도 없는가. 다 읽은 뒤에만 안내를 띄운다.</summary>
+    public bool IsTimelineEmpty => HasSelectedSession && !IsTimelineLoading && Timeline.Count == 0;
+
+    /// <summary>대화를 보여줄 수 있는가.</summary>
+    public bool HasTimeline => Timeline.Count > 0;
+
+    /// <summary>잘렸을 때 보여줄 안내.</summary>
+    public string TimelineTruncatedText =>
+        UiStrings.Format("Sessions_TimelineTruncated", TimelineLimit);
 
     /// <summary>아무것도 고르지 않았는가. 안내 문구를 띄운다.</summary>
     public bool NoSelection => SelectedSession is null;
@@ -292,6 +317,9 @@ public sealed partial class SessionsViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(session);
 
         Timeline.Clear();
+        IsTimelineLoading = true;
+        IsTimelineTruncated = false;
+        NotifyTimelineState();
 
         var provider = _providers.FirstOrDefault(p => p.Kind == session.Tool);
         if (provider is null)
@@ -309,11 +337,17 @@ public sealed partial class SessionsViewModel : ObservableObject
                 .ReadMessagesAsync(session.FilePath, 0, ct)
                 .ConfigureAwait(true))
             {
+                // 기본은 대화만. 도구 호출·시스템 주입은 토글을 켤 때만 보여준다.
+                if (!ShowToolCalls && message.Role is MessageRole.Tool or MessageRole.System)
+                {
+                    continue;
+                }
+
                 Timeline.Add(new MessageViewModel(message));
 
                 if (++count >= TimelineLimit)
                 {
-                    StatusText = UiStrings.Format("Sessions_TimelineLimit", TimelineLimit);
+                    IsTimelineTruncated = true;
                     break;
                 }
             }
@@ -321,6 +355,8 @@ public sealed partial class SessionsViewModel : ObservableObject
         finally
         {
             IsBusy = false;
+            IsTimelineLoading = false;
+            NotifyTimelineState();
         }
     }
 
@@ -537,10 +573,19 @@ public sealed partial class SessionsViewModel : ObservableObject
 
     partial void OnMinSizeMegabytesChanged(double value) => ReloadForFilter();
 
+    partial void OnShowToolCallsChanged(bool value)
+    {
+        if (SelectedSession is { } row)
+        {
+            _ = LoadTimelineAsync(row.Session);
+        }
+    }
+
     partial void OnSelectedSessionChanged(SessionRowViewModel? value)
     {
         OnPropertyChanged(nameof(HasSelectedSession));
         OnPropertyChanged(nameof(NoSelection));
+        NotifyTimelineState();
     }
 
     private void ReloadForFilter()
@@ -552,6 +597,12 @@ public sealed partial class SessionsViewModel : ObservableObject
     }
 
     private void OnRowCheckedChanged(object? sender, EventArgs e) => NotifyChecked();
+
+    private void NotifyTimelineState()
+    {
+        OnPropertyChanged(nameof(IsTimelineEmpty));
+        OnPropertyChanged(nameof(HasTimeline));
+    }
 
     private void NotifyChecked()
     {
@@ -672,6 +723,9 @@ public sealed partial class SessionRowViewModel : ObservableObject
     public bool IsOrphan => Session.ProjectPath is null || !Directory.Exists(Session.ProjectPath);
 
     /// <summary>배지 문구. 실행 중·아카이브·고아.</summary>
+    /// <summary>`&lt;command-*&gt;` 태그를 걷어낸 본문. 세션 상세에서도 쓴다.</summary>
+    internal static string CleanCommandText(string raw) => CleanPrompt(raw);
+
     /// <summary>태그·연속 공백을 걷어낸 한 줄짜리 프롬프트.</summary>
     private static string CleanPrompt(string? raw)
     {
@@ -738,15 +792,26 @@ public sealed class MessageViewModel
 
     public SessionMessage Message { get; }
 
-    public string RoleText => Message.Role switch
+    public string RoleText => UiStrings.Get(Message.Role switch
     {
-        MessageRole.User => "User",
-        MessageRole.Assistant => "Assistant",
-        MessageRole.System => "System",
-        _ => "Tool",
-    };
+        MessageRole.User => "Role_User",
+        MessageRole.Assistant => "Role_Assistant",
+        MessageRole.System => "Role_System",
+        _ => "Role_Tool",
+    });
 
-    public string TimeText => $"{Message.At.ToLocalTime():HH:mm:ss}";
+    public string TimeText => $"{Message.At.ToLocalTime():HH:mm}";
+
+    /// <summary>어시스턴트 말인가. 역할 알약 색을 다르게 해 한눈에 구분한다.</summary>
+    public bool IsAssistant => Message.Role == MessageRole.Assistant;
+
+    /// <summary>
+    /// 화면에 보여줄 본문. 슬래시 명령 메시지는 `&lt;command-name&gt;` 같은 태그로 감싸여 오므로
+    /// 태그만 걷어낸다. 그 밖의 본문은 원문 그대로 둔다.
+    /// </summary>
+    public string DisplayText => Message.Text.StartsWith("<command-", StringComparison.Ordinal)
+        ? SessionRowViewModel.CleanCommandText(Message.Text)
+        : Message.Text;
 
     public string Text => Message.Text;
 
