@@ -75,6 +75,35 @@ public sealed partial class ChatRoomViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private string input = string.Empty;
 
+    /// <summary>이 방에서 부를 수 있는 슬래시 명령 전부(내장 + 사용자·프로젝트·스킬). 방을 열 때 한 번 채운다.</summary>
+    private IReadOnlyList<Daiso.Core.Prompts.SlashCommand> _commands = [];
+
+    /// <summary>지금 입력에 맞는 슬래시 명령 제안. 입력이 `/`로 시작할 때만 채운다.</summary>
+    public ObservableCollection<Daiso.Core.Prompts.SlashCommand> Suggestions { get; } = [];
+
+    /// <summary>방을 열 때 명령 목록을 심는다.</summary>
+    public void SetCommands(IReadOnlyList<Daiso.Core.Prompts.SlashCommand> commands) => _commands = commands;
+
+    /// <summary>입력에 맞춰 제안을 다시 채운다. `/이름` 앞부분으로 거른다. `/`가 아니면 비운다.</summary>
+    public void FilterSuggestions(string? text)
+    {
+        Suggestions.Clear();
+
+        if (string.IsNullOrEmpty(text) || text[0] != '/')
+        {
+            return;
+        }
+
+        var query = text[1..].TrimStart();
+
+        foreach (var command in _commands
+            .Where(command => command.Name.Contains(query, StringComparison.OrdinalIgnoreCase))
+            .Take(12))
+        {
+            Suggestions.Add(command);
+        }
+    }
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsRunning))]
     private bool hasExited;

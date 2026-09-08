@@ -182,6 +182,7 @@ public sealed partial class TerminalPage : Page
             var tail = new Daiso.Infrastructure.SessionTail(tool.Provider, directory, DateTimeOffset.Now);
 
             var room = new ChatRoomViewModel(tool.Provider.Kind, directory, DispatcherQueue);
+            room.SetCommands(App.Services.GetRequiredService<Daiso.Infrastructure.SlashCommandReader>().Read(tool.Provider.Kind, directory));
             room.Bind(session, tail);
             App.Rooms.Add(room);
 
@@ -264,25 +265,35 @@ public sealed partial class TerminalPage : Page
         }
     }
 
-    /// <summary>Enter는 보내고, Shift+Enter는 줄바꿈. 터미널에 포커스가 있을 때는 xterm이 알아서 처리한다.</summary>
-    private void OnRoomInputKeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
+    /// <summary>입력이 바뀌면 `/` 명령 제안을 다시 채운다.</summary>
+    private void OnRoomInputTextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
     {
-        if (e.Key != Windows.System.VirtualKey.Enter || _room is null)
+        if (args.Reason == AutoSuggestionBoxTextChangeReason.UserInput)
+        {
+            _room?.FilterSuggestions(sender.Text);
+        }
+    }
+
+    /// <summary>제안을 고르면 그 명령을 입력에 채운다(바로 보내지 않는다. 인자를 더 붙일 수 있게).</summary>
+    private void OnRoomSuggestionChosen(AutoSuggestBox sender, AutoSuggestBoxSuggestionChosenEventArgs args)
+    {
+        if (args.SelectedItem is Daiso.Core.Prompts.SlashCommand command)
+        {
+            sender.Text = command.Invocation + " ";
+        }
+    }
+
+    /// <summary>Enter(또는 돋보기)로 제출하면 콘솔로 보낸다. 제안을 고른 경우는 채우기만 하고 보내지 않는다.</summary>
+    private void OnRoomQuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
+    {
+        if (_room is null || args.ChosenSuggestion is not null)
         {
             return;
         }
 
-        var shift = Microsoft.UI.Input.InputKeyboardSource
-            .GetKeyStateForCurrentThread(Windows.System.VirtualKey.Shift)
-            .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
-
-        if (shift)
-        {
-            return;
-        }
-
-        e.Handled = true;
+        _room.Input = sender.Text;
         _room.SendCommand.Execute(null);
+        sender.Text = string.Empty;
     }
 
     private void ScrollChatToEnd() =>

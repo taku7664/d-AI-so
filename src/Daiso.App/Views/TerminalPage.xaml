@@ -5,7 +5,8 @@
     xmlns:loc="using:Daiso.App.Strings"
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
     xmlns:vm="using:Daiso.App.ViewModels"
-    xmlns:terminal="using:Daiso.App.Terminal">
+    xmlns:terminal="using:Daiso.App.Terminal"
+    xmlns:prompts="using:Daiso.Core.Prompts">
 
     <ScrollViewer Padding="{StaticResource PagePadding}" VerticalScrollBarVisibility="Auto">
         <Grid>
@@ -395,15 +396,29 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBox
+                            <AutoSuggestBox
                                 x:Name="RoomInput"
                                 Grid.Column="0"
-                                AcceptsReturn="False"
-                                TextWrapping="Wrap"
                                 AutomationProperties.AutomationId="RoomInputBox"
                                 PlaceholderText="{loc:Str Key=Room_InputPlaceholder}"
                                 Text="{Binding Input, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                KeyDown="OnRoomInputKeyDown" />
+                                ItemsSource="{Binding Suggestions}"
+                                TextChanged="OnRoomInputTextChanged"
+                                SuggestionChosen="OnRoomSuggestionChosen"
+                                QuerySubmitted="OnRoomQuerySubmitted">
+                                <AutoSuggestBox.ItemTemplate>
+                                    <DataTemplate x:DataType="prompts:SlashCommand">
+                                        <Grid ColumnSpacing="10" Padding="0,2">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" MinWidth="120" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{x:Bind Invocation}" Style="{StaticResource MonoText}" Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+                                            <TextBlock Grid.Column="1" Text="{x:Bind Description}" Style="{StaticResource MutedText}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </AutoSuggestBox.ItemTemplate>
+                            </AutoSuggestBox>
                             <Button
                                 Grid.Column="1"
                                 Style="{ThemeResource AccentButtonStyle}"
