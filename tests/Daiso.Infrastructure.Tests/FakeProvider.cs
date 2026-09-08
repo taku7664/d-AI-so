@@ -33,6 +33,9 @@ internal sealed class FakeProvider : IProvider, IUsageReader
     public ToolKind Kind { get; }
 
     /// <inheritdoc />
+    public string SessionsRoot { get; set; } = Path.GetTempPath();
+
+    /// <inheritdoc />
     public bool UsageIsAdditive { get; }
 
     /// <inheritdoc />

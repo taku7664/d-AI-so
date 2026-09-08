@@ -7,6 +7,9 @@ public interface IProvider
 {
     ToolKind Kind { get; }
 
+    /// <summary>이 도구가 세션 파일을 두는 뿌리 폴더. 방이 활성 세션 파일을 찾을 때 훑는다.</summary>
+    string SessionsRoot { get; }
+
     /// <summary>실행 파일 이름. npm 셸(.cmd)만 사용한다.</summary>
     string ExecutableName { get; }
 

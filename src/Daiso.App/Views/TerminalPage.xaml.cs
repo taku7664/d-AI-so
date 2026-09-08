@@ -123,9 +123,9 @@ public sealed partial class TerminalPage : Page
         }
     }
 
-    private Daiso.Infrastructure.Pty.PtySession? _spikeSession;
+    private ChatRoomViewModel? _room;
 
-    /// <summary>스파이크: 고른 도구를 이 자리의 의사 콘솔에 띄운다. 외부 터미널과 같은 셸 명령을 쓴다.</summary>
+    /// <summary>고른 도구로 방을 연다. 의사 콘솔 + 세션 tail을 만들어 채팅·터미널에 잇는다.</summary>
     private async void OnEmbeddedOpenClick(object sender, RoutedEventArgs e)
     {
         if (!Terminal.TerminalHost.IsRuntimeAvailable())
@@ -147,7 +147,8 @@ public sealed partial class TerminalPage : Page
             return;
         }
 
-        _spikeSession?.Dispose();
+        // 이전 방은 정리한다
+        _room?.Dispose();
 
         var builder = new Daiso.Infrastructure.TerminalCommandBuilder(Daiso.Providers.Common.ExecutableLocator.ExistsOnPath);
         var shell = builder.BuildShellCommand(tool.Provider.ExecutableName, tool.Arguments);
@@ -156,13 +157,18 @@ public sealed partial class TerminalPage : Page
         try
         {
             await Embedded.InitializeAsync();
-            _spikeSession = Daiso.Infrastructure.Pty.PtySession.Start(commandLine, directory);
-            Embedded.Attach(_spikeSession);
-            Embedded.Visibility = Visibility.Visible;
-            EmbeddedStatus.Text = commandLine;
-            EmbeddedStatus.Visibility = Visibility.Visible;
-            Embedded.UpdateLayout();
-            Embedded.StartBringIntoView(new BringIntoViewOptions { AnimationDesired = false });
+
+            var session = Daiso.Infrastructure.Pty.PtySession.Start(commandLine, directory);
+            var tail = new Daiso.Infrastructure.SessionTail(tool.Provider, directory, DateTimeOffset.Now);
+
+            _room = new ChatRoomViewModel(tool.Provider.Kind, directory, DispatcherQueue);
+            _room.Bind(session, tail);
+            _room.Blocks.CollectionChanged += (_, _) => ScrollChatToEnd();
+
+            Embedded.Attach(session);
+            RoomCard.DataContext = _room;
+            RoomCard.Visibility = Visibility.Visible;
+            EmbeddedStatus.Visibility = Visibility.Collapsed;
             Embedded.Ready += (_, _) => Embedded.FocusTerminal();
             Embedded.FocusTerminal();
         }
@@ -172,6 +178,30 @@ public sealed partial class TerminalPage : Page
             EmbeddedStatus.Visibility = Visibility.Visible;
         }
     }
+
+    /// <summary>Enter는 보내고, Shift+Enter는 줄바꿈. 터미널에 포커스가 있을 때는 xterm이 알아서 처리한다.</summary>
+    private void OnRoomInputKeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
+    {
+        if (e.Key != Windows.System.VirtualKey.Enter || _room is null)
+        {
+            return;
+        }
+
+        var shift = Microsoft.UI.Input.InputKeyboardSource
+            .GetKeyStateForCurrentThread(Windows.System.VirtualKey.Shift)
+            .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+
+        if (shift)
+        {
+            return;
+        }
+
+        e.Handled = true;
+        _room.SendCommand.Execute(null);
+    }
+
+    private void ScrollChatToEnd() =>
+        DispatcherQueue.TryEnqueue(() => ChatScroll.ChangeView(null, ChatScroll.ScrollableHeight, null, disableAnimation: true));
 
     private void OnPresetClick(object sender, RoutedEventArgs e)
     {

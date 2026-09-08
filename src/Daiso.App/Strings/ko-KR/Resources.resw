@@ -1219,4 +1219,22 @@
   <data name="Terminal_NoWebView2" xml:space="preserve">
     <value>WebView2 런타임이 없어 앱 안에서 열 수 없습니다. 외부 터미널로 여세요</value>
   </data>
+  <data name="Room_ShowChat" xml:space="preserve">
+    <value>채팅으로</value>
+  </data>
+  <data name="Room_ShowTerminal" xml:space="preserve">
+    <value>터미널로</value>
+  </data>
+  <data name="Room_Thinking" xml:space="preserve">
+    <value>쓰는 중…</value>
+  </data>
+  <data name="Room_InputPlaceholder" xml:space="preserve">
+    <value>메시지를 쓰고 Enter. 승인·슬래시 메뉴는 터미널로 바꿔서</value>
+  </data>
+  <data name="Room_Send" xml:space="preserve">
+    <value>보내기</value>
+  </data>
+  <data name="Room_Empty" xml:space="preserve">
+    <value>대화를 시작하면 여기에 블록으로 쌓입니다. 아래 칸에 쓰거나 터미널로 바꿔 직접 조작하세요</value>
+  </data>
 </root>

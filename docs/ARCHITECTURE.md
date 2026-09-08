@@ -475,6 +475,7 @@ RefreshAsync
 - 화면: `Daiso.App.Terminal.TerminalHost` — WebView2 + 동봉 xterm.js(`Assets/xterm`, MIT). `SetVirtualHostNameToFolderMapping`으로 로컬만 로드, 네트워크 없음. 앱↔페이지 메시지: out(base64)·paste·theme·focus / in·resize·copy·paste·ready·title. 선택 있으면 Ctrl+C 복사·없으면 중단, Ctrl+V·오른클릭은 앱이 클립보드를 읽어 넣는다, F5·Ctrl+1~7은 페이지에서 먹어 앱 단축키와 겹치지 않게 한다.
 - 종료는 반드시 프로세스 **트리 전체**를 kill 한다. 루트 셸만 죽이면 자식이 콘솔 출력을 잡아 읽기가 안 풀리고, 파이프 핸들 해제와 네이티브 읽기가 겹쳐 힙이 깨진다.
 - WebView2 런타임이 없으면 내장을 못 켠다. `TerminalHost.IsRuntimeAvailable()`로 확인하고 없으면 외부 터미널로 보낸다.
+- 채팅 블록: `SessionTail`이 방을 연 뒤 **새로 만들어진** 세션 파일(생성 시각 기준)을 초당 폴링으로 잡아 provider로 다시 읽고, 지난번보다 늘어난 만큼만 흘린다. 이미 열려 있던 다른 세션은 잡지 않는다. `ChatRoomViewModel`이 블록으로 쌓고(같은 화자 연속이면 머리 생략), `ChatBlockViewModel`이 아바타·시각(호버 툴팁 전체 날짜)·도구 호출 접힘·사용자 세로줄을 그린다. 입력 칸 → `PtySession.Write`(끝에 CR), 터미널↔채팅은 같은 자리 토글. A 방식이라 스트리밍은 "쓰는 중…"만, 글자 단위는 아직 없다.
 
 ### 5.4 Context Doctor
 ```
