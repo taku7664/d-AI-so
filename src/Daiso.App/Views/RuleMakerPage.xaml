@@ -548,41 +548,70 @@
                         </StackPanel>
                     </ScrollViewer>
 
-                    <!-- 미리보기 -->
-                    <Border Grid.Column="1" Style="{StaticResource CardBorder}">
-                        <Grid RowSpacing="10">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="*" />
-                            </Grid.RowDefinitions>
+                    <!-- 미리보기: 편집 중인 규칙 · 왼쪽에서 고른 프리셋. 목록을 고르면 두 번째 탭으로 넘어간다 -->
+                    <Border Grid.Column="1" Style="{StaticResource CardBorder}" Padding="4,0,4,4">
+                        <muxc:Pivot x:Name="PreviewPivot" Padding="8,4,8,0">
+                            <muxc:PivotItem Header="{loc:Str Key=RuleMaker_PreviewEditing}">
+                                <Grid>
+                                    <Border
+                                        Style="{StaticResource NoticeBorder}"
+                                        VerticalAlignment="Top"
+                                        Visibility="{x:Bind ViewModel.PreviewIsEmpty, Mode=OneWay}">
+                                        <TextBlock Text="{loc:Str Key=RuleMaker_PreviewEmpty}" Style="{StaticResource PageSubtitleText}" />
+                                    </Border>
 
-                            <TextBlock
-                                Grid.Row="0"
-                                Text="{loc:Str Key=RuleMaker_Preview}"
-                                Style="{StaticResource SectionTitleText}" />
+                                    <ScrollViewer
+                                        VerticalScrollBarVisibility="Auto"
+                                        Visibility="{x:Bind ViewModel.PreviewHasContent, Mode=OneWay}">
+                                        <TextBlock
+                                            AutomationProperties.AutomationId="MarkdownPreview"
+                                            Text="{x:Bind ViewModel.MarkdownPreview, Mode=OneWay}"
+                                            Style="{StaticResource MonoText}"
+                                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                            TextTrimming="None"
+                                            TextWrapping="Wrap"
+                                            IsTextSelectionEnabled="True" />
+                                    </ScrollViewer>
+                                </Grid>
+                            </muxc:PivotItem>
 
-                            <Border
-                                Grid.Row="1"
-                                Style="{StaticResource NoticeBorder}"
-                                VerticalAlignment="Top"
-                                Visibility="{x:Bind ViewModel.PreviewIsEmpty, Mode=OneWay}">
-                                <TextBlock Text="{loc:Str Key=RuleMaker_PreviewEmpty}" Style="{StaticResource PageSubtitleText}" />
-                            </Border>
+                            <muxc:PivotItem Header="{loc:Str Key=RuleMaker_PreviewSelected}">
+                                <Grid RowSpacing="8">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
 
-                            <ScrollViewer
-                                Grid.Row="1"
-                                VerticalScrollBarVisibility="Auto"
-                                Visibility="{x:Bind ViewModel.PreviewHasContent, Mode=OneWay}">
-                                <TextBlock
-                                    AutomationProperties.AutomationId="MarkdownPreview"
-                                    Text="{x:Bind ViewModel.MarkdownPreview, Mode=OneWay}"
-                                    Style="{StaticResource MonoText}"
-                                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                                    TextTrimming="None"
-                                    TextWrapping="Wrap"
-                                    IsTextSelectionEnabled="True" />
-                            </ScrollViewer>
-                        </Grid>
+                                    <TextBlock
+                                        Grid.Row="0"
+                                        Text="{x:Bind ViewModel.GalleryPreviewTitle, Mode=OneWay}"
+                                        Style="{StaticResource MutedText}"
+                                        TextWrapping="Wrap" />
+
+                                    <Border
+                                        Grid.Row="1"
+                                        Style="{StaticResource NoticeBorder}"
+                                        VerticalAlignment="Top"
+                                        Visibility="{x:Bind ViewModel.HasNoGallerySelection, Mode=OneWay}">
+                                        <TextBlock Text="{loc:Str Key=RuleMaker_GalleryPick}" Style="{StaticResource PageSubtitleText}" />
+                                    </Border>
+
+                                    <ScrollViewer
+                                        Grid.Row="1"
+                                        VerticalScrollBarVisibility="Auto"
+                                        Visibility="{x:Bind ViewModel.HasGallerySelection, Mode=OneWay}">
+                                        <TextBlock
+                                            AutomationProperties.AutomationId="GalleryPreview"
+                                            Text="{x:Bind ViewModel.GalleryPreview, Mode=OneWay}"
+                                            Style="{StaticResource MonoText}"
+                                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                            TextTrimming="None"
+                                            TextWrapping="Wrap"
+                                            IsTextSelectionEnabled="True" />
+                                    </ScrollViewer>
+                                </Grid>
+                            </muxc:PivotItem>
+                        </muxc:Pivot>
                     </Border>
                 </Grid>
             </Grid>

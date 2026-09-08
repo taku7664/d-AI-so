@@ -27,10 +27,14 @@ public sealed partial class RuleMakerPage : Page
             BindTree();
             ViewModel.RefreshGalleryCommand.Execute(null);
             BuildRecentFlyout();
+            _galleryPickedByUser = true;
         };
     }
 
     public RuleMakerViewModel ViewModel { get; }
+
+    /// <summary>목록이 사람 손으로 골라졌는가. 첫 채움의 자동 선택과 구분한다.</summary>
+    private bool _galleryPickedByUser;
 
     /// <summary>지금 트리에서 고른 노드. 없으면 루트.</summary>
     private ConditionNodeViewModel? SelectedNode =>
@@ -45,6 +49,10 @@ public sealed partial class RuleMakerPage : Page
                 break;
             case nameof(RuleMakerViewModel.CurrentPath):
                 BuildRecentFlyout();
+                break;
+            case nameof(RuleMakerViewModel.SelectedGalleryItem) when ViewModel.SelectedGalleryItem is not null && _galleryPickedByUser:
+                // 목록에서 고르면 그 내용을 바로 보여준다. 처음 채워질 때의 자동 선택은 넘어간다
+                PreviewPivot.SelectedIndex = 1;
                 break;
             default:
                 break;
@@ -376,6 +384,7 @@ public sealed partial class RuleMakerPage : Page
         {
             ViewModel.OpenFromGallery(item);
             BindTree();
+            PreviewPivot.SelectedIndex = 0;
         }
         catch (RuleParseException ex)
         {
@@ -397,6 +406,7 @@ public sealed partial class RuleMakerPage : Page
 
         ViewModel.MergeFromGallery(item);
         BindTree();
+        PreviewPivot.SelectedIndex = 0;
     }
 
     /// <summary>현재 프리셋을 내 라이브러리에 저장한다. 갤러리에 바로 나타난다.</summary>
