@@ -610,6 +610,7 @@ Apply(projectDir, direction, dryRun)
 - 왼쪽 메뉴 항목과 페이지 제목은 같은 말을 쓴다. 메뉴 안에 같은 이름의 탭을 또 두지 않는다
 - 인덱싱이 끝나면 목록·요약을 자동으로 다시 읽는다. 사람이 "다시 읽기"를 눌러야 최신이 되는 화면을 만들지 않는다
 - 단축키는 설정의 "단축키" 카드에 적는다. 알려주지 않는 단축키는 없는 것과 같다
+- `SelectorBar` 탭은 페이지 생성자에서 `SelectorBarVisuals.ResetPressedOnLeave`를 붙인다. WinUI 항목은 누른 뒤 포인터가 나가면 회색 눌림이 남는다. 포인터가 나가거나 선택이 바뀌면 `SelectedNormal`/`UnselectedNormal`로 되돌린다
 
 **테마** — 설정의 테마는 고른 즉시 적용한다 (`SettingsViewModel.ThemeChanged` → `ShellWindow.ApplyTheme`).
 - `System`: `MicaBackdrop` + 배경 없음. OS 테마를 따른다

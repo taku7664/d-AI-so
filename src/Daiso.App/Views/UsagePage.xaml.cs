@@ -1,3 +1,4 @@
+using Daiso.App.Controls;
 using Daiso.App.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
@@ -11,6 +12,7 @@ public sealed partial class UsagePage : Page
     public UsagePage()
     {
         InitializeComponent();
+        SelectorBarVisuals.ResetPressedOnLeave(ToolTabs);
         Usage = App.Services.GetRequiredService<UsageViewModel>();
 
         Loaded += async (_, _) => await Usage.LoadCommand.ExecuteAsync(null);

@@ -1,3 +1,4 @@
+using Daiso.App.Controls;
 using Daiso.App.Strings;
 using Daiso.App.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,6 +12,7 @@ public sealed partial class DashboardPage : Page
     public DashboardPage()
     {
         InitializeComponent();
+        SelectorBarVisuals.ResetPressedOnLeave(ToolTabs);
         ViewModel = App.Services.GetRequiredService<DashboardViewModel>();
         Shell.PropertyChanged += OnShellPropertyChanged;
 

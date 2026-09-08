@@ -1,3 +1,4 @@
+using Daiso.App.Controls;
 using Daiso.App.Services;
 using Daiso.App.Strings;
 using Daiso.App.ViewModels;
@@ -13,6 +14,7 @@ public sealed partial class TerminalPage : Page
     public TerminalPage()
     {
         InitializeComponent();
+        SelectorBarVisuals.ResetPressedOnLeave(ToolTabs);
         ViewModel = App.Services.GetRequiredService<TerminalViewModel>();
 
         Loaded += async (_, _) =>
