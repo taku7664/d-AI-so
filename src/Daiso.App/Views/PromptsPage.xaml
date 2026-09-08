@@ -35,7 +35,7 @@
                     Label="{loc:Str Key=Prompts_New}"
                     Icon="Add"
                     AutomationProperties.AutomationId="PromptNewButton"
-                    Command="{x:Bind ViewModel.NewCommand}" />
+                    Click="OnNewClick" />
                 <muxc:AppBarButton
                     Label="{loc:Str Key=Prompts_SaveToLibrary}"
                     Icon="Save"
@@ -69,6 +69,7 @@
                     ItemsSource="{x:Bind ViewModel.Gallery}"
                     SelectedItem="{x:Bind ViewModel.SelectedItem, Mode=TwoWay}"
                     SelectionMode="Single"
+                    SelectionChanged="OnPromptSelectionChanged"
                     ContainerContentChanging="OnPromptContainerChanging">
                     <ListView.ItemTemplate>
                         <DataTemplate x:DataType="vm:PromptGalleryItemViewModel">

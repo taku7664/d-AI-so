@@ -1114,4 +1114,13 @@
   <data name="RuleMaker_OpenFailedWith" xml:space="preserve">
     <value>파일을 열지 못했습니다: {0}</value>
   </data>
+  <data name="Common_DiscardTitle" xml:space="preserve">
+    <value>저장하지 않은 변경이 있습니다</value>
+  </data>
+  <data name="Common_DiscardBody" xml:space="preserve">
+    <value>지금 편집 중인 내용을 버리고 넘어갈까요? 남기려면 취소하고 먼저 저장하세요.</value>
+  </data>
+  <data name="Common_Discard" xml:space="preserve">
+    <value>버리고 넘어가기</value>
+  </data>
 </root>

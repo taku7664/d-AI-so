@@ -15,10 +15,66 @@ public sealed partial class PromptsPage : Page
         InitializeComponent();
         ViewModel = App.Services.GetRequiredService<PromptsViewModel>();
 
-        Loaded += (_, _) => ViewModel.RefreshGalleryCommand.Execute(null);
+        Loaded += (_, _) =>
+        {
+            ViewModel.RefreshGalleryCommand.Execute(null);
+
+            // 처음 열면 첫 항목을 싣는다. 아직 편집한 게 없으니 묻지 않는다
+            if (ViewModel.SelectedItem is null && ViewModel.Gallery.Count > 0 && !ViewModel.IsDirty)
+            {
+                ViewModel.SelectedItem = ViewModel.Gallery[0];
+            }
+        };
     }
 
     public PromptsViewModel ViewModel { get; }
+
+    /// <summary>편집기에 실려 있는 목록 항목.</summary>
+    private PromptGalleryItemViewModel? _loadedItem;
+
+    private bool _revertingSelection;
+
+    private async Task<bool> CanLeaveAsync() => !ViewModel.IsDirty || await DiscardDialog.ConfirmAsync(XamlRoot);
+
+    /// <summary>고르면 편집기에 싣는다. 편집 중인 것이 있으면 먼저 묻고, 거절하면 선택을 되돌린다.</summary>
+    private async void OnPromptSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_revertingSelection || ViewModel.SelectedItem is not { } item)
+        {
+            return;
+        }
+
+        if (_loadedItem?.Key == item.Key || !ViewModel.IsDirty && ViewModel.EditName == item.Name && ViewModel.EditBody == item.Preset.Body)
+        {
+            // 목록을 다시 채우며 되찾은 항목이거나, 방금 저장해 내 것으로 바뀐 같은 내용. 편집기는 그대로
+            _loadedItem = item;
+            return;
+        }
+
+        if (!await CanLeaveAsync())
+        {
+            _revertingSelection = true;
+            ViewModel.SelectedItem = _loadedItem;
+            _revertingSelection = false;
+            return;
+        }
+
+        ViewModel.LoadItem(item);
+        _loadedItem = item;
+    }
+
+    private async void OnNewClick(object sender, RoutedEventArgs e)
+    {
+        if (!await CanLeaveAsync())
+        {
+            return;
+        }
+
+        _revertingSelection = true;
+        ViewModel.NewCommand.Execute(null);
+        _loadedItem = null;
+        _revertingSelection = false;
+    }
 
     /// <summary>목록 항목의 접근성 이름을 프롬프트 이름으로.</summary>
     private void OnPromptContainerChanging(ListViewBase sender, ContainerContentChangingEventArgs args)

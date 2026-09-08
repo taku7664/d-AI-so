@@ -62,6 +62,7 @@ public sealed partial class PromptsViewModel : ObservableObject
         _knownProjects = knownProjects;
 
         RefreshGallery();
+        MarkClean();
     }
 
     /// <summary>기본 제공 뒤에 내 것.</summary>
@@ -88,6 +89,40 @@ public sealed partial class PromptsViewModel : ObservableObject
     public bool CanSave => !string.IsNullOrWhiteSpace(EditName) && !string.IsNullOrWhiteSpace(EditBody);
 
     public bool HasStarter => !string.IsNullOrWhiteSpace(StarterMessage);
+
+    /// <summary>마지막으로 실었거나 저장하거나 새로 만든 시점의 편집 내용.</summary>
+    private string _cleanSnapshot = string.Empty;
+
+    /// <summary>저장하지 않은 편집이 있는가. 다른 항목을 고르거나 새로 만들기 전에 화면이 묻는다.</summary>
+    public bool IsDirty => Snapshot() != _cleanSnapshot;
+
+    private string Snapshot() => string.Join("\u001f", EditName, EditDescription, EditOutput, CategoryIndex, EditBody);
+
+    private void MarkClean() => _cleanSnapshot = Snapshot();
+
+    /// <summary>목록 항목을 편집기에 싹 싣는다. 화면이 확인을 거친 뒤 부른다.</summary>
+    public void LoadItem(PromptGalleryItemViewModel item)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+
+        _loadingSelection = true;
+
+        try
+        {
+            EditName = item.Preset.Name;
+            EditDescription = item.Preset.Description;
+            EditOutput = item.Preset.Output ?? string.Empty;
+            EditBody = item.Preset.Body;
+            CategoryIndex = (int)item.Preset.Category;
+            StarterMessage = null;
+        }
+        finally
+        {
+            _loadingSelection = false;
+        }
+
+        MarkClean();
+    }
 
     /// <summary>
     /// 편집기 내용으로 모델을 만든다. id는 고른 항목의 것을 그대로 쓴다(기본 제공이면 planning-interview 같은 영문 슬러그).
@@ -126,7 +161,7 @@ public sealed partial class PromptsViewModel : ObservableObject
             Gallery.Add(new PromptGalleryItemViewModel(prompt, isMine: true));
         }
 
-        SelectedItem = Gallery.FirstOrDefault(item => item.Key == keep) ?? Gallery.FirstOrDefault();
+        SelectedItem = Gallery.FirstOrDefault(item => item.Key == keep);
     }
 
     /// <summary>빈 편집기로 시작한다.</summary>
@@ -141,6 +176,7 @@ public sealed partial class PromptsViewModel : ObservableObject
         CategoryIndex = 0;
         StarterMessage = null;
         StatusText = UiStrings.Get("Prompts_Created");
+        MarkClean();
     }
 
     /// <summary>편집기 내용을 내 보관함에 저장한다.</summary>
@@ -158,6 +194,7 @@ public sealed partial class PromptsViewModel : ObservableObject
 
         RefreshGallery();
         SelectedItem = Gallery.FirstOrDefault(item => item.IsMine && item.Preset.Id == preset.Id) ?? SelectedItem;
+        MarkClean();
         StatusText = UiStrings.Format("Prompts_Saved", preset.Name);
     }
 
@@ -208,30 +245,6 @@ public sealed partial class PromptsViewModel : ObservableObject
         foreach (var path in known)
         {
             ProjectChoices.Add(path);
-        }
-    }
-
-    partial void OnSelectedItemChanged(PromptGalleryItemViewModel? value)
-    {
-        if (value is null)
-        {
-            return;
-        }
-
-        _loadingSelection = true;
-
-        try
-        {
-            EditName = value.Preset.Name;
-            EditDescription = value.Preset.Description;
-            EditOutput = value.Preset.Output ?? string.Empty;
-            EditBody = value.Preset.Body;
-            CategoryIndex = (int)value.Preset.Category;
-            StarterMessage = null;
-        }
-        finally
-        {
-            _loadingSelection = false;
         }
     }
 

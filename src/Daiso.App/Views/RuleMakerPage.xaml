@@ -35,7 +35,7 @@
                     Label="{loc:Str Key=RuleMaker_New}"
                     Icon="Add"
                     AutomationProperties.AutomationId="NewButton"
-                    Command="{x:Bind ViewModel.NewCommand}" />
+                    Click="OnNewClick" />
                 <muxc:AppBarButton
                     Label="{loc:Str Key=Common_Open}"
                     Icon="OpenFile"
@@ -122,6 +122,7 @@
                         ItemsSource="{x:Bind ViewModel.Gallery}"
                         SelectedItem="{x:Bind ViewModel.SelectedGalleryItem, Mode=TwoWay}"
                         SelectionMode="Single"
+                        SelectionChanged="OnGallerySelectionChanged"
                         ContainerContentChanging="OnGalleryContainerChanging">
                         <ListView.ItemTemplate>
                             <DataTemplate x:DataType="vm:PresetGalleryItemViewModel">

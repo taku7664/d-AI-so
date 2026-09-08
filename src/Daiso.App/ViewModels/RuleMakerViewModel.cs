@@ -97,22 +97,30 @@ public sealed partial class RuleMakerViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasNoGallerySelection))]
     private PresetGalleryItemViewModel? selectedGalleryItem;
 
-    /// <summary>목록을 다시 채우는 중인가. 이때의 선택 복원은 편집기를 건드리지 않는다.</summary>
-    private bool _refreshingGallery;
+    /// <summary>마지막으로 열거나 저장하거나 새로 만든 시점의 직렬화 결과. 이것과 다르면 저장하지 않은 편집이 있다.</summary>
+    private string _cleanSnapshot = string.Empty;
 
     /// <summary>
-    /// 목록에서 고르면 그것이 편집기에 실린다(내 프롬프트와 같다). 기본 제공은 경로 없이 열려 저장할 때 내 파일이 된다.
-    /// 목록을 다시 채우며 같은 항목을 되찾는 경우는 편집 중인 내용을 지키기 위해 넘어간다.
+    /// 저장하지 않은 편집이 있는가. 다른 프리셋을 고르거나 새로 만들기·열기 전에 화면이 이것을 보고 묻는다. (ARCHITECTURE §6.2)
+    /// 빈 자리표시자 줄은 직렬화에서 빠지므로 새 문서에 아무것도 안 쓴 상태는 더럽지 않다.
     /// </summary>
-    partial void OnSelectedGalleryItemChanged(PresetGalleryItemViewModel? value)
-    {
-        if (value is null || _refreshingGallery)
-        {
-            return;
-        }
+    public bool IsDirty => Snapshot() != _cleanSnapshot;
 
-        OpenFromGallery(value);
+    private string Snapshot()
+    {
+        try
+        {
+            return _serializer.Serialize(BuildPreset());
+        }
+        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+        {
+            // 직렬화가 안 되는 중간 상태는 사람이 손댄 것이다
+            return "\0dirty:" + Guid.NewGuid();
+        }
     }
+
+    /// <summary>지금 상태를 깨끗한 기준으로 삼는다.</summary>
+    private void MarkClean() => _cleanSnapshot = Snapshot();
 
     /// <summary>갤러리에서 무언가 골랐는가.</summary>
     public bool HasGallerySelection => SelectedGalleryItem is not null;
@@ -125,7 +133,6 @@ public sealed partial class RuleMakerViewModel : ObservableObject
     public void RefreshGallery()
     {
         var keep = SelectedGalleryItem?.Key;
-        _refreshingGallery = true;
 
         Gallery.Clear();
 
@@ -150,7 +157,6 @@ public sealed partial class RuleMakerViewModel : ObservableObject
 
         // 같은 항목이 있으면 되찾고, 없으면(첫 채움) 아무것도 고르지 않는다. 고르는 순간 편집기가 바뀌기 때문이다
         SelectedGalleryItem = Gallery.FirstOrDefault(item => item.Key == keep);
-        _refreshingGallery = false;
     }
 
     /// <summary>갤러리 항목을 편집기에 연다. 기본 제공은 내 파일이 아니므로 경로 없이 열리고, 저장할 때 파일이 된다.</summary>
@@ -259,6 +265,7 @@ public sealed partial class RuleMakerViewModel : ObservableObject
         AddRule();
         StatusText = UiStrings.Get("RuleMaker_Created");
         Refresh();
+        MarkClean();
     }
 
     /// <summary>파일을 읽어 편집기에 채운다.</summary>
@@ -284,6 +291,7 @@ public sealed partial class RuleMakerViewModel : ObservableObject
         CurrentPath = path;
         RememberRecent(path);
         StatusText = UiStrings.Format("RuleMaker_Saved", path);
+        MarkClean();
     }
 
     /// <summary>프리셋 라이브러리 목록을 다시 읽는다.</summary>
@@ -506,6 +514,7 @@ public sealed partial class RuleMakerViewModel : ObservableObject
 
         SelectedRule = Rules.FirstOrDefault();
         Refresh();
+        MarkClean();
     }
 
     private ActionEditViewModel Track(ActionEditViewModel action)

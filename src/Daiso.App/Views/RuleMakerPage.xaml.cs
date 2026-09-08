@@ -46,10 +46,7 @@ public sealed partial class RuleMakerPage : Page
             case nameof(RuleMakerViewModel.CurrentPath):
                 BuildRecentFlyout();
                 break;
-            case nameof(RuleMakerViewModel.SelectedGalleryItem):
-                // 고르면 뷰모델이 편집기에 실었다. 조건 트리를 새 규칙에 다시 묶는다
-                BindTree();
-                break;
+
             default:
                 break;
         }
@@ -59,8 +56,73 @@ public sealed partial class RuleMakerPage : Page
 
     // ── 파일 ─────────────────────────────────────────────────────────────
 
+    /// <summary>편집기에 실려 있는 목록 항목. 같은 것을 다시 고르면 묻지 않는다.</summary>
+    private PresetGalleryItemViewModel? _loadedGalleryItem;
+
+    /// <summary>확인을 거절해 선택을 되돌리는 중인가. 그때 다시 들어오는 이벤트는 무시한다.</summary>
+    private bool _revertingSelection;
+
+    /// <summary>저장하지 않은 편집이 있으면 버릴지 묻는다. true면 진행.</summary>
+    private async Task<bool> CanLeaveAsync() => !ViewModel.IsDirty || await DiscardDialog.ConfirmAsync(XamlRoot);
+
+    /// <summary>
+    /// 목록에서 고르면 편집기에 싹 실린다. 편집 중인 것이 있으면 먼저 묻고, 거절하면 선택을 이전 항목으로 되돌린다.
+    /// </summary>
+    private async void OnGallerySelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_revertingSelection || ViewModel.SelectedGalleryItem is not { } item)
+        {
+            return;
+        }
+
+        if (_loadedGalleryItem?.Key == item.Key)
+        {
+            // 목록을 다시 채우며 같은 항목을 되찾은 것. 편집기는 그대로
+            _loadedGalleryItem = item;
+            return;
+        }
+
+        if (!await CanLeaveAsync())
+        {
+            _revertingSelection = true;
+            ViewModel.SelectedGalleryItem = _loadedGalleryItem;
+            _revertingSelection = false;
+            return;
+        }
+
+        ViewModel.OpenFromGallery(item);
+        _loadedGalleryItem = item;
+        BindTree();
+    }
+
+    /// <summary>목록 선택을 비운다. 파일을 열거나 새로 만들면 목록의 어느 것도 편집기에 실린 게 아니다.</summary>
+    private void ClearGallerySelection()
+    {
+        _revertingSelection = true;
+        ViewModel.SelectedGalleryItem = null;
+        _loadedGalleryItem = null;
+        _revertingSelection = false;
+    }
+
+    private async void OnNewClick(object sender, RoutedEventArgs e)
+    {
+        if (!await CanLeaveAsync())
+        {
+            return;
+        }
+
+        ViewModel.NewCommand.Execute(null);
+        ClearGallerySelection();
+        BindTree();
+    }
+
     private async void OnOpenClick(object sender, RoutedEventArgs e)
     {
+        if (!await CanLeaveAsync())
+        {
+            return;
+        }
+
         var picker = new FileOpenPicker { SuggestedStartLocation = PickerLocationId.DocumentsLibrary };
         picker.FileTypeFilter.Add(".daiso");
         Attach(picker);
@@ -396,9 +458,15 @@ public sealed partial class RuleMakerPage : Page
 
     private async Task OpenPathAsync(string path)
     {
+        if (!await CanLeaveAsync())
+        {
+            return;
+        }
+
         try
         {
             ViewModel.Open(path);
+            ClearGallerySelection();
             BindTree();
         }
         catch (RuleParseException ex)
