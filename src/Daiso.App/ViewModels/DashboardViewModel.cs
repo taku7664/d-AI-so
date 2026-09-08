@@ -259,6 +259,41 @@ public sealed partial class ToolCardViewModel : ObservableObject
     /// <summary>부가 정보. MCP 커넥터 이름, 구독 등급 등.</summary>
     public ObservableCollection<string> Extras { get; } = [];
 
+    /// <summary>이 도구의 로그인 프로필. 요약 화면이 <see cref="AuthProfileViewModel"/>에서 골라 채운다.</summary>
+    public ObservableCollection<AuthProfileRowViewModel> Profiles { get; } = [];
+
+    /// <summary>보관 중인 프로필이 있는가.</summary>
+    public bool HasProfiles => Profiles.Count > 0;
+
+    /// <summary>보관 중인 프로필이 없는가. 안내 문구를 띄운다.</summary>
+    public bool HasNoProfiles => Profiles.Count == 0;
+
+    /// <summary>계정 버튼 글자. 보관 개수가 있으면 붙인다.</summary>
+    public string AccountsButtonText => Profiles.Count == 0
+        ? UiStrings.Get("AuthProfile_Accounts")
+        : UiStrings.Format("AuthProfile_AccountsCount", Profiles.Count);
+
+    /// <summary>프로필 저장·전환·삭제 결과 한 줄.</summary>
+    [ObservableProperty]
+    private string? profileStatus;
+
+    /// <summary>이 도구의 프로필만 골라 다시 채운다.</summary>
+    public void SetProfiles(IEnumerable<AuthProfileRowViewModel> rows)
+    {
+        ArgumentNullException.ThrowIfNull(rows);
+
+        Profiles.Clear();
+
+        foreach (var row in rows.Where(row => row.Profile.Tool == Kind))
+        {
+            Profiles.Add(row);
+        }
+
+        OnPropertyChanged(nameof(HasProfiles));
+        OnPropertyChanged(nameof(HasNoProfiles));
+        OnPropertyChanged(nameof(AccountsButtonText));
+    }
+
     /// <summary>상태 점 색. 초록·주황·빨강.</summary>
     public Brush StateBrush => new SolidColorBrush(State switch
     {

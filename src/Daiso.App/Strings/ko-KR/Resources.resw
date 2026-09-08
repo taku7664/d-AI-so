@@ -976,11 +976,11 @@
   <data name="AuthProfile_Hint" xml:space="preserve">
     <value>지금 로그인 상태를 이름 붙여 두면 계정을 오갈 때 다시 로그인하지 않아도 됩니다. 저장한 정보는 이 PC의 사용자 계정으로만 풀 수 있게 암호화됩니다.</value>
   </data>
-  <data name="AuthProfile_Count" xml:space="preserve">
-    <value>보관 중인 계정 {0}개</value>
+  <data name="AuthProfile_Accounts" xml:space="preserve">
+    <value>계정</value>
   </data>
-  <data name="AuthProfile_CountNone" xml:space="preserve">
-    <value>보관 중인 계정 없음</value>
+  <data name="AuthProfile_AccountsCount" xml:space="preserve">
+    <value>계정 {0}</value>
   </data>
   <data name="AuthProfile_Empty" xml:space="preserve">
     <value>저장한 프로필이 없습니다. 지금 로그인한 계정을 저장해 두세요.</value>
@@ -1021,7 +1021,7 @@
   <data name="AuthProfile_SaveTitle" xml:space="preserve">
     <value>지금 로그인 저장</value>
   </data>
-  <data name="AuthProfile_SaveBody" xml:space="preserve">
-    <value>어느 도구의 로그인을 저장할까요?</value>
+  <data name="AuthProfile_SaveBodyFor" xml:space="preserve">
+    <value>{0}의 지금 로그인을 이 이름으로 저장합니다</value>
   </data>
 </root>

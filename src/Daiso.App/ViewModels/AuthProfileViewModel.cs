@@ -42,11 +42,6 @@ public sealed partial class AuthProfileViewModel : ObservableObject
     /// <summary>비었는가. 안내 문구를 띄운다.</summary>
     public bool IsEmpty => Profiles.Count == 0;
 
-    /// <summary>접힌 머리글에 쓰는 한 줄. 펼치지 않아도 몇 개인지는 보인다.</summary>
-    public string CountText => IsEmpty
-        ? UiStrings.Get("AuthProfile_CountNone")
-        : UiStrings.Format("AuthProfile_Count", Profiles.Count);
-
     /// <summary>목록을 다시 읽는다.</summary>
     [RelayCommand]
     public void Reload()
@@ -60,7 +55,6 @@ public sealed partial class AuthProfileViewModel : ObservableObject
 
         OnPropertyChanged(nameof(HasProfiles));
         OnPropertyChanged(nameof(IsEmpty));
-        OnPropertyChanged(nameof(CountText));
     }
 
     /// <summary>지금 로그인 상태를 이름 붙여 저장한다.</summary>

@@ -14,7 +14,31 @@ public sealed partial class DashboardPage : Page
         ViewModel = App.Services.GetRequiredService<DashboardViewModel>();
         Shell.PropertyChanged += OnShellPropertyChanged;
 
-        Loaded += async (_, _) => await ViewModel.LoadCommand.ExecuteAsync(null);
+        Loaded += async (_, _) =>
+        {
+            await ViewModel.LoadCommand.ExecuteAsync(null);
+            SyncProfiles();
+        };
+    }
+
+    /// <summary>전체 프로필 목록을 도구 카드마다 자기 도구 것만 골라 넣는다.</summary>
+    private void SyncProfiles()
+    {
+        foreach (var card in ViewModel.Tools)
+        {
+            card.SetProfiles(Profiles.Profiles);
+        }
+    }
+
+    /// <summary>작업 결과를 그 도구 카드의 팝오버에만 적는다.</summary>
+    private void ReportProfile(Daiso.Core.ToolKind tool)
+    {
+        SyncProfiles();
+
+        foreach (var card in ViewModel.Tools)
+        {
+            card.ProfileStatus = card.Kind == tool ? Profiles.StatusText : null;
+        }
     }
 
     public DashboardViewModel ViewModel { get; }
@@ -53,24 +77,21 @@ public sealed partial class DashboardPage : Page
         Go("Terminal");
     }
 
-    /// <summary>지금 로그인 상태를 이름 붙여 저장한다. 도구를 고르고 이름을 받는다.</summary>
+    /// <summary>지금 로그인 상태를 이름 붙여 저장한다. 누른 카드의 도구로 저장하니 이름만 받는다.</summary>
     private async void OnSaveProfileClick(object sender, RoutedEventArgs e)
     {
-        var tools = new ComboBox
+        if (sender is not FrameworkElement { DataContext: ToolCardViewModel card })
         {
-            Header = UiStrings.Get("AuthProfile_SaveBody"),
-            SelectedIndex = 0,
-            ItemsSource = ViewModel.Tools.Select(card => card.Title).ToList(),
-        };
+            return;
+        }
 
         var name = new TextBox
         {
+            Header = UiStrings.Format("AuthProfile_SaveBodyFor", card.Title),
             PlaceholderText = UiStrings.Get("AuthProfile_NamePlaceholder"),
-            Margin = new Thickness(0, 12, 0, 0),
         };
 
         var panel = new StackPanel { Width = 360 };
-        panel.Children.Add(tools);
         panel.Children.Add(name);
 
         var dialog = new ContentDialog
@@ -88,8 +109,6 @@ public sealed partial class DashboardPage : Page
             return;
         }
 
-        var card = ViewModel.Tools[Math.Max(0, tools.SelectedIndex)];
-
         if (string.IsNullOrWhiteSpace(name.Text))
         {
             return;
@@ -99,6 +118,7 @@ public sealed partial class DashboardPage : Page
         {
             var status = await ViewModel.ReadAuthStatusAsync(card.Kind);
             Profiles.Save(card.Kind, name.Text, status);
+            ReportProfile(card.Kind);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
         {
@@ -118,6 +138,7 @@ public sealed partial class DashboardPage : Page
         {
             Profiles.Apply(row, await ViewModel.ReadAuthStatusAsync(row.Profile.Tool));
             await ViewModel.LoadCommand.ExecuteAsync(null);
+            ReportProfile(row.Profile.Tool);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
         {
@@ -149,6 +170,7 @@ public sealed partial class DashboardPage : Page
         if (await dialog.ShowAsync() == ContentDialogResult.Primary)
         {
             Profiles.Remove(row);
+            ReportProfile(row.Profile.Tool);
         }
     }
 
