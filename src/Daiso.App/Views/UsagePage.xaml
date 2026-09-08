@@ -109,11 +109,20 @@
                         <ItemsControl ItemsSource="{x:Bind Usage.Days}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="vm:UsageDayViewModel">
-                                    <Grid ColumnSpacing="12" Margin="0,0,0,6">
+                                    <!-- 호버: 줄 배경이 켜지고 막대가 밝아지며 오른쪽에 정확한 수치·내역이 나온다(코드 비하인드) -->
+                                    <Grid
+                                        ColumnSpacing="12"
+                                        Margin="0,0,0,2"
+                                        Padding="6,4"
+                                        CornerRadius="4"
+                                        Background="Transparent"
+                                        PointerEntered="OnDayEntered"
+                                        PointerExited="OnDayExited">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="56" />
                                             <ColumnDefinition Width="360" />
                                             <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
 
                                         <TextBlock
@@ -129,8 +138,7 @@
                                             RadiusX="6"
                                             RadiusY="6"
                                             Width="{x:Bind BarWidth}"
-                                            Fill="{ThemeResource AccentFillColorDefaultBrush}"
-                                            ToolTipService.ToolTip="{x:Bind Detail}" />
+                                            Fill="{ThemeResource AccentFillColorDefaultBrush}" />
 
                                         <TextBlock
                                             Grid.Column="2"
@@ -139,6 +147,14 @@
                                             HorizontalAlignment="Left"
                                             VerticalAlignment="Center"
                                             ToolTipService.ToolTip="{x:Bind TotalExact}" />
+
+                                        <TextBlock
+                                            Grid.Column="3"
+                                            Text="{x:Bind Detail}"
+                                            Style="{StaticResource MutedText}"
+                                            VerticalAlignment="Center"
+                                            TextTrimming="CharacterEllipsis"
+                                            Opacity="0" />
                                     </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>

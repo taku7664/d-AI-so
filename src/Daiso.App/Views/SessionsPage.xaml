@@ -161,9 +161,9 @@
         <Grid Grid.Row="2" ColumnSpacing="14">
             <!-- 목록은 고정 폭(구분선을 끌어 조절, 설정에 기억), 상세는 남은 폭 전부. 상세가 400px 고정이라 대화가 좁게 보이던 것을 고침 -->
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="460" MinWidth="340" MaxWidth="900" />
+                <ColumnDefinition Width="420" MinWidth="320" MaxWidth="900" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" MinWidth="360" />
+                <ColumnDefinition Width="*" MinWidth="320" />
             </Grid.ColumnDefinitions>
 
             <!-- 목록 (일반 목록 또는 검색 결과 트리) -->
@@ -174,14 +174,18 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <Grid Grid.Row="0" Margin="16,14,16,8" ColumnSpacing="8">
+                    <!-- 머리: 제목·건수 왼쪽, 체크 도구 오른쪽(전체 체크 · 골라 체크 · 선택 수 · 휴지통 · 영구 삭제). 아이콘만, 툴팁으로 설명 -->
+                    <Grid Grid.Row="0" Margin="12,10,12,6" ColumnSpacing="8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
                         <TextBlock
                             Grid.Column="0"
+                            Margin="4,0,0,0"
+                            VerticalAlignment="Center"
                             Style="{StaticResource SectionTitleText}"
                             Text="{x:Bind ViewModel.ListHeaderText, Mode=OneWay}" />
 
@@ -190,6 +194,56 @@
                             VerticalAlignment="Center"
                             Style="{StaticResource MutedText}"
                             Text="{x:Bind ViewModel.SessionCountText, Mode=OneWay}" />
+
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                            <CheckBox
+                                MinWidth="0"
+                                Padding="0"
+                                Margin="0,0,2,0"
+                                IsThreeState="False"
+                                AutomationProperties.AutomationId="CheckAllBox"
+                                AutomationProperties.Name="{loc:Str Key=Sessions_CheckAll}"
+                                ToolTipService.ToolTip="{loc:Str Key=Sessions_CheckAllTip}"
+                                IsChecked="{x:Bind ViewModel.AllChecked, Mode=OneWay}"
+                                Click="OnCheckAllClick" />
+                            <muxc:DropDownButton Padding="6" AutomationProperties.AutomationId="SelectMenuButton" AutomationProperties.Name="{loc:Str Key=Sessions_SelectMenu}" ToolTipService.ToolTip="{loc:Str Key=Sessions_SelectMenuTip}">
+                                <muxc:DropDownButton.Content>
+                                    <FontIcon Glyph="&#xE762;" FontSize="14" />
+                                </muxc:DropDownButton.Content>
+                                <muxc:DropDownButton.Flyout>
+                                    <MenuFlyout>
+                                        <MenuFlyoutItem Text="{loc:Str Key=Sessions_SelectOld}" AutomationProperties.AutomationId="SelectOldButton" Click="OnSelectOldClick" />
+                                        <MenuFlyoutItem Text="{loc:Str Key=Sessions_SelectOrphan}" AutomationProperties.AutomationId="SelectOrphanButton" Click="OnSelectOrphanClick" />
+                                        <MenuFlyoutItem Text="{loc:Str Key=Sessions_SelectLarge}" AutomationProperties.AutomationId="SelectLargeButton" Click="OnSelectLargeClick" />
+                                    </MenuFlyout>
+                                </muxc:DropDownButton.Flyout>
+                            </muxc:DropDownButton>
+                            <Border Style="{StaticResource PillBorder}" VerticalAlignment="Center" Visibility="{x:Bind ViewModel.HasChecked, Mode=OneWay}">
+                                <TextBlock AutomationProperties.AutomationId="CheckedCountText" Text="{x:Bind ViewModel.CheckedText, Mode=OneWay}" FontSize="12" />
+                            </Border>
+                            <Button
+                                Padding="6"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                AutomationProperties.AutomationId="RecycleButton"
+                                AutomationProperties.Name="{loc:Str Key=Sessions_SendToRecycleBin}"
+                                ToolTipService.ToolTip="{loc:Str Key=Sessions_SendToRecycleBin}"
+                                IsEnabled="{x:Bind ViewModel.HasChecked, Mode=OneWay}"
+                                Click="OnRecycleClick">
+                                <FontIcon Glyph="&#xE74D;" FontSize="14" />
+                            </Button>
+                            <Button
+                                Padding="6"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                AutomationProperties.AutomationId="PermanentButton"
+                                AutomationProperties.Name="{loc:Str Key=Common_PermanentDelete}"
+                                ToolTipService.ToolTip="{loc:Str Key=Sessions_PermanentDeleteTip}"
+                                IsEnabled="{x:Bind ViewModel.HasChecked, Mode=OneWay}"
+                                Click="OnPermanentClick">
+                                <FontIcon Glyph="&#xE107;" FontSize="14" Foreground="{ThemeResource SystemFillColorCriticalBrush}" />
+                            </Button>
+                        </StackPanel>
                     </Grid>
 
                     <Grid Grid.Row="1">
@@ -223,22 +277,7 @@
                                             AutomationProperties.Name="{x:Bind TitleText}"
                                             IsChecked="{x:Bind IsChecked, Mode=TwoWay}" />
 
-                                        <Border
-                                            Grid.Column="1"
-                                            Width="26"
-                                            Height="26"
-                                            CornerRadius="13"
-                                            VerticalAlignment="Center"
-                                            Background="{x:Bind ToolBrush}"
-                                            ToolTipService.ToolTip="{x:Bind ToolName}">
-                                            <TextBlock
-                                                Text="{x:Bind ToolInitial}"
-                                                Foreground="White"
-                                                FontSize="12"
-                                                FontWeight="SemiBold"
-                                                HorizontalAlignment="Center"
-                                                VerticalAlignment="Center" />
-                                        </Border>
+                                        <controls:ToolIcon Grid.Column="1" Kind="{x:Bind Session.Tool}" Size="26" VerticalAlignment="Center" />
 
                                         <StackPanel Grid.Column="2" Spacing="3">
                                             <TextBlock
@@ -599,61 +638,5 @@
         </Grid>
 
         <!-- 정리 -->
-        <Grid Grid.Row="3" ColumnSpacing="10">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-
-            <muxc:DropDownButton Grid.Column="0" AutomationProperties.AutomationId="SelectMenuButton">
-                <muxc:DropDownButton.Content>
-                    <TextBlock Text="{loc:Str Key=Sessions_SelectMenu}" />
-                </muxc:DropDownButton.Content>
-                <muxc:DropDownButton.Flyout>
-                    <MenuFlyout>
-                        <MenuFlyoutItem
-                            Text="{loc:Str Key=Sessions_SelectOld}"
-                            AutomationProperties.AutomationId="SelectOldButton"
-                            Click="OnSelectOldClick" />
-                        <MenuFlyoutItem
-                            Text="{loc:Str Key=Sessions_SelectOrphan}"
-                            AutomationProperties.AutomationId="SelectOrphanButton"
-                            Click="OnSelectOrphanClick" />
-                        <MenuFlyoutItem
-                            Text="{loc:Str Key=Sessions_SelectLarge}"
-                            AutomationProperties.AutomationId="SelectLargeButton"
-                            Click="OnSelectLargeClick" />
-                    </MenuFlyout>
-                </muxc:DropDownButton.Flyout>
-            </muxc:DropDownButton>
-
-            <Border Grid.Column="1" Style="{StaticResource PillBorder}">
-                <TextBlock
-                    AutomationProperties.AutomationId="CheckedCountText"
-                    Text="{x:Bind ViewModel.CheckedText, Mode=OneWay}"
-                    FontSize="12" />
-            </Border>
-
-            <Button
-                Grid.Column="3"
-                AutomationProperties.AutomationId="RecycleButton"
-                IsEnabled="{x:Bind ViewModel.HasChecked, Mode=OneWay}"
-                Click="OnRecycleClick">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <FontIcon Glyph="&#xE74D;" FontSize="13" />
-                    <TextBlock Text="{loc:Str Key=Sessions_SendToRecycleBin}" />
-                </StackPanel>
-            </Button>
-
-            <Button
-                Grid.Column="4"
-                Content="{loc:Str Key=Common_PermanentDelete}"
-                AutomationProperties.AutomationId="PermanentButton"
-                IsEnabled="{x:Bind ViewModel.HasChecked, Mode=OneWay}"
-                Click="OnPermanentClick" />
-        </Grid>
     </Grid>
 </Page>

@@ -47,6 +47,9 @@ public sealed partial class ShellWindow : Window
     }
 
     /// <summary>다른 페이지의 안내에서 이 페이지로 보내 달라고 할 때 쓴다. 왼쪽 선택 표시도 맞춘다.</summary>
+    /// <summary>열린 방 등록부. 좌측 메뉴 터미널 항목의 안 본 답 점이 이걸 본다.</summary>
+    public ViewModels.RoomManager Rooms => App.Rooms;
+
     public void NavigateTo(string tag)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(tag);

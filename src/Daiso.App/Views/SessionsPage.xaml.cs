@@ -181,6 +181,10 @@ public sealed partial class SessionsPage : Page
         }
     }
 
+    /// <summary>목록 머리의 전체 체크. 하나라도 안 체크된 것이 있으면 전부 켜고, 전부 켜져 있으면 전부 끈다.</summary>
+    private void OnCheckAllClick(object sender, RoutedEventArgs e) =>
+        ViewModel.CheckAll(sender is CheckBox { IsChecked: true });
+
     private void OnSelectOldClick(object sender, RoutedEventArgs e) =>
         ViewModel.SelectByRuleCommand.Execute("old");
 

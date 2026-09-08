@@ -145,6 +145,20 @@ public sealed partial class SessionsViewModel : ObservableObject
     /// <summary>선택 개수 문구.</summary>
     public string CheckedText => UiStrings.Format("Sessions_CheckedCount", CheckedCount);
 
+    /// <summary>전체 체크 상자 상태. 전부 켜졌을 때만 참.</summary>
+    public bool AllChecked => Sessions.Count > 0 && CheckedCount == Sessions.Count;
+
+    /// <summary>보이는 세션 전부를 켜거나 끈다.</summary>
+    public void CheckAll(bool on)
+    {
+        foreach (var row in Sessions)
+        {
+            row.IsChecked = on;
+        }
+
+        NotifyChecked();
+    }
+
     /// <summary>목록에 보여줄 세션이 있는가.</summary>
     public bool HasSessions => Sessions.Count > 0;
 
@@ -673,6 +687,7 @@ public sealed partial class SessionsViewModel : ObservableObject
         OnPropertyChanged(nameof(CheckedCount));
         OnPropertyChanged(nameof(HasChecked));
         OnPropertyChanged(nameof(CheckedText));
+        OnPropertyChanged(nameof(AllChecked));
     }
 }
 

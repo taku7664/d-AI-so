@@ -30,8 +30,15 @@ public sealed partial class TerminalPage : Page
             if (_room is TerminalRoomViewModel terminal)
             {
                 terminal.SetProcessTitle(title);
+                RoomTitleText.Text = terminal.Title;
             }
         };
+
+        // 도구 탭에 제작사 로고. 탭 순서 = ViewModel.Tools 순서(ToolLook.DisplayOrder)
+        for (var i = 0; i < ToolTabs.Items.Count && i < ViewModel.Tools.Count; i++)
+        {
+            ToolTabs.Items[i].Icon = ToolLook.LogoIcon(ViewModel.Tools[i].Kind);
+        }
 
         Loaded += async (_, _) =>
         {
@@ -267,7 +274,47 @@ public sealed partial class TerminalPage : Page
             TerminalPanel.Visibility = Visibility.Visible;
             ChatbotPanel.Visibility = Visibility.Collapsed;
             RoomTools.Visibility = Visibility.Visible;
+            RoomTitleText.Text = terminal.Title;
             _ = BindTerminalAsync(terminal);
+        }
+    }
+
+    /// <summary>도구 줄의 찾기 아이콘: 켜면 입력칸이 나오고 포커스, 끄면 표시를 지우고 터미널로 포커스.</summary>
+    private void OnFindToggleClick(object sender, RoutedEventArgs e)
+    {
+        var on = FindToggle.IsChecked == true;
+        FindPanel.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
+
+        if (on)
+        {
+            FindBox.Focus(FocusState.Programmatic);
+        }
+        else
+        {
+            FindBox.Text = string.Empty;
+            Embedded.ClearFind();
+            Embedded.FocusTerminal();
+        }
+    }
+
+    /// <summary>도구 줄의 폴더 열기: 이 방의 프로젝트 폴더를 탐색기로.</summary>
+    private async void OnRoomOpenFolderClick(object sender, RoutedEventArgs e)
+    {
+        if (_room is TerminalRoomViewModel room && Directory.Exists(room.ProjectDirectory))
+        {
+            await Windows.System.Launcher.LaunchFolderPathAsync(room.ProjectDirectory);
+        }
+    }
+
+    /// <summary>도구 줄의 "같은 폴더로 새 터미널": 새 세션 카드에 이 방의 도구·폴더를 채워 보인다.</summary>
+    private void OnRoomDuplicateClick(object sender, RoutedEventArgs e)
+    {
+        if (_room is TerminalRoomViewModel room)
+        {
+            ViewModel.SelectTool(room.Tool);
+            ViewModel.SetFolder(room.ProjectDirectory);
+            ViewModel.SessionModeIndex = 0;
+            ShowNewSession();
         }
     }
 
@@ -463,8 +510,8 @@ public sealed partial class TerminalPage : Page
                 e.Handled = true;
                 break;
             case Windows.System.VirtualKey.Escape:
-                FindBox.Text = string.Empty;
-                Embedded.FocusTerminal();
+                FindToggle.IsChecked = false;
+                OnFindToggleClick(FindToggle, new RoutedEventArgs());
                 e.Handled = true;
                 break;
             default:

@@ -40,9 +40,6 @@ public sealed partial class StreamingRoomViewModel : ObservableObject, IRoom
 
     public string ShortTitle => Formats.FolderName(ProjectDirectory);
 
-    public string Avatar => ToolLook.Initial(_tool);
-
-    public Microsoft.UI.Xaml.Media.Brush AvatarBrush => ToolLook.Brush(_tool);
 
     /// <summary>대화 말풍선.</summary>
     public ObservableCollection<ChatBubbleViewModel> Bubbles { get; } = [];

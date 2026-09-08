@@ -16,11 +16,8 @@ public interface IRoom : IDisposable, INotifyPropertyChanged
     /// <summary>탭에 다는 짧은 이름(폴더).</summary>
     string ShortTitle { get; }
 
-    /// <summary>도구 아바타 글자.</summary>
-    string Avatar { get; }
-
-    /// <summary>도구 아바타 색.</summary>
-    Microsoft.UI.Xaml.Media.Brush AvatarBrush { get; }
+    /// <summary>어느 도구의 방인가. 탭 아이콘(로고)에 쓴다.</summary>
+    Daiso.Core.ToolKind Tool { get; }
 
     /// <summary>안 본 새 답이 있으면 탭에 점.</summary>
     Visibility UnseenVisibility { get; }

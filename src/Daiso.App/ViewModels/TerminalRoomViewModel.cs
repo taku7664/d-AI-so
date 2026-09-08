@@ -44,10 +44,6 @@ public sealed partial class TerminalRoomViewModel : ObservableObject, IRoom
     /// <summary>탭에 다는 짧은 이름(폴더). 도구 아바타와 함께.</summary>
     public string ShortTitle => Formats.FolderName(ProjectDirectory);
 
-    public string Avatar => ToolLook.Initial(_tool);
-
-    public Microsoft.UI.Xaml.Media.Brush AvatarBrush => ToolLook.Brush(_tool);
-
     /// <summary>안의 프로그램이 바꾼 창 제목. 비어 있으면 도구·폴더만 보인다.</summary>
     public void SetProcessTitle(string? processTitle)
     {

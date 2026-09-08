@@ -20,6 +20,38 @@ public sealed partial class UsagePage : Page
 
     public UsageViewModel Usage { get; }
 
+    /// <summary>일별 줄에 마우스가 올라오면 배경·막대를 밝히고 내역 글을 보인다.</summary>
+    private void OnDayEntered(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) => HighlightDay(sender as Grid, true);
+
+    private void OnDayExited(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) => HighlightDay(sender as Grid, false);
+
+    private static void HighlightDay(Grid? row, bool on)
+    {
+        if (row is null)
+        {
+            return;
+        }
+
+        row.Background = on
+            ? (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["SubtleFillColorSecondaryBrush"]
+            : new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
+
+        foreach (var child in row.Children)
+        {
+            switch (child)
+            {
+                case Microsoft.UI.Xaml.Shapes.Rectangle bar:
+                    bar.Fill = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources[on ? "AccentFillColorSecondaryBrush" : "AccentFillColorDefaultBrush"];
+                    break;
+                case TextBlock text when Grid.GetColumn(text) == 3:
+                    text.Opacity = on ? 1 : 0;
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
     /// <summary>탭을 누르면 뷰모델이 그 도구로 좁혀 다시 읽는다.</summary>
     private void OnToolTabChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
     {
