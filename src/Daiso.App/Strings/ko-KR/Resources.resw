@@ -180,7 +180,7 @@
     <value>예: --continue</value>
   </data>
   <data name="Terminal_ShellNote" xml:space="preserve">
-    <value>폴더와 옵션을 고르면 아래 명령 그대로 새 터미널에서 실행합니다</value>
+    <value>도구·폴더·옵션을 고르고 열면 앱 안 터미널에서 실행합니다. 새 창으로도 열 수 있습니다</value>
   </data>
   <data name="Terminal_PickFolderFirst" xml:space="preserve">
     <value>폴더를 먼저 고르세요</value>
@@ -1210,9 +1210,6 @@
   <data name="RuleMaker_SaveHint" xml:space="preserve">
     <value>이름을 적고 행동이나 규칙을 하나 넣으면 저장할 수 있습니다</value>
   </data>
-  <data name="Terminal_EmbeddedExperiment" xml:space="preserve">
-    <value>앱 안에서 열기 (실험)</value>
-  </data>
 <data name="Room_ShowChat" xml:space="preserve">
     <value>채팅으로</value>
   </data>
@@ -1284,5 +1281,17 @@
   </data>
   <data name="Terminal_OpenTerminalRoom" xml:space="preserve">
     <value>터미널로 열기</value>
+  </data>
+  <data name="Terminal_OpenExternal" xml:space="preserve">
+    <value>새 창에서 열기</value>
+  </data>
+  <data name="Terminal_ShowRooms" xml:space="preserve">
+    <value>열린 터미널 보기</value>
+  </data>
+  <data name="Terminal_OpenRoomsCount" xml:space="preserve">
+    <value>열린 터미널이 {0}개 있습니다. 여기서 새 터미널을 열거나 돌아갈 수 있습니다.</value>
+  </data>
+  <data name="Room_NewTerminal" xml:space="preserve">
+    <value>새 터미널</value>
   </data>
 </root>

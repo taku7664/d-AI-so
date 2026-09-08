@@ -29,6 +29,8 @@ public sealed partial class TerminalPage : Page
             {
                 _ = OpenTerminalRoomAsync();
             }
+
+            App.Rooms.Rooms.CollectionChanged += (_, _) => RefreshOpenRoomsNotice();
         };
         ViewModel.PropertyChanged += (_, e) =>
         {
@@ -132,17 +134,60 @@ public sealed partial class TerminalPage : Page
 
     private IRoom? _room;
 
-    /// <summary>이 화면에 처음 들어오면 이미 열려 있던 방들을 탭으로 되돌린다.</summary>
+    /// <summary>이 화면에 들어오면 이미 열려 있던 방이 있으면 바로 방 화면으로, 없으면 로비로.</summary>
     private void RestoreRooms()
     {
         RoomTabs.ItemsSource = App.Rooms.Rooms;
 
         if (App.Rooms.Rooms.Count > 0)
         {
-            RoomTabs.Visibility = Visibility.Visible;
+            ShowRoomView();
             SelectRoom(App.Rooms.Rooms[^1]);
         }
+        else
+        {
+            ShowLobby();
+        }
     }
+
+    /// <summary>로비를 보인다. 열린 방은 그대로 살아 있고, 있으면 돌아가는 길을 위에 띄운다.</summary>
+    private void ShowLobby()
+    {
+        RoomView.Visibility = Visibility.Collapsed;
+        Lobby.Visibility = Visibility.Visible;
+        RefreshOpenRoomsNotice();
+    }
+
+    /// <summary>방 화면을 보인다. 로비는 숨긴다.</summary>
+    private void ShowRoomView()
+    {
+        Lobby.Visibility = Visibility.Collapsed;
+        RoomView.Visibility = Visibility.Visible;
+    }
+
+    private void RefreshOpenRoomsNotice()
+    {
+        var count = App.Rooms.Rooms.Count;
+        OpenRoomsNotice.Visibility = count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        OpenRoomsText.Text = UiStrings.Format("Terminal_OpenRoomsCount", count);
+    }
+
+    /// <summary>로비의 "열린 터미널 보기": 마지막에 보던 방(없으면 마지막 방)으로 돌아간다.</summary>
+    private void OnShowRoomsClick(object sender, RoutedEventArgs e)
+    {
+        if (App.Rooms.Rooms.Count == 0)
+        {
+            return;
+        }
+
+        ShowRoomView();
+        var target = _room is not null && App.Rooms.Rooms.Contains(_room) ? _room : App.Rooms.Rooms[^1];
+        _room = null; // SelectRoom이 같은 방이라도 다시 붙이게
+        SelectRoom(target);
+    }
+
+    /// <summary>방 머리의 "새 터미널": 로비로 돌아가 다른 도구·폴더를 고른다. 방은 닫지 않는다.</summary>
+    private void OnBackToLobbyClick(object sender, RoutedEventArgs e) => ShowLobby();
 
     // 챗봇 방(B 모드, stream-json 말풍선). 지금은 UI 비공개 — TerminalPage.xaml에서 OpenChatbotButton을 빼 둬 이 핸들러는 호출되지 않는다.
     // 재공개하려면 그 버튼을 되살린다. (ARCHITECTURE §5.3)
@@ -203,7 +248,12 @@ public sealed partial class TerminalPage : Page
     /// <summary>터미널 방: 진짜 터미널(xterm + 의사 콘솔). 모든 도구. WebView2 없으면 외부 터미널로.</summary>
     private async Task OpenTerminalRoomAsync()
     {
-        if (!Terminal.TerminalHost.IsRuntimeAvailable())
+        var settings = App.Services.GetRequiredService<ISettingsStore>().Current;
+
+        // 미설치면 같은 버튼이 설치다. 내장이 꺼졌거나 WebView2가 없으면 외부 터미널로 폴백한다 (ARCHITECTURE §5.3)
+        if (!ViewModel.SelectedTool.IsInstalled
+            || !settings.UseEmbeddedTerminal
+            || !Terminal.TerminalHost.IsRuntimeAvailable())
         {
             await ViewModel.LaunchAsync(ViewModel.SelectedTool);
             return;
@@ -240,15 +290,17 @@ public sealed partial class TerminalPage : Page
     {
         App.Rooms.Add(room);
         RoomTabs.ItemsSource = App.Rooms.Rooms;
-        RoomTabs.Visibility = Visibility.Visible;
         EmbeddedStatus.Visibility = Visibility.Collapsed;
+        ShowRoomView();
         SelectRoom(room);
     }
 
+    /// <summary>방을 못 열었거나 붙이지 못했다. 로비의 실행 칸 아래에 사람 말로 알린다.</summary>
     private void ShowRoomNote(string text)
     {
         EmbeddedStatus.Text = text;
         EmbeddedStatus.Visibility = Visibility.Visible;
+        ShowLobby();
     }
 
     /// <summary>그 방을 화면에 보인다. 방 종류에 맞는 화면(챗봇 말풍선 / 터미널)을 켠다.</summary>
@@ -265,7 +317,6 @@ public sealed partial class TerminalPage : Page
 
         RoomTabs.SelectedItem = room;
         RoomCard.DataContext = room;
-        RoomCard.Visibility = Visibility.Visible;
 
         if (room is StreamingRoomViewModel chat)
         {
@@ -323,8 +374,7 @@ public sealed partial class TerminalPage : Page
         if (App.Rooms.Rooms.Count == 0)
         {
             _room = null;
-            RoomTabs.Visibility = Visibility.Collapsed;
-            RoomCard.Visibility = Visibility.Collapsed;
+            ShowLobby();
             return;
         }
 

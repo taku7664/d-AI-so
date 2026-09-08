@@ -120,6 +120,9 @@ public sealed partial class TerminalViewModel : ObservableObject
     /// <summary>최근 폴더가 비었는가. 안내 문구를 띄운다.</summary>
     public bool HasNoRecentFolders => RecentFolders.Count == 0;
 
+    /// <summary>최근 폴더가 있는가. 목록 표시에 쓴다.</summary>
+    public bool HasRecentFolders => RecentFolders.Count > 0;
+
     /// <summary>마지막 실행 기록이 있는가.</summary>
     public bool HasLastCommand => !string.IsNullOrWhiteSpace(LastCommand);
 
@@ -145,6 +148,7 @@ public sealed partial class TerminalViewModel : ObservableObject
         WorkingDirectory = path;
         Remember(path);
         OnPropertyChanged(nameof(HasNoRecentFolders));
+        OnPropertyChanged(nameof(HasRecentFolders));
     }
 
     /// <summary>세션 "이어서 열기"가 방을 바로 열어 달라고 요청했는가. TerminalPage가 한 번 소비한다.</summary>

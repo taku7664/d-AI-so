@@ -43,6 +43,7 @@ public sealed partial class ToolLaunchViewModel : ObservableObject
     /// <summary>실행 파일이 PATH에 있는가. 없으면 버튼이 설치로 바뀐다.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ButtonText))]
+    [NotifyPropertyChangedFor(nameof(EmbeddedButtonText))]
     [NotifyPropertyChangedFor(nameof(Glyph))]
     [NotifyPropertyChangedFor(nameof(CanPress))]
     [NotifyPropertyChangedFor(nameof(Hint))]
@@ -53,6 +54,7 @@ public sealed partial class ToolLaunchViewModel : ObservableObject
     /// <summary>설치를 눌러 새 터미널이 돌고 있는가. 확인될 때까지 버튼을 잠근다.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ButtonText))]
+    [NotifyPropertyChangedFor(nameof(EmbeddedButtonText))]
     [NotifyPropertyChangedFor(nameof(CanPress))]
     private bool isInstalling;
 
@@ -93,6 +95,11 @@ public sealed partial class ToolLaunchViewModel : ObservableObject
     public string ButtonText => IsInstalling
         ? UiStrings.Format("Terminal_Installing", Label)
         : UiStrings.Format(IsInstalled ? "Terminal_Open" : "Terminal_Install", Label);
+
+    /// <summary>기본 버튼(앱 안 터미널) 글. 설치 전이면 설치, 설치 중이면 잠금 문구. 외부 열기 버튼의 툴팁은 <see cref="ButtonText"/>.</summary>
+    public string EmbeddedButtonText => IsInstalling
+        ? UiStrings.Format("Terminal_Installing", Label)
+        : IsInstalled ? UiStrings.Get("Terminal_OpenTerminalRoom") : UiStrings.Format("Terminal_Install", Label);
 
     /// <summary>열기는 터미널 아이콘, 설치는 내려받기 아이콘.</summary>
     public string Glyph => IsInstalled ? "" : "";

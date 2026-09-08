@@ -457,9 +457,15 @@ RefreshAsync
 
 ### 5.3 터미널
 ```
-화면은 작업 폴더(공통) 아래 탭 띠 `Codex · Claude · Gemini`. 탭마다 그 도구의 인자·프리셋·버튼·미리보기(ToolLaunchViewModel). 인자는 탭별로 따로 기억한다
-화면 열림 → 도구마다 IProvider.IsInstalledAsync → 버튼이 "{도구} 열기" 또는 "{도구} 설치"
-열기   폴더 선택 + 도구 선택 (+ 세션 → BuildResumeArguments)
+화면은 두 상태다(같은 페이지, 표시 전환).
+  로비  카드 하나: 탭 띠 `Codex · Claude · Gemini`(카드 머리) → 작업 폴더(공통: 경로·아는 프로젝트·내 프롬프트·최근 폴더) → 옵션 인자·프리셋(탭별 기억) → 실행
+        실행 줄: [터미널로 열기](기본, 앱 안) [새 창에서 열기](보조, 설치돼 있을 때만). 미설치면 기본 버튼이 "{도구} 설치"가 된다
+        열린 방이 있으면 위에 "열린 터미널이 N개 있습니다 · 열린 터미널 보기" 띠
+  방    열린 터미널이 화면을 채운다: 머리(새 터미널 → 로비, 방 탭 띠) + xterm(남은 높이 전부). 로비는 보이지 않는다
+        페이지에 들어올 때 방이 있으면 바로 방, 없으면 로비. 마지막 방을 닫으면 로비로
+화면 열림 → 도구마다 IProvider.IsInstalledAsync
+터미널로 열기  설치됨 + UseEmbeddedTerminal + WebView2 있음 → 내장 방(아래 "내장 터미널"). 아니면 아래 외부 열기 또는 설치로 폴백
+새 창에서 열기 폴더 선택 + 도구 선택 (+ 세션 → BuildResumeArguments)
        → ITerminalLauncher.LaunchAsync(dir, "claude"|"codex"|"gemini", args)
 설치   폴더 없어도 됨 → ITerminalLauncher.LaunchAsync(dir|home, "npm", "install -g <패키지>")   (IProvider.InstallCommand)
        → 버튼은 "설치 중…"으로 잠기고 3초마다 IsInstalledAsync. 실행 파일이 보이면 "열기"로 돌아온다. 5분이 지나면 지켜보기를 멈추고 안내
@@ -472,10 +478,10 @@ RefreshAsync
 
 **내장 터미널** — 앱을 떠나지 않고 CLI를 xterm 터미널로 띄운다. 방 화면에는 터미널만 보이고, 입력은 xterm이 직접 받는다(별도 입력칸 없음).
 - 엔진: `Daiso.Infrastructure.Pty` — `PseudoConsole`(ConPTY: CreatePseudoConsole + 파이프 + STARTUPINFOEX, 자식 생성 동안만 부모 표준 핸들을 비워 콘솔 핸들을 새로 받게 한다), `PtySession`(FileStream IO, 트리 kill 종료, 초기 출력 버퍼링, conhost 마지막 프레임 정착 대기), `PtyEnvironment`(중첩 Claude Code 표식 제거 — 챗봇 엔진도 이걸 쓴다).
-- 화면: `Daiso.App.Terminal.TerminalHost` — WebView2 + 동봉 xterm.js(`Assets/xterm`, xterm·fit·search, MIT). `SetVirtualHostNameToFolderMapping`으로 로컬만 로드, 네트워크 없음. 앱↔페이지 메시지: out(base64)·paste·theme·focus·fit·clear·find / in·resize·copy·paste·ready·title. 선택 있으면 Ctrl+C 복사·없으면 중단, Ctrl+V·오른클릭 붙여넣기, F5·Ctrl+1~7은 페이지에서 먹어 앱 단축키와 안 겹치게. 찾기는 방 머리의 찾기 칸(xterm search 애드온).
+- 화면: `Daiso.App.Terminal.TerminalHost` — WebView2 + 동봉 xterm.js(`Assets/xterm`, xterm·fit·search, MIT). `SetVirtualHostNameToFolderMapping`으로 로컬만 로드, 네트워크 없음. 앱↔페이지 메시지: out(base64)·paste·theme·focus·fit·clear·find / in·resize·copy·paste·ready·title. 선택 있으면 Ctrl+C 복사·없으면 중단, Ctrl+V·오른클릭 붙여넣기, F5·Ctrl+1~7은 페이지에서 먹어 앱 단축키와 안 겹치게. 찾기(xterm search 애드온)는 호스트에 `Find`/`ClearFind`가 있으나 **화면에 찾기 칸이 없어 지금은 쓰이지 않는다**(챗봇 교체 때 UI가 빠짐. 되살릴 항목 — FEATURE_PLAN "터미널 파트 점검").
 - 종료는 반드시 프로세스 **트리 전체**를 kill 한다. 루트 셸만 죽이면 자식이 콘솔 출력을 잡아 읽기가 안 풀리고, 파이프 핸들 해제와 네이티브 읽기가 겹쳐 힙이 깨진다.
 - 방 = `ChatRoomViewModel`(공통 `IRoom` 구현). `RoomManager`(싱글턴)가 방을 들고 있어 화면을 옮겨도 산다. 탭 띠가 `RoomManager.Rooms`(IRoom)를 그리고, 탭을 고르면 하나뿐인 `TerminalHost`를 `BindRoom`으로 그 방에 다시 가리킨다. 방이 콘솔 출력을 8MB까지 버퍼링해, 탭을 다시 보거나 화면을 다시 열면 `AttachHost`가 스냅샷·구독을 한 잠금 안에서 원자적으로 잡아 지난 화면을 되돌린다(중복·누락 없음). 세대 번호로 옛 방의 늦은 출력이 새 방에 안 섞이게 한다(WebView2 호스트는 방마다 새로 만들지 않는다).
-- 열기: 터미널 화면의 **"터미널로 열기"** 버튼 → `PtySession.Start`(셸 명령) + `ChatRoomViewModel` + 탭 추가 → `TerminalHost.BindRoom`. WebView2가 없거나 설정 `UseEmbeddedTerminal`(기본 켬)이 꺼졌으면 외부 터미널(`ITerminalLauncher`)로 폴백.
+- 열기: 로비의 **"터미널로 열기"** 버튼 → `PtySession.Start`(셸 명령) + `ChatRoomViewModel` + 탭 추가 → 방 화면으로 전환 → `TerminalHost.BindRoom`. 미설치면 설치 흐름, WebView2가 없거나 설정 `UseEmbeddedTerminal`(기본 켬)이 꺼졌으면 외부 터미널(`ITerminalLauncher`)로 폴백. 방 머리의 "새 터미널"은 로비로 돌아갈 뿐 방을 닫지 않는다.
 - 이어서 열기: 세션·요약의 "이어서 열기"가 `TerminalViewModel.PrepareResume(tool, dir, args, autoOpen:true)` 뒤 터미널로 이동, 화면 로드 때 `ConsumeAutoOpen()`이 도구·인자를 다시 심고 터미널 방을 연다(탭 기본 선택·TwoWay 바인딩이 덮어쓰는 것을 되돌린다).
 - 앱 종료: 살아 있는 방이 있으면 `AppWindow.Closing`이 한 번 묻고, 계속하면 `App.Rooms.DisposeAll`이 프로세스 트리를 정리한다.
 - 설정: `UseEmbeddedTerminal`(기본 켬), 터미널 글자 크기(px).
