@@ -16,7 +16,17 @@ public sealed partial class SessionsViewModel : ObservableObject
     private const int SearchMinimumLength = 2;
 
     /// <summary>타임라인에 그리는 최대 메시지 수.</summary>
-    private const int TimelineLimit = 500;
+    /// <summary>화면에 올리는 메시지 상한. 가상화 목록이라 그리기 비용은 보이는 만큼만 든다.</summary>
+    private const int TimelineLimit = 2000;
+
+    /// <summary>파일에서 읽어 메모리에 두는 상한. 도구 호출 토글은 이 안에서 다시 걸러 파일을 다시 읽지 않는다.</summary>
+    private const int RawMessageLimit = 20000;
+
+    /// <summary>선택한 세션의 메시지 전부(상한 안). 필터는 여기서 건다.</summary>
+    private List<SessionMessage> _loadedMessages = [];
+
+    /// <summary>진행 중인 타임라인 읽기. 다른 세션을 고르면 앞의 것을 취소한다.</summary>
+    private CancellationTokenSource? _timelineCts;
 
     /// <summary>프로젝트 경로를 모를 때 쓰는 표식. 묶음·비교에 쓰므로 번역하지 않는다.</summary>
     internal const string UnknownProject = "(알 수 없음)";
@@ -110,7 +120,9 @@ public sealed partial class SessionsViewModel : ObservableObject
     public ObservableCollection<SearchProjectViewModel> SearchResults { get; } = [];
 
     /// <summary>선택한 세션의 메시지 타임라인.</summary>
-    public ObservableCollection<MessageViewModel> Timeline { get; } = [];
+    /// <summary>화면에 보이는 메시지. 한 번에 통째로 갈아 끼운다. 한 건씩 Add하면 수백 번 다시 그린다.</summary>
+    [ObservableProperty]
+    private IReadOnlyList<MessageViewModel> timeline = [];
 
     /// <summary>도구 필터 항목.</summary>
     public IReadOnlyList<string> ToolFilters { get; } = [UiStrings.All, "Claude", "Codex"];
@@ -311,12 +323,21 @@ public sealed partial class SessionsViewModel : ObservableObject
         await LoadTimelineAsync(session, ct).ConfigureAwait(true);
     }
 
-    /// <summary>선택한 세션의 메시지를 읽어온다. 도구 호출은 접힌 항목으로 남긴다.</summary>
+    /// <summary>
+    /// 선택한 세션의 메시지를 읽어온다. 파일 읽기와 파싱은 백그라운드에서 한 번에 끝내고,
+    /// UI에는 완성된 목록을 한 번만 올린다. 다른 세션을 고르면 앞의 읽기는 취소된다.
+    /// </summary>
     public async Task LoadTimelineAsync(SessionInfo session, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(session);
 
-        Timeline.Clear();
+        _timelineCts?.Cancel();
+        _timelineCts?.Dispose();
+        _timelineCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        var token = _timelineCts.Token;
+
+        Timeline = [];
+        _loadedMessages = [];
         IsTimelineLoading = true;
         IsTimelineTruncated = false;
         NotifyTimelineState();
@@ -324,6 +345,8 @@ public sealed partial class SessionsViewModel : ObservableObject
         var provider = _providers.FirstOrDefault(p => p.Kind == session.Tool);
         if (provider is null)
         {
+            IsTimelineLoading = false;
+            NotifyTimelineState();
             return;
         }
 
@@ -331,33 +354,74 @@ public sealed partial class SessionsViewModel : ObservableObject
 
         try
         {
-            var count = 0;
+            var messages = await Task.Run(
+                async () =>
+                {
+                    var list = new List<SessionMessage>();
 
-            await foreach (var message in provider
-                .ReadMessagesAsync(session.FilePath, 0, ct)
-                .ConfigureAwait(true))
+                    await foreach (var message in provider
+                        .ReadMessagesAsync(session.FilePath, 0, token)
+                        .ConfigureAwait(false))
+                    {
+                        list.Add(message);
+
+                        if (list.Count >= RawMessageLimit)
+                        {
+                            break;
+                        }
+                    }
+
+                    return list;
+                },
+                token).ConfigureAwait(true);
+
+            if (token.IsCancellationRequested)
             {
-                // 기본은 대화만. 도구 호출·시스템 주입은 토글을 켤 때만 보여준다.
-                if (!ShowToolCalls && message.Role is MessageRole.Tool or MessageRole.System)
-                {
-                    continue;
-                }
-
-                Timeline.Add(new MessageViewModel(message));
-
-                if (++count >= TimelineLimit)
-                {
-                    IsTimelineTruncated = true;
-                    break;
-                }
+                return;
             }
+
+            _loadedMessages = messages;
+            ApplyTimelineFilter();
+        }
+        catch (OperationCanceledException)
+        {
+            // 다른 세션으로 넘어갔다. 새 읽기가 상태를 이어받는다.
         }
         finally
         {
-            IsBusy = false;
-            IsTimelineLoading = false;
-            NotifyTimelineState();
+            if (!token.IsCancellationRequested)
+            {
+                IsBusy = false;
+                IsTimelineLoading = false;
+                NotifyTimelineState();
+            }
         }
+    }
+
+    /// <summary>메모리에 있는 메시지에서 보일 것만 골라 한 번에 올린다. 파일은 다시 읽지 않는다.</summary>
+    private void ApplyTimelineFilter()
+    {
+        // 기본은 대화만. 도구 호출·시스템 주입은 토글을 켤 때만 보여준다.
+        var visible = _loadedMessages
+            .Where(message => ShowToolCalls || message.Role is not (MessageRole.Tool or MessageRole.System));
+
+        var items = new List<MessageViewModel>(Math.Min(TimelineLimit, _loadedMessages.Count));
+        var truncated = false;
+
+        foreach (var message in visible)
+        {
+            if (items.Count >= TimelineLimit)
+            {
+                truncated = true;
+                break;
+            }
+
+            items.Add(new MessageViewModel(message));
+        }
+
+        IsTimelineTruncated = truncated;
+        Timeline = items;
+        NotifyTimelineState();
     }
 
     /// <summary>세션을 터미널에서 이어서 연다.</summary>
@@ -575,9 +639,9 @@ public sealed partial class SessionsViewModel : ObservableObject
 
     partial void OnShowToolCallsChanged(bool value)
     {
-        if (SelectedSession is { } row)
+        if (SelectedSession is not null && !IsTimelineLoading)
         {
-            _ = LoadTimelineAsync(row.Session);
+            ApplyTimelineFilter();
         }
     }
 
@@ -786,11 +850,40 @@ public sealed partial class SessionRowViewModel : ObservableObject
 }
 
 /// <summary>타임라인 항목. 도구 호출은 접어서 보여준다.</summary>
-public sealed class MessageViewModel
+public sealed partial class MessageViewModel : ObservableObject
 {
-    public MessageViewModel(SessionMessage message) => Message = message;
+    /// <summary>처음에 보여주는 글자 수. 도구 출력 한 덩어리가 수십만 자라 전부 펼치면 한 줄이 화면을 삼킨다.</summary>
+    private const int PreviewChars = 1500;
+
+    public MessageViewModel(SessionMessage message)
+    {
+        Message = message;
+        FullText = message.Text.StartsWith("<command-", StringComparison.Ordinal)
+            ? SessionRowViewModel.CleanCommandText(message.Text)
+            : message.Text;
+    }
 
     public SessionMessage Message { get; }
+
+    /// <summary>태그만 걷어낸 전체 본문.</summary>
+    public string FullText { get; }
+
+    /// <summary>더 보기를 눌러 전체를 펼쳤는가.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(DisplayText))]
+    [NotifyPropertyChangedFor(nameof(MoreText))]
+    private bool isExpanded;
+
+    /// <summary>미리보기 길이를 넘는가. 넘으면 더 보기 버튼이 붙는다.</summary>
+    public bool IsTruncated => FullText.Length > PreviewChars;
+
+    /// <summary>더 보기 / 접기 버튼 글자.</summary>
+    public string MoreText => IsExpanded
+        ? UiStrings.Get("Sessions_ShowLess")
+        : UiStrings.Format("Sessions_ShowMore", FullText.Length - PreviewChars);
+
+    [RelayCommand]
+    private void ToggleExpanded() => IsExpanded = !IsExpanded;
 
     public string RoleText => UiStrings.Get(Message.Role switch
     {
@@ -810,13 +903,10 @@ public sealed class MessageViewModel
         ? Microsoft.UI.Xaml.Visibility.Visible
         : Microsoft.UI.Xaml.Visibility.Collapsed;
 
-    /// <summary>
-    /// 화면에 보여줄 본문. 슬래시 명령 메시지는 `&lt;command-name&gt;` 같은 태그로 감싸여 오므로
-    /// 태그만 걷어낸다. 그 밖의 본문은 원문 그대로 둔다.
-    /// </summary>
-    public string DisplayText => Message.Text.StartsWith("<command-", StringComparison.Ordinal)
-        ? SessionRowViewModel.CleanCommandText(Message.Text)
-        : Message.Text;
+    /// <summary>화면에 보여줄 본문. 길면 앞부분만, 더 보기를 누르면 전부.</summary>
+    public string DisplayText => IsExpanded || !IsTruncated
+        ? FullText
+        : string.Concat(FullText.AsSpan(0, PreviewChars), " …");
 
     public string Text => Message.Text;
 

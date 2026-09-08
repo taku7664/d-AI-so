@@ -10,7 +10,8 @@
         <MicaBackdrop />
     </Window.SystemBackdrop>
 
-    <Grid x:Name="RootGrid">
+    <!-- 가속기 키 풍선(Ctrl+1 …)이 본문 어디에나 떠다니지 않게. 단축키는 설정 화면에 적혀 있다 -->
+    <Grid x:Name="RootGrid" KeyboardAcceleratorPlacementMode="Hidden">
         <!-- 페이지 이동 단축키. 왼쪽 메뉴 순서와 같다 -->
         <Grid.KeyboardAccelerators>
             <KeyboardAccelerator Modifiers="Control" Key="Number1" Invoked="OnNavAccelerator" />

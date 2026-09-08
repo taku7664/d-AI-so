@@ -375,8 +375,14 @@
                                             Style="{StaticResource PageSubtitleText}" />
                                     </Border>
 
-                                <ItemsControl ItemsSource="{x:Bind ViewModel.Timeline}">
-                                    <ItemsControl.ItemTemplate>
+                                <!-- 보이는 것만 그린다. 메시지 2000개를 한 번에 만들면 세션 하나 여는 데 몇 초가 걸린다 -->
+                                <ItemsRepeater
+                                    AutomationProperties.AutomationId="TimelineList"
+                                    ItemsSource="{x:Bind ViewModel.Timeline, Mode=OneWay}">
+                                    <ItemsRepeater.Layout>
+                                        <StackLayout Spacing="0" />
+                                    </ItemsRepeater.Layout>
+                                    <ItemsRepeater.ItemTemplate>
                                         <DataTemplate x:DataType="vm:MessageViewModel">
                                             <Grid Margin="0,0,0,12" ColumnSpacing="8">
                                                 <Grid.ColumnDefinitions>
@@ -408,10 +414,16 @@
                                                             VerticalAlignment="Center" />
                                                     </StackPanel>
                                                     <TextBlock
-                                                        Text="{x:Bind DisplayText}"
+                                                        Text="{x:Bind DisplayText, Mode=OneWay}"
                                                         Style="{ThemeResource BodyTextBlockStyle}"
                                                         TextWrapping="Wrap"
                                                         IsTextSelectionEnabled="True" />
+                                                    <HyperlinkButton
+                                                        Content="{x:Bind MoreText, Mode=OneWay}"
+                                                        Visibility="{x:Bind IsTruncated}"
+                                                        Command="{x:Bind ToggleExpandedCommand}"
+                                                        Padding="0"
+                                                        FontSize="12" />
                                                 </StackPanel>
 
                                                 <Expander
@@ -424,18 +436,26 @@
                                                             <Run Text="{x:Bind TimeText}" />
                                                         </TextBlock>
                                                     </Expander.Header>
-                                                    <TextBlock
-                                                        Text="{x:Bind DisplayText}"
-                                                        Style="{StaticResource MonoText}"
-                                                        TextTrimming="None"
-                                                        TextWrapping="Wrap"
-                                                        IsTextSelectionEnabled="True" />
+                                                    <StackPanel Spacing="4">
+                                                        <TextBlock
+                                                            Text="{x:Bind DisplayText, Mode=OneWay}"
+                                                            Style="{StaticResource MonoText}"
+                                                            TextTrimming="None"
+                                                            TextWrapping="Wrap"
+                                                            IsTextSelectionEnabled="True" />
+                                                        <HyperlinkButton
+                                                            Content="{x:Bind MoreText, Mode=OneWay}"
+                                                            Visibility="{x:Bind IsTruncated}"
+                                                            Command="{x:Bind ToggleExpandedCommand}"
+                                                            Padding="0"
+                                                            FontSize="12" />
+                                                    </StackPanel>
                                                 </Expander>
                                                 </StackPanel>
                                             </Grid>
                                         </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                    </ItemsRepeater.ItemTemplate>
+                                </ItemsRepeater>
                                 </StackPanel>
                             </ScrollViewer>
                         </Grid>

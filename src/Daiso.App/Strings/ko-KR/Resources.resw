@@ -1123,4 +1123,58 @@
   <data name="Common_Discard" xml:space="preserve">
     <value>버리고 넘어가기</value>
   </data>
+  <data name="Sessions_ShowMore" xml:space="preserve">
+    <value>더 보기 ({0:N0}자 더)</value>
+  </data>
+  <data name="Sessions_ShowLess" xml:space="preserve">
+    <value>접기</value>
+  </data>
+  <data name="Auth_Installed" xml:space="preserve">
+    <value>설치됨</value>
+  </data>
+  <data name="Auth_NotInstalled" xml:space="preserve">
+    <value>설치되지 않음</value>
+  </data>
+  <data name="Auth_ReLogin" xml:space="preserve">
+    <value>다시 로그인</value>
+  </data>
+  <data name="Common_Absent" xml:space="preserve">
+    <value>없음</value>
+  </data>
+  <data name="Common_All" xml:space="preserve">
+    <value>전체</value>
+  </data>
+  <data name="Common_Present" xml:space="preserve">
+    <value>있음</value>
+  </data>
+  <data name="Dashboard_Login" xml:space="preserve">
+    <value>로그인 하기</value>
+  </data>
+  <data name="Role_Assistant" xml:space="preserve">
+    <value>어시스턴트</value>
+  </data>
+  <data name="Role_System" xml:space="preserve">
+    <value>시스템</value>
+  </data>
+  <data name="Role_Tool" xml:space="preserve">
+    <value>도구</value>
+  </data>
+  <data name="Role_User" xml:space="preserve">
+    <value>사용자</value>
+  </data>
+  <data name="Sessions_DeletePreviewTitle" xml:space="preserve">
+    <value>삭제 미리보기</value>
+  </data>
+  <data name="Sessions_ListHeader" xml:space="preserve">
+    <value>세션 목록</value>
+  </data>
+  <data name="Sessions_MoveToRecycleBin" xml:space="preserve">
+    <value>휴지통으로 이동</value>
+  </data>
+  <data name="Sessions_PermanentPreviewTitle" xml:space="preserve">
+    <value>영구 삭제 미리보기</value>
+  </data>
+  <data name="Sessions_SearchTitle" xml:space="preserve">
+    <value>검색 결과</value>
+  </data>
 </root>
