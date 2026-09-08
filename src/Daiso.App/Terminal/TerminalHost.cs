@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Daiso.Infrastructure.Pty;
+using Daiso.App.ViewModels;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
@@ -20,7 +20,7 @@ public sealed class TerminalHost : UserControl
 
     private readonly WebView2 _web = new();
     private readonly List<string> _pendingOut = [];
-    private PtySession? _session;
+    private ChatRoomViewModel? _room;
     private bool _ready;
     private bool _initialized;
 
@@ -87,25 +87,34 @@ public sealed class TerminalHost : UserControl
         _web.Source = new Uri($"https://{VirtualHost}/index.html");
     }
 
-    /// <summary>프로세스를 화면에 잇는다. 출력은 UI 스레드로 옮겨 base64로 넘긴다.</summary>
-    public void Attach(PtySession session)
+    /// <summary>
+    /// 방을 화면에 잇는다. xterm을 비우고 그 방의 지난 화면을 되돌린 뒤 이후 출력을 잇는다.
+    /// 다른 방으로 바꾸면 이전 방 구독을 끊고 새 방을 되돌린다. 하나의 호스트를 탭마다 다시 가리켜 쓴다.
+    /// </summary>
+    public void BindRoom(ChatRoomViewModel room)
     {
-        ArgumentNullException.ThrowIfNull(session);
+        ArgumentNullException.ThrowIfNull(room);
 
-        _session = session;
-
-        session.OutputReceived += bytes =>
+        if (ReferenceEquals(_room, room))
         {
-            var data = Convert.ToBase64String(bytes);
-            DispatcherQueue.TryEnqueue(() => PostOutput(data));
-        };
+            return;
+        }
 
-        session.Exited += code =>
+        if (_room is not null)
         {
-            var line = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes($"\r\n[90m[프로세스가 끝났습니다 · 코드 {code}][0m\r\n"));
-            DispatcherQueue.TryEnqueue(() => PostOutput(line));
-        };
+            _room.OutputChunk -= OnRoomOutput;
+        }
+
+        _room = room;
+        room.OutputChunk += OnRoomOutput;
+
+        // 화면을 비우고 이 방의 버퍼를 통째로 되돌린다
+        Post(new { type = "clear" });
+        _pendingOut.Clear();
+        room.ReplayInto(chunk => PostOutput(Convert.ToBase64String(chunk)));
     }
+
+    private void OnRoomOutput(byte[] bytes) => PostOutput(Convert.ToBase64String(bytes));
 
     /// <summary>키보드 포커스를 터미널로.</summary>
     public void FocusTerminal()
@@ -189,7 +198,7 @@ public sealed class TerminalHost : UserControl
             case "in":
                 if (root.TryGetProperty("data", out var data) && data.GetString() is { Length: > 0 } text)
                 {
-                    _session?.Write(text);
+                    _room?.SendRaw(text);
                 }
 
                 break;
@@ -197,7 +206,7 @@ public sealed class TerminalHost : UserControl
             case "resize":
                 if (root.TryGetProperty("cols", out var cols) && root.TryGetProperty("rows", out var rows))
                 {
-                    _session?.Resize(cols.GetInt32(), rows.GetInt32());
+                    _room?.ResizeConsole(cols.GetInt32(), rows.GetInt32());
                 }
 
                 break;

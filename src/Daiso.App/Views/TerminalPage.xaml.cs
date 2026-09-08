@@ -22,8 +22,9 @@ public sealed partial class TerminalPage : Page
         {
             SyncTabFromViewModel();
             await ViewModel.RefreshInstalledAsync();
+            RestoreRooms();
 
-            // 세션 "이어서 열기"가 방을 바로 열어 달라고 했으면 연다
+            // 세션 "이어서 열기"가 방을 바로 열어 달라고 했으면 새 방을 연다
             if (ViewModel.ConsumeAutoOpen())
             {
                 await OpenRoomAsync();
@@ -131,9 +132,21 @@ public sealed partial class TerminalPage : Page
 
     private ChatRoomViewModel? _room;
 
+    /// <summary>이 화면에 처음 들어오면 이미 열려 있던 방들을 탭으로 되돌린다.</summary>
+    private void RestoreRooms()
+    {
+        RoomTabs.ItemsSource = App.Rooms.Rooms;
+
+        if (App.Rooms.Rooms.Count > 0)
+        {
+            RoomTabs.Visibility = Visibility.Visible;
+            _ = SelectRoomAsync(App.Rooms.Rooms[^1]);
+        }
+    }
+
     private void OnEmbeddedOpenClick(object sender, RoutedEventArgs e) => _ = OpenRoomAsync();
 
-    /// <summary>고른 도구로 방을 연다. 의사 콘솔 + 세션 tail을 만들어 채팅·터미널에 잇는다.</summary>
+    /// <summary>고른 도구로 새 방을 연다. 의사 콘솔 + 세션 tail을 만들어 탭에 더하고 그 방을 보인다.</summary>
     private async Task OpenRoomAsync()
     {
         var settings = App.Services.GetRequiredService<Services.ISettingsStore>().Current;
@@ -157,9 +170,6 @@ public sealed partial class TerminalPage : Page
             return;
         }
 
-        // 이전 방은 정리한다
-        _room?.Dispose();
-
         var builder = new Daiso.Infrastructure.TerminalCommandBuilder(Daiso.Providers.Common.ExecutableLocator.ExistsOnPath);
         var shell = builder.BuildShellCommand(tool.Provider.ExecutableName, tool.Arguments);
         var commandLine = $"{shell.FileName} {shell.Arguments}";
@@ -171,22 +181,76 @@ public sealed partial class TerminalPage : Page
             var session = Daiso.Infrastructure.Pty.PtySession.Start(commandLine, directory);
             var tail = new Daiso.Infrastructure.SessionTail(tool.Provider, directory, DateTimeOffset.Now);
 
-            _room = new ChatRoomViewModel(tool.Provider.Kind, directory, DispatcherQueue);
-            App.RegisterRoom(_room);
-            _room.Bind(session, tail);
-            _room.Blocks.CollectionChanged += (_, _) => ScrollChatToEnd();
+            var room = new ChatRoomViewModel(tool.Provider.Kind, directory, DispatcherQueue);
+            room.Bind(session, tail);
+            App.Rooms.Add(room);
 
-            Embedded.Attach(session);
-            RoomCard.DataContext = _room;
-            RoomCard.Visibility = Visibility.Visible;
+            RoomTabs.ItemsSource = App.Rooms.Rooms;
+            RoomTabs.Visibility = Visibility.Visible;
             EmbeddedStatus.Visibility = Visibility.Collapsed;
-            Embedded.Ready += (_, _) => Embedded.FocusTerminal();
-            Embedded.FocusTerminal();
+
+            await SelectRoomAsync(room);
         }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or System.Runtime.InteropServices.COMException or IOException)
         {
             EmbeddedStatus.Text = ex.Message;
             EmbeddedStatus.Visibility = Visibility.Visible;
+        }
+    }
+
+    /// <summary>그 방을 화면에 보인다. 하나뿐인 터미널 호스트를 그 방으로 다시 가리키고(버퍼 되돌림) 채팅·입력을 잇는다.</summary>
+    private async Task SelectRoomAsync(ChatRoomViewModel room)
+    {
+        if (_room is not null)
+        {
+            _room.Blocks.CollectionChanged -= OnBlocksChanged;
+        }
+
+        _room = room;
+        room.Blocks.CollectionChanged += OnBlocksChanged;
+
+        RoomCard.DataContext = room;
+        RoomCard.Visibility = Visibility.Visible;
+        RoomTabs.SelectedItem = room;
+
+        await Embedded.InitializeAsync();
+        Embedded.BindRoom(room);
+        Embedded.FocusTerminal();
+        ScrollChatToEnd();
+    }
+
+    private void OnBlocksChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e) => ScrollChatToEnd();
+
+    private async void OnRoomTabChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (RoomTabs.SelectedItem is ChatRoomViewModel room && !ReferenceEquals(room, _room))
+        {
+            await SelectRoomAsync(room);
+        }
+    }
+
+    /// <summary>탭의 X. 그 방을 닫고 프로세스를 끝낸다. 남은 방이 있으면 마지막 것을 보인다.</summary>
+    private async void OnCloseRoomClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: ChatRoomViewModel room })
+        {
+            return;
+        }
+
+        var wasSelected = ReferenceEquals(room, _room);
+        App.Rooms.Close(room);
+
+        if (App.Rooms.Rooms.Count == 0)
+        {
+            _room = null;
+            RoomTabs.Visibility = Visibility.Collapsed;
+            RoomCard.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        if (wasSelected)
+        {
+            await SelectRoomAsync(App.Rooms.Rooms[^1]);
         }
     }
 

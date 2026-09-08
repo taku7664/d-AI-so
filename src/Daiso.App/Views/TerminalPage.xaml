@@ -199,7 +199,56 @@
                         TextWrapping="Wrap"
                         Visibility="Collapsed" />
 
-                    <!-- 방 UI. DataContext = ChatRoomViewModel 로 코드비하인드가 채운다 -->
+                    <!-- 열린 방 탭. 여러 방을 열고 탭으로 오간다. 방은 RoomManager가 들고 있어 화면을 옮겨도 산다 -->
+                    <ListView
+                        x:Name="RoomTabs"
+                        SelectionMode="Single"
+                        SelectionChanged="OnRoomTabChanged"
+                        AutomationProperties.AutomationId="RoomTabs"
+                        Visibility="Collapsed"
+                        ScrollViewer.HorizontalScrollMode="Auto"
+                        ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                        ScrollViewer.VerticalScrollMode="Disabled">
+                        <ListView.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="6" />
+                            </ItemsPanelTemplate>
+                        </ListView.ItemsPanel>
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="Padding" Value="4" />
+                                <Setter Property="MinWidth" Value="0" />
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ChatRoomViewModel">
+                                <Grid ColumnSpacing="8" Padding="6,2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Width="20" Height="20" CornerRadius="10" VerticalAlignment="Center" Background="{x:Bind AvatarBrush}">
+                                        <TextBlock Text="{x:Bind Avatar}" Foreground="White" FontSize="10" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <TextBlock Grid.Column="1" Text="{x:Bind ShortTitle}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="140" />
+                                    <Button
+                                        Grid.Column="2"
+                                        Padding="4"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        AutomationProperties.Name="{loc:Str Key=Common_Close}"
+                                        ToolTipService.ToolTip="{loc:Str Key=Common_Close}"
+                                        Click="OnCloseRoomClick"
+                                        DataContext="{x:Bind}">
+                                        <FontIcon Glyph="&#xE711;" FontSize="11" />
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                    <!-- 방 UI. DataContext = 선택된 ChatRoomViewModel -->
                     <StackPanel x:Name="RoomCard" Spacing="10" Visibility="Collapsed">
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>

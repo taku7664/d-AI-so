@@ -33,47 +33,8 @@ public partial class App : Application
     /// <summary>열려 있는 Shell 창. 파일 선택 대화상자가 창 핸들을 필요로 한다.</summary>
     public static Window? MainWindow { get; private set; }
 
-    /// <summary>
-    /// 지금 살아 있는 대화 방. 앱을 닫을 때 여기 든 방을 정리해 자식 CLI 프로세스가 남지 않게 한다.
-    /// 페이지를 옮겨도 방은 이 목록으로 살아 있다. (ARCHITECTURE §5.3)
-    /// </summary>
-    private static readonly List<ViewModels.ChatRoomViewModel> Rooms = [];
-
-    /// <summary>방을 등록한다. 이미 끝난 방은 걷어낸다.</summary>
-    public static void RegisterRoom(ViewModels.ChatRoomViewModel room)
-    {
-        ArgumentNullException.ThrowIfNull(room);
-
-        lock (Rooms)
-        {
-            Rooms.RemoveAll(existing => existing.HasExited);
-            Rooms.Add(room);
-        }
-    }
-
-    /// <summary>살아 있는 방이 있는가. 앱을 닫을 때 물어볼지 판단한다.</summary>
-    public static bool HasRunningRooms()
-    {
-        lock (Rooms)
-        {
-            Rooms.RemoveAll(existing => existing.HasExited);
-            return Rooms.Count > 0;
-        }
-    }
-
-    /// <summary>모든 방을 정리한다(자식 프로세스 트리 kill). 앱 종료 때.</summary>
-    public static void DisposeRooms()
-    {
-        lock (Rooms)
-        {
-            foreach (var room in Rooms)
-            {
-                room.Dispose();
-            }
-
-            Rooms.Clear();
-        }
-    }
+    /// <summary>열린 방을 들고 있는 하나뿐인 자리. 화면을 옮겨도 방은 여기 살아 있다. (ARCHITECTURE §5.3)</summary>
+    public static ViewModels.RoomManager Rooms => Services.GetRequiredService<ViewModels.RoomManager>();
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
@@ -140,6 +101,7 @@ public partial class App : Application
         services.AddSingleton<IndexService>();
         services.AddSingleton<KnownProjects>();
 
+        services.AddSingleton<ViewModels.RoomManager>();
         services.AddSingleton<ShellViewModel>();
         services.AddSingleton<DashboardViewModel>();
         services.AddSingleton<UsageViewModel>();

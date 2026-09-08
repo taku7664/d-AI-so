@@ -248,9 +248,9 @@ public sealed partial class ShellWindow : Window
     /// </summary>
     private async void OnClosing(AppWindow sender, AppWindowClosingEventArgs args)
     {
-        if (_closeConfirmed || !App.HasRunningRooms())
+        if (_closeConfirmed || !App.Rooms.HasRooms)
         {
-            App.DisposeRooms();
+            App.Rooms.DisposeAll();
             return;
         }
 
@@ -269,14 +269,14 @@ public sealed partial class ShellWindow : Window
         if (await dialog.ShowAsync() == ContentDialogResult.Primary)
         {
             _closeConfirmed = true;
-            App.DisposeRooms();
+            App.Rooms.DisposeAll();
             Close();
         }
     }
 
     private void OnClosed(object sender, WindowEventArgs args)
     {
-        App.DisposeRooms();
+        App.Rooms.DisposeAll();
         _settings.Current.WindowWidth = AppWindow.Size.Width;
         _settings.Current.WindowHeight = AppWindow.Size.Height;
         _settings.Save();
