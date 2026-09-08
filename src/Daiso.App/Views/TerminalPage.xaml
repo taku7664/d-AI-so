@@ -196,17 +196,12 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{loc:Str Key=Terminal_EmbeddedExperiment}" Style="{StaticResource SectionTitleText}" />
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                            <Button
-                                Content="{loc:Str Key=Terminal_OpenTerminalRoom}"
-                                AutomationProperties.AutomationId="OpenTerminalButton"
-                                Click="OnOpenTerminalClick" />
-                            <Button
-                                Content="{loc:Str Key=Terminal_OpenChatbotRoom}"
-                                Style="{ThemeResource AccentButtonStyle}"
-                                AutomationProperties.AutomationId="OpenChatbotButton"
-                                Click="OnOpenChatbotClick" />
-                        </StackPanel>
+                        <Button
+                            Grid.Column="1"
+                            Content="{loc:Str Key=Terminal_OpenTerminalRoom}"
+                            Style="{ThemeResource AccentButtonStyle}"
+                            AutomationProperties.AutomationId="OpenTerminalButton"
+                            Click="OnOpenTerminalClick" />
                     </Grid>
                     <TextBlock
                         x:Name="EmbeddedStatus"

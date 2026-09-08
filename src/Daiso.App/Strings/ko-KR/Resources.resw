@@ -1285,7 +1285,4 @@
   <data name="Terminal_OpenTerminalRoom" xml:space="preserve">
     <value>터미널로 열기</value>
   </data>
-  <data name="Terminal_OpenChatbotRoom" xml:space="preserve">
-    <value>챗봇으로 열기</value>
-  </data>
 </root>

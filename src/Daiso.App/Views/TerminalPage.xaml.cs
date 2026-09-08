@@ -24,17 +24,10 @@ public sealed partial class TerminalPage : Page
             await ViewModel.RefreshInstalledAsync();
             RestoreRooms();
 
-            // 세션 "이어서 열기"가 방을 바로 열어 달라고 했으면 새 방을 연다. Claude면 챗봇, 아니면 터미널
+            // 세션 "이어서 열기"가 방을 바로 열어 달라고 했으면 새 터미널 방을 연다
             if (ViewModel.ConsumeAutoOpen())
             {
-                if (ViewModel.SelectedTool?.Provider.Kind == Daiso.Core.ToolKind.Claude)
-                {
-                    OpenChatbotRoom();
-                }
-                else
-                {
-                    _ = OpenTerminalRoomAsync();
-                }
+                _ = OpenTerminalRoomAsync();
             }
         };
         ViewModel.PropertyChanged += (_, e) =>

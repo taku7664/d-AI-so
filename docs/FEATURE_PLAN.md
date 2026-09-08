@@ -1,5 +1,16 @@
 # 기능 계획 — 내장 터미널과 채팅방 (2026-09-08)
 
+## 현재 상태 (터미널 파트 기준, 2026-09-08)
+
+이 문서는 여러 방향 전환의 기록이 시간순으로 쌓여 있다. **지금 상태는 이렇다:**
+- **공개되는 것: 내장 터미널만.** 터미널 화면에서 **"터미널로 열기"**를 누르면 xterm 터미널 방이 열린다. 입력은 xterm이 직접 받는다(별도 입력칸 없음). Codex·Claude·Gemini 다 된다.
+- **챗봇(stream-json 말풍선): 코드만 남기고 UI 비공개.** `"챗봇으로 열기"` 버튼을 빼 둔 상태다. 재공개하려면 `TerminalPage`의 `OpenChatbotButton`/`OnOpenChatbotClick`을 되살리면 된다. 챗봇 엔진·파서·뷰모델(`ClaudeChatSession`·`ClaudeStreamParser`·`StreamingRoomViewModel`·`ChatBubbleViewModel`)은 그대로 있다.
+- **정본은 `ARCHITECTURE.md` §5.3**(터미널 + 챗봇(비공개)). 코드는 그걸 따른다.
+- **다음 작업(새 세션): 터미널 파트.** 터미널 방을 다듬는다. 챗봇은 건드리지 않는다.
+
+아래는 여기까지 온 기획·구현 기록이다(시간순, 참고용).
+
+
 ## 1. 한 줄 요약과 이유
 
 터미널 화면 안에서 Claude Code · Codex · Gemini CLI를 앱을 떠나지 않고 띄우고, 대화를 디스코드처럼 **채팅 블록**으로 본다.
