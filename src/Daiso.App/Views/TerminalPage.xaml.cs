@@ -232,6 +232,34 @@ public sealed partial class TerminalPage : Page
 
     private void OnBlocksChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e) => ScrollChatToEnd();
 
+    /// <summary>찾기 칸에서 Enter는 다음, Shift+Enter는 이전.</summary>
+    private void OnRoomFindKeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
+    {
+        if (e.Key != Windows.System.VirtualKey.Enter)
+        {
+            return;
+        }
+
+        e.Handled = true;
+        var shift = Microsoft.UI.Input.InputKeyboardSource
+            .GetKeyStateForCurrentThread(Windows.System.VirtualKey.Shift)
+            .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+
+        Embedded.Find(RoomFindBox.Text, previous: shift);
+    }
+
+    private void OnRoomFindTextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (RoomFindBox.Text.Length == 0)
+        {
+            Embedded.ClearFind();
+        }
+    }
+
+    private void OnRoomFindNextClick(object sender, RoutedEventArgs e) => Embedded.Find(RoomFindBox.Text, previous: false);
+
+    private void OnRoomFindPrevClick(object sender, RoutedEventArgs e) => Embedded.Find(RoomFindBox.Text, previous: true);
+
     private async void OnRoomTabChanged(object sender, SelectionChangedEventArgs e)
     {
         if (RoomTabs.SelectedItem is ChatRoomViewModel room && !ReferenceEquals(room, _room))

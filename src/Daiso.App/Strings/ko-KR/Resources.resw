@@ -1255,4 +1255,13 @@
   <data name="Settings_TerminalFontSize" xml:space="preserve">
     <value>터미널 글자 크기 (px)</value>
   </data>
+  <data name="Room_FindPlaceholder" xml:space="preserve">
+    <value>터미널에서 찾기</value>
+  </data>
+  <data name="Room_FindNext" xml:space="preserve">
+    <value>다음 찾기</value>
+  </data>
+  <data name="Room_FindPrev" xml:space="preserve">
+    <value>이전 찾기</value>
+  </data>
 </root>

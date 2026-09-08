@@ -126,6 +126,13 @@ public sealed class TerminalHost : UserControl
         room.AttachHost(_roomSink);
     }
 
+    /// <summary>터미널 화면에서 글자를 찾는다. 다음/이전으로 이동.</summary>
+    public void Find(string query, bool previous) =>
+        Post(new { type = "find", query, dir = previous ? "prev" : "next" });
+
+    /// <summary>찾기 표시를 지운다.</summary>
+    public void ClearFind() => Post(new { type = "find-clear" });
+
     /// <summary>키보드 포커스를 터미널로.</summary>
     public void FocusTerminal()
     {

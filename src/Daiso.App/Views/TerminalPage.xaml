@@ -255,6 +255,7 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                 <TextBlock Text="{Binding Title}" Style="{ThemeResource BodyStrongTextBlockStyle}" VerticalAlignment="Center" />
@@ -265,8 +266,32 @@
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
+
+                            <!-- 터미널 화면에서만: 찾기. Enter 다음, Shift+Enter 이전 -->
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" Visibility="{Binding TerminalVisibility}">
+                                <TextBox
+                                    x:Name="RoomFindBox"
+                                    Width="180"
+                                    PlaceholderText="{loc:Str Key=Room_FindPlaceholder}"
+                                    AutomationProperties.AutomationId="RoomFindBox"
+                                    KeyDown="OnRoomFindKeyDown"
+                                    TextChanged="OnRoomFindTextChanged" />
+                                <Button
+                                    AutomationProperties.Name="{loc:Str Key=Room_FindPrev}"
+                                    ToolTipService.ToolTip="{loc:Str Key=Room_FindPrev}"
+                                    Click="OnRoomFindPrevClick">
+                                    <FontIcon Glyph="&#xE70E;" FontSize="12" />
+                                </Button>
+                                <Button
+                                    AutomationProperties.Name="{loc:Str Key=Room_FindNext}"
+                                    ToolTipService.ToolTip="{loc:Str Key=Room_FindNext}"
+                                    Click="OnRoomFindNextClick">
+                                    <FontIcon Glyph="&#xE70D;" FontSize="12" />
+                                </Button>
+                            </StackPanel>
+
                             <Button
-                                Grid.Column="1"
+                                Grid.Column="2"
                                 Content="{Binding ToggleLabel}"
                                 Command="{Binding ToggleViewCommand}"
                                 AutomationProperties.AutomationId="RoomToggleButton" />
