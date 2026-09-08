@@ -18,6 +18,16 @@ public sealed partial class TerminalPage : Page
         SelectorBarVisuals.ResetPressedOnLeave(ToolTabs);
         ViewModel = App.Services.GetRequiredService<TerminalViewModel>();
 
+        // 페이지는 캐시된다(NavigationCacheMode=Required). Loaded는 돌아올 때마다 다시 돌므로 한 번만 걸 것은 생성자에 둔다
+        App.Rooms.Rooms.CollectionChanged += (_, _) => RefreshOpenRoomsNotice();
+        Embedded.TitleChanged += (_, title) =>
+        {
+            if (_room is TerminalRoomViewModel terminal)
+            {
+                terminal.SetProcessTitle(title);
+            }
+        };
+
         Loaded += async (_, _) =>
         {
             SyncTabFromViewModel();
@@ -29,8 +39,6 @@ public sealed partial class TerminalPage : Page
             {
                 _ = OpenTerminalRoomAsync();
             }
-
-            App.Rooms.Rooms.CollectionChanged += (_, _) => RefreshOpenRoomsNotice();
         };
         ViewModel.PropertyChanged += (_, e) =>
         {
@@ -275,8 +283,7 @@ public sealed partial class TerminalPage : Page
             var session = Daiso.Infrastructure.Pty.PtySession.Start($"{shell.FileName} {shell.Arguments}", directory);
             var tail = new Daiso.Infrastructure.SessionTail(tool.Provider, directory, DateTimeOffset.Now);
 
-            var room = new ChatRoomViewModel(tool.Provider.Kind, directory, DispatcherQueue);
-            room.SetCommands(App.Services.GetRequiredService<Daiso.Infrastructure.SlashCommandReader>().Read(tool.Provider.Kind, directory));
+            var room = new TerminalRoomViewModel(tool.Provider.Kind, directory, DispatcherQueue);
             room.Bind(session, tail);
             AddAndSelect(room);
         }
@@ -327,16 +334,68 @@ public sealed partial class TerminalPage : Page
             RoomInput.Focus(FocusState.Programmatic);
             ScrollChatToEnd();
         }
-        else if (room is ChatRoomViewModel terminal)
+        else if (room is TerminalRoomViewModel terminal)
         {
             TerminalPanel.DataContext = terminal;
             TerminalPanel.Visibility = Visibility.Visible;
             ChatbotPanel.Visibility = Visibility.Collapsed;
             _ = BindTerminalAsync(terminal);
         }
+
+        FindPanel.Visibility = room is TerminalRoomViewModel ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    private async Task BindTerminalAsync(ChatRoomViewModel room)
+    /// <summary>찾기 칸: 글이 바뀌면 다음 것을 찾고, 비우면 표시를 지운다.</summary>
+    private void OnFindTextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (string.IsNullOrEmpty(FindBox.Text))
+        {
+            Embedded.ClearFind();
+        }
+        else
+        {
+            Embedded.Find(FindBox.Text, previous: false);
+        }
+    }
+
+    /// <summary>Enter 다음, Shift+Enter 이전, Esc는 비우고 터미널로 포커스.</summary>
+    private void OnFindKeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
+    {
+        switch (e.Key)
+        {
+            case Windows.System.VirtualKey.Enter:
+                var shift = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Shift)
+                    .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+                Embedded.Find(FindBox.Text, previous: shift);
+                e.Handled = true;
+                break;
+            case Windows.System.VirtualKey.Escape:
+                FindBox.Text = string.Empty;
+                Embedded.FocusTerminal();
+                e.Handled = true;
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void OnFindPrevClick(object sender, RoutedEventArgs e)
+    {
+        if (FindBox.Text.Length > 0)
+        {
+            Embedded.Find(FindBox.Text, previous: true);
+        }
+    }
+
+    private void OnFindNextClick(object sender, RoutedEventArgs e)
+    {
+        if (FindBox.Text.Length > 0)
+        {
+            Embedded.Find(FindBox.Text, previous: false);
+        }
+    }
+
+    private async Task BindTerminalAsync(TerminalRoomViewModel room)
     {
         try
         {

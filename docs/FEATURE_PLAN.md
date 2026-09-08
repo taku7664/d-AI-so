@@ -7,29 +7,31 @@
 - **챗봇(stream-json 말풍선): 코드만 남기고 UI 비공개.** `"챗봇으로 열기"` 버튼을 빼 둔 상태다. 재공개하려면 `TerminalPage`의 `OpenChatbotButton`/`OnOpenChatbotClick`을 되살리면 된다. 챗봇 엔진·파서·뷰모델(`ClaudeChatSession`·`ClaudeStreamParser`·`StreamingRoomViewModel`·`ChatBubbleViewModel`)은 그대로 있다.
 - **정본은 `ARCHITECTURE.md` §5.3**(터미널 + 챗봇(비공개)). 코드는 그걸 따른다.
 - **다음 작업(새 세션): 터미널 파트.** 터미널 방을 다듬는다. 챗봇은 건드리지 않는다.
-- **화면(2026-09-08 정리)**: 로비는 카드 하나(탭 띠 → 작업 폴더 → 인자 → 실행). 따로 있던 작업 폴더 카드와 "앱 안에서 열기 (실험)" 카드는 없앴다. 방을 열면 로비 대신 터미널이 화면을 채운다(머리: 새 터미널·방 탭). 기본 버튼은 "터미널로 열기", 새 창은 보조. 기본 버튼도 설정 `UseEmbeddedTerminal`을 따른다.
+- **화면(2026-09-08 정리)**: 로비는 카드 하나(탭 띠 → 작업 폴더 → 인자 → 실행). 방 머리에 찾기 칸. 따로 있던 작업 폴더 카드와 "앱 안에서 열기 (실험)" 카드는 없앴다. 방을 열면 로비 대신 터미널이 화면을 채운다(머리: 새 터미널·방 탭). 기본 버튼은 "터미널로 열기", 새 창은 보조. 기본 버튼도 설정 `UseEmbeddedTerminal`을 따른다.
 
-### 터미널 파트 점검 (2026-09-08, 코드 분석에서 나온 것 — 아직 안 고침)
+### 터미널 파트 점검 (2026-09-08 분석 → 2026-09-09 전부 고침)
 
-문서와 코드가 어긋난 것:
-- **찾기가 죽어 있다.** `TerminalHost.Find/ClearFind`와 xterm search 애드온은 있지만 페이지에 찾기 칸이 없다(챗봇 교체 커밋 때 UI가 빠짐). 되살리거나 뺀다.
-- `TerminalHost.TitleChanged`·`Ready` 이벤트는 구독자가 없다. OSC 제목 → 탭 이름은 구현되지 않았다.
-- ~~"터미널로 열기"가 설정 `UseEmbeddedTerminal`을 무시했다~~ → 고침(2026-09-08).
+코드 분석에서 나온 목록. 항목마다 어떻게 고쳤는지 적는다. 규칙은 ARCHITECTURE §5.3에 반영했다.
 
-동작상 의심되는 버그(우선순위 순):
-1. **탭 전환 때 xterm을 `clear()`로만 비운다** (`Assets/xterm/index.html`). `clear()`는 현재 줄을 남기고 대체 화면·bracketed paste 같은 모드를 되돌리지 않는다. TUI가 떠 있던 방에서 다른 방으로 가면 새 방 버퍼가 옛 모드 위에 재생된다. `reset()`이 맞다.
-2. **비활성 방의 PTY 크기가 갱신되지 않는다.** xterm은 크기가 바뀔 때만 `resize`를 보낸다. 다른 탭을 보는 동안 창 크기가 바뀌면 그 방의 PTY는 옛 크기로 남고, 돌아와도 크기가 같아 이벤트가 안 난다. `BindRoom` 직후 현재 cols/rows로 `ResizeConsole`을 한 번 불러야 한다. `ready`에 오는 cols/rows도 지금은 버린다.
-3. **방 닫기가 UI 스레드를 최대 2초 막는다.** `RoomManager.Close` → `PtySession.Dispose`가 `_readDrained.Task.Wait(2초)`를 동기로 기다린다. 자식이 바로 안 죽으면 화면이 굳는다. 백그라운드에서 정리하도록 바꿀 것.
-4. **`TerminalHost.OnWebMessage`가 `async void`이고 클립보드 호출을 감싸지 않는다.** 다른 앱이 클립보드를 잡고 있을 때 `Clipboard.GetContent`가 COMException을 던지면 앱이 죽을 수 있다.
-5. **`TerminalHost.InitializeAsync`가 await 전에 `_initialized = true`를 세운다.** WebView2 생성이 실패하면 그 호스트는 이후 호출에서 조용히 빠져나가 빈 화면이 된다. 실패 시 플래그를 되돌려 재시도할 수 있게.
-6. 페이지 캐시가 없어 터미널 화면을 떠났다 돌아오면 WebView2를 새로 만들고 최대 8MB 버퍼를 재생한다. `NavigationCacheMode` 또는 호스트를 페이지 밖에서 들고 있기 검토.
-7. 설정의 글자 크기는 테마 메시지에만 실려 다음 `ready`·테마 변경 때 반영된다. 열린 방에는 즉시 적용되지 않는다.
+문서와 코드가 어긋났던 것:
+- **찾기가 죽어 있었다** → 방 머리에 찾기 칸을 되살렸다(글 바뀌면 다음, Enter 다음·Shift+Enter 이전, Esc 비우고 터미널로). 터미널 방에서만 보인다.
+- `TerminalHost.TitleChanged`·`Ready` 구독자 없음 → `TitleChanged`는 방 `Title`(탭 툴팁)에 프로세스 제목을 붙인다. `IRoom`이 `INotifyPropertyChanged`가 되어 탭이 따라간다. `Ready`는 호스트 안에서 크기 동기화·테마·밀린 출력 재생에 쓴다.
+- "터미널로 열기"가 설정 `UseEmbeddedTerminal`을 무시 → 따른다.
 
-남은 옛 코드(A 방식 흔적, 터미널 방에서 쓰이지 않음):
-- `ChatRoomViewModel`의 `Blocks`·`SessionTail`·`ShowTerminal` 토글·`Input/Send`·`Suggestions/SetCommands`. 터미널 방을 열 때마다 `SessionTail` 시작과 `SlashCommandReader.Read`(디스크 IO)를 실행하지만 화면에는 쓰지 않는다. 탭의 "안 본 점"만 `SessionTail`에 기댄다. 이름도 `ChatRoomViewModel`이라 터미널 방과 어긋난다.
+동작상 버그:
+1. 탭 전환 때 `clear()` → `reset()`으로. 모드(대체 화면·bracketed paste)와 스크롤백까지 초기화한 뒤 새 방 버퍼를 재생한다.
+2. 비활성 방 PTY 크기 미갱신 → 호스트가 `ready`·`resize`에서 cols/rows를 기억하고, `BindRoom` 직후 그 방 콘솔에 `ResizeConsole`을 한 번 보낸다.
+3. 방 닫기가 UI를 최대 2초 막음 → `TerminalRoomViewModel.Dispose`가 트리 kill만 바로 하고 `PtySession.Dispose`(읽기 루프 종료 대기·핸들 정리)는 `Task.Run`으로 보낸다. 앱 종료 때도 kill은 동기라 고아가 안 남는다.
+4. `OnWebMessage`(async void) 클립보드 예외 → 처리 본문을 별도 메서드로 빼고 COMException·JsonException·InvalidOperation·UnauthorizedAccess를 감싼다.
+5. `InitializeAsync`가 await 전에 플래그를 세움 → 끝까지 성공해야 `_initialized = true`. 실패하면 되돌려 다음 호출이 재시도한다.
+6. 페이지 캐시 없음 → `TerminalPage`에 `NavigationCacheMode="Required"`. 한 번만 걸 이벤트(방 목록 변경·제목)는 생성자로 옮겼다.
+7. 글자 크기 즉시 반영 안 됨 → 호스트가 `ISettingsStore.Changed`를 구독해(Loaded에 걸고 Unloaded에 뗀다) 저장 즉시 테마를 다시 보낸다.
 
-테스트 빈 곳:
-- 8MB 버퍼·스냅샷·세대 번호 로직이 App 프로젝트(WinUI) 안에 있어 단위 테스트가 없다. Infrastructure의 순수 클래스(예: `OutputReplayBuffer`)로 빼면 테스트할 수 있다.
+옛 코드:
+- `ChatRoomViewModel` → `TerminalRoomViewModel`로 바꾸고 `Blocks`·`ChatBlockViewModel`·`ShowTerminal` 토글·`Input/Send`·`Suggestions/SetCommands`를 지웠다. 터미널 방을 열 때 `SlashCommandReader.Read`도 더는 부르지 않는다. `SessionTail`은 안 본 답 점에만 남았다. 문구 `Room_ShowChat`·`Room_ShowTerminal` 삭제.
+
+테스트:
+- 버퍼 로직을 `Daiso.Infrastructure.Pty.OutputReplayBuffer`로 빼고 테스트 5건(재생·떼기·상한·비우기·동시 붙이기 중복 없음)을 더했다.
 
 아래는 여기까지 온 기획·구현 기록이다(시간순, 참고용).
 

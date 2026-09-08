@@ -6,10 +6,12 @@
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
     xmlns:vm="using:Daiso.App.ViewModels"
     xmlns:terminal="using:Daiso.App.Terminal"
-    xmlns:prompts="using:Daiso.Core.Prompts">
+    xmlns:prompts="using:Daiso.Core.Prompts"
+    NavigationCacheMode="Required">
 
     <!-- 화면은 두 상태다. 로비(도구·폴더·인자를 고르는 카드 하나)와 방(열린 터미널이 화면을 채운다).
-         방을 열면 로비가 사라지고 터미널이 뜬다. 방 머리의 "새 터미널"로 로비에 돌아온다. (ARCHITECTURE §5.3) -->
+         방을 열면 로비가 사라지고 터미널이 뜬다. 방 머리의 "새 터미널"로 로비에 돌아온다. (ARCHITECTURE §5.3)
+         NavigationCacheMode=Required: 화면을 떠났다 돌아와도 WebView2를 다시 만들거나 버퍼를 재생하지 않는다 -->
     <Grid>
 
         <!-- ───── 로비 ───── -->
@@ -232,12 +234,30 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <!-- 머리: 새 터미널(로비로) + 방 탭 띠. 방은 RoomManager가 들고 있어 화면을 옮겨도 산다 -->
+            <!-- 머리: 새 터미널(로비로) + 방 탭 띠 + 찾기(터미널 방만). 방은 RoomManager가 들고 있어 화면을 옮겨도 산다 -->
             <Grid Grid.Row="0" ColumnSpacing="10">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
+
+                <!-- 찾기: xterm search 애드온. Enter 다음, Shift+Enter 이전, 비우면 표시 지움 -->
+                <StackPanel x:Name="FindPanel" Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                    <TextBox
+                        x:Name="FindBox"
+                        Width="200"
+                        PlaceholderText="{loc:Str Key=Room_FindPlaceholder}"
+                        AutomationProperties.AutomationId="TerminalFindBox"
+                        TextChanged="OnFindTextChanged"
+                        KeyDown="OnFindKeyDown" />
+                    <Button Padding="6" Click="OnFindPrevClick" ToolTipService.ToolTip="{loc:Str Key=Room_FindPrev}" AutomationProperties.Name="{loc:Str Key=Room_FindPrev}">
+                        <FontIcon Glyph="&#xE70E;" FontSize="12" />
+                    </Button>
+                    <Button Padding="6" Click="OnFindNextClick" ToolTipService.ToolTip="{loc:Str Key=Room_FindNext}" AutomationProperties.Name="{loc:Str Key=Room_FindNext}">
+                        <FontIcon Glyph="&#xE70D;" FontSize="12" />
+                    </Button>
+                </StackPanel>
 
                 <Button Grid.Column="0" Click="OnBackToLobbyClick" AutomationProperties.AutomationId="NewTerminalButton" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal" Spacing="6">
@@ -268,7 +288,7 @@
                     </ListView.ItemContainerStyle>
                     <ListView.ItemTemplate>
                         <DataTemplate x:DataType="vm:IRoom">
-                            <Grid ColumnSpacing="8" Padding="6,2" ToolTipService.ToolTip="{x:Bind Title}">
+                            <Grid ColumnSpacing="8" Padding="6,2" ToolTipService.ToolTip="{x:Bind Title, Mode=OneWay}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="Auto" />
@@ -399,7 +419,7 @@
                     </Grid>
                 </Grid>
 
-                <!-- 터미널 패널: 진짜 터미널(xterm)이 남은 높이를 다 쓴다. DataContext = ChatRoomViewModel -->
+                <!-- 터미널 패널: 진짜 터미널(xterm)이 남은 높이를 다 쓴다. DataContext = TerminalRoomViewModel -->
                 <Border x:Name="TerminalPanel" Visibility="Collapsed" CornerRadius="6" BorderThickness="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
                     <terminal:TerminalHost x:Name="Embedded" />
                 </Border>

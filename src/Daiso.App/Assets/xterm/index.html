@@ -18,7 +18,7 @@
 <script src="addon-fit.js"></script>
 <script src="addon-search.js"></script>
 <script>
-// 앱(WinUI)과의 브리지. 앱 → 페이지: {type:'out'|'paste'|'theme'|'focus'|'fit', ...}, 페이지 → 앱: {type:'in'|'resize'|'copy'|'paste'|'ready'|'title'}
+// 앱(WinUI)과의 브리지. 앱 → 페이지: {type:'out'|'paste'|'theme'|'focus'|'fit'|'reset'|'find'|'find-clear', ...}, 페이지 → 앱: {type:'in'|'resize'|'copy'|'paste'|'ready'|'title'}
 // 출력은 base64 UTF-8 바이트다. 글자 중간에서 잘린 덩어리는 xterm이 이어 붙여 해석한다.
 (function () {
   var host = window.chrome && window.chrome.webview;
@@ -111,7 +111,8 @@
         case 'theme': applyTheme(m.theme); break;
         case 'focus': term.focus(); break;
         case 'fit': doFit(); break;
-        case 'clear': term.clear(); break;
+        // reset: 다른 방으로 바꿀 때. clear()는 현재 줄과 대체 화면·bracketed paste 같은 모드를 남겨 옛 방 상태 위에 새 방이 그려진다
+        case 'reset': term.reset(); break;
         case 'find': try { if (m.dir === 'prev') search.findPrevious(m.query || '', searchOptions); else search.findNext(m.query || '', searchOptions); } catch (err) {} break;
         case 'find-clear': try { search.clearDecorations(); } catch (err) {} break;
       }

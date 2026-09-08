@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
+using Daiso.App.Services;
 using Daiso.App.ViewModels;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -10,10 +11,10 @@ namespace Daiso.App.Terminal;
 
 /// <summary>
 /// 앱 안의 터미널 화면. WebView2에 동봉한 xterm.js(Assets/xterm)를 로컬 가상 호스트로 띄우고
-/// <see cref="PtySession"/>과 메시지로 잇는다. 네트워크는 쓰지 않는다. (ARCHITECTURE §5.3)
+/// <see cref="TerminalRoomViewModel"/>과 메시지로 잇는다. 네트워크는 쓰지 않는다. (ARCHITECTURE §5.3)
 ///
-/// 앱 → 페이지: out(base64 UTF-8) · paste(text) · theme · focus · fit · clear
-/// 페이지 → 앱: in(키 입력) · resize(cols,rows) · copy(text) · paste(요청) · ready · title
+/// 앱 → 페이지: out(base64 UTF-8) · paste(text) · theme · focus · fit · reset · find · find-clear
+/// 페이지 → 앱: in(키 입력) · resize(cols,rows) · copy(text) · paste(요청) · ready(cols,rows) · title
 /// </summary>
 public sealed class TerminalHost : UserControl
 {
@@ -21,11 +22,14 @@ public sealed class TerminalHost : UserControl
 
     private readonly WebView2 _web = new();
     private readonly List<string> _pendingOut = [];
-    private ChatRoomViewModel? _room;
+    private TerminalRoomViewModel? _room;
     private Action<byte[]>? _roomSink;
     private int _generation;
     private bool _ready;
     private bool _initialized;
+    private int _cols;
+    private int _rows;
+    private ISettingsStore? _settings;
 
     public TerminalHost()
     {
@@ -33,12 +37,27 @@ public sealed class TerminalHost : UserControl
         HorizontalContentAlignment = HorizontalAlignment.Stretch;
         VerticalContentAlignment = VerticalAlignment.Stretch;
         ActualThemeChanged += (_, _) => PostTheme();
+
+        // 설정(글자 크기)이 저장되면 열린 방에도 바로 반영한다. 화면을 떠나면 끊고 돌아오면 다시 건다
+        Loaded += (_, _) =>
+        {
+            _settings ??= App.Services.GetRequiredService<ISettingsStore>();
+            _settings.Changed -= OnSettingsChanged;
+            _settings.Changed += OnSettingsChanged;
+        };
+        Unloaded += (_, _) =>
+        {
+            if (_settings is not null)
+            {
+                _settings.Changed -= OnSettingsChanged;
+            }
+        };
     }
 
     /// <summary>xterm이 뜨고 첫 크기를 보고했다. 그 뒤부터 출력이 바로 그려진다.</summary>
     public event EventHandler? Ready;
 
-    /// <summary>프로세스가 제목을 바꿨다(OSC 0). 방 탭 이름에 쓴다.</summary>
+    /// <summary>프로세스가 제목을 바꿨다(OSC 0). 방 제목(탭 툴팁)에 쓴다.</summary>
     public event EventHandler<string>? TitleChanged;
 
     /// <summary>동봉한 xterm 파일 폴더.</summary>
@@ -57,7 +76,7 @@ public sealed class TerminalHost : UserControl
         }
     }
 
-    /// <summary>WebView2를 만들고 xterm 페이지를 연다. 한 번만 하면 된다.</summary>
+    /// <summary>WebView2를 만들고 xterm 페이지를 연다. 한 번만 하면 된다. 실패하면 다음 호출이 다시 시도한다.</summary>
     public async Task InitializeAsync()
     {
         if (_initialized)
@@ -65,36 +84,46 @@ public sealed class TerminalHost : UserControl
             return;
         }
 
-        _initialized = true;
+        try
+        {
+            // unpackaged 앱의 기본 사용자 데이터 폴더는 exe 옆이라 쓰기가 막힐 수 있다. 앱 설정과 같은 곳(%LOCALAPPDATA%\d-AI-so) 아래에 둔다
+            var dataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "d-AI-so", "WebView2");
+            Environment.SetEnvironmentVariable("WEBVIEW2_USER_DATA_FOLDER", dataFolder);
 
-        // unpackaged 앱의 기본 사용자 데이터 폴더는 exe 옆이라 쓰기가 막힐 수 있다. 앱 설정과 같은 곳(%LOCALAPPDATA%\d-AI-so) 아래에 둔다
-        var dataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "d-AI-so", "WebView2");
-        Environment.SetEnvironmentVariable("WEBVIEW2_USER_DATA_FOLDER", dataFolder);
+            await _web.EnsureCoreWebView2Async();
 
-        await _web.EnsureCoreWebView2Async();
+            var core = _web.CoreWebView2;
+            core.Settings.AreDevToolsEnabled = false;
+            core.Settings.AreDefaultContextMenusEnabled = false;
+            core.Settings.IsStatusBarEnabled = false;
+            core.Settings.IsZoomControlEnabled = false;
+            core.Settings.AreBrowserAcceleratorKeysEnabled = false;
+            core.Settings.IsWebMessageEnabled = true;
+            core.Settings.IsGeneralAutofillEnabled = false;
+            core.Settings.IsPasswordAutosaveEnabled = false;
 
-        var core = _web.CoreWebView2;
-        core.Settings.AreDevToolsEnabled = false;
-        core.Settings.AreDefaultContextMenusEnabled = false;
-        core.Settings.IsStatusBarEnabled = false;
-        core.Settings.IsZoomControlEnabled = false;
-        core.Settings.AreBrowserAcceleratorKeysEnabled = false;
-        core.Settings.IsWebMessageEnabled = true;
-        core.Settings.IsGeneralAutofillEnabled = false;
-        core.Settings.IsPasswordAutosaveEnabled = false;
+            core.SetVirtualHostNameToFolderMapping(VirtualHost, AssetFolder, CoreWebView2HostResourceAccessKind.Allow);
+            core.WebMessageReceived += OnWebMessage;
+            core.NewWindowRequested += (_, e) => e.Handled = true;
 
-        core.SetVirtualHostNameToFolderMapping(VirtualHost, AssetFolder, CoreWebView2HostResourceAccessKind.Allow);
-        core.WebMessageReceived += OnWebMessage;
-        core.NewWindowRequested += (_, e) => e.Handled = true;
+            _web.Source = new Uri($"https://{VirtualHost}/index.html");
 
-        _web.Source = new Uri($"https://{VirtualHost}/index.html");
+            // 여기까지 와야 초기화된 것이다. 중간에 던지면 플래그가 안 서서 다음에 다시 시도한다
+            _initialized = true;
+        }
+        catch
+        {
+            _initialized = false;
+            throw;
+        }
     }
 
     /// <summary>
-    /// 방을 화면에 잇는다. xterm을 비우고 그 방의 지난 화면을 되돌린 뒤 이후 출력을 잇는다.
+    /// 방을 화면에 잇는다. xterm을 초기 상태로 되돌리고(모드·스크롤백까지) 그 방의 지난 화면을 재생한 뒤 이후 출력을 잇는다.
     /// 다른 방으로 바꾸면 이전 방 구독을 끊고 새 방을 되돌린다. 하나의 호스트를 탭마다 다시 가리켜 쓴다.
+    /// 비활성 동안 창 크기가 바뀌었을 수 있어, 지금 xterm 크기를 그 방의 콘솔에 한 번 알려 준다.
     /// </summary>
-    public void BindRoom(ChatRoomViewModel room)
+    public void BindRoom(TerminalRoomViewModel room)
     {
         ArgumentNullException.ThrowIfNull(room);
 
@@ -120,9 +149,10 @@ public sealed class TerminalHost : UserControl
             }
         };
 
-        // 화면을 비우고 이 방의 버퍼를 통째로 되돌린 뒤 이후 출력을 받는다(원자적 붙이기)
-        Post(new { type = "clear" });
+        // reset: clear()는 현재 줄과 대체 화면·bracketed paste 같은 모드를 남긴다. 다른 방의 버퍼를 깨끗한 상태 위에 재생해야 한다
+        Post(new { type = "reset" });
         _pendingOut.Clear();
+        SyncSize();
         room.AttachHost(_roomSink);
     }
 
@@ -138,6 +168,15 @@ public sealed class TerminalHost : UserControl
     {
         _web.Focus(FocusState.Programmatic);
         Post(new { type = "focus" });
+    }
+
+    /// <summary>지금 xterm 크기를 붙은 방의 콘솔에 알린다. ready·resize·BindRoom에서 부른다.</summary>
+    private void SyncSize()
+    {
+        if (_cols > 0 && _rows > 0)
+        {
+            _room?.ResizeConsole(_cols, _rows);
+        }
     }
 
     private void PostOutput(string base64)
@@ -159,12 +198,15 @@ public sealed class TerminalHost : UserControl
         }
     }
 
+    private void OnSettingsChanged(object? sender, EventArgs e) => PostTheme();
+
     private void PostTheme()
     {
         var dark = ActualTheme == ElementTheme.Dark
             || (ActualTheme == ElementTheme.Default && Application.Current.RequestedTheme == ApplicationTheme.Dark);
 
-        var fontSize = Math.Clamp(App.Services.GetRequiredService<Services.ISettingsStore>().Current.TerminalFontSize, 8, 28);
+        _settings ??= App.Services.GetRequiredService<ISettingsStore>();
+        var fontSize = Math.Clamp(_settings.Current.TerminalFontSize, 8, 28);
 
         // xterm ITheme. 카드 배경과 비슷한 색을 써 화면 안에서 튀지 않게 한다
         var theme = dark
@@ -192,9 +234,25 @@ public sealed class TerminalHost : UserControl
         Post(new { type = "theme", theme });
     }
 
+    /// <summary>
+    /// 페이지에서 온 메시지. async void 핸들러라 여기서 던지면 앱이 죽는다. 클립보드는 다른 앱이 잡고 있으면
+    /// COMException을 던지므로 감싼다. 그 밖의 처리는 던질 일이 없는 필드 읽기뿐이다.
+    /// </summary>
     private async void OnWebMessage(CoreWebView2 sender, CoreWebView2WebMessageReceivedEventArgs args)
     {
-        using var document = JsonDocument.Parse(args.WebMessageAsJson);
+        try
+        {
+            await HandleWebMessageAsync(args.WebMessageAsJson).ConfigureAwait(true);
+        }
+        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or JsonException or InvalidOperationException or UnauthorizedAccessException)
+        {
+            // 클립보드 잠김·깨진 메시지. 한 번의 붙이기/복사가 안 된 것뿐이니 조용히 넘긴다
+        }
+    }
+
+    private async Task HandleWebMessageAsync(string json)
+    {
+        using var document = JsonDocument.Parse(json);
         var root = document.RootElement;
 
         if (root.ValueKind != JsonValueKind.Object || !root.TryGetProperty("type", out var typeElement))
@@ -206,7 +264,9 @@ public sealed class TerminalHost : UserControl
         {
             case "ready":
                 _ready = true;
+                ReadSize(root);
                 PostTheme();
+                SyncSize();
                 foreach (var chunk in _pendingOut)
                 {
                     Post(new { type = "out", data = chunk });
@@ -225,11 +285,8 @@ public sealed class TerminalHost : UserControl
                 break;
 
             case "resize":
-                if (root.TryGetProperty("cols", out var cols) && root.TryGetProperty("rows", out var rows))
-                {
-                    _room?.ResizeConsole(cols.GetInt32(), rows.GetInt32());
-                }
-
+                ReadSize(root);
+                SyncSize();
                 break;
 
             case "copy":
@@ -262,6 +319,16 @@ public sealed class TerminalHost : UserControl
 
             default:
                 break;
+        }
+    }
+
+    private void ReadSize(JsonElement root)
+    {
+        if (root.TryGetProperty("cols", out var cols) && root.TryGetProperty("rows", out var rows)
+            && cols.ValueKind == JsonValueKind.Number && rows.ValueKind == JsonValueKind.Number)
+        {
+            _cols = cols.GetInt32();
+            _rows = rows.GetInt32();
         }
     }
 }

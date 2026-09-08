@@ -478,10 +478,10 @@ RefreshAsync
 
 **내장 터미널** — 앱을 떠나지 않고 CLI를 xterm 터미널로 띄운다. 방 화면에는 터미널만 보이고, 입력은 xterm이 직접 받는다(별도 입력칸 없음).
 - 엔진: `Daiso.Infrastructure.Pty` — `PseudoConsole`(ConPTY: CreatePseudoConsole + 파이프 + STARTUPINFOEX, 자식 생성 동안만 부모 표준 핸들을 비워 콘솔 핸들을 새로 받게 한다), `PtySession`(FileStream IO, 트리 kill 종료, 초기 출력 버퍼링, conhost 마지막 프레임 정착 대기), `PtyEnvironment`(중첩 Claude Code 표식 제거 — 챗봇 엔진도 이걸 쓴다).
-- 화면: `Daiso.App.Terminal.TerminalHost` — WebView2 + 동봉 xterm.js(`Assets/xterm`, xterm·fit·search, MIT). `SetVirtualHostNameToFolderMapping`으로 로컬만 로드, 네트워크 없음. 앱↔페이지 메시지: out(base64)·paste·theme·focus·fit·clear·find / in·resize·copy·paste·ready·title. 선택 있으면 Ctrl+C 복사·없으면 중단, Ctrl+V·오른클릭 붙여넣기, F5·Ctrl+1~7은 페이지에서 먹어 앱 단축키와 안 겹치게. 찾기(xterm search 애드온)는 호스트에 `Find`/`ClearFind`가 있으나 **화면에 찾기 칸이 없어 지금은 쓰이지 않는다**(챗봇 교체 때 UI가 빠짐. 되살릴 항목 — FEATURE_PLAN "터미널 파트 점검").
-- 종료는 반드시 프로세스 **트리 전체**를 kill 한다. 루트 셸만 죽이면 자식이 콘솔 출력을 잡아 읽기가 안 풀리고, 파이프 핸들 해제와 네이티브 읽기가 겹쳐 힙이 깨진다.
-- 방 = `ChatRoomViewModel`(공통 `IRoom` 구현). `RoomManager`(싱글턴)가 방을 들고 있어 화면을 옮겨도 산다. 탭 띠가 `RoomManager.Rooms`(IRoom)를 그리고, 탭을 고르면 하나뿐인 `TerminalHost`를 `BindRoom`으로 그 방에 다시 가리킨다. 방이 콘솔 출력을 8MB까지 버퍼링해, 탭을 다시 보거나 화면을 다시 열면 `AttachHost`가 스냅샷·구독을 한 잠금 안에서 원자적으로 잡아 지난 화면을 되돌린다(중복·누락 없음). 세대 번호로 옛 방의 늦은 출력이 새 방에 안 섞이게 한다(WebView2 호스트는 방마다 새로 만들지 않는다).
-- 열기: 로비의 **"터미널로 열기"** 버튼 → `PtySession.Start`(셸 명령) + `ChatRoomViewModel` + 탭 추가 → 방 화면으로 전환 → `TerminalHost.BindRoom`. 미설치면 설치 흐름, WebView2가 없거나 설정 `UseEmbeddedTerminal`(기본 켬)이 꺼졌으면 외부 터미널(`ITerminalLauncher`)로 폴백. 방 머리의 "새 터미널"은 로비로 돌아갈 뿐 방을 닫지 않는다.
+- 화면: `Daiso.App.Terminal.TerminalHost` — WebView2 + 동봉 xterm.js(`Assets/xterm`, xterm·fit·search, MIT). `SetVirtualHostNameToFolderMapping`으로 로컬만 로드, 네트워크 없음. 앱↔페이지 메시지: out(base64)·paste·theme·focus·fit·reset·find·find-clear / in·resize·copy·paste·ready(cols,rows)·title. 방을 바꿀 때는 `reset`(clear가 아니라)으로 모드·스크롤백까지 초기화한 뒤 재생하고, 지금 xterm 크기를 그 방 콘솔에 다시 알린다(비활성 중 창 크기가 바뀌어도 따라잡는다). 페이지 메시지 처리는 클립보드 잠김 등 예외를 감싼다(async void). 초기화가 도중에 실패하면 플래그를 되돌려 다음 호출이 다시 시도한다. 설정 `Changed`를 구독해 글자 크기가 열린 방에 즉시 반영된다. 선택 있으면 Ctrl+C 복사·없으면 중단, Ctrl+V·오른클릭 붙여넣기, F5·Ctrl+1~7은 페이지에서 먹어 앱 단축키와 안 겹치게. 찾기는 방 머리의 찾기 칸(xterm search 애드온): 글이 바뀌면 다음, Enter 다음·Shift+Enter 이전, Esc는 비우고 터미널로 포커스. 터미널 방에서만 보인다.
+- 종료는 반드시 프로세스 **트리 전체**를 kill 한다. 루트 셸만 죽이면 자식이 콘솔 출력을 잡아 읽기가 안 풀리고, 파이프 핸들 해제와 네이티브 읽기가 겹쳐 힙이 깨진다. 방 닫기(`TerminalRoomViewModel.Dispose`)는 트리 kill만 UI 스레드에서 바로 하고(앱 종료 때도 고아가 안 남게), 읽기 루프 종료를 기다리는 핸들 정리(`PtySession.Dispose`)는 백그라운드로 보내 UI가 굳지 않게 한다.
+- 방 = `TerminalRoomViewModel`(공통 `IRoom` 구현. `IRoom`은 `INotifyPropertyChanged`라 탭이 제목·안 본 점을 따라간다). `RoomManager`(싱글턴)가 방을 들고 있어 화면을 옮겨도 산다. 탭 띠가 `RoomManager.Rooms`(IRoom)를 그리고, 탭을 고르면 하나뿐인 `TerminalHost`를 `BindRoom`으로 그 방에 다시 가리킨다. 출력 버퍼는 `Daiso.Infrastructure.Pty.OutputReplayBuffer`(순수, 테스트 있음): 8MB까지 쌓고, `Attach`가 스냅샷·싱크 교체를 한 잠금 안에서 원자적으로 해 지난 화면을 되돌린다(중복·누락 없음). 세대 번호로 옛 방의 늦은 출력이 새 방에 안 섞이게 한다. 프로세스가 OSC 0 제목을 보내면 방 `Title`(탭 툴팁) 뒤에 붙는다. `TerminalPage`는 `NavigationCacheMode=Required`라 화면을 떠났다 돌아와도 WebView2를 다시 만들거나 버퍼를 재생하지 않는다.
+- 열기: 로비의 **"터미널로 열기"** 버튼 → `PtySession.Start`(셸 명령) + `TerminalRoomViewModel` + 탭 추가 → 방 화면으로 전환 → `TerminalHost.BindRoom`. 미설치면 설치 흐름, WebView2가 없거나 설정 `UseEmbeddedTerminal`(기본 켬)이 꺼졌으면 외부 터미널(`ITerminalLauncher`)로 폴백. 방 머리의 "새 터미널"은 로비로 돌아갈 뿐 방을 닫지 않는다.
 - 이어서 열기: 세션·요약의 "이어서 열기"가 `TerminalViewModel.PrepareResume(tool, dir, args, autoOpen:true)` 뒤 터미널로 이동, 화면 로드 때 `ConsumeAutoOpen()`이 도구·인자를 다시 심고 터미널 방을 연다(탭 기본 선택·TwoWay 바인딩이 덮어쓰는 것을 되돌린다).
 - 앱 종료: 살아 있는 방이 있으면 `AppWindow.Closing`이 한 번 묻고, 계속하면 `App.Rooms.DisposeAll`이 프로세스 트리를 정리한다.
 - 설정: `UseEmbeddedTerminal`(기본 켬), 터미널 글자 크기(px).
@@ -489,7 +489,7 @@ RefreshAsync
 **챗봇 (B 모드 — 코드만 남기고 UI 비공개)** — 터미널 대신 CLI를 구조화 스트리밍(JSON)으로 다뤄 말풍선 대화로 만드는 코드가 있다. 지금은 **"챗봇으로 열기" 버튼을 빼서 화면에 안 나온다**. 재공개하려면 `TerminalPage`의 그 버튼(`OpenChatbotButton`, `OnOpenChatbotClick`)을 되살린다.
 - `ClaudeChatSession`(`claude --print --output-format stream-json --input-format stream-json --include-partial-messages --dangerously-skip-permissions`, stdin/stdout JSON, 트리 kill), `ClaudeStreamParser`(줄 → `ChatEvent`: 파서 테스트로 실제 이벤트 모양 고정), `StreamingRoomViewModel`·`ChatBubbleViewModel`(말풍선, 글자 단위 스트리밍, 도구 호출 카드). 도구 승인은 묻지 않는다. Claude만.
 - `SlashCommandReader`(`BuiltInSlashCommands` 내장 명령표 + 디스크의 사용자·프로젝트 명령·스킬, 읽기 전용)는 챗봇 입력의 `/` 선택기용. 터미널 방에서는 안 쓴다.
-- `ChatRoomViewModel`의 채팅 블록(`SessionTail` 파일 tail 기반)·토글 코드도 옛 A 방식의 흔적으로 남아 있으나, 지금 터미널 방은 xterm만 그린다.
+- 옛 A 방식(채팅 블록·터미널 토글·입력 칸)은 걷어냈다. `TerminalRoomViewModel`에 남은 `SessionTail`은 다른 탭에 있는 동안 어시스턴트 답이 오면 탭에 점을 켜는 용도만이다.
 
 ### 5.4 Context Doctor
 ```

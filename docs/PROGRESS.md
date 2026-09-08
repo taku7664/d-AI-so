@@ -39,7 +39,8 @@
 - **요약·터미널 탭**: 요약 `전체·Codex·Claude·Gemini`(카드·최근 세션·통계·토큰이 탭을 따름), 터미널 `Codex·Claude·Gemini`(인자는 탭별). 도구 순서는 `ToolLook.DisplayOrder` 한 곳 (UX 20차)
 - **사용량 탭 + 터미널 탭 붙이기**: 사용량에 `전체·Codex·Claude·Gemini`, 터미널 탭 띠는 카드 머리에 (UX 21차)
 - **내장 터미널**: ConPTY + 동봉 xterm.js(WebView2)로 Claude·Codex·Gemini를 앱 안 xterm 터미널로 띄운다. "터미널로 열기"로 방을 열고 여러 개를 탭으로(화면 이동에도 유지), 세션·요약 `이어서 열기` → 터미널 방, 설정 토글·외부 폴백, 종료 시 프로세스 트리 정리. 종료 힙 손상·탭 전환 출력 섞임·WebView2 초기화 실패를 잡음. 챗봇(stream-json 말풍선)은 코드만 남기고 UI 비공개 (ARCHITECTURE §5.3, FEATURE_PLAN, UX 26차)
-- 빌드 경고 0 / 오류 0, 테스트 333건 + Slow 2건 통과 (2026-09-08)
+- **터미널 파트 정리 (2026-09-09)**: 로비를 카드 하나로 합치고 방을 열면 터미널이 화면을 채운다. 코드 분석에서 나온 문제 전부 고침 — 탭 전환 `reset`, 비활성 방 크기 동기화, 닫기 때 UI 안 굳음, 클립보드 예외, 초기화 재시도, 페이지 캐시, 글자 크기 즉시 반영, 찾기 칸 복구, OSC 제목 → 탭 툴팁, 옛 A 방식 코드 제거(`TerminalRoomViewModel`), 버퍼를 `OutputReplayBuffer`로 빼 테스트 (FEATURE_PLAN "터미널 파트 점검", ARCHITECTURE §5.3)
+- 빌드 경고 0 / 오류 0, 테스트 338건 + Slow 2건 통과 (2026-09-09)
 - 완성 상태 6항목 확인 결과는 README "수동 확인 체크리스트"에 있다
 
 ## ARCHITECTURE에서 벗어난 판단 4건 (모두 문서 반영됨)
