@@ -144,6 +144,8 @@ public sealed partial class TerminalPage : Page
         }
     }
 
+    // 챗봇 방(B 모드, stream-json 말풍선). 지금은 UI 비공개 — TerminalPage.xaml에서 OpenChatbotButton을 빼 둬 이 핸들러는 호출되지 않는다.
+    // 재공개하려면 그 버튼을 되살린다. (ARCHITECTURE §5.3)
     private void OnOpenChatbotClick(object sender, RoutedEventArgs e) => OpenChatbotRoom();
 
     private void OnOpenTerminalClick(object sender, RoutedEventArgs e) => _ = OpenTerminalRoomAsync();
