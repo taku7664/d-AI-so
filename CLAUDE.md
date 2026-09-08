@@ -5,6 +5,12 @@
 - 아키텍처: `docs/ARCHITECTURE.md` (인터페이스·파싱 규칙의 정본. 코드가 이를 따른다)
 - 목표·완료 기준: `docs/GOAL.md`
 
+## 빌드·실행 확인
+
+앱을 띄워 확인할 때는 `tools/run-app.ps1`을 쓴다. 빌드한 바로 그 산출물을 실행한다.
+`dotnet build`(솔루션)와 프로젝트 단독 빌드의 산출물 폴더는 같아야 하며(csproj의 기본 Platform x64), 손으로 적은 경로로 실행하지 않는다.
+문구 키를 지우거나 바꾸면 `Daiso.Core.Tests`의 `StringResourceKeysTests`가 잡는다. 테스트가 빨간데 눈으로 넘기지 않는다.
+
 ## 커밋
 
 커밋은 작업 단위 별로 필수로 커밋합니다.

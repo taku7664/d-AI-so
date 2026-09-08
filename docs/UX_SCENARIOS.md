@@ -416,3 +416,16 @@ Gemini를 넣고 보니 터미널의 `Gemini 열기`는 설치가 안 된 PC에�
 
 버튼·프리셋·미리보기 셋을 도구별 줄 하나(`ToolLaunchViewModel`)로 바꿔 세 도구가 같은 틀을 쓴다. 도구가 더 늘어도 화면은 그대로다.
 
+## 19차 — 코드 점검: 당황하지 않기 위한 안전망
+
+시나리오를 쓰며 당황한 일 셋을 되짚어 원인을 코드로 막았다.
+
+| 당황한 일 | 원인 | 막은 방법 |
+|---|---|---|
+| 새 빌드를 검수했다고 믿었는데 옛 빌드였다 (두 번) | 솔루션 빌드는 `bind\Debug`, 프로젝트 빌드는 `bin\Debug`로 산출물이 갈렸다 | csproj `AppendPlatformToOutputPath=false`로 폴더 하나. `tools/run-app.ps1`은 MSBuild에 출력 폴더를 물어 빌드한 그 파일을 띄운다. CLAUDE.md에 규칙 |
+| "죽은 키"라며 지운 문구 16개가 화면에 키 이름 그대로 떴다 | 점검 정규식이 `UiStrings.Get("…")` 꼴만 봤다. switch 식 안 리터럴을 놓쳤다 | `StringResourceKeysTests` — 코드가 부르는 키는 resw에 있고, resw 키는 어딘가 불려야 한다. 따옴표 안 리터럴 전부를 참조로 본다 |
+| 세션을 여는 동안 필터를 바꿔도 아무 일이 없었을 것 | 타임라인 읽기가 목록 작업과 같은 `IsBusy`를 켰고, 필터는 `IsBusy`면 무시했다 | 타임라인은 `IsTimelineLoading`만 쓴다 |
+
+덤으로 잡은 것: 세션 파일이 잠기거나 지워진 채 고르면 `async void` 핸들러에서 IOException이 튀어 앱이 죽을 수 있었다. 뷰모델에서 잡아 `세션 파일을 읽지 못했습니다: …`로 보여준다.
+전역 `CrashReporter`는 이미 있었다.
+

@@ -350,8 +350,6 @@ public sealed partial class SessionsViewModel : ObservableObject
             return;
         }
 
-        IsBusy = true;
-
         try
         {
             var messages = await Task.Run(
@@ -387,11 +385,15 @@ public sealed partial class SessionsViewModel : ObservableObject
         {
             // 다른 세션으로 넘어갔다. 새 읽기가 상태를 이어받는다.
         }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
+        {
+            // 파일이 잠겼거나 지워졌거나 깨졌다. 앱이 죽는 대신 이유를 보여준다.
+            StatusText = UiStrings.Format("Sessions_TimelineFailed", ex.Message);
+        }
         finally
         {
             if (!token.IsCancellationRequested)
             {
-                IsBusy = false;
                 IsTimelineLoading = false;
                 NotifyTimelineState();
             }
