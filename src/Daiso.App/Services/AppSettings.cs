@@ -36,6 +36,9 @@ public sealed class AppSettings
     /// <summary>창 높이 기억.</summary>
     public int WindowHeight { get; set; } = 820;
 
+    /// <summary>화면별로 사람이 끌어 놓은 왼쪽 판 너비. 키는 화면 이름(RuleMaker, Prompts).</summary>
+    public Dictionary<string, int> PaneWidths { get; set; } = new(StringComparer.Ordinal);
+
     /// <summary>최근 목록에 담는 최대 개수.</summary>
     public const int RecentLimit = 10;
 

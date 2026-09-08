@@ -4,11 +4,11 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:loc="using:Daiso.App.Strings"
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
-    xmlns:vm="using:Daiso.App.ViewModels">
+    xmlns:vm="using:Daiso.App.ViewModels"
+    xmlns:controls="using:Daiso.App.Controls">
 
     <Grid Padding="{StaticResource PagePadding}" RowSpacing="14">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
@@ -37,115 +37,6 @@
                     AutomationProperties.AutomationId="NewButton"
                     Command="{x:Bind ViewModel.NewCommand}" />
                 <muxc:AppBarButton
-                    Label="{loc:Str Key=RuleMaker_Presets}"
-                    Icon="Library"
-                    AutomationProperties.AutomationId="PresetsButton">
-                    <muxc:AppBarButton.Flyout>
-                        <!-- 프리셋 갤러리: 목록 · 미리보기 · 새로 열기 / 지금 규칙에 추가 (ARCHITECTURE §5.2) -->
-                        <Flyout x:Name="GalleryFlyout" Placement="BottomEdgeAlignedLeft" Opening="OnGalleryOpening">
-                            <Flyout.FlyoutPresenterStyle>
-                                <Style TargetType="FlyoutPresenter">
-                                    <Setter Property="MaxWidth" Value="900" />
-                                    <Setter Property="MaxHeight" Value="640" />
-                                    <Setter Property="Padding" Value="16" />
-                                </Style>
-                            </Flyout.FlyoutPresenterStyle>
-
-                            <Grid Width="820" Height="520" RowSpacing="12" ColumnSpacing="16">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="*" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="300" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-
-                                <TextBlock
-                                    Grid.Row="0"
-                                    Grid.ColumnSpan="2"
-                                    Text="{loc:Str Key=RuleMaker_GalleryHint}"
-                                    Style="{StaticResource PageSubtitleText}" />
-
-                                <ListView
-                                    Grid.Row="1"
-                                    Grid.Column="0"
-                                    AutomationProperties.AutomationId="GalleryList"
-                                    ItemsSource="{x:Bind ViewModel.Gallery}"
-                                    SelectedItem="{x:Bind ViewModel.SelectedGalleryItem, Mode=TwoWay}"
-                                    SelectionMode="Single"
-                                    IsItemClickEnabled="False">
-                                    <ListView.ItemTemplate>
-                                        <DataTemplate x:DataType="vm:PresetGalleryItemViewModel">
-                                            <StackPanel Spacing="2" Margin="0,6,0,6">
-                                                <TextBlock Text="{x:Bind Badge}" Style="{StaticResource MutedText}" FontSize="11" />
-                                                <TextBlock Text="{x:Bind Name}" Style="{ThemeResource BodyStrongTextBlockStyle}" TextTrimming="CharacterEllipsis" />
-                                                <TextBlock
-                                                    Text="{x:Bind Description}"
-                                                    Style="{StaticResource MutedText}"
-                                                    TextTrimming="CharacterEllipsis"
-                                                    TextWrapping="NoWrap" />
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </ListView.ItemTemplate>
-                                </ListView>
-
-                                <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CardBorder}" Padding="14">
-                                    <Grid RowSpacing="8">
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="*" />
-                                        </Grid.RowDefinitions>
-
-                                        <TextBlock
-                                            Grid.Row="0"
-                                            Text="{x:Bind ViewModel.SelectedGalleryItem.Name, Mode=OneWay}"
-                                            Style="{StaticResource SectionTitleText}" />
-                                        <StackPanel Grid.Row="1" Spacing="2">
-                                            <TextBlock
-                                                Text="{x:Bind ViewModel.SelectedGalleryItem.Description, Mode=OneWay}"
-                                                Style="{StaticResource PageSubtitleText}" />
-                                            <TextBlock
-                                                Text="{x:Bind ViewModel.SelectedGalleryItem.CountText, Mode=OneWay}"
-                                                Style="{StaticResource MutedText}" />
-                                        </StackPanel>
-
-                                        <TextBlock
-                                            Grid.Row="2"
-                                            Text="{loc:Str Key=RuleMaker_GalleryPick}"
-                                            Style="{StaticResource MutedText}"
-                                            Visibility="{x:Bind ViewModel.HasNoGallerySelection, Mode=OneWay}" />
-                                        <ScrollViewer Grid.Row="2" Visibility="{x:Bind ViewModel.HasGallerySelection, Mode=OneWay}">
-                                            <TextBlock
-                                                AutomationProperties.AutomationId="GalleryPreview"
-                                                Text="{x:Bind ViewModel.SelectedGalleryItem.Preview, Mode=OneWay}"
-                                                Style="{StaticResource MonoText}"
-                                                TextWrapping="Wrap"
-                                                IsTextSelectionEnabled="True" />
-                                        </ScrollViewer>
-                                    </Grid>
-                                </Border>
-
-                                <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-                                    <Button
-                                        Content="{loc:Str Key=RuleMaker_GalleryMerge}"
-                                        AutomationProperties.AutomationId="GalleryMergeButton"
-                                        IsEnabled="{x:Bind ViewModel.HasGallerySelection, Mode=OneWay}"
-                                        Click="OnGalleryMergeClick" />
-                                    <Button
-                                        Content="{loc:Str Key=RuleMaker_GalleryOpen}"
-                                        Style="{ThemeResource AccentButtonStyle}"
-                                        AutomationProperties.AutomationId="GalleryOpenButton"
-                                        IsEnabled="{x:Bind ViewModel.HasGallerySelection, Mode=OneWay}"
-                                        Click="OnGalleryOpenClick" />
-                                </StackPanel>
-                            </Grid>
-                        </Flyout>
-                    </muxc:AppBarButton.Flyout>
-                </muxc:AppBarButton>
-                <muxc:AppBarButton
                     Label="{loc:Str Key=Common_Open}"
                     Icon="OpenFile"
                     AutomationProperties.AutomationId="OpenButton"
@@ -170,6 +61,13 @@
                     Icon="Sync"
                     AutomationProperties.AutomationId="MigrateButton"
                     Click="OnMigrateClick" />
+
+                <muxc:AppBarToggleButton
+                    Label="{loc:Str Key=Common_ToggleList}"
+                    Icon="List"
+                    IsChecked="True"
+                    AutomationProperties.AutomationId="ToggleListButton"
+                    Click="OnToggleListClick" />
 
                 <muxc:CommandBar.SecondaryCommands>
                     <muxc:AppBarButton
@@ -202,430 +100,497 @@
             </muxc:CommandBar>
         </Grid>
 
-        <!-- 이름 · 설명 · 프로젝트 폴더 -->
-        <StackPanel Grid.Row="1" Spacing="10">
-            <Grid ColumnSpacing="12">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="280" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
 
-                <TextBox
-                    Grid.Column="0"
-                    Header="{loc:Str Key=RuleMaker_Name}"
-                    AutomationProperties.AutomationId="NameBox"
-                    Text="{x:Bind ViewModel.PresetName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-
-                <TextBox
-                    Grid.Column="1"
-                    Header="{loc:Str Key=RuleMaker_Description}"
-                    AutomationProperties.AutomationId="DescriptionBox"
-                    Text="{x:Bind ViewModel.Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-            </Grid>
-
-            <Grid ColumnSpacing="8">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
-                <TextBox
-                    Grid.Column="0"
-                    Header="{loc:Str Key=RuleMaker_ProjectFolder}"
-                    PlaceholderText="{loc:Str Key=RuleMaker_ProjectFolderPlaceholder}"
-                    AutomationProperties.AutomationId="ProjectDirBox"
-                    Text="{x:Bind ViewModel.ProjectDirectory, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-
-                <muxc:DropDownButton
-                    Grid.Column="1"
-                    VerticalAlignment="Bottom"
-                    AutomationProperties.AutomationId="ProjectPickerButton">
-                    <muxc:DropDownButton.Content>
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="{loc:Str Key=Common_KnownProjects}" />
-                        </StackPanel>
-                    </muxc:DropDownButton.Content>
-                    <muxc:DropDownButton.Flyout>
-                        <MenuFlyout x:Name="ProjectFlyout" Opening="OnProjectFlyoutOpening" />
-                    </muxc:DropDownButton.Flyout>
-                </muxc:DropDownButton>
-
-                <Button
-                    Grid.Column="2"
-                    Content="{loc:Str Key=RuleMaker_Link}"
-                    VerticalAlignment="Bottom"
-                    Style="{ThemeResource AccentButtonStyle}"
-                    AutomationProperties.AutomationId="LinkTypedButton"
-                    IsEnabled="{x:Bind ViewModel.CanSave, Mode=OneWay}"
-                    Click="OnLinkTypedClick" />
-            </Grid>
-        </StackPanel>
-
-        <!-- 본문 -->
-        <Grid Grid.Row="2" ColumnSpacing="14">
+        <!-- 왼쪽 내 규칙 목록 · 끌 수 있는 구분선 · 오른쪽 편집기 (내 프롬프트와 같은 골격) -->
+        <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2*" MinWidth="480" />
-                <ColumnDefinition Width="*" MinWidth="240" />
+                <ColumnDefinition x:Name="ListColumn" Width="220" MinWidth="180" MaxWidth="480" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
-                <StackPanel Spacing="14">
+            <Border Grid.Column="0" Style="{StaticResource CardBorder}" Padding="8">
+                <Grid RowSpacing="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
 
-                    <!-- 항상 적용되는 행동 -->
-                    <Border Style="{StaticResource CardBorder}">
-                        <StackPanel Spacing="10">
-                            <Grid ColumnSpacing="12">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock
-                                    Grid.Column="0"
-                                    Text="{loc:Str Key=RuleMaker_GlobalHeader}"
-                                    Style="{StaticResource SectionTitleText}" />
-                                <Button
-                                    Grid.Column="1"
-                                    AutomationProperties.AutomationId="AddGlobalButton"
-                                    Command="{x:Bind ViewModel.AddGlobalActionCommand}">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <FontIcon Glyph="&#xE710;" FontSize="13" />
-                                        <TextBlock Text="{loc:Str Key=RuleMaker_AddAction}" />
-                                    </StackPanel>
-                                </Button>
-                            </Grid>
+                    <ListView
+                        Grid.Row="0"
+                        AutomationProperties.AutomationId="GalleryList"
+                        ItemsSource="{x:Bind ViewModel.Gallery}"
+                        SelectedItem="{x:Bind ViewModel.SelectedGalleryItem, Mode=TwoWay}"
+                        SelectionMode="Single"
+                        ContainerContentChanging="OnGalleryContainerChanging">
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="vm:PresetGalleryItemViewModel">
+                                <StackPanel Spacing="2" Margin="0,6,0,6">
+                                    <TextBlock Text="{x:Bind Badge}" Style="{StaticResource MutedText}" FontSize="11" />
+                                    <TextBlock Text="{x:Bind Name}" Style="{ThemeResource BodyStrongTextBlockStyle}" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock
+                                        Text="{x:Bind Description}"
+                                        Style="{StaticResource MutedText}"
+                                        TextTrimming="CharacterEllipsis"
+                                        TextWrapping="NoWrap" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
 
-                            <ItemsControl ItemsSource="{x:Bind ViewModel.Global}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:ActionEditViewModel">
-                                        <Grid ColumnSpacing="8" Margin="0,0,0,8">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="120" />
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
+                    <!-- 고른 것을 편집기에 여는 두 길. 목록 선택만으로는 편집 중인 것을 버리지 않는다 -->
+                    <StackPanel Grid.Row="1" Spacing="6" Margin="4,0,4,0">
+                        <Button
+                            HorizontalAlignment="Stretch"
+                            Style="{ThemeResource AccentButtonStyle}"
+                            Content="{loc:Str Key=RuleMaker_GalleryOpen}"
+                            AutomationProperties.AutomationId="GalleryOpenButton"
+                            IsEnabled="{x:Bind ViewModel.HasGallerySelection, Mode=OneWay}"
+                            Click="OnGalleryOpenClick" />
+                        <Button
+                            HorizontalAlignment="Stretch"
+                            Content="{loc:Str Key=RuleMaker_GalleryMerge}"
+                            AutomationProperties.AutomationId="GalleryMergeButton"
+                            IsEnabled="{x:Bind ViewModel.HasGallerySelection, Mode=OneWay}"
+                            Click="OnGalleryMergeClick" />
+                    </StackPanel>
+                </Grid>
+            </Border>
 
-                                            <TextBox
-                                                Grid.Column="0"
-                                                MinWidth="180"
-                                                PlaceholderText="{loc:Str Key=RuleMaker_ActionPlaceholder}"
-                                                Text="{x:Bind Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <controls:PaneSplitter x:Name="ListSplitter" Grid.Column="1" SettingsKey="RuleMaker" />
 
-                                            <ComboBox
-                                                Grid.Column="1"
-                                                SelectedIndex="{x:Bind PriorityIndex, Mode=TwoWay}">
-                                                <ComboBoxItem Content="MUST" />
-                                                <ComboBoxItem Content="SHOULD" />
-                                                <ComboBoxItem Content="MAY" />
-                                            </ComboBox>
+            <Grid Grid.Column="2" RowSpacing="14">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
 
-                                            <Button
-                                                Grid.Column="2"
-                                                AutomationProperties.Name="{loc:Str Key=RuleMaker_MoveUp}"
-                                                ToolTipService.ToolTip="{loc:Str Key=RuleMaker_MoveUp}"
-                                                Click="OnGlobalUpClick"
-                                                DataContext="{x:Bind}">
-                                                <FontIcon Glyph="&#xE74A;" FontSize="12" />
-                                            </Button>
-                                            <Button
-                                                Grid.Column="3"
-                                                AutomationProperties.Name="{loc:Str Key=RuleMaker_MoveDown}"
-                                                ToolTipService.ToolTip="{loc:Str Key=RuleMaker_MoveDown}"
-                                                Click="OnGlobalDownClick"
-                                                DataContext="{x:Bind}">
-                                                <FontIcon Glyph="&#xE74B;" FontSize="12" />
-                                            </Button>
-                                            <Button
-                                                Grid.Column="4"
-                                                AutomationProperties.Name="{loc:Str Key=Common_Delete}"
-                                                ToolTipService.ToolTip="{loc:Str Key=Common_Delete}"
-                                                Click="OnGlobalRemoveClick"
-                                                DataContext="{x:Bind}">
-                                                <FontIcon Glyph="&#xE74D;" FontSize="12" />
-                                            </Button>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </Border>
+                <!-- 이름 · 설명 · 프로젝트 폴더 -->
+                <StackPanel Grid.Row="0" Spacing="10">
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="280" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
 
-                    <!-- 규칙 목록 -->
-                    <Border Style="{StaticResource CardBorder}">
-                        <StackPanel Spacing="10">
-                            <Grid ColumnSpacing="12">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock
-                                    Grid.Column="0"
-                                    Text="{loc:Str Key=RuleMaker_Rules}"
-                                    Style="{StaticResource SectionTitleText}" />
-                                <Button
-                                    Grid.Column="1"
-                                    AutomationProperties.AutomationId="AddRuleButton"
-                                    Command="{x:Bind ViewModel.AddRuleCommand}">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <FontIcon Glyph="&#xE710;" FontSize="13" />
-                                        <TextBlock Text="{loc:Str Key=RuleMaker_AddRule}" />
-                                    </StackPanel>
-                                </Button>
-                            </Grid>
+                        <TextBox
+                            Grid.Column="0"
+                            Header="{loc:Str Key=RuleMaker_Name}"
+                            AutomationProperties.AutomationId="NameBox"
+                            Text="{x:Bind ViewModel.PresetName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-                            <ListView
-                                AutomationProperties.AutomationId="RuleList"
-                                ItemsSource="{x:Bind ViewModel.Rules}"
-                                SelectedItem="{x:Bind ViewModel.SelectedRule, Mode=TwoWay}"
-                                MaxHeight="150">
-                                <ListView.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:RuleEditViewModel">
+                        <TextBox
+                            Grid.Column="1"
+                            Header="{loc:Str Key=RuleMaker_Description}"
+                            AutomationProperties.AutomationId="DescriptionBox"
+                            Text="{x:Bind ViewModel.Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </Grid>
+
+                    <Grid ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBox
+                            Grid.Column="0"
+                            Header="{loc:Str Key=RuleMaker_ProjectFolder}"
+                            PlaceholderText="{loc:Str Key=RuleMaker_ProjectFolderPlaceholder}"
+                            AutomationProperties.AutomationId="ProjectDirBox"
+                            Text="{x:Bind ViewModel.ProjectDirectory, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                        <muxc:DropDownButton
+                            Grid.Column="1"
+                            VerticalAlignment="Bottom"
+                            AutomationProperties.AutomationId="ProjectPickerButton">
+                            <muxc:DropDownButton.Content>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="{loc:Str Key=Common_KnownProjects}" />
+                                </StackPanel>
+                            </muxc:DropDownButton.Content>
+                            <muxc:DropDownButton.Flyout>
+                                <MenuFlyout x:Name="ProjectFlyout" Opening="OnProjectFlyoutOpening" />
+                            </muxc:DropDownButton.Flyout>
+                        </muxc:DropDownButton>
+
+                        <Button
+                            Grid.Column="2"
+                            Content="{loc:Str Key=RuleMaker_Link}"
+                            VerticalAlignment="Bottom"
+                            Style="{ThemeResource AccentButtonStyle}"
+                            AutomationProperties.AutomationId="LinkTypedButton"
+                            IsEnabled="{x:Bind ViewModel.CanSave, Mode=OneWay}"
+                            Click="OnLinkTypedClick" />
+                    </Grid>
+                </StackPanel>
+
+                <!-- 본문 -->
+                <Grid Grid.Row="1" ColumnSpacing="14">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*" MinWidth="360" />
+                        <ColumnDefinition Width="*" MinWidth="190" />
+                    </Grid.ColumnDefinitions>
+
+                    <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Spacing="14">
+
+                            <!-- 항상 적용되는 행동 -->
+                            <Border Style="{StaticResource CardBorder}">
+                                <StackPanel Spacing="10">
+                                    <Grid ColumnSpacing="12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
                                         <TextBlock
-                                            Text="{x:Bind Summary, Mode=OneWay}"
-                                            TextWrapping="NoWrap"
-                                            TextTrimming="CharacterEllipsis"
-                                            Padding="0,6" />
-                                    </DataTemplate>
-                                </ListView.ItemTemplate>
-                            </ListView>
-                        </StackPanel>
-                    </Border>
+                                            Grid.Column="0"
+                                            Text="{loc:Str Key=RuleMaker_GlobalHeader}"
+                                            Style="{StaticResource SectionTitleText}" />
+                                        <Button
+                                            Grid.Column="1"
+                                            AutomationProperties.AutomationId="AddGlobalButton"
+                                            Command="{x:Bind ViewModel.AddGlobalActionCommand}">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <FontIcon Glyph="&#xE710;" FontSize="13" />
+                                                <TextBlock Text="{loc:Str Key=RuleMaker_AddAction}" />
+                                            </StackPanel>
+                                        </Button>
+                                    </Grid>
 
-                    <!-- 선택한 규칙 -->
-                    <Border Style="{StaticResource CardBorder}">
-                        <StackPanel Spacing="10">
-                            <Grid ColumnSpacing="12">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
+                                    <ItemsControl ItemsSource="{x:Bind ViewModel.Global}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:ActionEditViewModel">
+                                                <Grid ColumnSpacing="8" Margin="0,0,0,8">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="120" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
 
-                                <TextBlock
-                                    Grid.Column="0"
-                                    Text="{loc:Str Key=RuleMaker_ConditionTree}"
-                                    Style="{StaticResource SectionTitleText}" />
+                                                    <TextBox
+                                                        Grid.Column="0"
+                                                        MinWidth="180"
+                                                        PlaceholderText="{loc:Str Key=RuleMaker_ActionPlaceholder}"
+                                                        Text="{x:Bind Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-                                <TextBlock
-                                    Grid.Column="1"
-                                    VerticalAlignment="Center"
-                                    Text="{loc:Str Key=RuleMaker_TreeHint}"
-                                    Style="{StaticResource MutedText}" />
-                            </Grid>
+                                                    <ComboBox
+                                                        Grid.Column="1"
+                                                        SelectedIndex="{x:Bind PriorityIndex, Mode=TwoWay}">
+                                                        <ComboBoxItem Content="MUST" />
+                                                        <ComboBoxItem Content="SHOULD" />
+                                                        <ComboBoxItem Content="MAY" />
+                                                    </ComboBox>
 
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <Button AutomationProperties.AutomationId="AddLeafButton" Click="OnAddLeafClick">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <FontIcon Glyph="&#xE710;" FontSize="13" />
-                                        <TextBlock Text="{loc:Str Key=RuleMaker_AddLeaf}" />
-                                    </StackPanel>
-                                </Button>
+                                                    <Button
+                                                        Grid.Column="2"
+                                                        AutomationProperties.Name="{loc:Str Key=RuleMaker_MoveUp}"
+                                                        ToolTipService.ToolTip="{loc:Str Key=RuleMaker_MoveUp}"
+                                                        Click="OnGlobalUpClick"
+                                                        DataContext="{x:Bind}">
+                                                        <FontIcon Glyph="&#xE74A;" FontSize="12" />
+                                                    </Button>
+                                                    <Button
+                                                        Grid.Column="3"
+                                                        AutomationProperties.Name="{loc:Str Key=RuleMaker_MoveDown}"
+                                                        ToolTipService.ToolTip="{loc:Str Key=RuleMaker_MoveDown}"
+                                                        Click="OnGlobalDownClick"
+                                                        DataContext="{x:Bind}">
+                                                        <FontIcon Glyph="&#xE74B;" FontSize="12" />
+                                                    </Button>
+                                                    <Button
+                                                        Grid.Column="4"
+                                                        AutomationProperties.Name="{loc:Str Key=Common_Delete}"
+                                                        ToolTipService.ToolTip="{loc:Str Key=Common_Delete}"
+                                                        Click="OnGlobalRemoveClick"
+                                                        DataContext="{x:Bind}">
+                                                        <FontIcon Glyph="&#xE74D;" FontSize="12" />
+                                                    </Button>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
 
-                                <muxc:DropDownButton AutomationProperties.AutomationId="WrapNodeButton">
-                                    <muxc:DropDownButton.Content>
-                                        <TextBlock Text="{loc:Str Key=RuleMaker_Wrap}" />
-                                    </muxc:DropDownButton.Content>
-                                    <muxc:DropDownButton.Flyout>
-                                        <MenuFlyout>
-                                            <MenuFlyoutItem Text="{loc:Str Key=RuleMaker_WrapAnd}" AutomationProperties.AutomationId="WrapAndButton" Click="OnWrapAndClick" />
-                                            <MenuFlyoutItem Text="{loc:Str Key=RuleMaker_WrapOr}" Click="OnWrapOrClick" />
-                                        </MenuFlyout>
-                                    </muxc:DropDownButton.Flyout>
-                                </muxc:DropDownButton>
+                            <!-- 규칙 목록 -->
+                            <Border Style="{StaticResource CardBorder}">
+                                <StackPanel Spacing="10">
+                                    <Grid ColumnSpacing="12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock
+                                            Grid.Column="0"
+                                            Text="{loc:Str Key=RuleMaker_Rules}"
+                                            Style="{StaticResource SectionTitleText}" />
+                                        <Button
+                                            Grid.Column="1"
+                                            AutomationProperties.AutomationId="AddRuleButton"
+                                            Command="{x:Bind ViewModel.AddRuleCommand}">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <FontIcon Glyph="&#xE710;" FontSize="13" />
+                                                <TextBlock Text="{loc:Str Key=RuleMaker_AddRule}" />
+                                            </StackPanel>
+                                        </Button>
+                                    </Grid>
 
-                                <Button
-                                    AutomationProperties.Name="{loc:Str Key=RuleMaker_MoveUp}"
-                                    ToolTipService.ToolTip="{loc:Str Key=RuleMaker_MoveUp}"
-                                    Click="OnNodeUpClick">
-                                    <FontIcon Glyph="&#xE74A;" FontSize="12" />
-                                </Button>
-                                <Button
-                                    AutomationProperties.Name="{loc:Str Key=RuleMaker_MoveDown}"
-                                    ToolTipService.ToolTip="{loc:Str Key=RuleMaker_MoveDown}"
-                                    Click="OnNodeDownClick">
-                                    <FontIcon Glyph="&#xE74B;" FontSize="12" />
-                                </Button>
-                                <Button
-                                    AutomationProperties.Name="{loc:Str Key=RuleMaker_DeleteNode}"
-                                    ToolTipService.ToolTip="{loc:Str Key=RuleMaker_DeleteNode}"
-                                    Click="OnNodeDeleteClick">
-                                    <FontIcon Glyph="&#xE74D;" FontSize="12" />
-                                </Button>
-                            </StackPanel>
-
-                            <muxc:TreeView
-                                x:Name="ConditionTree"
-                                AutomationProperties.AutomationId="ConditionTree"
-                                SelectionMode="Single"
-                                CanDragItems="True"
-                                AllowDrop="True"
-                                CanReorderItems="True"
-                                MinHeight="120"
-                                DragItemsCompleted="OnTreeDragCompleted">
-                                <muxc:TreeView.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:ConditionNodeViewModel">
-                                        <muxc:TreeViewItem
-                                            ItemsSource="{x:Bind Children}"
-                                            IsExpanded="True">
-                                            <Grid ColumnSpacing="8">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-
+                                    <ListView
+                                        AutomationProperties.AutomationId="RuleList"
+                                        ItemsSource="{x:Bind ViewModel.Rules}"
+                                        SelectedItem="{x:Bind ViewModel.SelectedRule, Mode=TwoWay}"
+                                        MaxHeight="150">
+                                        <ListView.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:RuleEditViewModel">
                                                 <TextBlock
-                                                    Grid.Column="0"
-                                                    Text="{x:Bind Label, Mode=OneWay}"
-                                                    VerticalAlignment="Center" />
+                                                    Text="{x:Bind Summary, Mode=OneWay}"
+                                                    TextWrapping="NoWrap"
+                                                    TextTrimming="CharacterEllipsis"
+                                                    Padding="0,6" />
+                                            </DataTemplate>
+                                        </ListView.ItemTemplate>
+                                    </ListView>
+                                </StackPanel>
+                            </Border>
 
-                                                <TextBox
-                                                    Grid.Column="1"
-                                                    MinWidth="220"
-                                                    Visibility="{x:Bind LeafVisibility, Mode=OneWay}"
-                                                    PlaceholderText="{loc:Str Key=RuleMaker_ConditionPlaceholder}"
-                                                    Text="{x:Bind Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                            </Grid>
-                                        </muxc:TreeViewItem>
-                                    </DataTemplate>
-                                </muxc:TreeView.ItemTemplate>
-                            </muxc:TreeView>
+                            <!-- 선택한 규칙 -->
+                            <Border Style="{StaticResource CardBorder}">
+                                <StackPanel Spacing="10">
+                                    <Grid ColumnSpacing="12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
 
-                            <Border Style="{StaticResource NoticeBorder}">
+                                        <TextBlock
+                                            Grid.Column="0"
+                                            Text="{loc:Str Key=RuleMaker_ConditionTree}"
+                                            Style="{StaticResource SectionTitleText}" />
+
+                                        <TextBlock
+                                            Grid.Column="1"
+                                            VerticalAlignment="Center"
+                                            Text="{loc:Str Key=RuleMaker_TreeHint}"
+                                            Style="{StaticResource MutedText}" />
+                                    </Grid>
+
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Button AutomationProperties.AutomationId="AddLeafButton" Click="OnAddLeafClick">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <FontIcon Glyph="&#xE710;" FontSize="13" />
+                                                <TextBlock Text="{loc:Str Key=RuleMaker_AddLeaf}" />
+                                            </StackPanel>
+                                        </Button>
+
+                                        <muxc:DropDownButton AutomationProperties.AutomationId="WrapNodeButton">
+                                            <muxc:DropDownButton.Content>
+                                                <TextBlock Text="{loc:Str Key=RuleMaker_Wrap}" />
+                                            </muxc:DropDownButton.Content>
+                                            <muxc:DropDownButton.Flyout>
+                                                <MenuFlyout>
+                                                    <MenuFlyoutItem Text="{loc:Str Key=RuleMaker_WrapAnd}" AutomationProperties.AutomationId="WrapAndButton" Click="OnWrapAndClick" />
+                                                    <MenuFlyoutItem Text="{loc:Str Key=RuleMaker_WrapOr}" Click="OnWrapOrClick" />
+                                                </MenuFlyout>
+                                            </muxc:DropDownButton.Flyout>
+                                        </muxc:DropDownButton>
+
+                                        <Button
+                                            AutomationProperties.Name="{loc:Str Key=RuleMaker_MoveUp}"
+                                            ToolTipService.ToolTip="{loc:Str Key=RuleMaker_MoveUp}"
+                                            Click="OnNodeUpClick">
+                                            <FontIcon Glyph="&#xE74A;" FontSize="12" />
+                                        </Button>
+                                        <Button
+                                            AutomationProperties.Name="{loc:Str Key=RuleMaker_MoveDown}"
+                                            ToolTipService.ToolTip="{loc:Str Key=RuleMaker_MoveDown}"
+                                            Click="OnNodeDownClick">
+                                            <FontIcon Glyph="&#xE74B;" FontSize="12" />
+                                        </Button>
+                                        <Button
+                                            AutomationProperties.Name="{loc:Str Key=RuleMaker_DeleteNode}"
+                                            ToolTipService.ToolTip="{loc:Str Key=RuleMaker_DeleteNode}"
+                                            Click="OnNodeDeleteClick">
+                                            <FontIcon Glyph="&#xE74D;" FontSize="12" />
+                                        </Button>
+                                    </StackPanel>
+
+                                    <muxc:TreeView
+                                        x:Name="ConditionTree"
+                                        AutomationProperties.AutomationId="ConditionTree"
+                                        SelectionMode="Single"
+                                        CanDragItems="True"
+                                        AllowDrop="True"
+                                        CanReorderItems="True"
+                                        MinHeight="120"
+                                        DragItemsCompleted="OnTreeDragCompleted">
+                                        <muxc:TreeView.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:ConditionNodeViewModel">
+                                                <muxc:TreeViewItem
+                                                    ItemsSource="{x:Bind Children}"
+                                                    IsExpanded="True">
+                                                    <Grid ColumnSpacing="8">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto" />
+                                                            <ColumnDefinition Width="*" />
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <TextBlock
+                                                            Grid.Column="0"
+                                                            Text="{x:Bind Label, Mode=OneWay}"
+                                                            VerticalAlignment="Center" />
+
+                                                        <TextBox
+                                                            Grid.Column="1"
+                                                            MinWidth="220"
+                                                            Visibility="{x:Bind LeafVisibility, Mode=OneWay}"
+                                                            PlaceholderText="{loc:Str Key=RuleMaker_ConditionPlaceholder}"
+                                                            Text="{x:Bind Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                    </Grid>
+                                                </muxc:TreeViewItem>
+                                            </DataTemplate>
+                                        </muxc:TreeView.ItemTemplate>
+                                    </muxc:TreeView>
+
+                                    <Border Style="{StaticResource NoticeBorder}">
+                                        <TextBlock
+                                            AutomationProperties.AutomationId="ConditionPreview"
+                                            Text="{x:Bind ViewModel.SelectedRule.ConditionPreviewLine, Mode=OneWay}"
+                                            Style="{StaticResource MonoText}"
+                                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                            TextTrimming="None"
+                                            TextWrapping="Wrap" />
+                                    </Border>
+
+                                    <Grid ColumnSpacing="12" Margin="0,6,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock
+                                            Grid.Column="0"
+                                            Text="{loc:Str Key=RuleMaker_Actions}"
+                                            Style="{StaticResource SectionTitleText}" />
+                                        <Button
+                                            Grid.Column="1"
+                                            AutomationProperties.AutomationId="AddRuleActionButton"
+                                            Click="OnAddRuleActionClick">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <FontIcon Glyph="&#xE710;" FontSize="13" />
+                                                <TextBlock Text="{loc:Str Key=RuleMaker_AddAction}" />
+                                            </StackPanel>
+                                        </Button>
+                                    </Grid>
+
+                                    <ItemsControl ItemsSource="{x:Bind ViewModel.SelectedRule.Actions, Mode=OneWay}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:ActionEditViewModel">
+                                                <Grid ColumnSpacing="8" Margin="0,0,0,8">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="120" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <TextBox
+                                                        Grid.Column="0"
+                                                        MinWidth="180"
+                                                        PlaceholderText="{loc:Str Key=RuleMaker_ActionPlaceholder}"
+                                                        Text="{x:Bind Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                                                    <ComboBox
+                                                        Grid.Column="1"
+                                                        SelectedIndex="{x:Bind PriorityIndex, Mode=TwoWay}">
+                                                        <ComboBoxItem Content="MUST" />
+                                                        <ComboBoxItem Content="SHOULD" />
+                                                        <ComboBoxItem Content="MAY" />
+                                                    </ComboBox>
+
+                                                    <Button
+                                                        Grid.Column="2"
+                                                        AutomationProperties.Name="{loc:Str Key=RuleMaker_MoveUp}"
+                                                        ToolTipService.ToolTip="{loc:Str Key=RuleMaker_MoveUp}"
+                                                        Click="OnRuleActionUpClick"
+                                                        DataContext="{x:Bind}">
+                                                        <FontIcon Glyph="&#xE74A;" FontSize="12" />
+                                                    </Button>
+                                                    <Button
+                                                        Grid.Column="3"
+                                                        AutomationProperties.Name="{loc:Str Key=RuleMaker_MoveDown}"
+                                                        ToolTipService.ToolTip="{loc:Str Key=RuleMaker_MoveDown}"
+                                                        Click="OnRuleActionDownClick"
+                                                        DataContext="{x:Bind}">
+                                                        <FontIcon Glyph="&#xE74B;" FontSize="12" />
+                                                    </Button>
+                                                    <Button
+                                                        Grid.Column="4"
+                                                        AutomationProperties.Name="{loc:Str Key=Common_Delete}"
+                                                        ToolTipService.ToolTip="{loc:Str Key=Common_Delete}"
+                                                        Click="OnRuleActionRemoveClick"
+                                                        DataContext="{x:Bind}">
+                                                        <FontIcon Glyph="&#xE74D;" FontSize="12" />
+                                                    </Button>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <Button
+                                        Content="{loc:Str Key=RuleMaker_DeleteRule}"
+                                        Click="OnRemoveRuleClick"
+                                        HorizontalAlignment="Left" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- 미리보기 -->
+                    <Border Grid.Column="1" Style="{StaticResource CardBorder}">
+                        <Grid RowSpacing="10">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock
+                                Grid.Row="0"
+                                Text="{loc:Str Key=RuleMaker_Preview}"
+                                Style="{StaticResource SectionTitleText}" />
+
+                            <Border
+                                Grid.Row="1"
+                                Style="{StaticResource NoticeBorder}"
+                                VerticalAlignment="Top"
+                                Visibility="{x:Bind ViewModel.PreviewIsEmpty, Mode=OneWay}">
+                                <TextBlock Text="{loc:Str Key=RuleMaker_PreviewEmpty}" Style="{StaticResource PageSubtitleText}" />
+                            </Border>
+
+                            <ScrollViewer
+                                Grid.Row="1"
+                                VerticalScrollBarVisibility="Auto"
+                                Visibility="{x:Bind ViewModel.PreviewHasContent, Mode=OneWay}">
                                 <TextBlock
-                                    AutomationProperties.AutomationId="ConditionPreview"
-                                    Text="{x:Bind ViewModel.SelectedRule.ConditionPreviewLine, Mode=OneWay}"
+                                    AutomationProperties.AutomationId="MarkdownPreview"
+                                    Text="{x:Bind ViewModel.MarkdownPreview, Mode=OneWay}"
                                     Style="{StaticResource MonoText}"
                                     Foreground="{ThemeResource TextFillColorPrimaryBrush}"
                                     TextTrimming="None"
-                                    TextWrapping="Wrap" />
-                            </Border>
-
-                            <Grid ColumnSpacing="12" Margin="0,6,0,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock
-                                    Grid.Column="0"
-                                    Text="{loc:Str Key=RuleMaker_Actions}"
-                                    Style="{StaticResource SectionTitleText}" />
-                                <Button
-                                    Grid.Column="1"
-                                    AutomationProperties.AutomationId="AddRuleActionButton"
-                                    Click="OnAddRuleActionClick">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <FontIcon Glyph="&#xE710;" FontSize="13" />
-                                        <TextBlock Text="{loc:Str Key=RuleMaker_AddAction}" />
-                                    </StackPanel>
-                                </Button>
-                            </Grid>
-
-                            <ItemsControl ItemsSource="{x:Bind ViewModel.SelectedRule.Actions, Mode=OneWay}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:ActionEditViewModel">
-                                        <Grid ColumnSpacing="8" Margin="0,0,0,8">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="120" />
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-
-                                            <TextBox
-                                                Grid.Column="0"
-                                                MinWidth="180"
-                                                PlaceholderText="{loc:Str Key=RuleMaker_ActionPlaceholder}"
-                                                Text="{x:Bind Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-
-                                            <ComboBox
-                                                Grid.Column="1"
-                                                SelectedIndex="{x:Bind PriorityIndex, Mode=TwoWay}">
-                                                <ComboBoxItem Content="MUST" />
-                                                <ComboBoxItem Content="SHOULD" />
-                                                <ComboBoxItem Content="MAY" />
-                                            </ComboBox>
-
-                                            <Button
-                                                Grid.Column="2"
-                                                AutomationProperties.Name="{loc:Str Key=RuleMaker_MoveUp}"
-                                                ToolTipService.ToolTip="{loc:Str Key=RuleMaker_MoveUp}"
-                                                Click="OnRuleActionUpClick"
-                                                DataContext="{x:Bind}">
-                                                <FontIcon Glyph="&#xE74A;" FontSize="12" />
-                                            </Button>
-                                            <Button
-                                                Grid.Column="3"
-                                                AutomationProperties.Name="{loc:Str Key=RuleMaker_MoveDown}"
-                                                ToolTipService.ToolTip="{loc:Str Key=RuleMaker_MoveDown}"
-                                                Click="OnRuleActionDownClick"
-                                                DataContext="{x:Bind}">
-                                                <FontIcon Glyph="&#xE74B;" FontSize="12" />
-                                            </Button>
-                                            <Button
-                                                Grid.Column="4"
-                                                AutomationProperties.Name="{loc:Str Key=Common_Delete}"
-                                                ToolTipService.ToolTip="{loc:Str Key=Common_Delete}"
-                                                Click="OnRuleActionRemoveClick"
-                                                DataContext="{x:Bind}">
-                                                <FontIcon Glyph="&#xE74D;" FontSize="12" />
-                                            </Button>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-
-                            <Button
-                                Content="{loc:Str Key=RuleMaker_DeleteRule}"
-                                Click="OnRemoveRuleClick"
-                                HorizontalAlignment="Left" />
-                        </StackPanel>
+                                    TextWrapping="Wrap"
+                                    IsTextSelectionEnabled="True" />
+                            </ScrollViewer>
+                        </Grid>
                     </Border>
-                </StackPanel>
-            </ScrollViewer>
-
-            <!-- 미리보기 -->
-            <Border Grid.Column="1" Style="{StaticResource CardBorder}">
-                <Grid RowSpacing="10">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-
-                    <TextBlock
-                        Grid.Row="0"
-                        Text="{loc:Str Key=RuleMaker_Preview}"
-                        Style="{StaticResource SectionTitleText}" />
-
-                    <Border
-                        Grid.Row="1"
-                        Style="{StaticResource NoticeBorder}"
-                        VerticalAlignment="Top"
-                        Visibility="{x:Bind ViewModel.PreviewIsEmpty, Mode=OneWay}">
-                        <TextBlock Text="{loc:Str Key=RuleMaker_PreviewEmpty}" Style="{StaticResource PageSubtitleText}" />
-                    </Border>
-
-                    <ScrollViewer
-                        Grid.Row="1"
-                        VerticalScrollBarVisibility="Auto"
-                        Visibility="{x:Bind ViewModel.PreviewHasContent, Mode=OneWay}">
-                        <TextBlock
-                            AutomationProperties.AutomationId="MarkdownPreview"
-                            Text="{x:Bind ViewModel.MarkdownPreview, Mode=OneWay}"
-                            Style="{StaticResource MonoText}"
-                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                            TextTrimming="None"
-                            TextWrapping="Wrap"
-                            IsTextSelectionEnabled="True" />
-                    </ScrollViewer>
                 </Grid>
-            </Border>
+            </Grid>
         </Grid>
 
         <!-- 상태 -->
         <TextBlock
-            Grid.Row="3"
+            Grid.Row="2"
             AutomationProperties.AutomationId="RuleMakerStatus"
             Text="{x:Bind ViewModel.StatusText, Mode=OneWay}"
             Style="{StaticResource MutedText}" />

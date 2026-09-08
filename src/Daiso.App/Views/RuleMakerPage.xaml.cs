@@ -338,8 +338,31 @@ public sealed partial class RuleMakerPage : Page
 
     // ── 프리셋 갤러리 ─────────────────────────────────────────────────────
 
-    /// <summary>열 때마다 다시 읽는다. 라이브러리에 방금 저장한 파일이 바로 보여야 한다.</summary>
-    private void OnGalleryOpening(object sender, object e) => ViewModel.RefreshGalleryCommand.Execute(null);
+    /// <summary>목록 항목의 접근성 이름을 프리셋 이름으로.</summary>
+    private void OnGalleryContainerChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
+    {
+        if (args.Item is PresetGalleryItemViewModel item)
+        {
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(args.ItemContainer, item.Name);
+        }
+    }
+
+    /// <summary>왼쪽 목록을 접거나 편다. 좁은 창에서 편집기에 자리를 내준다.</summary>
+    private void OnToggleListClick(object sender, RoutedEventArgs e)
+    {
+        var show = sender is AppBarToggleButton { IsChecked: true };
+
+        if (!show && ListColumn.ActualWidth > 0)
+        {
+            _listWidth = ListColumn.ActualWidth;
+        }
+
+        ListColumn.Width = show ? new GridLength(Math.Max(ListColumn.MinWidth, _listWidth)) : new GridLength(0);
+        ListColumn.MinWidth = show ? 180 : 0;
+        ListSplitter.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private double _listWidth = 220;
 
     /// <summary>고른 프리셋을 편집기에 연다. 기본 제공은 경로 없이 열려 저장할 때 내 파일이 된다.</summary>
     private async void OnGalleryOpenClick(object sender, RoutedEventArgs e)
@@ -348,8 +371,6 @@ public sealed partial class RuleMakerPage : Page
         {
             return;
         }
-
-        GalleryFlyout.Hide();
 
         try
         {
@@ -374,7 +395,6 @@ public sealed partial class RuleMakerPage : Page
             return;
         }
 
-        GalleryFlyout.Hide();
         ViewModel.MergeFromGallery(item);
         BindTree();
     }
@@ -385,6 +405,7 @@ public sealed partial class RuleMakerPage : Page
         try
         {
             ViewModel.SaveToLibraryCommand.Execute(null);
+            ViewModel.RefreshGalleryCommand.Execute(null);
         }
         catch (RuleParseException ex)
         {
