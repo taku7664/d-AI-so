@@ -191,7 +191,7 @@ public sealed partial class TerminalPage : Page
 
             await SelectRoomAsync(room);
         }
-        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or System.Runtime.InteropServices.COMException or IOException)
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or System.Runtime.InteropServices.COMException or InvalidOperationException or IOException)
         {
             EmbeddedStatus.Text = ex.Message;
             EmbeddedStatus.Visibility = Visibility.Visible;
@@ -213,9 +213,19 @@ public sealed partial class TerminalPage : Page
         RoomCard.Visibility = Visibility.Visible;
         RoomTabs.SelectedItem = room;
 
-        await Embedded.InitializeAsync();
-        Embedded.BindRoom(room);
-        Embedded.FocusTerminal();
+        try
+        {
+            await Embedded.InitializeAsync();
+            Embedded.BindRoom(room);
+            Embedded.FocusTerminal();
+        }
+        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or InvalidOperationException or IOException)
+        {
+            // WebView2를 못 띄웠다. 방(프로세스)은 살아 있으니 채팅으로 두고 안내만 한다
+            EmbeddedStatus.Text = ex.Message;
+            EmbeddedStatus.Visibility = Visibility.Visible;
+        }
+
         ScrollChatToEnd();
     }
 
