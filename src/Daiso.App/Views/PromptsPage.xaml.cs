@@ -1,3 +1,4 @@
+using Daiso.App.Controls;
 using Daiso.App.Strings;
 using Daiso.App.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,6 +14,7 @@ public sealed partial class PromptsPage : Page
     public PromptsPage()
     {
         InitializeComponent();
+        FocusRelease.Attach(this);
         ViewModel = App.Services.GetRequiredService<PromptsViewModel>();
 
         Loaded += (_, _) =>

@@ -40,6 +40,7 @@
                     Label="{loc:Str Key=Common_Open}"
                     Icon="OpenFile"
                     AutomationProperties.AutomationId="OpenButton"
+                    ToolTipService.ToolTip="Ctrl+O"
                     Click="OnOpenClick">
                     <muxc:AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="O" />
@@ -49,6 +50,7 @@
                     Label="{loc:Str Key=Common_Save}"
                     Icon="Save"
                     AutomationProperties.AutomationId="SaveButton"
+                    ToolTipService.ToolTip="Ctrl+S"
                     IsEnabled="{x:Bind ViewModel.CanSave, Mode=OneWay}"
                     Click="OnSaveClick">
                     <muxc:AppBarButton.KeyboardAccelerators>
@@ -126,8 +128,8 @@
                         ContainerContentChanging="OnGalleryContainerChanging">
                         <ListView.ItemTemplate>
                             <DataTemplate x:DataType="vm:PresetGalleryItemViewModel">
-                                <StackPanel Spacing="2" Margin="0,6,0,6">
-                                    <TextBlock Text="{x:Bind Badge}" Style="{StaticResource MutedText}" FontSize="11" />
+                                <StackPanel Spacing="2" Margin="0,6,0,6" ToolTipService.ToolTip="{x:Bind Description}">
+                                    <TextBlock Text="{x:Bind Badge}" Style="{StaticResource MutedText}" />
                                     <TextBlock Text="{x:Bind Name}" Style="{ThemeResource BodyStrongTextBlockStyle}" TextTrimming="CharacterEllipsis" />
                                     <TextBlock
                                         Text="{x:Bind Description}"
@@ -343,6 +345,7 @@
                                                     Text="{x:Bind Summary, Mode=OneWay}"
                                                     TextWrapping="NoWrap"
                                                     TextTrimming="CharacterEllipsis"
+                                                    ToolTipService.ToolTip="{x:Bind Summary, Mode=OneWay}"
                                                     Padding="0,6" />
                                             </DataTemplate>
                                         </ListView.ItemTemplate>
@@ -582,11 +585,19 @@
             </Grid>
         </Grid>
 
-        <!-- 상태 -->
-        <TextBlock
-            Grid.Row="2"
-            AutomationProperties.AutomationId="RuleMakerStatus"
-            Text="{x:Bind ViewModel.StatusText, Mode=OneWay}"
-            Style="{StaticResource MutedText}" />
+        <!-- 상태. 저장이 잠겨 있으면 그 이유가 먼저 -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="16">
+            <StackPanel Orientation="Horizontal" Spacing="6" Visibility="{x:Bind ViewModel.SaveHintVisibility, Mode=OneWay}">
+                <FontIcon Glyph="&#xE946;" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                <TextBlock
+                    AutomationProperties.AutomationId="RuleMakerSaveHint"
+                    Text="{loc:Str Key=RuleMaker_SaveHint}"
+                    Style="{StaticResource MutedText}" />
+            </StackPanel>
+            <TextBlock
+                AutomationProperties.AutomationId="RuleMakerStatus"
+                Text="{x:Bind ViewModel.StatusText, Mode=OneWay}"
+                Style="{StaticResource MutedText}" />
+        </StackPanel>
     </Grid>
 </Page>

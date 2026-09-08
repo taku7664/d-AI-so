@@ -257,6 +257,9 @@ public sealed class RecentSessionViewModel
     /// <summary>도구 한 글자.</summary>
     public string ToolInitial => ToolLook.Initial(Session.Tool);
 
+    /// <summary>도구 원에 마우스를 올리면 이름이 보인다. 머리글자만으로는 처음엔 모른다.</summary>
+    public string ToolName => ToolLook.Title(Session.Tool);
+
     /// <summary>도구 색.</summary>
     public Brush ToolBrush => ToolLook.Brush(Session.Tool);
 

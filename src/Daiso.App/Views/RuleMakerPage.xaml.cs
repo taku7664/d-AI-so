@@ -1,3 +1,4 @@
+using Daiso.App.Controls;
 using Daiso.App.Services;
 using Daiso.App.Strings;
 using Daiso.App.ViewModels;
@@ -14,6 +15,7 @@ public sealed partial class RuleMakerPage : Page
     public RuleMakerPage()
     {
         InitializeComponent();
+        FocusRelease.Attach(this);
         ViewModel = App.Services.GetRequiredService<RuleMakerViewModel>();
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
 

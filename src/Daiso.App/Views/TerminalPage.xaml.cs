@@ -14,6 +14,7 @@ public sealed partial class TerminalPage : Page
     public TerminalPage()
     {
         InitializeComponent();
+        FocusRelease.Attach(this);
         SelectorBarVisuals.ResetPressedOnLeave(ToolTabs);
         ViewModel = App.Services.GetRequiredService<TerminalViewModel>();
 

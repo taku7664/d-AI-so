@@ -1,3 +1,4 @@
+using Daiso.App.Controls;
 using Daiso.App.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
@@ -13,6 +14,7 @@ public sealed partial class SessionsPage : Page
     public SessionsPage()
     {
         InitializeComponent();
+        FocusRelease.Attach(this);
         ViewModel = App.Services.GetRequiredService<SessionsViewModel>();
         Shell.PropertyChanged += OnShellPropertyChanged;
         Doctor = App.Services.GetRequiredService<ContextDoctorViewModel>();

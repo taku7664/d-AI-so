@@ -5,6 +5,8 @@ using Daiso.App.Services;
 using Daiso.Core;
 using Daiso.App.Strings;
 
+using Microsoft.UI.Xaml;
+
 namespace Daiso.App.ViewModels;
 
 /// <summary>.daiso 편집기. (REQUIREMENTS §6, GOAL Step 12)</summary>
@@ -448,6 +450,7 @@ public sealed partial class RuleMakerViewModel : ObservableObject
         OnPropertyChanged(nameof(PreviewIsEmpty));
         OnPropertyChanged(nameof(PreviewHasContent));
         OnPropertyChanged(nameof(CanSave));
+        OnPropertyChanged(nameof(SaveHintVisibility));
     }
 
     /// <summary>
@@ -465,6 +468,9 @@ public sealed partial class RuleMakerViewModel : ObservableObject
     public bool CanSave =>
         !string.IsNullOrWhiteSpace(PresetName)
         && (Global.Any(HasText) || Rules.Any(CanSaveRule));
+
+    /// <summary>저장이 잠겨 있을 때만 상태 줄에 이유를 보인다. 잠긴 버튼은 왜 잠겼는지 말하지 못한다.</summary>
+    public Visibility SaveHintVisibility => CanSave ? Visibility.Collapsed : Visibility.Visible;
 
     private static bool HasText(ActionEditViewModel action) => !string.IsNullOrWhiteSpace(action.Text);
 

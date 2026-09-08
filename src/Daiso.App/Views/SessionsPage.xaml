@@ -49,7 +49,7 @@
                 <Button
                     AutomationProperties.AutomationId="SearchButton"
                     AutomationProperties.Name="{loc:Str Key=Common_Search}"
-                    ToolTipService.ToolTip="{loc:Str Key=Common_Search}"
+                    ToolTipService.ToolTip="{loc:Str Key=Common_SearchTip}"
                     Style="{ThemeResource AccentButtonStyle}"
                     Command="{x:Bind ViewModel.SearchCommand}">
                     <FontIcon Glyph="&#xE721;" FontSize="14" />
@@ -57,14 +57,14 @@
                 <Button
                     AutomationProperties.AutomationId="ClearSearchButton"
                     AutomationProperties.Name="{loc:Str Key=Sessions_ClearSearch}"
-                    ToolTipService.ToolTip="{loc:Str Key=Sessions_ClearSearch}"
+                    ToolTipService.ToolTip="{loc:Str Key=Sessions_ClearSearchTip}"
                     Command="{x:Bind ViewModel.ClearSearchCommand}">
                     <FontIcon Glyph="&#xE711;" FontSize="14" />
                 </Button>
                 <Button
                     AutomationProperties.AutomationId="ReloadButton"
                     AutomationProperties.Name="{loc:Str Key=Sessions_ReloadList}"
-                    ToolTipService.ToolTip="{loc:Str Key=Sessions_ReloadList}"
+                    ToolTipService.ToolTip="{loc:Str Key=Sessions_ReloadListTip}"
                     Command="{x:Bind ViewModel.LoadCommand}">
                     <Button.KeyboardAccelerators>
                         <KeyboardAccelerator Key="F5" />
@@ -76,21 +76,23 @@
 
         <!-- 필터 (바꾸면 바로 적용) -->
         <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="12">
-            <ComboBox
-                Header="{loc:Str Key=Sessions_ProjectFilter}"
-                MinWidth="220"
-                MaxWidth="300"
-                IsEnabled="{x:Bind ViewModel.CanPickProject, Mode=OneWay}"
-                ToolTipService.ToolTip="{loc:Str Key=Sessions_SearchScopeHint}"
-                AutomationProperties.AutomationId="ProjectCombo"
-                ItemsSource="{x:Bind ViewModel.Projects}"
-                SelectedItem="{x:Bind ViewModel.SelectedProject, Mode=TwoWay}">
-                <ComboBox.ItemTemplate>
-                    <DataTemplate x:DataType="vm:ProjectGroupViewModel">
-                        <TextBlock Text="{x:Bind ComboLabel}" ToolTipService.ToolTip="{x:Bind Path}" />
-                    </DataTemplate>
-                </ComboBox.ItemTemplate>
-            </ComboBox>
+            <!-- 잠긴 컨트롤은 마우스를 받지 않아 툴팁이 안 뜬다. 검색 중 잠기는 이유는 투명 테두리가 대신 말한다 -->
+            <Border Background="Transparent" ToolTipService.ToolTip="{loc:Str Key=Sessions_SearchScopeHint}">
+                <ComboBox
+                    Header="{loc:Str Key=Sessions_ProjectFilter}"
+                    MinWidth="220"
+                    MaxWidth="300"
+                    IsEnabled="{x:Bind ViewModel.CanPickProject, Mode=OneWay}"
+                    AutomationProperties.AutomationId="ProjectCombo"
+                    ItemsSource="{x:Bind ViewModel.Projects}"
+                    SelectedItem="{x:Bind ViewModel.SelectedProject, Mode=TwoWay}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ProjectGroupViewModel">
+                            <TextBlock Text="{x:Bind ComboLabel}" ToolTipService.ToolTip="{x:Bind Path}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </Border>
 
             <ComboBox
                 Header="{loc:Str Key=Common_Tool}"
@@ -252,7 +254,7 @@
                                             Grid.Column="3"
                                             Style="{StaticResource PillBorder}"
                                             Visibility="{x:Bind HasBadges}">
-                                            <TextBlock Text="{x:Bind Badges}" FontSize="11" />
+                                            <TextBlock Text="{x:Bind Badges}" FontSize="12" />
                                         </Border>
                                     </Grid>
                                 </DataTemplate>
@@ -405,7 +407,7 @@
                                                         <Border Style="{StaticResource PillBorder}">
                                                             <TextBlock
                                                                 Text="{x:Bind RoleText}"
-                                                                FontSize="11"
+                                                                FontSize="12"
                                                                 FontWeight="SemiBold" />
                                                         </Border>
                                                         <TextBlock

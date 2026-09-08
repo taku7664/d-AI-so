@@ -611,6 +611,12 @@ Apply(projectDir, direction, dryRun)
 - 인덱싱이 끝나면 목록·요약을 자동으로 다시 읽는다. 사람이 "다시 읽기"를 눌러야 최신이 되는 화면을 만들지 않는다
 - 단축키는 설정의 "단축키" 카드에 적는다. 알려주지 않는 단축키는 없는 것과 같다
 - `SelectorBar` 탭은 페이지 생성자에서 `SelectorBarVisuals.ResetPressedOnLeave`를 붙인다. WinUI 항목은 누른 뒤 포인터가 나가면 회색 눌림이 남는다. 포인터가 나가거나 선택이 바뀌면 `SelectedNormal`/`UnselectedNormal`로 되돌린다
+- 입력 칸이 있는 페이지는 생성자에서 `FocusRelease.Attach(this)`를 붙인다. WinUI는 빈 자리를 눌러도 포커스를 옮기지 않아 커서가 입력 칸에 남는다. 포커스를 받을 컨트롤이 없는 곳을 누르면 페이지가 잠깐 받아 놓아 준다
+- 단축키가 있는 버튼의 툴팁에는 키를 적는다 (`다시 읽기 (F5)`, `Ctrl+S`). 가속기 풍선을 숨겼으므로(`KeyboardAcceleratorPlacementMode=Hidden`) 툴팁이 유일한 안내다. 설정의 단축키 카드에 적힌 키는 그 화면 전부에서 실제로 동작해야 한다 (F5는 요약·사용량·세션)
+- 잠긴(IsEnabled=false) 컨트롤은 왜 잠겼는지 근처 글로 말한다. 잠긴 컨트롤은 마우스를 받지 않아 툴팁이 안 뜬다. 이유를 툴팁으로 줘야 하면 `Background=Transparent`인 Border로 감싸 그쪽에 단다(세션 프로젝트 콤보). 이유가 화면에 이미 있으면(선택 0건 알약, 왼쪽에서 고르라는 안내) 그대로 둔다. 상태 줄로 말할 수도 있다(내 규칙 저장 힌트, 내 프롬프트 기본 제공 안내)
+- 잘려 보일 수 있는 글(`TextTrimming=CharacterEllipsis`)에는 전체 문구 툴팁을 단다. 머리글자·아이콘만 있는 것에는 이름 툴팁을 단다
+- 글자는 12px보다 작게 쓰지 않는다. 보조 색(`TextFillColorSecondaryBrush`) 글자는 12px가 하한이다. 색 원 위의 흰 글자는 4.5:1 이상 (ToolLook 색은 이 기준으로 골랐다)
+- 비어 있음 안내에는 다음에 할 일을 한 문장 붙인다 ("필터를 넓혀 보세요", "기간을 넓히거나 전체 탭을 보세요"). 읽는 동안은 페이지 위 `ProgressBar`(요약·사용량) 또는 필터 줄의 `ProgressRing`(세션)
 
 **테마** — 설정의 테마는 고른 즉시 적용한다 (`SettingsViewModel.ThemeChanged` → `ShellWindow.ApplyTheme`).
 - `System`: `MicaBackdrop` + 배경 없음. OS 테마를 따른다

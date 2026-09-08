@@ -1,3 +1,4 @@
+using Daiso.App.Controls;
 using Daiso.App.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
@@ -11,6 +12,7 @@ public sealed partial class SettingsPage : Page
     public SettingsPage()
     {
         InitializeComponent();
+        FocusRelease.Attach(this);
         ViewModel = App.Services.GetRequiredService<SettingsViewModel>();
     }
 

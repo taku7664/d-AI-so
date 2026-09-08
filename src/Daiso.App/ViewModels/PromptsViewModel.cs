@@ -248,6 +248,15 @@ public sealed partial class PromptsViewModel : ObservableObject
         }
     }
 
+    /// <summary>기본 제공을 고르면 왜 삭제가 잠기는지 상태 줄이 말한다. 잠긴 버튼은 스스로 설명하지 못한다.</summary>
+    partial void OnSelectedItemChanged(PromptGalleryItemViewModel? value)
+    {
+        if (value is { IsMine: false })
+        {
+            StatusText = UiStrings.Get("Prompts_BuiltInHint");
+        }
+    }
+
     partial void OnEditBodyChanged(string value)
     {
         if (!_loadingSelection)

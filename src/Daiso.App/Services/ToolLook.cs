@@ -61,7 +61,7 @@ public static class ToolLook
     {
         ToolKind.Claude => Windows.UI.Color.FromArgb(255, 122, 90, 248),
         ToolKind.Codex => Windows.UI.Color.FromArgb(255, 96, 104, 120),
-        ToolKind.Gemini => Windows.UI.Color.FromArgb(255, 52, 120, 246),
+        ToolKind.Gemini => Windows.UI.Color.FromArgb(255, 42, 102, 217), // 흰 머리글자와 5.2:1. 원래 파랑은 4.1:1
         _ => Colors.Gray,
     };
 

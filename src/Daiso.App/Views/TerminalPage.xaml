@@ -159,7 +159,8 @@
                                 AutomationProperties.AutomationId="LaunchPreview"
                                 Text="{x:Bind ViewModel.SelectedTool.Preview, Mode=OneWay}"
                                 Style="{StaticResource MonoText}"
-                                TextTrimming="CharacterEllipsis" />
+                                TextTrimming="CharacterEllipsis"
+                                ToolTipService.ToolTip="{x:Bind ViewModel.SelectedTool.Preview, Mode=OneWay}" />
                         </StackPanel>
 
                         <StackPanel Spacing="4" Visibility="{x:Bind ViewModel.HasLastCommand, Mode=OneWay}">

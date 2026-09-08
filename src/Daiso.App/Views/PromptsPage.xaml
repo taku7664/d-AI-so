@@ -40,6 +40,7 @@
                     Label="{loc:Str Key=Prompts_SaveToLibrary}"
                     Icon="Save"
                     AutomationProperties.AutomationId="PromptSaveButton"
+                    ToolTipService.ToolTip="Ctrl+S"
                     IsEnabled="{x:Bind ViewModel.CanSave, Mode=OneWay}"
                     Command="{x:Bind ViewModel.SaveToLibraryCommand}">
                     <muxc:AppBarButton.KeyboardAccelerators>
@@ -73,8 +74,8 @@
                     ContainerContentChanging="OnPromptContainerChanging">
                     <ListView.ItemTemplate>
                         <DataTemplate x:DataType="vm:PromptGalleryItemViewModel">
-                            <StackPanel Spacing="2" Margin="0,6,0,6">
-                                <TextBlock Text="{x:Bind Badge}" Style="{StaticResource MutedText}" FontSize="11" />
+                            <StackPanel Spacing="2" Margin="0,6,0,6" ToolTipService.ToolTip="{x:Bind Description}">
+                                <TextBlock Text="{x:Bind Badge}" Style="{StaticResource MutedText}" />
                                 <TextBlock Text="{x:Bind Name}" Style="{ThemeResource BodyStrongTextBlockStyle}" TextTrimming="CharacterEllipsis" />
                                 <TextBlock
                                     Text="{x:Bind Description}"
