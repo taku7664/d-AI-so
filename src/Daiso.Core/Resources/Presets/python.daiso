@@ -1,0 +1,36 @@
+daiso: 1
+name: Python 코딩 규칙
+description: 타입 힌트·가상환경·의존성 관리 습관
+
+global:
+  - action: 새 함수와 공개 메서드에는 타입 힌트를 붙인다
+    priority: SHOULD
+  - action: 프로젝트의 포매터와 린터 설정을 따른다. 있으면 ruff 또는 black 기준
+    priority: MUST
+
+rules:
+  - when: 패키지를 설치하거나 추가할 때
+    then:
+      - action: 전역이 아닌 프로젝트 가상환경에 설치한다
+        priority: MUST
+      - action: 의존성 파일에 버전을 함께 기록한다
+        priority: MUST
+  - when: 예외를 다룰 때
+    then:
+      - action: bare except를 쓰지 않고 구체 예외를 잡는다
+        priority: MUST
+  - when:
+      or:
+        - 파일을 열 때
+        - 소켓이나 연결을 열 때
+    then:
+      - action: with 문으로 감싸 반드시 닫히게 한다
+        priority: MUST
+  - when: 문자열을 조합할 때
+    then:
+      - action: f-string을 우선 쓴다
+        priority: MAY
+  - when: 스크립트가 아닌 모듈을 만들 때
+    then:
+      - action: 실행 코드는 main 가드 아래에 둔다
+        priority: SHOULD

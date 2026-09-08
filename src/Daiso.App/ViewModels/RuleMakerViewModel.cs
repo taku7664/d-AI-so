@@ -88,6 +88,134 @@ public sealed partial class RuleMakerViewModel : ObservableObject
     /// <summary>라이브러리에 저장된 프리셋 파일.</summary>
     public ObservableCollection<string> LibraryPresets { get; } = [];
 
+    /// <summary>프리셋 갤러리. 기본 제공 프리셋 뒤에 내 라이브러리 파일이 온다. (ARCHITECTURE §5.2)</summary>
+    public ObservableCollection<PresetGalleryItemViewModel> Gallery { get; } = [];
+
+    /// <summary>갤러리에서 고른 항목. 오른쪽 미리보기와 버튼 활성이 따라간다.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasGallerySelection))]
+    [NotifyPropertyChangedFor(nameof(HasNoGallerySelection))]
+    private PresetGalleryItemViewModel? selectedGalleryItem;
+
+    /// <summary>갤러리에서 무언가 골랐는가.</summary>
+    public bool HasGallerySelection => SelectedGalleryItem is not null;
+
+    /// <summary>아직 고르지 않았는가. 안내 문구를 띄운다.</summary>
+    public bool HasNoGallerySelection => SelectedGalleryItem is null;
+
+    /// <summary>갤러리를 다시 채운다. 기본 제공은 항상 같고, 내 라이브러리는 폴더를 다시 읽는다.</summary>
+    [RelayCommand]
+    public void RefreshGallery()
+    {
+        var keep = SelectedGalleryItem?.Key;
+
+        Gallery.Clear();
+
+        foreach (var item in BuiltInPresets.List(_serializer))
+        {
+            Gallery.Add(PresetGalleryItemViewModel.FromBuiltIn(item, _serializer, _renderer));
+        }
+
+        RefreshLibrary();
+
+        foreach (var path in LibraryPresets)
+        {
+            try
+            {
+                Gallery.Add(PresetGalleryItemViewModel.FromFile(path, _ruleFiles.Load(path), _renderer));
+            }
+            catch (Exception ex) when (ex is RuleParseException or IOException or UnauthorizedAccessException)
+            {
+                // 깨진 라이브러리 파일은 갤러리에서 빼고 넘어간다. 열기 메뉴로는 여전히 열 수 있고 거기서 오류를 본다.
+            }
+        }
+
+        SelectedGalleryItem = Gallery.FirstOrDefault(item => item.Key == keep) ?? Gallery.FirstOrDefault();
+    }
+
+    /// <summary>갤러리 항목을 편집기에 연다. 기본 제공은 내 파일이 아니므로 경로 없이 열리고, 저장할 때 파일이 된다.</summary>
+    public void OpenFromGallery(PresetGalleryItemViewModel item)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+
+        if (item.FilePath is { } path)
+        {
+            Open(path);
+            return;
+        }
+
+        Load(item.Preset);
+        CurrentPath = null;
+        StatusText = UiStrings.Format("RuleMaker_GalleryOpened", item.Name);
+    }
+
+    /// <summary>
+    /// 갤러리 항목의 규칙을 지금 편집 중인 규칙 뒤에 붙인다. 같은 문장의 전역 행동은 한 번만 남긴다.
+    /// 새 문서의 빈 자리표시자 줄은 치운다. 이름이 아직 기본값이면 프리셋 이름을 가져온다.
+    /// </summary>
+    /// <returns>추가된 전역 행동과 규칙의 수.</returns>
+    public int MergeFromGallery(PresetGalleryItemViewModel item)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+
+        var preset = item.Preset;
+        var added = 0;
+
+        foreach (var blank in Global.Where(action => !HasText(action)).ToList())
+        {
+            Global.Remove(blank);
+        }
+
+        foreach (var action in preset.Global)
+        {
+            if (Global.Any(existing => string.Equals(existing.Text.Trim(), action.Action, StringComparison.Ordinal)))
+            {
+                continue;
+            }
+
+            Global.Add(Track(ActionEditViewModel.From(action)));
+            added++;
+        }
+
+        foreach (var blank in Rules.Where(rule => rule.ConditionPreview.Length == 0 && !rule.Actions.Any(HasText)).ToList())
+        {
+            blank.Changed -= OnChildChanged;
+            Rules.Remove(blank);
+        }
+
+        foreach (var rule in preset.Rules)
+        {
+            var editable = RuleEditViewModel.From(rule, _renderer);
+
+            // 같은 조건에 같은 행동이면 이미 있는 규칙이다. 같은 프리셋을 두 번 합쳐도 두 배가 되지 않는다.
+            if (Rules.Any(existing => SameRule(existing, editable)))
+            {
+                continue;
+            }
+
+            editable.Changed += OnChildChanged;
+
+            foreach (var action in editable.Actions)
+            {
+                Track(action);
+            }
+
+            Rules.Add(editable);
+            added++;
+        }
+
+        if (string.IsNullOrWhiteSpace(PresetName) || PresetName == UiStrings.Get("RuleMaker_NewPresetName"))
+        {
+            PresetName = preset.Name;
+        }
+
+        SelectedRule ??= Rules.FirstOrDefault();
+        Refresh();
+        StatusText = UiStrings.Format("RuleMaker_GalleryMerged", item.Name, added);
+
+        return added;
+    }
+
     // ── 파일 ─────────────────────────────────────────────────────────────
 
     /// <summary>빈 프리셋으로 시작한다.</summary>
@@ -303,6 +431,12 @@ public sealed partial class RuleMakerViewModel : ObservableObject
         && (Global.Any(HasText) || Rules.Any(CanSaveRule));
 
     private static bool HasText(ActionEditViewModel action) => !string.IsNullOrWhiteSpace(action.Text);
+
+    /// <summary>조건식과 행동 문장이 모두 같은가. 합칠 때 중복을 거르는 기준.</summary>
+    private static bool SameRule(RuleEditViewModel a, RuleEditViewModel b) =>
+        string.Equals(a.ConditionPreview, b.ConditionPreview, StringComparison.Ordinal)
+        && a.Actions.Where(HasText).Select(action => action.Text.Trim())
+            .SequenceEqual(b.Actions.Where(HasText).Select(action => action.Text.Trim()), StringComparer.Ordinal);
 
     /// <summary>조건과 행동이 모두 채워진 규칙만 저장한다.</summary>
     private static bool CanSaveRule(RuleEditViewModel rule) =>
@@ -526,4 +660,84 @@ public sealed partial class RuleEditViewModel : ObservableObject
     }
 
     private void OnRootChanged(object? sender, EventArgs e) => NotifyChanged();
+}
+
+/// <summary>프리셋 갤러리 한 줄. 기본 제공이면 <see cref="FilePath"/>가 null이다.</summary>
+public sealed class PresetGalleryItemViewModel
+{
+    private PresetGalleryItemViewModel(
+        string key,
+        string category,
+        string source,
+        RulePreset preset,
+        string? filePath,
+        IMarkdownRuleRenderer renderer)
+    {
+        Key = key;
+        Category = category;
+        Source = source;
+        Preset = preset;
+        FilePath = filePath;
+        Preview = renderer.Render(preset);
+    }
+
+    /// <summary>다시 채워도 선택을 유지하기 위한 식별자.</summary>
+    public string Key { get; }
+
+    /// <summary>갈래 표시 문구. 언어 · 작업 방식 · 소통 · 내 라이브러리.</summary>
+    public string Category { get; }
+
+    /// <summary>어디서 왔는지. 기본 제공 또는 내 라이브러리.</summary>
+    public string Source { get; }
+
+    public RulePreset Preset { get; }
+
+    /// <summary>내 라이브러리 파일이면 경로. 기본 제공이면 null.</summary>
+    public string? FilePath { get; }
+
+    public string Name => Preset.Name;
+
+    public string Description => Preset.Description ?? string.Empty;
+
+    /// <summary>갈래와 출처를 한 줄로.</summary>
+    public string Badge => UiStrings.Format("RuleMaker_GalleryBadge", Category, Source);
+
+    /// <summary>렌더된 Markdown. 고르면 오른쪽에 보인다.</summary>
+    public string Preview { get; }
+
+    /// <summary>규칙 몇 개인지.</summary>
+    public string CountText => UiStrings.Format("RuleMaker_GalleryCount", Preset.Global.Count, Preset.Rules.Count);
+
+    /// <summary>목록 항목의 접근성 이름. 스크린 리더와 UI 자동화가 이 값을 읽는다.</summary>
+    public override string ToString() => Name;
+
+    public static PresetGalleryItemViewModel FromBuiltIn(
+        BuiltInPreset item,
+        IRulePresetSerializer serializer,
+        IMarkdownRuleRenderer renderer)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+        ArgumentNullException.ThrowIfNull(serializer);
+
+        return new PresetGalleryItemViewModel(
+            "builtin:" + item.Id,
+            UiStrings.Get("PresetCategory_" + item.Category),
+            UiStrings.Get("RuleMaker_GalleryBuiltIn"),
+            serializer.Parse(BuiltInPresets.Read(item.Id)),
+            filePath: null,
+            renderer);
+    }
+
+    public static PresetGalleryItemViewModel FromFile(string path, RulePreset preset, IMarkdownRuleRenderer renderer)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+
+        return new PresetGalleryItemViewModel(
+            "file:" + path,
+            UiStrings.Get("RuleMaker_GalleryMine"),
+            UiStrings.Get("RuleMaker_GalleryMine"),
+            preset,
+            path,
+            renderer);
+    }
 }

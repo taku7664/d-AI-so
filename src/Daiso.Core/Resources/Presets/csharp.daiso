@@ -1,0 +1,40 @@
+daiso: 1
+name: C# / .NET 코딩 규칙
+description: nullable, async, 예외 처리 등 .NET 프로젝트 공통 습관
+
+global:
+  - action: Nullable 참조 형식을 켠 상태로 경고 없이 컴파일되게 한다
+    priority: MUST
+  - action: 기존 코드 스타일을 따른다. .editorconfig가 있으면 그것이 우선이다
+    priority: MUST
+
+rules:
+  - when: 비동기 메서드를 만들 때
+    then:
+      - action: 이름을 Async로 끝내고 CancellationToken을 받는다
+        priority: SHOULD
+      - action: async void를 쓰지 않는다. 이벤트 핸들러만 예외다
+        priority: MUST
+      - action: Result나 Wait로 동기 대기하지 않는다
+        priority: MUST
+  - when: 예외를 잡을 때
+    then:
+      - action: 처리할 수 있는 구체 예외만 잡고 빈 catch를 두지 않는다
+        priority: MUST
+  - when: 공개 API를 추가할 때
+    then:
+      - action: XML 문서 주석을 남긴다
+        priority: SHOULD
+      - action: 인자 검증은 ArgumentNullException.ThrowIfNull 같은 표준 헬퍼를 쓴다
+        priority: SHOULD
+  - when:
+      or:
+        - 파일을 읽거나 쓸 때
+        - 네트워크 응답을 문자열로 다룰 때
+    then:
+      - action: 인코딩을 UTF-8로 명시한다
+        priority: MUST
+  - when: 문자열을 비교할 때
+    then:
+      - action: StringComparison을 명시한다
+        priority: SHOULD

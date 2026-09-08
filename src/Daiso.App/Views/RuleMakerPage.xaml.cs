@@ -25,9 +25,8 @@ public sealed partial class RuleMakerPage : Page
             }
 
             BindTree();
-            ViewModel.RefreshLibraryCommand.Execute(null);
+            ViewModel.RefreshGalleryCommand.Execute(null);
             BuildRecentFlyout();
-            BuildLibraryFlyout();
         };
     }
 
@@ -337,32 +336,59 @@ public sealed partial class RuleMakerPage : Page
         }
     }
 
-    private void BuildLibraryFlyout()
+    // ── 프리셋 갤러리 ─────────────────────────────────────────────────────
+
+    /// <summary>열 때마다 다시 읽는다. 라이브러리에 방금 저장한 파일이 바로 보여야 한다.</summary>
+    private void OnGalleryOpening(object sender, object e) => ViewModel.RefreshGalleryCommand.Execute(null);
+
+    /// <summary>고른 프리셋을 편집기에 연다. 기본 제공은 경로 없이 열려 저장할 때 내 파일이 된다.</summary>
+    private async void OnGalleryOpenClick(object sender, RoutedEventArgs e)
     {
-        LibraryFlyout.Items.Clear();
-
-        var save = new MenuFlyoutItem { Text = UiStrings.Get("RuleMaker_SaveToLibrary") };
-        save.Click += async (_, _) =>
+        if (ViewModel.SelectedGalleryItem is not { } item)
         {
-            try
-            {
-                ViewModel.SaveToLibraryCommand.Execute(null);
-                BuildLibraryFlyout();
-            }
-            catch (RuleParseException ex)
-            {
-                await ShowParseErrorAsync(ex);
-            }
-        };
+            return;
+        }
 
-        LibraryFlyout.Items.Add(save);
-        LibraryFlyout.Items.Add(new MenuFlyoutSeparator());
+        GalleryFlyout.Hide();
 
-        foreach (var path in ViewModel.LibraryPresets)
+        try
         {
-            var item = new MenuFlyoutItem { Text = Path.GetFileNameWithoutExtension(path) };
-            item.Click += async (_, _) => await OpenPathAsync(path);
-            LibraryFlyout.Items.Add(item);
+            ViewModel.OpenFromGallery(item);
+            BindTree();
+        }
+        catch (RuleParseException ex)
+        {
+            await ShowFileParseErrorAsync(ex);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            await ShowAsync(UiStrings.Get("RuleMaker_OpenFailed"), ex.Message);
+        }
+    }
+
+    /// <summary>고른 프리셋의 규칙을 지금 규칙 뒤에 붙인다.</summary>
+    private void OnGalleryMergeClick(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel.SelectedGalleryItem is not { } item)
+        {
+            return;
+        }
+
+        GalleryFlyout.Hide();
+        ViewModel.MergeFromGallery(item);
+        BindTree();
+    }
+
+    /// <summary>현재 프리셋을 내 라이브러리에 저장한다. 갤러리에 바로 나타난다.</summary>
+    private async void OnSaveToLibraryClick(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            ViewModel.SaveToLibraryCommand.Execute(null);
+        }
+        catch (RuleParseException ex)
+        {
+            await ShowParseErrorAsync(ex);
         }
     }
 

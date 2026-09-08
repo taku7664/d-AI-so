@@ -37,6 +37,115 @@
                     AutomationProperties.AutomationId="NewButton"
                     Command="{x:Bind ViewModel.NewCommand}" />
                 <muxc:AppBarButton
+                    Label="{loc:Str Key=RuleMaker_Presets}"
+                    Icon="Library"
+                    AutomationProperties.AutomationId="PresetsButton">
+                    <muxc:AppBarButton.Flyout>
+                        <!-- 프리셋 갤러리: 목록 · 미리보기 · 새로 열기 / 지금 규칙에 추가 (ARCHITECTURE §5.2) -->
+                        <Flyout x:Name="GalleryFlyout" Placement="BottomEdgeAlignedLeft" Opening="OnGalleryOpening">
+                            <Flyout.FlyoutPresenterStyle>
+                                <Style TargetType="FlyoutPresenter">
+                                    <Setter Property="MaxWidth" Value="900" />
+                                    <Setter Property="MaxHeight" Value="640" />
+                                    <Setter Property="Padding" Value="16" />
+                                </Style>
+                            </Flyout.FlyoutPresenterStyle>
+
+                            <Grid Width="820" Height="520" RowSpacing="12" ColumnSpacing="16">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="300" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.ColumnSpan="2"
+                                    Text="{loc:Str Key=RuleMaker_GalleryHint}"
+                                    Style="{StaticResource PageSubtitleText}" />
+
+                                <ListView
+                                    Grid.Row="1"
+                                    Grid.Column="0"
+                                    AutomationProperties.AutomationId="GalleryList"
+                                    ItemsSource="{x:Bind ViewModel.Gallery}"
+                                    SelectedItem="{x:Bind ViewModel.SelectedGalleryItem, Mode=TwoWay}"
+                                    SelectionMode="Single"
+                                    IsItemClickEnabled="False">
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:PresetGalleryItemViewModel">
+                                            <StackPanel Spacing="2" Margin="0,6,0,6">
+                                                <TextBlock Text="{x:Bind Badge}" Style="{StaticResource MutedText}" FontSize="11" />
+                                                <TextBlock Text="{x:Bind Name}" Style="{ThemeResource BodyStrongTextBlockStyle}" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock
+                                                    Text="{x:Bind Description}"
+                                                    Style="{StaticResource MutedText}"
+                                                    TextTrimming="CharacterEllipsis"
+                                                    TextWrapping="NoWrap" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
+
+                                <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CardBorder}" Padding="14">
+                                    <Grid RowSpacing="8">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="*" />
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock
+                                            Grid.Row="0"
+                                            Text="{x:Bind ViewModel.SelectedGalleryItem.Name, Mode=OneWay}"
+                                            Style="{StaticResource SectionTitleText}" />
+                                        <StackPanel Grid.Row="1" Spacing="2">
+                                            <TextBlock
+                                                Text="{x:Bind ViewModel.SelectedGalleryItem.Description, Mode=OneWay}"
+                                                Style="{StaticResource PageSubtitleText}" />
+                                            <TextBlock
+                                                Text="{x:Bind ViewModel.SelectedGalleryItem.CountText, Mode=OneWay}"
+                                                Style="{StaticResource MutedText}" />
+                                        </StackPanel>
+
+                                        <TextBlock
+                                            Grid.Row="2"
+                                            Text="{loc:Str Key=RuleMaker_GalleryPick}"
+                                            Style="{StaticResource MutedText}"
+                                            Visibility="{x:Bind ViewModel.HasNoGallerySelection, Mode=OneWay}" />
+                                        <ScrollViewer Grid.Row="2" Visibility="{x:Bind ViewModel.HasGallerySelection, Mode=OneWay}">
+                                            <TextBlock
+                                                AutomationProperties.AutomationId="GalleryPreview"
+                                                Text="{x:Bind ViewModel.SelectedGalleryItem.Preview, Mode=OneWay}"
+                                                Style="{StaticResource MonoText}"
+                                                TextWrapping="Wrap"
+                                                IsTextSelectionEnabled="True" />
+                                        </ScrollViewer>
+                                    </Grid>
+                                </Border>
+
+                                <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                                    <Button
+                                        Content="{loc:Str Key=RuleMaker_GalleryMerge}"
+                                        AutomationProperties.AutomationId="GalleryMergeButton"
+                                        IsEnabled="{x:Bind ViewModel.HasGallerySelection, Mode=OneWay}"
+                                        Click="OnGalleryMergeClick" />
+                                    <Button
+                                        Content="{loc:Str Key=RuleMaker_GalleryOpen}"
+                                        Style="{ThemeResource AccentButtonStyle}"
+                                        AutomationProperties.AutomationId="GalleryOpenButton"
+                                        IsEnabled="{x:Bind ViewModel.HasGallerySelection, Mode=OneWay}"
+                                        Click="OnGalleryOpenClick" />
+                                </StackPanel>
+                            </Grid>
+                        </Flyout>
+                    </muxc:AppBarButton.Flyout>
+                </muxc:AppBarButton>
+                <muxc:AppBarButton
                     Label="{loc:Str Key=Common_Open}"
                     Icon="OpenFile"
                     AutomationProperties.AutomationId="OpenButton"
@@ -78,13 +187,11 @@
                         </muxc:AppBarButton.Flyout>
                     </muxc:AppBarButton>
                     <muxc:AppBarButton
-                        Label="{loc:Str Key=RuleMaker_Library}"
+                        Label="{loc:Str Key=RuleMaker_SaveToLibrary}"
                         Icon="Library"
-                        AutomationProperties.AutomationId="LibraryButton">
-                        <muxc:AppBarButton.Flyout>
-                            <MenuFlyout x:Name="LibraryFlyout" />
-                        </muxc:AppBarButton.Flyout>
-                    </muxc:AppBarButton>
+                        AutomationProperties.AutomationId="SaveToLibraryButton"
+                        IsEnabled="{x:Bind ViewModel.CanSave, Mode=OneWay}"
+                        Click="OnSaveToLibraryClick" />
                     <muxc:AppBarButton
                         Label="{loc:Str Key=RuleMaker_LinkProject}"
                         Icon="Link"

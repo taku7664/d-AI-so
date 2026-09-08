@@ -413,6 +413,15 @@ RefreshAsync
         Codex : AGENTS.md 마커 블록에 For(Codex) = 읽기 지시문
 ```
 
+**기본 제공 프리셋과 갤러리**
+
+- `Daiso.Core/Resources/Presets/*.daiso` 14개가 임베디드 리소스로 들어 있다. 형식은 사용자 파일과 완전히 같고, `BuiltInPresets.List/Read`로 읽는다
+- 카탈로그(순서·갈래)는 `BuiltInPresets.Catalog` 코드에 있다. 갈래는 `PresetCategory` — Language(C#, C++, Python, TypeScript, Rust, Unity), Workflow(Git, 테스트, 리뷰, 리팩터링, 보안, 문서, API), Communication(한국어 소통)
+- 규칙 화면의 **`프리셋` 버튼**이 갤러리 팝오버를 연다. 왼쪽은 기본 제공 + 내 라이브러리(`%LOCALAPPDATA%\d-AI-so\presets`) 목록, 오른쪽은 고른 것의 렌더된 Markdown 미리보기
+  - `새로 열기` — 편집기에 그대로 연다. 기본 제공은 **경로 없이** 열려 저장할 때 내 파일이 된다 (원본은 바뀌지 않는다)
+  - `지금 규칙에 추가` — 편집 중인 규칙 뒤에 붙인다. 같은 문장의 전역 행동은 한 번만, 새 문서의 빈 자리표시자 줄은 치운다. 이름이 기본값이면 프리셋 이름을 가져온다
+- 테스트가 보장하는 것: 카탈로그와 리소스 파일 일치, 전부 파싱·검증·라운드트립, 이름 중복 없음, 조건 문장에 연산자 문자 없음
+
 ### 5.3 터미널
 ```
 폴더 선택 + 도구 선택 (+ 세션 → BuildResumeArguments)

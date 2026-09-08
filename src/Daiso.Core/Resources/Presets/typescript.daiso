@@ -1,0 +1,38 @@
+daiso: 1
+name: TypeScript / JavaScript 코딩 규칙
+description: 타입 엄격성·비동기·패키지 관리 습관
+
+global:
+  - action: any를 새로 쓰지 않는다. 불가피하면 이유를 주석으로 남긴다
+    priority: MUST
+  - action: 프로젝트의 ESLint와 Prettier 설정을 따른다
+    priority: MUST
+
+rules:
+  - when: 패키지를 추가할 때
+    then:
+      - action: 프로젝트가 쓰는 패키지 매니저 하나만 쓴다. lock 파일을 섞지 않는다
+        priority: MUST
+      - action: 꼭 필요한지 먼저 설명하고 추가한다
+        priority: SHOULD
+  - when: 비동기 코드를 쓸 때
+    then:
+      - action: Promise 체인보다 async와 await를 쓴다
+        priority: SHOULD
+      - action: await를 빠뜨린 Promise가 남지 않게 한다
+        priority: MUST
+  - when: 외부 입력을 다룰 때
+    then:
+      - action: 타입 단언으로 넘기지 않고 런타임 검증을 거친다
+        priority: MUST
+  - when:
+      and:
+        - React 컴포넌트를 수정할 때
+        - 상태를 추가할 때
+    then:
+      - action: 파생 가능한 값은 상태로 두지 않고 계산한다
+        priority: SHOULD
+  - when: 콘솔 로그를 남길 때
+    then:
+      - action: 디버그용 console.log는 커밋 전에 지운다
+        priority: MUST

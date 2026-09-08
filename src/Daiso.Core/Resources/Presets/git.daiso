@@ -1,0 +1,36 @@
+daiso: 1
+name: Git 커밋 규칙
+description: 커밋 단위·메시지·푸시 습관. 어느 언어 프로젝트에나 붙일 수 있다
+
+global:
+  - action: 작업 단위마다 커밋한다. 여러 주제를 한 커밋에 섞지 않는다
+    priority: MUST
+  - action: 커밋 메시지는 한 줄 요약으로 쓰고 마침표를 붙이지 않는다
+    priority: SHOULD
+  - action: 커밋 메시지에 비밀값·토큰·내부 URL을 적지 않는다
+    priority: MUST
+
+rules:
+  - when: 커밋 메시지를 쓸 때
+    then:
+      - action: 타입 접두어를 붙인다. feat, fix, refactor, chore, docs 중 하나
+        priority: MUST
+      - action: 무엇을 왜 바꿨는지 적는다. 단순히 수정, 변경이라고만 쓰지 않는다
+        priority: MUST
+  - when: 커밋 전
+    then:
+      - action: 빌드와 테스트가 통과하는지 확인한다
+        priority: MUST
+      - action: 의도하지 않은 파일이 스테이징되지 않았는지 diff를 확인한다
+        priority: SHOULD
+  - when:
+      or:
+        - 히스토리를 다시 쓰는 명령을 쓸 때
+        - 강제 푸시가 필요할 때
+    then:
+      - action: 실행 전에 사용자에게 확인을 받는다
+        priority: MUST
+  - when: 충돌이 났을 때
+    then:
+      - action: 양쪽 변경 의도를 설명한 뒤 해결안을 제시한다
+        priority: SHOULD

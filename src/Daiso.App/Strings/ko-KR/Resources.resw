@@ -397,9 +397,6 @@
   <data name="RuleMaker_Recent" xml:space="preserve">
     <value>최근 파일</value>
   </data>
-  <data name="RuleMaker_Library" xml:space="preserve">
-    <value>프리셋 라이브러리</value>
-  </data>
   <data name="RuleMaker_LinkProject" xml:space="preserve">
     <value>프로젝트에 연동</value>
   </data>
@@ -521,6 +518,48 @@
   </data>
   <data name="RuleMaker_NoRecent" xml:space="preserve">
     <value>최근 파일 없음</value>
+  </data>
+  <data name="RuleMaker_Presets" xml:space="preserve">
+    <value>프리셋</value>
+  </data>
+  <data name="RuleMaker_GalleryHint" xml:space="preserve">
+    <value>기본 제공 프리셋을 그대로 열거나, 지금 규칙 뒤에 붙여 출발점으로 삼을 수 있습니다. 저장하면 내 파일이 됩니다.</value>
+  </data>
+  <data name="RuleMaker_GalleryBuiltIn" xml:space="preserve">
+    <value>기본 제공</value>
+  </data>
+  <data name="RuleMaker_GalleryMine" xml:space="preserve">
+    <value>내 라이브러리</value>
+  </data>
+  <data name="RuleMaker_GalleryBadge" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="RuleMaker_GalleryCount" xml:space="preserve">
+    <value>항상 적용 {0} · 조건 규칙 {1}</value>
+  </data>
+  <data name="RuleMaker_GalleryOpen" xml:space="preserve">
+    <value>새로 열기</value>
+  </data>
+  <data name="RuleMaker_GalleryMerge" xml:space="preserve">
+    <value>지금 규칙에 추가</value>
+  </data>
+  <data name="RuleMaker_GalleryPick" xml:space="preserve">
+    <value>왼쪽에서 프리셋을 고르면 내용이 여기 보입니다</value>
+  </data>
+  <data name="RuleMaker_GalleryOpened" xml:space="preserve">
+    <value>‘{0}’ 프리셋을 열었습니다. 저장하면 내 파일이 됩니다</value>
+  </data>
+  <data name="RuleMaker_GalleryMerged" xml:space="preserve">
+    <value>‘{0}’에서 {1}개를 지금 규칙에 추가했습니다</value>
+  </data>
+  <data name="PresetCategory_Language" xml:space="preserve">
+    <value>언어</value>
+  </data>
+  <data name="PresetCategory_Workflow" xml:space="preserve">
+    <value>작업 방식</value>
+  </data>
+  <data name="PresetCategory_Communication" xml:space="preserve">
+    <value>소통</value>
   </data>
   <data name="RuleMaker_SaveToLibrary" xml:space="preserve">
     <value>라이브러리에 저장</value>

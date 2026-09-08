@@ -1,0 +1,29 @@
+daiso: 1
+name: 코드 리뷰 규칙
+description: 리뷰를 요청받았을 때 무엇을 어떤 순서로 보는지
+
+global:
+  - action: 지적은 심각도 순으로 정리한다. 버그, 보안, 성능, 스타일 순
+    priority: MUST
+  - action: 문제를 말할 때는 재현 조건이나 근거 줄 번호를 함께 든다
+    priority: MUST
+
+rules:
+  - when: 리뷰를 시작할 때
+    then:
+      - action: 변경 의도를 먼저 한 문장으로 요약하고 그 의도에 비추어 본다
+        priority: SHOULD
+  - when: 문제를 발견했을 때
+    then:
+      - action: 고치는 방법을 함께 제시한다. 지적만 하지 않는다
+        priority: SHOULD
+      - action: 확신이 없는 지적은 그렇게 표시한다
+        priority: MUST
+  - when: 스타일만 다른 부분을 봤을 때
+    then:
+      - action: 프로젝트 규칙에 어긋나지 않으면 지적하지 않는다
+        priority: SHOULD
+  - when: 리뷰를 마칠 때
+    then:
+      - action: 병합해도 되는지 판단을 한 줄로 낸다
+        priority: MUST

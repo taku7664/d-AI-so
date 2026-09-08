@@ -1,0 +1,31 @@
+daiso: 1
+name: Rust 코딩 규칙
+description: 소유권·에러 처리·unsafe 관리 습관
+
+global:
+  - action: cargo clippy 경고를 남기지 않는다
+    priority: MUST
+  - action: cargo fmt로 포맷을 맞춘다
+    priority: MUST
+
+rules:
+  - when: 오류를 다룰 때
+    then:
+      - action: 라이브러리 코드에서는 unwrap과 expect를 쓰지 않고 Result를 돌려준다
+        priority: MUST
+      - action: 오류 타입은 thiserror나 프로젝트가 쓰는 방식을 따른다
+        priority: SHOULD
+  - when: unsafe 블록을 쓸 때
+    then:
+      - action: 왜 안전한지 SAFETY 주석을 바로 위에 남긴다
+        priority: MUST
+      - action: 안전한 대안이 없는지 먼저 설명한다
+        priority: MUST
+  - when: 소유권 문제로 clone을 넣을 때
+    then:
+      - action: 참조로 해결할 수 있는지 먼저 시도한다
+        priority: SHOULD
+  - when: 공개 아이템을 추가할 때
+    then:
+      - action: 문서 주석을 붙이고 예시 코드는 doctest로 남긴다
+        priority: SHOULD

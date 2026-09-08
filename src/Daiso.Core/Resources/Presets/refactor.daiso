@@ -1,0 +1,33 @@
+daiso: 1
+name: 리팩터링 안전 규칙
+description: 동작을 바꾸지 않고 구조만 바꿀 때 지키는 것
+
+global:
+  - action: 리팩터링과 기능 변경을 한 커밋에 섞지 않는다
+    priority: MUST
+  - action: 요청받지 않은 범위의 코드는 건드리지 않는다
+    priority: MUST
+
+rules:
+  - when: 리팩터링을 시작할 때
+    then:
+      - action: 기존 테스트가 전부 통과하는지 먼저 확인한다
+        priority: MUST
+      - action: 테스트가 없으면 현재 동작을 고정하는 테스트를 먼저 만든다
+        priority: SHOULD
+  - when: 이름을 바꿀 때
+    then:
+      - action: 참조하는 모든 곳을 함께 바꾸고 문서와 문자열 안의 이름도 확인한다
+        priority: MUST
+  - when: 공개 API의 시그니처를 바꿀 때
+    then:
+      - action: 호출자를 전부 찾아 영향 범위를 먼저 보고한다
+        priority: MUST
+  - when: 코드를 지울 때
+    then:
+      - action: 정말 쓰이지 않는지 검색으로 확인한 뒤 지운다
+        priority: MUST
+  - when: 리팩터링을 마쳤을 때
+    then:
+      - action: 동작이 같다는 근거를 테스트 결과로 보여준다
+        priority: MUST

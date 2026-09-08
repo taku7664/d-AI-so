@@ -1,0 +1,32 @@
+daiso: 1
+name: 웹 API 설계 규칙
+description: HTTP API를 추가하거나 바꿀 때의 호환성·오류·문서 습관
+
+global:
+  - action: 기존 엔드포인트의 응답 형태를 깨지 않는다. 필드 추가만 허용한다
+    priority: MUST
+  - action: 오류 응답은 프로젝트의 공통 형식을 따른다
+    priority: MUST
+
+rules:
+  - when: 엔드포인트를 추가할 때
+    then:
+      - action: 상태 코드, 요청과 응답 예시, 오류 경우를 문서에 함께 적는다
+        priority: MUST
+      - action: 인증과 권한이 필요한지 명시한다
+        priority: MUST
+  - when: 호환되지 않는 변경이 꼭 필요할 때
+    then:
+      - action: 새 버전 경로로 추가하고 기존 경로는 유지한다
+        priority: MUST
+  - when: 목록을 돌려줄 때
+    then:
+      - action: 페이지네이션을 넣고 최대 크기를 제한한다
+        priority: SHOULD
+  - when:
+      or:
+        - 입력 검증에 실패했을 때
+        - 리소스가 없을 때
+    then:
+      - action: 4xx 상태 코드와 원인이 드러나는 메시지를 돌려준다. 내부 스택은 노출하지 않는다
+        priority: MUST

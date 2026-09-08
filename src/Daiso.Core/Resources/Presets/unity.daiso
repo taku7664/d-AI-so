@@ -1,0 +1,32 @@
+daiso: 1
+name: Unity / C# 게임 개발 규칙
+description: MonoBehaviour 생명주기·성능·에셋 관리 습관
+
+global:
+  - action: 씬과 프리팹 파일은 요청 없이 수정하지 않는다. 병합 충돌이 심하다
+    priority: MUST
+  - action: 기존 네임스페이스와 폴더 구조를 따른다
+    priority: SHOULD
+
+rules:
+  - when: Update나 FixedUpdate 안의 코드를 수정할 때
+    then:
+      - action: 매 프레임 할당이 생기지 않게 한다. 캐싱하거나 풀링한다
+        priority: MUST
+      - action: GetComponent, Find 계열 호출을 매 프레임 하지 않고 Awake에서 캐싱한다
+        priority: MUST
+  - when: 코루틴이나 비동기 작업을 쓸 때
+    then:
+      - action: 오브젝트가 파괴된 뒤에도 돌지 않게 정리 경로를 둔다
+        priority: MUST
+  - when:
+      or:
+        - ScriptableObject를 추가할 때
+        - 직렬화 필드를 바꿀 때
+    then:
+      - action: 기존 에셋의 값이 깨지지 않는지 확인하고 FormerlySerializedAs를 검토한다
+        priority: SHOULD
+  - when: 에디터 전용 코드를 쓸 때
+    then:
+      - action: UNITY_EDITOR 조건부 컴파일이나 Editor 폴더 안에 둔다
+        priority: MUST

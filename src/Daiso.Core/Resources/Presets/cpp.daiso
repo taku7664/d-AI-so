@@ -1,0 +1,38 @@
+daiso: 1
+name: C++ 코딩 규칙
+description: 현대 C++ 기준의 안전한 메모리·소유권·빌드 습관
+
+global:
+  - action: C++17 이상 표준 기능을 우선 쓴다
+    priority: SHOULD
+  - action: 컴파일러 경고를 오류로 취급하고 새 경고를 만들지 않는다
+    priority: MUST
+
+rules:
+  - when: 동적 메모리를 다룰 때
+    then:
+      - action: new와 delete를 직접 쓰지 않고 unique_ptr, shared_ptr, 컨테이너를 쓴다
+        priority: MUST
+      - action: 소유권이 어디에 있는지 주석 없이도 타입으로 드러나게 한다
+        priority: SHOULD
+  - when: 헤더 파일을 수정할 때
+    then:
+      - action: 헤더에는 선언만 두고 구현은 소스 파일로 옮긴다
+        priority: SHOULD
+      - action: 불필요한 include를 넣지 않고 전방 선언을 우선한다
+        priority: SHOULD
+  - when:
+      or:
+        - 포인터 연산을 할 때
+        - 배열 인덱스를 직접 다룰 때
+    then:
+      - action: 범위 검사를 넣거나 span, at 같은 검사되는 접근을 쓴다
+        priority: MUST
+  - when: 예외 대신 오류 코드를 반환하는 코드베이스일 때
+    then:
+      - action: 기존 방식을 따르고 예외를 새로 도입하지 않는다
+        priority: MUST
+  - when: 성능을 이유로 최적화할 때
+    then:
+      - action: 측정 결과를 먼저 보여준 뒤 바꾼다
+        priority: SHOULD
