@@ -12,6 +12,7 @@
   <ItemGroup>
     <EmbeddedResource Include="Resources\conflict-keywords.json" />
     <EmbeddedResource Include="Resources\Presets\*.daiso" />
+    <EmbeddedResource Include="Resources\Prompts\*.md" />
   </ItemGroup>
 
 </Project>

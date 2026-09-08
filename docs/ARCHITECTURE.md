@@ -494,9 +494,21 @@ Apply(projectDir, direction, dryRun)
 
 ---
 
+### 5.8 내 프롬프트 (절차형 프롬프트)
+
+규칙(.daiso)은 매 세션 붙는 제약이고, **프롬프트는 세션의 첫 메시지로 한 번 실행하는 절차**다. 기획 인터뷰, 코드베이스 파악처럼 CLAUDE.md에 넣으면 매번 발동해 버리는 것들을 여기 둔다.
+
+- 파일 형식: 맨 위 `---` 사이 앞머리(`name`, `description`, `category`, `output`) + Markdown 본문. `PromptPresetSerializer`가 읽고 쓴다. 모르는 키는 오류
+- 갈래 `PromptCategory`: Planning(기획) · Understanding(파악) · Fixing(수정) · Release(배포)
+- 기본 제공: `Daiso.Core/Resources/Prompts/*.md` 임베디드. `BuiltInPrompts`가 카탈로그 순서로 돌려준다. 첫 세트는 `planning-interview`(소규모 프로젝트 기획 인터뷰), `codebase-tour`(기존 코드베이스 파악)
+- 내 보관함: `%LOCALAPPDATA%\d-AI-so\prompts\*.md`. `IPromptLibrary`(구현 `PromptLibraryStore`). 기본 제공을 고쳐 저장하면 내 것으로 사본이 생긴다
+- **적용 방식**: 본문을 명령줄 인자로 넘기지 않는다(25KB, 길이 한도·인용 문제). 대신 `WriteIntoProject`가 프로젝트의 `docs/prompts/{id}.md`에 **본문만** 쓰고, 시작 메시지 `docs/prompts/{id}.md 파일을 읽고 그 절차대로 진행해 주세요. 결과는 {output} 에 씁니다.`를 만들어 준다. 사용자는 이것을 새 세션의 첫 메시지로 붙인다. 두 도구 공통
+- 기본 제공 프롬프트가 지키는 것(테스트가 검사): 코딩 에이전트가 절차 도중 파일을 만들지 않게 막는 문장, 결과 파일 위치 명시, H1 하나, 기획 인터뷰는 첫 회차 질문 정확히 5개
+- 터미널 화면의 프롬프트 드롭다운(적용 여부 표시)은 뒤로 미룬 항목이다
+
 ## 6. App 구성
 
-- Shell: `NavigationView` 6 항목 → Dashboard(요약), Usage(사용량), Terminal(터미널), Sessions(세션), RuleMaker(규칙), Settings(설정)
+- Shell: `NavigationView` 7 항목 → Dashboard(요약), Usage(사용량), Terminal(터미널), Sessions(세션), RuleMaker(내 규칙), Prompts(내 프롬프트), Settings(설정). `Ctrl+1`~`Ctrl+7`
 - 페이지별 ViewModel 1개, `ObservableObject` + `RelayCommand`
 - DI: `App.xaml.cs`에서 등록. Provider는 `IEnumerable<IProvider>`로 주입
 - 설정: `%LOCALAPPDATA%\d-AI-so\settings.json` (최근 폴더, 최근 .daiso, 단가표, 정리 규칙)

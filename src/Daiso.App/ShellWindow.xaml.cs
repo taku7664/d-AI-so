@@ -61,7 +61,7 @@ public sealed partial class ShellWindow : Window
         Navigate(tag);
     }
 
-    /// <summary>Ctrl+1~6으로 왼쪽 메뉴 순서대로 이동한다.</summary>
+    /// <summary>Ctrl+1~7로 왼쪽 메뉴 순서대로 이동한다.</summary>
     private void OnNavAccelerator(
         Microsoft.UI.Xaml.Input.KeyboardAccelerator sender,
         Microsoft.UI.Xaml.Input.KeyboardAcceleratorInvokedEventArgs args)
@@ -92,6 +92,7 @@ public sealed partial class ShellWindow : Window
             "Terminal" => typeof(TerminalPage),
             "Sessions" => typeof(SessionsPage),
             "RuleMaker" => typeof(RuleMakerPage),
+            "Prompts" => typeof(PromptsPage),
             "Settings" => typeof(SettingsPage),
             _ => typeof(DashboardPage),
         };

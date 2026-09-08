@@ -89,3 +89,26 @@ public sealed record ExportOptions(
 {
     public static readonly ExportOptions Default = new();
 }
+
+/// <summary>
+/// 내 프롬프트 보관함과 프로젝트에 넣기. (ARCHITECTURE §5.8)
+/// 구현은 Daiso.Infrastructure. 기본 제공 프롬프트는 <see cref="BuiltInPrompts"/>가 따로 들고 있다.
+/// </summary>
+public interface IPromptLibrary
+{
+    /// <summary>보관함의 프롬프트. 파일 이름 순.</summary>
+    IReadOnlyList<PromptPreset> List();
+
+    /// <summary>보관함에 저장한다. 같은 id면 덮어쓴다. 저장한 경로를 돌려준다.</summary>
+    string Save(PromptPreset preset);
+
+    /// <summary>보관함에서 지운다. 없으면 조용히 넘어간다.</summary>
+    void Remove(string id);
+
+    /// <summary>
+    /// 프로젝트 폴더의 <c>docs/prompts/{id}.md</c>에 본문을 쓴다. 앞머리는 빼고 본문만.
+    /// 이미 있으면 덮어쓴다(프롬프트는 앱이 관리하는 사본이다). 쓴 절대 경로를 돌려준다.
+    /// </summary>
+    string WriteIntoProject(PromptPreset preset, string projectDirectory);
+}
+
