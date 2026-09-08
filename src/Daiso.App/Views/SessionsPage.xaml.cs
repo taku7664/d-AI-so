@@ -1,3 +1,4 @@
+using Daiso.App;
 using Daiso.App.Controls;
 using Daiso.App.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
@@ -128,8 +129,33 @@ public sealed partial class SessionsPage : Page
         }
     }
 
-    private async void OnResumeClick(object sender, RoutedEventArgs e) =>
-        await ViewModel.ResumeCommand.ExecuteAsync(ViewModel.SelectedSession);
+    private async void OnResumeClick(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel.SelectedSession is not { } row)
+        {
+            return;
+        }
+
+        var settings = App.Services.GetRequiredService<Services.ISettingsStore>().Current;
+
+        // 내장이 켜져 있고 WebView2가 있으면 방으로 연다. 아니면 기존처럼 외부 터미널로
+        if (settings.UseEmbeddedTerminal && Terminal.TerminalHost.IsRuntimeAvailable())
+        {
+            var provider = App.Services.GetRequiredService<IEnumerable<Daiso.Core.IProvider>>()
+                .First(p => p.Kind == row.Session.Tool);
+            var directory = row.Session.ProjectPath is { Length: > 0 } path && Directory.Exists(path)
+                ? path
+                : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+            App.Services.GetRequiredService<TerminalViewModel>()
+                .PrepareResume(row.Session.Tool, directory, provider.BuildResumeArguments(row.Session), autoOpen: true);
+
+            (App.MainWindow as ShellWindow)?.NavigateTo("Terminal");
+            return;
+        }
+
+        await ViewModel.ResumeCommand.ExecuteAsync(row);
+    }
 
     private async void OnExportClick(object sender, RoutedEventArgs e)
     {

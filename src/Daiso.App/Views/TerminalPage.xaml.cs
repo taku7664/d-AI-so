@@ -22,6 +22,12 @@ public sealed partial class TerminalPage : Page
         {
             SyncTabFromViewModel();
             await ViewModel.RefreshInstalledAsync();
+
+            // 세션 "이어서 열기"가 방을 바로 열어 달라고 했으면 연다
+            if (ViewModel.ConsumeAutoOpen())
+            {
+                await OpenRoomAsync();
+            }
         };
         ViewModel.PropertyChanged += (_, e) =>
         {
@@ -125,8 +131,10 @@ public sealed partial class TerminalPage : Page
 
     private ChatRoomViewModel? _room;
 
+    private void OnEmbeddedOpenClick(object sender, RoutedEventArgs e) => _ = OpenRoomAsync();
+
     /// <summary>고른 도구로 방을 연다. 의사 콘솔 + 세션 tail을 만들어 채팅·터미널에 잇는다.</summary>
-    private async void OnEmbeddedOpenClick(object sender, RoutedEventArgs e)
+    private async Task OpenRoomAsync()
     {
         var settings = App.Services.GetRequiredService<Services.ISettingsStore>().Current;
 

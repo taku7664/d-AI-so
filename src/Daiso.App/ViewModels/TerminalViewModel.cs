@@ -147,12 +147,46 @@ public sealed partial class TerminalViewModel : ObservableObject
         OnPropertyChanged(nameof(HasNoRecentFolders));
     }
 
+    /// <summary>세션 "이어서 열기"가 방을 바로 열어 달라고 요청했는가. TerminalPage가 한 번 소비한다.</summary>
+    private bool _autoOpen;
+
+    /// <summary>자동 열기가 쓸 도구·인자. 화면 로드 때 탭 기본 선택·빈 바인딩이 덮어써, 소비 시 다시 심는다.</summary>
+    private ToolKind? _autoOpenTool;
+    private string _autoOpenArguments = string.Empty;
+
     /// <summary>세션 "이어서 열기"에서 넘어온 인자를 그 도구 탭에 채우고 탭을 앞으로 가져온다.</summary>
-    public void PrepareResume(ToolKind tool, string workingDir, string resumeArguments)
+    /// <param name="autoOpen">true면 화면이 뜨는 즉시 방(내장 터미널)을 연다.</param>
+    public void PrepareResume(ToolKind tool, string workingDir, string resumeArguments, bool autoOpen = false)
     {
         SetFolder(workingDir);
         SelectTool(tool);
         SelectedTool.Arguments = resumeArguments;
+        _autoOpen = autoOpen;
+        _autoOpenTool = tool;
+        _autoOpenArguments = resumeArguments;
+    }
+
+    /// <summary>
+    /// 자동 열기 요청을 한 번만 꺼내 온다(다시 부르면 false). 인자를 지금 도구에 다시 심어
+    /// 화면 로드 때 빈 값으로 덮인 것을 되돌린다.
+    /// </summary>
+    public bool ConsumeAutoOpen()
+    {
+        var value = _autoOpen;
+        _autoOpen = false;
+
+        if (value)
+        {
+            // 화면 로드 때 탭이 기본값(Codex)으로 튈 수 있어 도구를 다시 고르고 인자를 심는다
+            if (_autoOpenTool is { } tool)
+            {
+                SelectTool(tool);
+            }
+
+            SelectedTool.Arguments = _autoOpenArguments;
+        }
+
+        return value;
     }
 
     /// <summary>프리셋을 지금 탭의 인자 뒤에 붙인다.</summary>

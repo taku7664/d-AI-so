@@ -182,11 +182,13 @@ public sealed partial class DashboardViewModel : ObservableObject
 
         var provider = _providers.First(item => item.Kind == session.Tool);
         var terminal = App.Services.GetRequiredService<TerminalViewModel>();
+        var embedded = App.Services.GetRequiredService<Services.ISettingsStore>().Current.UseEmbeddedTerminal && Daiso.App.Terminal.TerminalHost.IsRuntimeAvailable();
 
         terminal.PrepareResume(
             session.Tool,
             session.ProjectPath ?? string.Empty,
-            provider.BuildResumeArguments(session));
+            provider.BuildResumeArguments(session),
+            autoOpen: embedded);
     }
 
     /// <summary>도구 상태와 세션·사용량 요약을 다시 읽는다.</summary>
