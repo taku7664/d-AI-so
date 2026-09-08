@@ -62,11 +62,12 @@ public sealed partial class ChatRoomViewModel : ObservableObject, IDisposable
     /// <summary>지금 이 방 화면을 그리는 호스트 하나. 방마다 호스트는 하나뿐이다(같은 호스트를 탭마다 다시 가리킨다).</summary>
     private Action<byte[]>? _sink;
 
+    // 화면은 채팅이 기본이다. 터미널(원시 화면)은 승인·슬래시 메뉴처럼 필요할 때만 뒤에서 꺼내 본다.
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(TerminalVisibility))]
     [NotifyPropertyChangedFor(nameof(ChatVisibility))]
     [NotifyPropertyChangedFor(nameof(ToggleLabel))]
-    private bool showTerminal = true;
+    private bool showTerminal;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ThinkingVisibility))]

@@ -123,3 +123,13 @@ CLI는 숨은 진짜 터미널(ConPTY + WebView2 xterm.js)에서 돌고, 채팅 
 `src/Daiso.Infrastructure/Pty/PseudoConsole.cs` + `PtySession.cs`를 만들고 `cmd /c echo` 테스트로 읽기·쓰기·종료를 확인한다.
 이어서 `Daiso.App/Terminal/TerminalHost`(WebView2 + 동봉 xterm.js)에 PTY를 물려 터미널 화면 임시 영역에서 `claude`를 띄운다.
 확인 항목: 화면 그리기 · Ctrl+C · 여러 줄 붙이기 · 크기 변경 · 세션 파일 실시간 증가 · Gemini 파일 쓰기 시점.
+
+## 방향 전환 (2026-09-08) — 터미널이 아니라 진짜 챗봇
+
+사용자 확인: 터미널을 띄우는 게 아니라 대화만 뽑아 **진짜 챗봇**처럼. 터미널(xterm)은 숨은 엔진일 뿐, 화면은 채팅이어야 한다.
+- **엔진을 A(숨은 터미널 + 파일 tail)에서 B(구조화 스트리밍 JSON)로 바꾼다.** Claude를 `--print --output-format stream-json --input-format stream-json --include-partial-messages`로 stdin/stdout JSON으로 다룬다(PTY·xterm 없음). 글자 단위 스트리밍, 도구 카드, 승인 허용/거부 카드가 된다.
+- **화면은 채팅이 기본.** 터미널 원시 화면은 뺀다(필요하면 나중에 고급으로만).
+- 지금 만든 UI(말풍선·아바타·시각·방 탭·입력칸·`/` 선택기)는 그대로. 엔진만 교체.
+- 순서: Claude 먼저 → Codex·Gemini는 각 프로토콜로 나중.
+
+진행: `ChatEvent`(사건 모델)·`ClaudeStreamParser`(줄→사건, 테스트 7건)·`IChatSession`·`ClaudeChatSession`(프로세스 stdin/stdout 엔진, 트리 kill) 완성. 다음은 방 UI를 이 엔진에 잇고 스트리밍 말풍선·승인 카드를 그리기. 라이브 확인은 Claude 토큰을 쓰므로 사용자가 한 턴 돌려 본다.

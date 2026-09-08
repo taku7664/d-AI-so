@@ -220,7 +220,16 @@ public sealed partial class TerminalPage : Page
         {
             await Embedded.InitializeAsync();
             Embedded.BindRoom(room);
-            Embedded.FocusTerminal();
+
+            // 채팅이 기본이면 입력칸으로, 터미널을 보고 있으면 터미널로 포커스
+            if (room.ShowTerminal)
+            {
+                Embedded.FocusTerminal();
+            }
+            else
+            {
+                RoomInput.Focus(FocusState.Programmatic);
+            }
         }
         catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or InvalidOperationException or IOException)
         {
