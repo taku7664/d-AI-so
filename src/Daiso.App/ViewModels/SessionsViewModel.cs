@@ -243,7 +243,7 @@ public sealed partial class SessionsViewModel : ObservableObject
         {
             var hits = await _indexService.Index.SearchAsync(query, ct).ConfigureAwait(true);
 
-            foreach (var byProject in hits.GroupBy(hit => hit.Session.ProjectPath ?? UnknownProject))
+            foreach (var byProject in hits.GroupBy(hit => hit.Session.ProjectPath ?? UnknownProject, StringComparer.OrdinalIgnoreCase))
             {
                 var project = new SearchProjectViewModel(byProject.Key);
 
@@ -575,7 +575,7 @@ public sealed partial class SessionsViewModel : ObservableObject
         Projects.Clear();
 
         foreach (var group in _allSessions
-            .GroupBy(session => session.ProjectPath ?? UnknownProject)
+            .GroupBy(session => session.ProjectPath ?? UnknownProject, StringComparer.OrdinalIgnoreCase)
             .OrderByDescending(group => group.Max(session => session.ModifiedAt)))
         {
             Projects.Add(new ProjectGroupViewModel(group.Key, [.. group]));

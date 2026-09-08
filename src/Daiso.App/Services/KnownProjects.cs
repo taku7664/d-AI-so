@@ -39,7 +39,7 @@ public sealed class KnownProjects
 
             ordered.AddRange(sessions
                 .Where(session => session.ProjectPath is { Length: > 0 })
-                .GroupBy(session => session.ProjectPath!)
+                .GroupBy(session => session.ProjectPath!, StringComparer.OrdinalIgnoreCase)
                 .OrderByDescending(group => group.Max(session => session.ModifiedAt))
                 .Select(group => group.Key));
         }

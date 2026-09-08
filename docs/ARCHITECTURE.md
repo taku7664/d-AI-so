@@ -391,7 +391,7 @@ public sealed record ExportOptions(bool IncludeToolCalls = true, bool IncludeSys
   | `$rewindTo` | 문자열 | 그 id부터 끝까지 잘라냄 |
 - 그래서 `IProvider.AppendOnlySessions = false`. 인덱스는 이 도구의 파일이 바뀌면 오프셋을 버리고 처음부터 다시 읽는다(§5.1). `ReadMessagesAsync`의 오프셋도 무시한다
 - 메시지 → `type == "user"` → User, `"gemini"` → Assistant(`content`는 문자열 또는 `[{text}]` 조각), `"info"|"warning"|"error"` → System, `toolCalls[]` → 각각 Tool 한 건(이름 + 인자 앞 300자 + 상태. 결과 본문은 넣지 않는다)
-- 프로젝트 경로: `projects.json`의 `{"projects": {"소문자 경로": "이름"}}`으로 폴더 이름 → 경로, 또는 SHA-256(경로) → 경로를 되짚는다. 모르면 null
+- 프로젝트 경로: `projects.json`의 `{"projects": {"소문자 경로": "이름"}}`으로 폴더 이름 → 경로, 또는 SHA-256(경로) → 경로를 되짚는다. 모르면 null. 키가 소문자 경로라 `ProjectPathNormalizer.RestoreCasing`으로 디스크의 실제 대소문자를 되돌려 저장한다. 그래야 Claude·Codex의 같은 프로젝트와 한 묶음이 된다(§4.3)
 - 토큰: 메시지의 `tokens {input, output, cached, thoughts, tool}` — **응답마다 붙는 값이라 날짜별로 더한다**. Input = input + tool, Output = output + thoughts, CacheRead = cached, CacheCreate 0. 모델은 `model`
 - resume: `gemini --resume <id>`
 - 실행 파일: `gemini` (npm 셸 `.cmd`)

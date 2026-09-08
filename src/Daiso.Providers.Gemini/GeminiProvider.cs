@@ -305,7 +305,8 @@ public sealed class GeminiProvider : IProvider, IUsageReader
         var chats = Path.GetDirectoryName(filePath);
         var projectDir = chats is null ? null : Path.GetFileName(Path.GetDirectoryName(chats));
 
-        return projects.Resolve(projectDir) ?? projects.Resolve(projectHash);
+        // projects.json 키는 소문자 경로다. 디스크의 실제 대소문자로 되돌려야 다른 도구의 같은 프로젝트와 한 묶음이 된다
+        return ProjectPathNormalizer.RestoreCasing(projects.Resolve(projectDir) ?? projects.Resolve(projectHash));
     }
 
     private async Task<GeminiProjectMap> LoadProjectMapAsync(CancellationToken ct) =>

@@ -100,8 +100,9 @@
                                     <StackPanel Spacing="3">
                                         <TextBlock
                                             Text="{x:Bind AccountLabel, Mode=OneWay}"
-                                            Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                            TextWrapping="NoWrap"
                                             TextTrimming="CharacterEllipsis"
+                                            Style="{ThemeResource BodyStrongTextBlockStyle}"
                                             ToolTipService.ToolTip="{x:Bind AccountLabel, Mode=OneWay}" />
                                         <TextBlock
                                             Text="{x:Bind Email, Mode=OneWay}"

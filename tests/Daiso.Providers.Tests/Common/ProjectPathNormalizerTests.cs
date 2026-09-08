@@ -31,6 +31,35 @@ public sealed class ProjectPathNormalizerTests
         ProjectPathNormalizer.Normalize(@"c:\").Should().Be(@"C:\");
     }
 
+    [Fact]
+    public void Casing_is_restored_from_disk_for_the_part_that_exists()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "daiso-case-" + Guid.NewGuid().ToString("N"));
+        var real = Path.Combine(root, "MyProj", "Sub");
+        Directory.CreateDirectory(real);
+
+        try
+        {
+            var lower = Path.Combine(root, "myproj", "sub");
+            ProjectPathNormalizer.RestoreCasing(lower).Should().Be(ProjectPathNormalizer.Normalize(real));
+
+            // 없는 꼬리는 받은 그대로
+            ProjectPathNormalizer.RestoreCasing(Path.Combine(lower, "Missing"))
+                .Should().Be(Path.Combine(ProjectPathNormalizer.Normalize(real)!, "Missing"));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void Restoring_casing_of_nothing_is_nothing()
+    {
+        ProjectPathNormalizer.RestoreCasing(null).Should().BeNull();
+        ProjectPathNormalizer.RestoreCasing(@"c:\").Should().Be(@"C:\");
+    }
+
     [Theory]
     [InlineData(null)]
     [InlineData("")]
