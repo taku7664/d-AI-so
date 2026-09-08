@@ -449,9 +449,13 @@ RefreshAsync
 
 ### 5.3 터미널
 ```
-폴더 선택 + 도구 선택 (+ 세션 → BuildResumeArguments)
-  → ITerminalLauncher.LaunchAsync(dir, "claude"|"codex", args)
+화면 열림 → 도구마다 IProvider.IsInstalledAsync → 버튼이 "{도구} 열기" 또는 "{도구} 설치"
+열기   폴더 선택 + 도구 선택 (+ 세션 → BuildResumeArguments)
+       → ITerminalLauncher.LaunchAsync(dir, "claude"|"codex"|"gemini", args)
+설치   폴더 없어도 됨 → ITerminalLauncher.LaunchAsync(dir|home, "npm", "install -g <패키지>")   (IProvider.InstallCommand)
+       → 버튼은 "설치 중…"으로 잠기고 3초마다 IsInstalledAsync. 실행 파일이 보이면 "열기"로 돌아온다. 5분이 지나면 지켜보기를 멈추고 안내
 ```
+- 미리보기 줄도 설치 전이면 설치 명령을 그대로 보여준다. 누르면 무엇이 실행되는지 숨기지 않는다
 `WindowsTerminalLauncher` 규칙:
 - `claude`/`codex`는 npm이 설치한 `.cmd` 셸이다. **항상 셸로 감싼다**: `pwsh -NoExit -Command "& claude <args>"` (pwsh 없으면 `powershell`, 없으면 `cmd /k claude <args>`)
 - `wt.exe`가 PATH에 있으면 `wt -d <dir> <위 셸 명령>`, 없으면 셸을 직접 새 창으로 실행. **wt 없음이 기본 경로**이며 테스트 대상 (Windows 10 Home 기본 상태에 wt 없음 확인)

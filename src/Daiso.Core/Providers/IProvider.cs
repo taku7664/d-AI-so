@@ -10,6 +10,9 @@ public interface IProvider
     /// <summary>실행 파일 이름. npm 셸(.cmd)만 사용한다.</summary>
     string ExecutableName { get; }
 
+    /// <summary>실행 파일이 없을 때 새 터미널에서 돌릴 설치 명령 한 줄. 예: <c>npm install -g @openai/codex</c>.</summary>
+    string InstallCommand { get; }
+
     /// <summary>도구가 읽는 프로젝트 지시문 파일 이름. "CLAUDE.md" | "AGENTS.md" | "GEMINI.md".</summary>
     string RulesFileName { get; }
 

@@ -38,6 +38,8 @@ internal sealed class FakeProvider : IProvider, IUsageReader
     /// <inheritdoc />
     public string ExecutableName => "fake";
 
+    public string InstallCommand => "npm install -g fake";
+
     /// <inheritdoc />
     public string RulesFileName => "FAKE.md";
 

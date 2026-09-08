@@ -33,6 +33,9 @@ public sealed class CodexProvider : IProvider, IUsageReader
     public string ExecutableName => "codex";
 
     /// <inheritdoc />
+    public string InstallCommand => "npm install -g @openai/codex";
+
+    /// <inheritdoc />
     public string RulesFileName => RulesFile;
 
     /// <summary>`~/.codex`.</summary>

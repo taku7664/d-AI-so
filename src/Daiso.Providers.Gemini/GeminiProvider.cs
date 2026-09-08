@@ -36,6 +36,9 @@ public sealed class GeminiProvider : IProvider, IUsageReader
     public string ExecutableName => "gemini";
 
     /// <inheritdoc />
+    public string InstallCommand => "npm install -g @google/gemini-cli";
+
+    /// <inheritdoc />
     public string RulesFileName => RulesFile;
 
     /// <summary>`~/.gemini`.</summary>

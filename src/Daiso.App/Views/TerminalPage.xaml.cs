@@ -14,6 +14,8 @@ public sealed partial class TerminalPage : Page
     {
         InitializeComponent();
         ViewModel = App.Services.GetRequiredService<TerminalViewModel>();
+
+        Loaded += async (_, _) => await ViewModel.RefreshInstalledAsync();
     }
 
     public TerminalViewModel ViewModel { get; }

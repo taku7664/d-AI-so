@@ -43,8 +43,40 @@ public sealed partial class TerminalViewModel : ObservableObject
         _knownProjects = knownProjects;
 
         RecentFolders = new ObservableCollection<string>(_settings.Current.RecentFolders);
+
+        Tools = new ObservableCollection<ToolLaunchViewModel>(
+            _providers.Select(provider => new ToolLaunchViewModel(provider, PresetsFor(provider.Kind))));
+
+        foreach (var tool in Tools)
+        {
+            tool.LaunchCommand = LaunchCommand;
+        }
+
         WorkingDirectory = RecentFolders.FirstOrDefault();
+        RefreshPreviews();
     }
+
+    /// <summary>도구별 실행 줄. 설치 여부에 따라 열기·설치 버튼이 된다.</summary>
+    public ObservableCollection<ToolLaunchViewModel> Tools { get; }
+
+    /// <summary>실행 파일이 PATH에 있는지 다시 본다. 화면이 열릴 때와 설치를 돌린 뒤에 부른다.</summary>
+    public async Task RefreshInstalledAsync(CancellationToken ct = default)
+    {
+        foreach (var tool in Tools)
+        {
+            tool.IsInstalled = await tool.Provider.IsInstalledAsync(ct).ConfigureAwait(true);
+        }
+
+        RefreshPreviews();
+    }
+
+    private static IReadOnlyList<string> PresetsFor(ToolKind kind) => kind switch
+    {
+        ToolKind.Claude => ["--continue", "--resume ", "--model ", "--permission-mode "],
+        ToolKind.Codex => ["resume ", "--model ", "--sandbox "],
+        ToolKind.Gemini => ["--resume ", "--model ", "--sandbox"],
+        _ => [],
+    };
 
     /// <summary>앱이 이미 아는 프로젝트 폴더. 대화상자 없이 여기서 고른다.</summary>
     public ObservableCollection<string> ProjectChoices { get; } = [];
@@ -65,54 +97,30 @@ public sealed partial class TerminalViewModel : ObservableObject
     /// <summary>최근에 연 폴더. 최신 것이 앞. 최대 10개.</summary>
     public ObservableCollection<string> RecentFolders { get; }
 
-    /// <summary>Claude 인자 프리셋. (REQUIREMENTS §4)</summary>
-    public IReadOnlyList<string> ClaudePresets { get; } =
-        ["--continue", "--resume ", "--model ", "--permission-mode "];
-
-    /// <summary>Codex 인자 프리셋.</summary>
-    public IReadOnlyList<string> CodexPresets { get; } =
-        ["resume ", "--model ", "--sandbox "];
-
-    /// <summary>Gemini 인자 프리셋.</summary>
-    public IReadOnlyList<string> GeminiPresets { get; } =
-        ["--resume ", "--model ", "--sandbox"];
-
     /// <summary>폴더가 정해졌는지. 버튼 활성에 쓴다.</summary>
     public bool CanLaunch => !string.IsNullOrWhiteSpace(WorkingDirectory);
 
     /// <summary>최근 폴더가 비었는가. 안내 문구를 띄운다.</summary>
     public bool HasNoRecentFolders => RecentFolders.Count == 0;
 
-    /// <summary>Claude를 눌렀을 때 실제로 실행될 명령.</summary>
-    public string ClaudePreview => Preview(ToolKind.Claude);
-
-    /// <summary>Codex를 눌렀을 때 실제로 실행될 명령.</summary>
-    public string CodexPreview => Preview(ToolKind.Codex);
-
-    /// <summary>Gemini를 눌렀을 때 실제로 실행될 명령.</summary>
-    public string GeminiPreview => Preview(ToolKind.Gemini);
-
     /// <summary>마지막 실행 기록이 있는가.</summary>
     public bool HasLastCommand => !string.IsNullOrWhiteSpace(LastCommand);
 
-    /// <summary>버튼을 누르기 전에 무엇이 실행될지 보여준다. 셸 감싸기는 실행 시점에 붙는다.</summary>
-    private string Preview(ToolKind kind)
+    /// <summary>버튼을 누르기 전에 무엇이 실행될지 보여준다. 설치 전이면 설치 명령이 보인다. 셸 감싸기는 실행 시점에 붙는다.</summary>
+    private void RefreshPreviews()
     {
-        var executable = _providers.FirstOrDefault(provider => provider.Kind == kind)?.ExecutableName
-            ?? kind.ToString().ToLowerInvariant();
+        foreach (var tool in Tools)
+        {
+            var command = tool.IsInstalled
+                ? (Arguments.Length > 0 ? $"{tool.Provider.ExecutableName} {Arguments.Trim()}" : tool.Provider.ExecutableName)
+                : tool.Provider.InstallCommand;
 
-        var command = Arguments.Length > 0 ? $"{executable} {Arguments.Trim()}" : executable;
-        var label = ToolLook.Short(kind);
-
-        return $"{label}  ▸  {command}";
+            tool.Preview = $"{tool.Label}  ▸  {command}";
+            tool.HasFolder = CanLaunch;
+        }
     }
 
-    partial void OnArgumentsChanged(string value)
-    {
-        OnPropertyChanged(nameof(ClaudePreview));
-        OnPropertyChanged(nameof(CodexPreview));
-        OnPropertyChanged(nameof(GeminiPreview));
-    }
+    partial void OnArgumentsChanged(string value) => RefreshPreviews();
 
     partial void OnLastCommandChanged(string? value) => OnPropertyChanged(nameof(HasLastCommand));
 
@@ -148,32 +156,75 @@ public sealed partial class TerminalViewModel : ObservableObject
         Arguments = Arguments.Length == 0 ? preset : $"{Arguments.TrimEnd()} {preset}";
     }
 
-    /// <summary>Claude를 연다.</summary>
+    /// <summary>설치돼 있으면 그 도구를 열고, 아니면 새 터미널에서 설치 명령을 돌린다.</summary>
     [RelayCommand]
-    public Task LaunchClaudeAsync() => LaunchAsync(ToolKind.Claude);
-
-    /// <summary>Codex를 연다.</summary>
-    [RelayCommand]
-    public Task LaunchCodexAsync() => LaunchAsync(ToolKind.Codex);
-
-    /// <summary>Gemini를 연다.</summary>
-    [RelayCommand]
-    public Task LaunchGeminiAsync() => LaunchAsync(ToolKind.Gemini);
-
-    private async Task LaunchAsync(ToolKind kind)
+    public async Task LaunchAsync(ToolLaunchViewModel? tool)
     {
+        if (tool is null)
+        {
+            return;
+        }
+
+        if (!tool.IsInstalled)
+        {
+            await InstallAsync(tool).ConfigureAwait(true);
+            return;
+        }
+
         if (WorkingDirectory is not { Length: > 0 } directory)
         {
             LastCommand = UiStrings.Get("Terminal_PickFolderFirst");
             return;
         }
 
-        var provider = _providers.First(p => p.Kind == kind);
-
         Remember(directory);
-        LastCommand = $"{directory} > {provider.ExecutableName} {Arguments}".TrimEnd();
+        LastCommand = $"{directory} > {tool.Provider.ExecutableName} {Arguments}".TrimEnd();
 
-        await _launcher.LaunchAsync(directory, provider.ExecutableName, Arguments).ConfigureAwait(true);
+        await _launcher.LaunchAsync(directory, tool.Provider.ExecutableName, Arguments).ConfigureAwait(true);
+    }
+
+    /// <summary>설치가 끝난 것으로 볼 때까지 실행 파일을 몇 초마다 다시 찾는 최대 시간.</summary>
+    private static readonly TimeSpan InstallWatch = TimeSpan.FromMinutes(5);
+
+    /// <summary>
+    /// 새 터미널에서 설치 명령을 돌리고, 실행 파일이 PATH에 나타날 때까지 지켜본다.
+    /// 나타나면 버튼이 저절로 열기로 바뀐다. 사람이 터미널을 닫아도 앱은 알 수 없으니 시간이 지나면 지켜보기를 멈춘다.
+    /// </summary>
+    private async Task InstallAsync(ToolLaunchViewModel tool)
+    {
+        var (executable, arguments) = tool.InstallParts();
+        var directory = WorkingDirectory is { Length: > 0 } chosen && Directory.Exists(chosen)
+            ? chosen
+            : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+        tool.IsInstalling = true;
+        LastCommand = UiStrings.Format("Terminal_InstallStarted", tool.Label);
+
+        try
+        {
+            await _launcher.LaunchAsync(directory, executable, arguments).ConfigureAwait(true);
+
+            var deadline = DateTimeOffset.UtcNow + InstallWatch;
+
+            while (DateTimeOffset.UtcNow < deadline)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(3)).ConfigureAwait(true);
+
+                if (await tool.Provider.IsInstalledAsync(default).ConfigureAwait(true))
+                {
+                    tool.IsInstalled = true;
+                    RefreshPreviews();
+                    LastCommand = UiStrings.Format("Terminal_InstallDetected", tool.Label);
+                    return;
+                }
+            }
+
+            LastCommand = UiStrings.Format("Terminal_InstallTimeout", tool.Label);
+        }
+        finally
+        {
+            tool.IsInstalling = false;
+        }
     }
 
     private void Remember(string path)
@@ -189,5 +240,9 @@ public sealed partial class TerminalViewModel : ObservableObject
         }
     }
 
-    partial void OnWorkingDirectoryChanged(string? value) => OnPropertyChanged(nameof(CanLaunch));
+    partial void OnWorkingDirectoryChanged(string? value)
+    {
+        OnPropertyChanged(nameof(CanLaunch));
+        RefreshPreviews();
+    }
 }

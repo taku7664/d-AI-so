@@ -71,6 +71,7 @@
 - `.cmd` 셸은 직접 실행이 불안정하므로 **항상 셸로 감싸서 실행**: `pwsh -NoExit -Command` → `powershell` → `cmd /k` 순 폴백
 - Windows Terminal(`wt.exe`)이 있으면 그 안에서 열고, 없으면 셸 창을 직접 띄움. **wt 없음이 기본 경로** (Windows 10 Home 기본 상태)
 - 옵션 인자 프리셋
+- 도구가 설치돼 있지 않으면 같은 자리의 버튼이 `{도구} 설치`가 되고, 누르면 새 터미널에서 `npm install -g …`를 돌린다. 설치가 확인되면 버튼이 `열기`로 돌아온다
   - Claude: `--resume <id>`, `--continue`, `--model`, `--permission-mode`
   - Codex: `resume <id>`, `--model`, `--sandbox`
 - 세션 뷰에서 "이 세션 이어서 열기" 시 resume 인자 자동 채움

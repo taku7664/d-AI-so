@@ -3,7 +3,8 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:loc="using:Daiso.App.Strings"
-    xmlns:muxc="using:Microsoft.UI.Xaml.Controls">
+    xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
+    xmlns:vm="using:Daiso.App.ViewModels">
 
     <ScrollViewer Padding="{StaticResource PagePadding}" VerticalScrollBarVisibility="Auto">
         <Grid>
@@ -86,50 +87,30 @@
                         Text="{x:Bind ViewModel.Arguments, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                         PlaceholderText="{loc:Str Key=Terminal_ArgsPlaceholder}" />
 
-                    <TextBlock Text="{loc:Str Key=Terminal_ClaudePresets}" Style="{StaticResource MutedText}" />
-                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.ClaudePresets}">
+                    <!-- 도구마다 프리셋 한 묶음 -->
+                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.Tools}">
                         <ItemsRepeater.Layout>
-                            <UniformGridLayout
-                                MinItemWidth="170"
-                                MinRowSpacing="8"
-                                MinColumnSpacing="8"
-                                ItemsStretch="None" />
+                            <StackLayout Spacing="10" />
                         </ItemsRepeater.Layout>
                         <ItemsRepeater.ItemTemplate>
-                            <DataTemplate x:DataType="x:String">
-                                <Button Content="{x:Bind}" Tag="{x:Bind}" Click="OnPresetClick" HorizontalAlignment="Stretch" />
-                            </DataTemplate>
-                        </ItemsRepeater.ItemTemplate>
-                    </ItemsRepeater>
-
-                    <TextBlock Text="{loc:Str Key=Terminal_CodexPresets}" Style="{StaticResource MutedText}" />
-                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.CodexPresets}">
-                        <ItemsRepeater.Layout>
-                            <UniformGridLayout
-                                MinItemWidth="170"
-                                MinRowSpacing="8"
-                                MinColumnSpacing="8"
-                                ItemsStretch="None" />
-                        </ItemsRepeater.Layout>
-                        <ItemsRepeater.ItemTemplate>
-                            <DataTemplate x:DataType="x:String">
-                                <Button Content="{x:Bind}" Tag="{x:Bind}" Click="OnPresetClick" HorizontalAlignment="Stretch" />
-                            </DataTemplate>
-                        </ItemsRepeater.ItemTemplate>
-                    </ItemsRepeater>
-
-                    <TextBlock Text="{loc:Str Key=Terminal_GeminiPresets}" Style="{StaticResource MutedText}" />
-                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.GeminiPresets}">
-                        <ItemsRepeater.Layout>
-                            <UniformGridLayout
-                                MinItemWidth="170"
-                                MinRowSpacing="8"
-                                MinColumnSpacing="8"
-                                ItemsStretch="None" />
-                        </ItemsRepeater.Layout>
-                        <ItemsRepeater.ItemTemplate>
-                            <DataTemplate x:DataType="x:String">
-                                <Button Content="{x:Bind}" Tag="{x:Bind}" Click="OnPresetClick" HorizontalAlignment="Stretch" />
+                            <DataTemplate x:DataType="vm:ToolLaunchViewModel">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{x:Bind PresetsTitle}" Style="{StaticResource MutedText}" />
+                                    <ItemsRepeater ItemsSource="{x:Bind Presets}">
+                                        <ItemsRepeater.Layout>
+                                            <UniformGridLayout
+                                                MinItemWidth="170"
+                                                MinRowSpacing="8"
+                                                MinColumnSpacing="8"
+                                                ItemsStretch="None" />
+                                        </ItemsRepeater.Layout>
+                                        <ItemsRepeater.ItemTemplate>
+                                            <DataTemplate x:DataType="x:String">
+                                                <Button Content="{x:Bind}" Tag="{x:Bind}" Click="OnPresetClick" HorizontalAlignment="Stretch" />
+                                            </DataTemplate>
+                                        </ItemsRepeater.ItemTemplate>
+                                    </ItemsRepeater>
+                                </StackPanel>
                             </DataTemplate>
                         </ItemsRepeater.ItemTemplate>
                     </ItemsRepeater>
@@ -141,54 +122,54 @@
                 <StackPanel Spacing="12">
                     <TextBlock Text="{loc:Str Key=Terminal_Launch}" Style="{StaticResource SectionTitleText}" />
 
-                    <StackPanel Orientation="Horizontal" Spacing="10">
-                        <Button
-                            Style="{ThemeResource AccentButtonStyle}"
-                            AutomationProperties.AutomationId="LaunchClaudeButton"
-                            Command="{x:Bind ViewModel.LaunchClaudeCommand}"
-                            IsEnabled="{x:Bind ViewModel.CanLaunch, Mode=OneWay}">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <FontIcon Glyph="&#xE756;" FontSize="14" />
-                                <TextBlock Text="{loc:Str Key=Terminal_OpenClaude}" />
-                            </StackPanel>
-                        </Button>
-                        <Button
-                            AutomationProperties.AutomationId="LaunchCodexButton"
-                            Command="{x:Bind ViewModel.LaunchCodexCommand}"
-                            IsEnabled="{x:Bind ViewModel.CanLaunch, Mode=OneWay}">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <FontIcon Glyph="&#xE756;" FontSize="14" />
-                                <TextBlock Text="{loc:Str Key=Terminal_OpenCodex}" />
-                            </StackPanel>
-                        </Button>
-                        <Button
-                            AutomationProperties.AutomationId="LaunchGeminiButton"
-                            Command="{x:Bind ViewModel.LaunchGeminiCommand}"
-                            IsEnabled="{x:Bind ViewModel.CanLaunch, Mode=OneWay}">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <FontIcon Glyph="&#xE756;" FontSize="14" />
-                                <TextBlock Text="{loc:Str Key=Terminal_OpenGemini}" />
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
+                    <!-- 도구마다 버튼 하나. 설치돼 있으면 열기, 아니면 설치. 설치가 도는 동안은 잠긴다 -->
+                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.Tools}">
+                        <ItemsRepeater.Layout>
+                            <UniformGridLayout
+                                MinItemWidth="240"
+                                MinRowSpacing="10"
+                                MinColumnSpacing="10"
+                                ItemsStretch="Fill" />
+                        </ItemsRepeater.Layout>
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ToolLaunchViewModel">
+                                <StackPanel Spacing="6">
+                                    <Button
+                                        HorizontalAlignment="Stretch"
+                                        AutomationProperties.AutomationId="{x:Bind AutomationId}"
+                                        Command="{x:Bind LaunchCommand, Mode=OneWay}"
+                                        CommandParameter="{x:Bind}"
+                                        IsEnabled="{x:Bind CanPress, Mode=OneWay}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                                            <FontIcon Glyph="{x:Bind Glyph, Mode=OneWay}" FontSize="14" />
+                                            <TextBlock Text="{x:Bind ButtonText, Mode=OneWay}" />
+                                        </StackPanel>
+                                    </Button>
+                                    <TextBlock
+                                        Text="{x:Bind Hint, Mode=OneWay}"
+                                        Visibility="{x:Bind HasHint, Mode=OneWay}"
+                                        Style="{StaticResource MutedText}"
+                                        TextWrapping="Wrap" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
 
                     <StackPanel Spacing="4">
                         <TextBlock Text="{loc:Str Key=Terminal_Preview}" Style="{StaticResource MutedText}" />
-                        <TextBlock
-                            AutomationProperties.AutomationId="ClaudePreview"
-                            Text="{x:Bind ViewModel.ClaudePreview, Mode=OneWay}"
-                            Style="{StaticResource MonoText}"
-                            TextTrimming="CharacterEllipsis" />
-                        <TextBlock
-                            AutomationProperties.AutomationId="CodexPreview"
-                            Text="{x:Bind ViewModel.CodexPreview, Mode=OneWay}"
-                            Style="{StaticResource MonoText}"
-                            TextTrimming="CharacterEllipsis" />
-                        <TextBlock
-                            AutomationProperties.AutomationId="GeminiPreview"
-                            Text="{x:Bind ViewModel.GeminiPreview, Mode=OneWay}"
-                            Style="{StaticResource MonoText}"
-                            TextTrimming="CharacterEllipsis" />
+                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.Tools}">
+                            <ItemsRepeater.Layout>
+                                <StackLayout Spacing="2" />
+                            </ItemsRepeater.Layout>
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate x:DataType="vm:ToolLaunchViewModel">
+                                    <TextBlock
+                                        Text="{x:Bind Preview, Mode=OneWay}"
+                                        Style="{StaticResource MonoText}"
+                                        TextTrimming="CharacterEllipsis" />
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
                     </StackPanel>
 
                     <StackPanel Spacing="4" Visibility="{x:Bind ViewModel.HasLastCommand, Mode=OneWay}">

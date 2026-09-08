@@ -39,6 +39,9 @@ public sealed class ClaudeProvider : IProvider, IUsageReader
     public string ExecutableName => "claude";
 
     /// <inheritdoc />
+    public string InstallCommand => "npm install -g @anthropic-ai/claude-code";
+
+    /// <inheritdoc />
     public string RulesFileName => RulesFile;
 
     /// <summary>`~/.claude`.</summary>

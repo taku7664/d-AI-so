@@ -179,18 +179,6 @@
   <data name="Terminal_ArgsPlaceholder" xml:space="preserve">
     <value>예: --continue</value>
   </data>
-  <data name="Terminal_ClaudePresets" xml:space="preserve">
-    <value>Claude 프리셋</value>
-  </data>
-  <data name="Terminal_CodexPresets" xml:space="preserve">
-    <value>Codex 프리셋</value>
-  </data>
-  <data name="Terminal_OpenClaude" xml:space="preserve">
-    <value>Claude 열기</value>
-  </data>
-  <data name="Terminal_OpenCodex" xml:space="preserve">
-    <value>Codex 열기</value>
-  </data>
   <data name="Terminal_ShellNote" xml:space="preserve">
     <value>폴더와 옵션을 고르면 아래 명령 그대로 새 터미널에서 실행합니다</value>
   </data>
@@ -1177,10 +1165,28 @@
   <data name="Sessions_SearchTitle" xml:space="preserve">
     <value>검색 결과</value>
   </data>
-  <data name="Terminal_GeminiPresets" xml:space="preserve">
-    <value>Gemini 프리셋</value>
+  <data name="Terminal_PresetsFor" xml:space="preserve">
+    <value>{0} 프리셋</value>
   </data>
-  <data name="Terminal_OpenGemini" xml:space="preserve">
-    <value>Gemini 열기</value>
+  <data name="Terminal_Open" xml:space="preserve">
+    <value>{0} 열기</value>
+  </data>
+  <data name="Terminal_Install" xml:space="preserve">
+    <value>{0} 설치</value>
+  </data>
+  <data name="Terminal_Installing" xml:space="preserve">
+    <value>{0} 설치 중…</value>
+  </data>
+  <data name="Terminal_InstallHint" xml:space="preserve">
+    <value>설치되지 않았습니다. 누르면 새 터미널에서 실행합니다: {0}</value>
+  </data>
+  <data name="Terminal_InstallStarted" xml:space="preserve">
+    <value>{0} 설치를 새 터미널에서 시작했습니다. 끝나면 버튼이 열기로 바뀝니다</value>
+  </data>
+  <data name="Terminal_InstallDetected" xml:space="preserve">
+    <value>{0} 설치가 확인됐습니다. 이제 열 수 있습니다</value>
+  </data>
+  <data name="Terminal_InstallTimeout" xml:space="preserve">
+    <value>{0} 설치가 아직 확인되지 않습니다. 터미널을 확인한 뒤 이 화면을 다시 열어 주세요</value>
   </data>
 </root>
