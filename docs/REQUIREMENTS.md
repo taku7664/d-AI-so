@@ -75,7 +75,8 @@
   - Claude: `--resume <id>`, `--continue`, `--model`, `--permission-mode`
   - Codex: `resume <id>`, `--model`, `--sandbox`
 - 세션 뷰에서 "이 세션 이어서 열기" 시 resume 인자 자동 채움
-- 외부 터미널만 열고 앱은 개입하지 않음 (내장 터미널은 v2 검토)
+- 여는 방식 두 가지: **외부 터미널**(새 창) 또는 **내장 터미널**("터미널로 열기" → 앱 안 xterm 터미널 방). 내장은 WebView2가 있어야 하고 없으면 외부로 폴백한다. 구조·규칙은 ARCHITECTURE §5.3이 정본
+- 참고: 내장 CLI를 stream-json으로 다루는 **챗봇(말풍선)** 코드도 있으나 지금은 UI 비공개다 (ARCHITECTURE §5.3)
 
 ---
 
