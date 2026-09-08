@@ -95,17 +95,24 @@ public sealed partial class RuleMakerViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasGallerySelection))]
     [NotifyPropertyChangedFor(nameof(HasNoGallerySelection))]
-    [NotifyPropertyChangedFor(nameof(GalleryPreview))]
-    [NotifyPropertyChangedFor(nameof(GalleryPreviewTitle))]
     private PresetGalleryItemViewModel? selectedGalleryItem;
 
-    /// <summary>고른 프리셋의 렌더된 Markdown. 목록을 고르면 미리보기 카드의 두 번째 탭에 보인다.</summary>
-    public string GalleryPreview => SelectedGalleryItem?.Preview ?? string.Empty;
+    /// <summary>목록을 다시 채우는 중인가. 이때의 선택 복원은 편집기를 건드리지 않는다.</summary>
+    private bool _refreshingGallery;
 
-    /// <summary>고른 프리셋의 이름과 규칙 수.</summary>
-    public string GalleryPreviewTitle => SelectedGalleryItem is { } item
-        ? UiStrings.Format("RuleMaker_GalleryPreviewTitle", item.Name, item.Preset.Global.Count, item.Preset.Rules.Count)
-        : string.Empty;
+    /// <summary>
+    /// 목록에서 고르면 그것이 편집기에 실린다(내 프롬프트와 같다). 기본 제공은 경로 없이 열려 저장할 때 내 파일이 된다.
+    /// 목록을 다시 채우며 같은 항목을 되찾는 경우는 편집 중인 내용을 지키기 위해 넘어간다.
+    /// </summary>
+    partial void OnSelectedGalleryItemChanged(PresetGalleryItemViewModel? value)
+    {
+        if (value is null || _refreshingGallery)
+        {
+            return;
+        }
+
+        OpenFromGallery(value);
+    }
 
     /// <summary>갤러리에서 무언가 골랐는가.</summary>
     public bool HasGallerySelection => SelectedGalleryItem is not null;
@@ -118,12 +125,13 @@ public sealed partial class RuleMakerViewModel : ObservableObject
     public void RefreshGallery()
     {
         var keep = SelectedGalleryItem?.Key;
+        _refreshingGallery = true;
 
         Gallery.Clear();
 
         foreach (var item in BuiltInPresets.List(_serializer))
         {
-            Gallery.Add(PresetGalleryItemViewModel.FromBuiltIn(item, _serializer, _renderer));
+            Gallery.Add(PresetGalleryItemViewModel.FromBuiltIn(item, _serializer));
         }
 
         RefreshLibrary();
@@ -132,7 +140,7 @@ public sealed partial class RuleMakerViewModel : ObservableObject
         {
             try
             {
-                Gallery.Add(PresetGalleryItemViewModel.FromFile(path, _ruleFiles.Load(path), _renderer));
+                Gallery.Add(PresetGalleryItemViewModel.FromFile(path, _ruleFiles.Load(path)));
             }
             catch (Exception ex) when (ex is RuleParseException or IOException or UnauthorizedAccessException)
             {
@@ -140,7 +148,9 @@ public sealed partial class RuleMakerViewModel : ObservableObject
             }
         }
 
-        SelectedGalleryItem = Gallery.FirstOrDefault(item => item.Key == keep) ?? Gallery.FirstOrDefault();
+        // 같은 항목이 있으면 되찾고, 없으면(첫 채움) 아무것도 고르지 않는다. 고르는 순간 편집기가 바뀌기 때문이다
+        SelectedGalleryItem = Gallery.FirstOrDefault(item => item.Key == keep);
+        _refreshingGallery = false;
     }
 
     /// <summary>갤러리 항목을 편집기에 연다. 기본 제공은 내 파일이 아니므로 경로 없이 열리고, 저장할 때 파일이 된다.</summary>
@@ -150,7 +160,15 @@ public sealed partial class RuleMakerViewModel : ObservableObject
 
         if (item.FilePath is { } path)
         {
-            Open(path);
+            try
+            {
+                Open(path);
+            }
+            catch (Exception ex) when (ex is RuleParseException or IOException or UnauthorizedAccessException)
+            {
+                StatusText = UiStrings.Format("RuleMaker_OpenFailedWith", ex.Message);
+            }
+
             return;
         }
 
@@ -680,19 +698,14 @@ public sealed class PresetGalleryItemViewModel
         string category,
         string source,
         RulePreset preset,
-        string? filePath,
-        IMarkdownRuleRenderer renderer)
+        string? filePath)
     {
         Key = key;
         Category = category;
         Source = source;
         Preset = preset;
         FilePath = filePath;
-        Preview = renderer.Render(preset);
     }
-
-    /// <summary>렌더된 Markdown. 고르면 오른쪽 미리보기 탭에 보인다.</summary>
-    public string Preview { get; }
 
     /// <summary>다시 채워도 선택을 유지하기 위한 식별자.</summary>
     public string Key { get; }
@@ -718,10 +731,7 @@ public sealed class PresetGalleryItemViewModel
     /// <summary>목록 항목의 접근성 이름. 스크린 리더와 UI 자동화가 이 값을 읽는다.</summary>
     public override string ToString() => Name;
 
-    public static PresetGalleryItemViewModel FromBuiltIn(
-        BuiltInPreset item,
-        IRulePresetSerializer serializer,
-        IMarkdownRuleRenderer renderer)
+    public static PresetGalleryItemViewModel FromBuiltIn(BuiltInPreset item, IRulePresetSerializer serializer)
     {
         ArgumentNullException.ThrowIfNull(item);
         ArgumentNullException.ThrowIfNull(serializer);
@@ -731,11 +741,10 @@ public sealed class PresetGalleryItemViewModel
             UiStrings.Get("PresetCategory_" + item.Category),
             UiStrings.Get("RuleMaker_GalleryBuiltIn"),
             serializer.Parse(BuiltInPresets.Read(item.Id)),
-            filePath: null,
-            renderer);
+            filePath: null);
     }
 
-    public static PresetGalleryItemViewModel FromFile(string path, RulePreset preset, IMarkdownRuleRenderer renderer)
+    public static PresetGalleryItemViewModel FromFile(string path, RulePreset preset)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
 
@@ -744,7 +753,6 @@ public sealed class PresetGalleryItemViewModel
             UiStrings.Get("RuleMaker_GalleryMine"),
             UiStrings.Get("RuleMaker_GalleryMine"),
             preset,
-            path,
-            renderer);
+            path);
     }
 }

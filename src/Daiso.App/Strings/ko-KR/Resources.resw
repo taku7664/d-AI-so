@@ -498,9 +498,6 @@
   <data name="RuleMaker_GalleryBadge" xml:space="preserve">
     <value>{0} · {1}</value>
   </data>
-  <data name="RuleMaker_GalleryOpen" xml:space="preserve">
-    <value>새로 열기</value>
-  </data>
   <data name="RuleMaker_GalleryMerge" xml:space="preserve">
     <value>지금 규칙에 추가</value>
   </data>
@@ -1111,16 +1108,10 @@
   <data name="Common_ToggleList" xml:space="preserve">
     <value>목록</value>
   </data>
-  <data name="RuleMaker_PreviewEditing" xml:space="preserve">
-    <value>편집 중</value>
+  <data name="RuleMaker_Preview" xml:space="preserve">
+    <value>마크다운 미리보기</value>
   </data>
-  <data name="RuleMaker_PreviewSelected" xml:space="preserve">
-    <value>고른 프리셋</value>
-  </data>
-  <data name="RuleMaker_GalleryPreviewTitle" xml:space="preserve">
-    <value>{0} · 항상 적용 {1} · 조건 규칙 {2}</value>
-  </data>
-  <data name="RuleMaker_GalleryPick" xml:space="preserve">
-    <value>왼쪽에서 프리셋을 고르면 내용이 여기 보입니다</value>
+  <data name="RuleMaker_OpenFailedWith" xml:space="preserve">
+    <value>파일을 열지 못했습니다: {0}</value>
   </data>
 </root>

@@ -27,14 +27,10 @@ public sealed partial class RuleMakerPage : Page
             BindTree();
             ViewModel.RefreshGalleryCommand.Execute(null);
             BuildRecentFlyout();
-            _galleryPickedByUser = true;
         };
     }
 
     public RuleMakerViewModel ViewModel { get; }
-
-    /// <summary>목록이 사람 손으로 골라졌는가. 첫 채움의 자동 선택과 구분한다.</summary>
-    private bool _galleryPickedByUser;
 
     /// <summary>지금 트리에서 고른 노드. 없으면 루트.</summary>
     private ConditionNodeViewModel? SelectedNode =>
@@ -50,9 +46,9 @@ public sealed partial class RuleMakerPage : Page
             case nameof(RuleMakerViewModel.CurrentPath):
                 BuildRecentFlyout();
                 break;
-            case nameof(RuleMakerViewModel.SelectedGalleryItem) when ViewModel.SelectedGalleryItem is not null && _galleryPickedByUser:
-                // 목록에서 고르면 그 내용을 바로 보여준다. 처음 채워질 때의 자동 선택은 넘어간다
-                PreviewPivot.SelectedIndex = 1;
+            case nameof(RuleMakerViewModel.SelectedGalleryItem):
+                // 고르면 뷰모델이 편집기에 실었다. 조건 트리를 새 규칙에 다시 묶는다
+                BindTree();
                 break;
             default:
                 break;
@@ -372,30 +368,6 @@ public sealed partial class RuleMakerPage : Page
 
     private double _listWidth = 220;
 
-    /// <summary>고른 프리셋을 편집기에 연다. 기본 제공은 경로 없이 열려 저장할 때 내 파일이 된다.</summary>
-    private async void OnGalleryOpenClick(object sender, RoutedEventArgs e)
-    {
-        if (ViewModel.SelectedGalleryItem is not { } item)
-        {
-            return;
-        }
-
-        try
-        {
-            ViewModel.OpenFromGallery(item);
-            BindTree();
-            PreviewPivot.SelectedIndex = 0;
-        }
-        catch (RuleParseException ex)
-        {
-            await ShowFileParseErrorAsync(ex);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            await ShowAsync(UiStrings.Get("RuleMaker_OpenFailed"), ex.Message);
-        }
-    }
-
     /// <summary>고른 프리셋의 규칙을 지금 규칙 뒤에 붙인다.</summary>
     private void OnGalleryMergeClick(object sender, RoutedEventArgs e)
     {
@@ -406,7 +378,6 @@ public sealed partial class RuleMakerPage : Page
 
         ViewModel.MergeFromGallery(item);
         BindTree();
-        PreviewPivot.SelectedIndex = 0;
     }
 
     /// <summary>현재 프리셋을 내 라이브러리에 저장한다. 갤러리에 바로 나타난다.</summary>
