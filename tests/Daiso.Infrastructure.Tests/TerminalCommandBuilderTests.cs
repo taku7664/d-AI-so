@@ -92,4 +92,14 @@ public sealed class TerminalCommandBuilderTests
 
     private static TerminalCommandBuilder Builder(params string[] available) =>
         new(name => available.Contains(name, StringComparer.Ordinal));
+
+    [Fact]
+    public void Quoted_first_message_is_escaped_for_powershell_but_left_alone_for_cmd()
+    {
+        var pwsh = Builder("pwsh").BuildShellCommand("claude", "\"docs/prompts/x.md 파일을 읽고 진행\"");
+        var cmd = Builder().BuildShellCommand("gemini", "-i \"docs/prompts/x.md 파일을 읽고 진행\"");
+
+        pwsh.Arguments.Should().Be("-NoExit -Command \"& claude \\\"docs/prompts/x.md 파일을 읽고 진행\\\"\"");
+        cmd.Arguments.Should().Be("/k gemini -i \"docs/prompts/x.md 파일을 읽고 진행\"");
+    }
 }

@@ -47,19 +47,23 @@ public sealed class TerminalCommandBuilder
         return BuildShell(command, arguments ?? string.Empty);
     }
 
-    /// <summary>pwsh → powershell → cmd 순으로 고른다.</summary>
+    /// <summary>
+    /// pwsh → powershell → cmd 순으로 고른다. 인자 안의 큰따옴표(예: 첫 메시지 <c>"docs/prompts/x.md 파일을 읽고…"</c>)는
+    /// PowerShell 경로에서 <c>-Command "…"</c> 바깥 따옴표와 겹치므로 <c>\"</c>로 이스케이프한다. cmd는 그대로 통과한다.
+    /// </summary>
     private TerminalCommand BuildShell(string command, string arguments)
     {
         var invocation = arguments.Length == 0 ? command : $"{command} {arguments}";
+        var forPowerShell = invocation.Replace("\"", "\\\"", StringComparison.Ordinal);
 
         if (_existsOnPath("pwsh"))
         {
-            return new TerminalCommand("pwsh", $"-NoExit -Command \"& {invocation}\"");
+            return new TerminalCommand("pwsh", $"-NoExit -Command \"& {forPowerShell}\"");
         }
 
         if (_existsOnPath("powershell"))
         {
-            return new TerminalCommand("powershell", $"-NoExit -Command \"& {invocation}\"");
+            return new TerminalCommand("powershell", $"-NoExit -Command \"& {forPowerShell}\"");
         }
 
         return new TerminalCommand("cmd", $"/k {invocation}");

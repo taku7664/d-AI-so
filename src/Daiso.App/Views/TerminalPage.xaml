@@ -9,320 +9,334 @@
     xmlns:prompts="using:Daiso.Core.Prompts"
     NavigationCacheMode="Required">
 
-    <!-- 화면은 두 상태다. 로비(도구·폴더·인자를 고르는 카드 하나)와 방(열린 터미널이 화면을 채운다).
-         방을 열면 로비가 사라지고 터미널이 뜬다. 방 머리의 "새 터미널"로 로비에 돌아온다. (ARCHITECTURE §5.3)
+    <!-- 위는 탭 띠 하나: [＋ 새 터미널] [방 탭…]. 새 터미널 탭이면 아래에 새 세션 카드, 방 탭이면 그 방의 터미널이 화면을 채운다.
+         방은 RoomManager가 들고 있어 화면을 옮겨도 산다. (ARCHITECTURE §5.3)
          NavigationCacheMode=Required: 화면을 떠났다 돌아와도 WebView2를 다시 만들거나 버퍼를 재생하지 않는다 -->
-    <Grid>
+    <Grid Padding="{StaticResource PagePadding}" RowSpacing="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
-        <!-- ───── 로비 ───── -->
-        <ScrollViewer x:Name="Lobby" Padding="{StaticResource PagePadding}" VerticalScrollBarVisibility="Auto">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" MaxWidth="{StaticResource ContentMaxWidth}" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0" Spacing="16" Margin="0,0,0,20">
+        <!-- ───── 탭 띠 + 방 도구 줄 ───── -->
+        <Grid Grid.Row="0" ColumnSpacing="10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
 
-                    <StackPanel Spacing="2">
-                        <TextBlock Text="{loc:Str Key=Terminal_Title}" Style="{StaticResource PageTitleText}" />
-                        <TextBlock Text="{loc:Str Key=Terminal_ShellNote}" Style="{StaticResource PageSubtitleText}" />
-                    </StackPanel>
+            <!-- 새 터미널 탭. 방이 하나도 선택되지 않았을 때 켜진다 -->
+            <ToggleButton
+                x:Name="NewTab"
+                Grid.Column="0"
+                IsChecked="True"
+                Click="OnNewTabClick"
+                AutomationProperties.AutomationId="NewTerminalButton"
+                VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <FontIcon Glyph="&#xE710;" FontSize="12" />
+                    <TextBlock Text="{loc:Str Key=Room_NewTerminal}" />
+                </StackPanel>
+            </ToggleButton>
 
-                    <!-- 이미 열린 방이 있을 때만: 로비에서 방으로 돌아가는 길 -->
-                    <Border x:Name="OpenRoomsNotice" Style="{StaticResource NoticeBorder}" Visibility="Collapsed">
-                        <Grid ColumnSpacing="12">
+            <ListView
+                x:Name="RoomTabs"
+                Grid.Column="1"
+                SelectionMode="Single"
+                SelectionChanged="OnRoomTabChanged"
+                AutomationProperties.AutomationId="RoomTabs"
+                ScrollViewer.HorizontalScrollMode="Auto"
+                ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                ScrollViewer.VerticalScrollMode="Disabled">
+                <ListView.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="6" />
+                    </ItemsPanelTemplate>
+                </ListView.ItemsPanel>
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="Padding" Value="4" />
+                        <Setter Property="MinWidth" Value="0" />
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="vm:IRoom">
+                        <Grid ColumnSpacing="8" Padding="6,2" ToolTipService.ToolTip="{x:Bind Title, Mode=OneWay}">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock x:Name="OpenRoomsText" Grid.Column="0" VerticalAlignment="Center" Style="{StaticResource PageSubtitleText}" />
-                            <Button Grid.Column="1" Content="{loc:Str Key=Terminal_ShowRooms}" Click="OnShowRoomsClick" AutomationProperties.AutomationId="ShowRoomsButton" />
+                            <Grid Grid.Column="0" Width="20" Height="20" VerticalAlignment="Center">
+                                <Border Width="20" Height="20" CornerRadius="10" Background="{x:Bind AvatarBrush}">
+                                    <TextBlock Text="{x:Bind Avatar}" Foreground="White" FontSize="10" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <!-- 안 본 새 답 점 -->
+                                <Ellipse Width="8" Height="8" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0"
+                                         Fill="{ThemeResource SystemFillColorAttentionBrush}" Stroke="{ThemeResource CardBackgroundFillColorDefaultBrush}" StrokeThickness="1.5"
+                                         Visibility="{x:Bind UnseenVisibility, Mode=OneWay}" />
+                            </Grid>
+                            <TextBlock Grid.Column="1" Text="{x:Bind ShortTitle}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="140" />
+                            <Button
+                                Grid.Column="2"
+                                Padding="4"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                AutomationProperties.Name="{loc:Str Key=Common_Close}"
+                                ToolTipService.ToolTip="{loc:Str Key=Common_Close}"
+                                Click="OnCloseRoomClick"
+                                DataContext="{x:Bind}">
+                                <FontIcon Glyph="&#xE711;" FontSize="11" />
+                            </Button>
                         </Grid>
-                    </Border>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
 
-                    <!-- 도구 탭이 붙은 카드 하나. 탭 띠가 카드 머리에 있고 폴더·인자·실행이 그 아래 이어진다. 순서는 ToolLook.DisplayOrder -->
-                    <Border Style="{StaticResource CardBorder}" Padding="0">
-                        <StackPanel>
-                            <Border
-                                Padding="12,8,12,0"
-                                BorderThickness="0,0,0,1"
-                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
-                                <muxc:SelectorBar x:Name="ToolTabs" SelectionChanged="OnToolTabChanged" AutomationProperties.AutomationId="ToolTabs">
-                                    <muxc:SelectorBarItem Text="Codex" IsSelected="True" AutomationProperties.AutomationId="ToolTabCodex">
-                                        <muxc:SelectorBarItem.Icon>
-                                            <FontIcon Glyph="&#xE756;" />
-                                        </muxc:SelectorBarItem.Icon>
-                                    </muxc:SelectorBarItem>
-                                    <muxc:SelectorBarItem Text="Claude" AutomationProperties.AutomationId="ToolTabClaude">
-                                        <muxc:SelectorBarItem.Icon>
-                                            <FontIcon Glyph="&#xE756;" />
-                                        </muxc:SelectorBarItem.Icon>
-                                    </muxc:SelectorBarItem>
-                                    <muxc:SelectorBarItem Text="Gemini" AutomationProperties.AutomationId="ToolTabGemini">
-                                        <muxc:SelectorBarItem.Icon>
-                                            <FontIcon Glyph="&#xE756;" />
-                                        </muxc:SelectorBarItem.Icon>
-                                    </muxc:SelectorBarItem>
-                                </muxc:SelectorBar>
-                            </Border>
+            <!-- 방 도구 줄(터미널 방일 때만): 찾기 · 프롬프트 넣기 · 규칙 편집 -->
+            <StackPanel x:Name="RoomTools" Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Visibility="Collapsed">
+                <TextBox
+                    x:Name="FindBox"
+                    Width="180"
+                    PlaceholderText="{loc:Str Key=Room_FindPlaceholder}"
+                    AutomationProperties.AutomationId="TerminalFindBox"
+                    TextChanged="OnFindTextChanged"
+                    KeyDown="OnFindKeyDown" />
+                <Button Padding="6" Click="OnFindPrevClick" ToolTipService.ToolTip="{loc:Str Key=Room_FindPrev}" AutomationProperties.Name="{loc:Str Key=Room_FindPrev}">
+                    <FontIcon Glyph="&#xE70E;" FontSize="12" />
+                </Button>
+                <Button Padding="6" Click="OnFindNextClick" ToolTipService.ToolTip="{loc:Str Key=Room_FindNext}" AutomationProperties.Name="{loc:Str Key=Room_FindNext}">
+                    <FontIcon Glyph="&#xE70D;" FontSize="12" />
+                </Button>
+                <muxc:DropDownButton AutomationProperties.AutomationId="RoomPromptButton" ToolTipService.ToolTip="{loc:Str Key=Room_ApplyPromptHint}">
+                    <muxc:DropDownButton.Content>
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon Glyph="&#xE8BD;" FontSize="12" />
+                            <TextBlock Text="{loc:Str Key=Room_ApplyPrompt}" />
+                        </StackPanel>
+                    </muxc:DropDownButton.Content>
+                    <muxc:DropDownButton.Flyout>
+                        <MenuFlyout x:Name="RoomPromptFlyout" Opening="OnRoomPromptFlyoutOpening" />
+                    </muxc:DropDownButton.Flyout>
+                </muxc:DropDownButton>
+                <Button Click="OnRoomRulesClick" AutomationProperties.AutomationId="RoomRulesButton" ToolTipService.ToolTip="{loc:Str Key=Room_EditRulesHint}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE8A5;" FontSize="12" />
+                        <TextBlock Text="{loc:Str Key=Terminal_EditRules}" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
 
-                            <StackPanel Spacing="14" Padding="20,16,20,20">
+        <!-- ───── 본문 ───── -->
+        <Grid Grid.Row="1">
 
-                                <!-- 작업 폴더: 모든 도구가 같은 폴더를 쓴다 -->
-                                <StackPanel Spacing="8">
-                                    <TextBlock Text="{loc:Str Key=Terminal_WorkFolder}" Style="{StaticResource SectionTitleText}" />
+            <!-- 새 세션 카드 -->
+            <ScrollViewer x:Name="NewSessionPanel" VerticalScrollBarVisibility="Auto">
+                <Border Style="{StaticResource CardBorder}" Padding="0" MaxWidth="{StaticResource ContentMaxWidth}" HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <StackPanel>
+                        <!-- 도구 탭. 순서는 ToolLook.DisplayOrder -->
+                        <Border Padding="12,8,12,0" BorderThickness="0,0,0,1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+                            <muxc:SelectorBar x:Name="ToolTabs" SelectionChanged="OnToolTabChanged" AutomationProperties.AutomationId="ToolTabs">
+                                <muxc:SelectorBarItem Text="Codex" IsSelected="True" AutomationProperties.AutomationId="ToolTabCodex">
+                                    <muxc:SelectorBarItem.Icon>
+                                        <FontIcon Glyph="&#xE756;" />
+                                    </muxc:SelectorBarItem.Icon>
+                                </muxc:SelectorBarItem>
+                                <muxc:SelectorBarItem Text="Claude" AutomationProperties.AutomationId="ToolTabClaude">
+                                    <muxc:SelectorBarItem.Icon>
+                                        <FontIcon Glyph="&#xE756;" />
+                                    </muxc:SelectorBarItem.Icon>
+                                </muxc:SelectorBarItem>
+                                <muxc:SelectorBarItem Text="Gemini" AutomationProperties.AutomationId="ToolTabGemini">
+                                    <muxc:SelectorBarItem.Icon>
+                                        <FontIcon Glyph="&#xE756;" />
+                                    </muxc:SelectorBarItem.Icon>
+                                </muxc:SelectorBarItem>
+                            </muxc:SelectorBar>
+                        </Border>
 
-                                    <Grid ColumnSpacing="8">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
+                        <StackPanel Spacing="16" Padding="20,16,20,20">
 
-                                        <TextBox
-                                            Grid.Column="0"
-                                            AutomationProperties.AutomationId="WorkingDirBox"
-                                            AutomationProperties.Name="{loc:Str Key=Terminal_FolderPath}"
-                                            FontFamily="Consolas"
-                                            Text="{x:Bind ViewModel.WorkingDirectory, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                            PlaceholderText="{loc:Str Key=Terminal_FolderPath}" />
+                            <!-- 1. 프로젝트 폴더: 도구 공통. 폴더는 실행 위치일 뿐이라 도구별로 나누지 않는다 -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="{loc:Str Key=Terminal_WorkFolder}" Style="{StaticResource SectionTitleText}" />
+                                <Grid ColumnSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox
+                                        Grid.Column="0"
+                                        AutomationProperties.AutomationId="WorkingDirBox"
+                                        AutomationProperties.Name="{loc:Str Key=Terminal_FolderPath}"
+                                        FontFamily="Consolas"
+                                        Text="{x:Bind ViewModel.WorkingDirectory, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        PlaceholderText="{loc:Str Key=Terminal_FolderPath}" />
+                                    <muxc:DropDownButton Grid.Column="1" AutomationProperties.AutomationId="ProjectPickerButton">
+                                        <muxc:DropDownButton.Content>
+                                            <TextBlock Text="{loc:Str Key=Common_KnownProjects}" />
+                                        </muxc:DropDownButton.Content>
+                                        <muxc:DropDownButton.Flyout>
+                                            <MenuFlyout x:Name="ProjectFlyout" Opening="OnProjectFlyoutOpening" />
+                                        </muxc:DropDownButton.Flyout>
+                                    </muxc:DropDownButton>
+                                </Grid>
+                            </StackPanel>
 
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                                            <muxc:DropDownButton AutomationProperties.AutomationId="ProjectPickerButton">
-                                                <muxc:DropDownButton.Content>
-                                                    <TextBlock Text="{loc:Str Key=Common_KnownProjects}" />
-                                                </muxc:DropDownButton.Content>
-                                                <muxc:DropDownButton.Flyout>
-                                                    <MenuFlyout x:Name="ProjectFlyout" Opening="OnProjectFlyoutOpening" />
-                                                </muxc:DropDownButton.Flyout>
-                                            </muxc:DropDownButton>
+                            <!-- 2. 세션: 새로 시작하거나 이 폴더의 지난 세션을 이어서 -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="{loc:Str Key=Terminal_Session}" Style="{StaticResource SectionTitleText}" />
+                                <muxc:RadioButtons
+                                    AutomationProperties.AutomationId="SessionModeRadios"
+                                    MaxColumns="2"
+                                    SelectedIndex="{x:Bind ViewModel.SessionModeIndex, Mode=TwoWay}">
+                                    <RadioButton Content="{loc:Str Key=Terminal_NewSession}" AutomationProperties.AutomationId="NewSessionRadio" />
+                                    <RadioButton Content="{loc:Str Key=Terminal_ResumeSession}" AutomationProperties.AutomationId="ResumeSessionRadio" />
+                                </muxc:RadioButtons>
 
-                                            <muxc:DropDownButton AutomationProperties.AutomationId="PromptPickerButton">
-                                                <muxc:DropDownButton.Content>
-                                                    <TextBlock Text="{loc:Str Key=Terminal_MyPrompts}" />
-                                                </muxc:DropDownButton.Content>
-                                                <muxc:DropDownButton.Flyout>
-                                                    <MenuFlyout x:Name="PromptFlyout" Opening="OnPromptFlyoutOpening" />
-                                                </muxc:DropDownButton.Flyout>
-                                            </muxc:DropDownButton>
-                                        </StackPanel>
-                                    </Grid>
-
-                                    <!-- 최근 폴더: 있으면 짧은 목록, 없으면 한 줄 안내 -->
+                                <!-- 기존 세션 목록 -->
+                                <StackPanel Spacing="6" Visibility="{x:Bind ViewModel.IsResume, Mode=OneWay}">
                                     <ListView
-                                        AutomationProperties.AutomationId="RecentFolderList"
-                                        AutomationProperties.Name="{loc:Str Key=Terminal_RecentFolders}"
-                                        ItemsSource="{x:Bind ViewModel.RecentFolders}"
+                                        AutomationProperties.AutomationId="ResumeSessionList"
+                                        ItemsSource="{x:Bind ViewModel.ResumeCandidates}"
+                                        SelectedItem="{x:Bind ViewModel.SelectedResume, Mode=TwoWay}"
                                         SelectionMode="Single"
-                                        MaxHeight="120"
-                                        Visibility="{x:Bind ViewModel.HasRecentFolders, Mode=OneWay}"
-                                        SelectionChanged="OnRecentSelectionChanged">
-                                        <ListView.ItemContainerStyle>
-                                            <Style TargetType="ListViewItem">
-                                                <Setter Property="MinHeight" Value="30" />
-                                            </Style>
-                                        </ListView.ItemContainerStyle>
+                                        MaxHeight="220"
+                                        BorderThickness="1"
+                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                        CornerRadius="4">
                                         <ListView.ItemTemplate>
-                                            <DataTemplate x:DataType="x:String">
-                                                <TextBlock
-                                                    Text="{x:Bind}"
-                                                    Style="{StaticResource MonoText}"
-                                                    ToolTipService.ToolTip="{x:Bind}" />
+                                            <DataTemplate x:DataType="vm:ResumeCandidateViewModel">
+                                                <Grid ColumnSpacing="12" Padding="0,4">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0" Text="{x:Bind When}" Style="{StaticResource MonoText}" VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="1" Text="{x:Bind Summary}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" ToolTipService.ToolTip="{x:Bind Summary}" />
+                                                    <TextBlock Grid.Column="2" Text="{x:Bind Counts}" Style="{StaticResource MutedText}" VerticalAlignment="Center" />
+                                                </Grid>
                                             </DataTemplate>
                                         </ListView.ItemTemplate>
                                     </ListView>
-
                                     <TextBlock
-                                        Text="{loc:Str Key=Terminal_NoRecent}"
+                                        Text="{x:Bind ViewModel.NoResumeCandidatesText, Mode=OneWay}"
                                         Style="{StaticResource MutedText}"
-                                        Visibility="{x:Bind ViewModel.HasNoRecentFolders, Mode=OneWay}" />
+                                        Visibility="{x:Bind ViewModel.HasNoResumeCandidates, Mode=OneWay}" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- 3. 시작할 때(새 세션): 프롬프트 · 규칙 -->
+                            <StackPanel Spacing="8" Visibility="{x:Bind ViewModel.IsNewSession, Mode=OneWay}">
+                                <TextBlock Text="{loc:Str Key=Terminal_StartWith}" Style="{StaticResource SectionTitleText}" />
+                                <Grid ColumnSpacing="16" RowSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Str Key=Terminal_PromptLabel}" VerticalAlignment="Center" MinWidth="60" />
+                                    <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                        <ComboBox
+                                            MinWidth="280"
+                                            AutomationProperties.AutomationId="StartPromptBox"
+                                            ItemsSource="{x:Bind ViewModel.PromptChoices}"
+                                            SelectedItem="{x:Bind ViewModel.SelectedPrompt, Mode=TwoWay}"
+                                            DisplayMemberPath="Name" />
+                                        <TextBlock Text="{loc:Str Key=Terminal_PromptHint}" Style="{StaticResource MutedText}" VerticalAlignment="Center" TextWrapping="Wrap" />
+                                    </StackPanel>
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="{loc:Str Key=Terminal_RulesLabel}" VerticalAlignment="Center" MinWidth="60" />
+                                    <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                        <Button Content="{loc:Str Key=Terminal_EditRules}" Click="OnEditRulesClick" AutomationProperties.AutomationId="EditRulesButton" />
+                                        <TextBlock Text="{x:Bind ViewModel.RulesStatusText, Mode=OneWay}" Style="{StaticResource MutedText}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+
+                            <!-- 4. 옵션 인자 -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="{loc:Str Key=Terminal_OptionArgs}" Style="{StaticResource SectionTitleText}" />
+                                <TextBox
+                                    AutomationProperties.AutomationId="ArgumentsBox"
+                                    AutomationProperties.Name="{loc:Str Key=Terminal_OptionArgs}"
+                                    Text="{x:Bind ViewModel.SelectedTool.Arguments, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    PlaceholderText="{loc:Str Key=Terminal_ArgsPlaceholder}" />
+                                <TextBlock Text="{x:Bind ViewModel.SelectedTool.PresetsTitle, Mode=OneWay}" Style="{StaticResource MutedText}" />
+                                <ItemsRepeater ItemsSource="{x:Bind ViewModel.SelectedTool.Presets, Mode=OneWay}">
+                                    <ItemsRepeater.Layout>
+                                        <UniformGridLayout MinItemWidth="170" MinRowSpacing="8" MinColumnSpacing="8" ItemsStretch="None" />
+                                    </ItemsRepeater.Layout>
+                                    <ItemsRepeater.ItemTemplate>
+                                        <DataTemplate x:DataType="x:String">
+                                            <Button Content="{x:Bind}" Tag="{x:Bind}" Click="OnPresetClick" HorizontalAlignment="Stretch" />
+                                        </DataTemplate>
+                                    </ItemsRepeater.ItemTemplate>
+                                </ItemsRepeater>
+                            </StackPanel>
+
+                            <!-- 5. 실행: 기본은 앱 안 터미널. 미설치면 같은 버튼이 설치. 새 창은 보조 -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="{loc:Str Key=Terminal_Launch}" Style="{StaticResource SectionTitleText}" />
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Button
+                                        MinWidth="200"
+                                        Style="{ThemeResource AccentButtonStyle}"
+                                        AutomationProperties.AutomationId="OpenTerminalButton"
+                                        Click="OnOpenTerminalClick"
+                                        IsEnabled="{x:Bind ViewModel.SelectedTool.CanPress, Mode=OneWay}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                                            <FontIcon Glyph="{x:Bind ViewModel.SelectedTool.Glyph, Mode=OneWay}" FontSize="14" />
+                                            <TextBlock Text="{x:Bind ViewModel.SelectedTool.EmbeddedButtonText, Mode=OneWay}" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button
+                                        AutomationProperties.AutomationId="LaunchButton"
+                                        Command="{x:Bind ViewModel.LaunchCommand}"
+                                        CommandParameter="{x:Bind ViewModel.SelectedTool, Mode=OneWay}"
+                                        IsEnabled="{x:Bind ViewModel.SelectedTool.CanPress, Mode=OneWay}"
+                                        Visibility="{x:Bind ViewModel.SelectedTool.IsInstalled, Mode=OneWay}"
+                                        Content="{loc:Str Key=Terminal_OpenExternal}"
+                                        ToolTipService.ToolTip="{x:Bind ViewModel.SelectedTool.ButtonText, Mode=OneWay}" />
                                 </StackPanel>
 
-                                <!-- 인자 -->
-                                <StackPanel Spacing="8">
-                                    <TextBlock Text="{loc:Str Key=Terminal_OptionArgs}" Style="{StaticResource SectionTitleText}" />
-                                    <TextBox
-                                        AutomationProperties.AutomationId="ArgumentsBox"
-                                        AutomationProperties.Name="{loc:Str Key=Terminal_OptionArgs}"
-                                        Text="{x:Bind ViewModel.SelectedTool.Arguments, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                        PlaceholderText="{loc:Str Key=Terminal_ArgsPlaceholder}" />
+                                <TextBlock
+                                    Text="{x:Bind ViewModel.SelectedTool.Hint, Mode=OneWay}"
+                                    Visibility="{x:Bind ViewModel.SelectedTool.HasHint, Mode=OneWay}"
+                                    Style="{StaticResource MutedText}"
+                                    TextWrapping="Wrap" />
 
-                                    <TextBlock Text="{x:Bind ViewModel.SelectedTool.PresetsTitle, Mode=OneWay}" Style="{StaticResource MutedText}" />
-                                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.SelectedTool.Presets, Mode=OneWay}">
-                                        <ItemsRepeater.Layout>
-                                            <UniformGridLayout
-                                                MinItemWidth="170"
-                                                MinRowSpacing="8"
-                                                MinColumnSpacing="8"
-                                                ItemsStretch="None" />
-                                        </ItemsRepeater.Layout>
-                                        <ItemsRepeater.ItemTemplate>
-                                            <DataTemplate x:DataType="x:String">
-                                                <Button Content="{x:Bind}" Tag="{x:Bind}" Click="OnPresetClick" HorizontalAlignment="Stretch" />
-                                            </DataTemplate>
-                                        </ItemsRepeater.ItemTemplate>
-                                    </ItemsRepeater>
+                                <TextBlock x:Name="EmbeddedStatus" Style="{StaticResource MutedText}" TextWrapping="Wrap" Visibility="Collapsed" />
+
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{loc:Str Key=Terminal_Preview}" Style="{StaticResource MutedText}" />
+                                    <TextBlock
+                                        AutomationProperties.AutomationId="LaunchPreview"
+                                        Text="{x:Bind ViewModel.Preview, Mode=OneWay}"
+                                        Style="{StaticResource MonoText}"
+                                        TextTrimming="CharacterEllipsis"
+                                        ToolTipService.ToolTip="{x:Bind ViewModel.Preview, Mode=OneWay}" />
                                 </StackPanel>
 
-                                <!-- 실행: 기본은 앱 안 터미널. 설치돼 있지 않으면 같은 버튼이 설치가 된다. 새 창은 보조 -->
-                                <StackPanel Spacing="8">
-                                    <TextBlock Text="{loc:Str Key=Terminal_Launch}" Style="{StaticResource SectionTitleText}" />
-
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <Button
-                                            MinWidth="200"
-                                            Style="{ThemeResource AccentButtonStyle}"
-                                            AutomationProperties.AutomationId="OpenTerminalButton"
-                                            Click="OnOpenTerminalClick"
-                                            IsEnabled="{x:Bind ViewModel.SelectedTool.CanPress, Mode=OneWay}">
-                                            <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
-                                                <FontIcon Glyph="{x:Bind ViewModel.SelectedTool.Glyph, Mode=OneWay}" FontSize="14" />
-                                                <TextBlock Text="{x:Bind ViewModel.SelectedTool.EmbeddedButtonText, Mode=OneWay}" />
-                                            </StackPanel>
-                                        </Button>
-                                        <Button
-                                            AutomationProperties.AutomationId="LaunchButton"
-                                            Command="{x:Bind ViewModel.LaunchCommand}"
-                                            CommandParameter="{x:Bind ViewModel.SelectedTool, Mode=OneWay}"
-                                            IsEnabled="{x:Bind ViewModel.SelectedTool.CanPress, Mode=OneWay}"
-                                            Visibility="{x:Bind ViewModel.SelectedTool.IsInstalled, Mode=OneWay}"
-                                            Content="{loc:Str Key=Terminal_OpenExternal}"
-                                            ToolTipService.ToolTip="{x:Bind ViewModel.SelectedTool.ButtonText, Mode=OneWay}" />
-                                    </StackPanel>
-
-                                    <TextBlock
-                                        Text="{x:Bind ViewModel.SelectedTool.Hint, Mode=OneWay}"
-                                        Visibility="{x:Bind ViewModel.SelectedTool.HasHint, Mode=OneWay}"
-                                        Style="{StaticResource MutedText}"
-                                        TextWrapping="Wrap" />
-
-                                    <TextBlock
-                                        x:Name="EmbeddedStatus"
-                                        Style="{StaticResource MutedText}"
-                                        TextWrapping="Wrap"
-                                        Visibility="Collapsed" />
-
-                                    <StackPanel Spacing="4">
-                                        <TextBlock Text="{loc:Str Key=Terminal_Preview}" Style="{StaticResource MutedText}" />
-                                        <TextBlock
-                                            AutomationProperties.AutomationId="LaunchPreview"
-                                            Text="{x:Bind ViewModel.SelectedTool.Preview, Mode=OneWay}"
-                                            Style="{StaticResource MonoText}"
-                                            TextTrimming="CharacterEllipsis"
-                                            ToolTipService.ToolTip="{x:Bind ViewModel.SelectedTool.Preview, Mode=OneWay}" />
-                                    </StackPanel>
-
-                                    <StackPanel Spacing="4" Visibility="{x:Bind ViewModel.HasLastCommand, Mode=OneWay}">
-                                        <TextBlock Text="{loc:Str Key=Terminal_LastCommand}" Style="{StaticResource MutedText}" />
-                                        <TextBlock
-                                            Text="{x:Bind ViewModel.LastCommand, Mode=OneWay}"
-                                            Style="{StaticResource MonoText}"
-                                            TextWrapping="Wrap"
-                                            IsTextSelectionEnabled="True" />
-                                    </StackPanel>
+                                <StackPanel Spacing="4" Visibility="{x:Bind ViewModel.HasLastCommand, Mode=OneWay}">
+                                    <TextBlock Text="{loc:Str Key=Terminal_LastCommand}" Style="{StaticResource MutedText}" />
+                                    <TextBlock Text="{x:Bind ViewModel.LastCommand, Mode=OneWay}" Style="{StaticResource MonoText}" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
                                 </StackPanel>
                             </StackPanel>
                         </StackPanel>
-                    </Border>
-                </StackPanel>
-            </Grid>
-        </ScrollViewer>
-
-        <!-- ───── 방: 열린 터미널이 화면을 채운다 ───── -->
-        <Grid x:Name="RoomView" Padding="{StaticResource PagePadding}" RowSpacing="10" Visibility="Collapsed">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-
-            <!-- 머리: 새 터미널(로비로) + 방 탭 띠 + 찾기(터미널 방만). 방은 RoomManager가 들고 있어 화면을 옮겨도 산다 -->
-            <Grid Grid.Row="0" ColumnSpacing="10">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
-                <!-- 찾기: xterm search 애드온. Enter 다음, Shift+Enter 이전, 비우면 표시 지움 -->
-                <StackPanel x:Name="FindPanel" Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                    <TextBox
-                        x:Name="FindBox"
-                        Width="200"
-                        PlaceholderText="{loc:Str Key=Room_FindPlaceholder}"
-                        AutomationProperties.AutomationId="TerminalFindBox"
-                        TextChanged="OnFindTextChanged"
-                        KeyDown="OnFindKeyDown" />
-                    <Button Padding="6" Click="OnFindPrevClick" ToolTipService.ToolTip="{loc:Str Key=Room_FindPrev}" AutomationProperties.Name="{loc:Str Key=Room_FindPrev}">
-                        <FontIcon Glyph="&#xE70E;" FontSize="12" />
-                    </Button>
-                    <Button Padding="6" Click="OnFindNextClick" ToolTipService.ToolTip="{loc:Str Key=Room_FindNext}" AutomationProperties.Name="{loc:Str Key=Room_FindNext}">
-                        <FontIcon Glyph="&#xE70D;" FontSize="12" />
-                    </Button>
-                </StackPanel>
-
-                <Button Grid.Column="0" Click="OnBackToLobbyClick" AutomationProperties.AutomationId="NewTerminalButton" VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <FontIcon Glyph="&#xE710;" FontSize="12" />
-                        <TextBlock Text="{loc:Str Key=Room_NewTerminal}" />
                     </StackPanel>
-                </Button>
-
-                <ListView
-                    x:Name="RoomTabs"
-                    Grid.Column="1"
-                    SelectionMode="Single"
-                    SelectionChanged="OnRoomTabChanged"
-                    AutomationProperties.AutomationId="RoomTabs"
-                    ScrollViewer.HorizontalScrollMode="Auto"
-                    ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                    ScrollViewer.VerticalScrollMode="Disabled">
-                    <ListView.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel Orientation="Horizontal" Spacing="6" />
-                        </ItemsPanelTemplate>
-                    </ListView.ItemsPanel>
-                    <ListView.ItemContainerStyle>
-                        <Style TargetType="ListViewItem">
-                            <Setter Property="Padding" Value="4" />
-                            <Setter Property="MinWidth" Value="0" />
-                        </Style>
-                    </ListView.ItemContainerStyle>
-                    <ListView.ItemTemplate>
-                        <DataTemplate x:DataType="vm:IRoom">
-                            <Grid ColumnSpacing="8" Padding="6,2" ToolTipService.ToolTip="{x:Bind Title, Mode=OneWay}">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <Grid Grid.Column="0" Width="20" Height="20" VerticalAlignment="Center">
-                                    <Border Width="20" Height="20" CornerRadius="10" Background="{x:Bind AvatarBrush}">
-                                        <TextBlock Text="{x:Bind Avatar}" Foreground="White" FontSize="10" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                    <!-- 안 본 새 답 점 -->
-                                    <Ellipse Width="8" Height="8" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0"
-                                             Fill="{ThemeResource SystemFillColorAttentionBrush}" Stroke="{ThemeResource CardBackgroundFillColorDefaultBrush}" StrokeThickness="1.5"
-                                             Visibility="{x:Bind UnseenVisibility, Mode=OneWay}" />
-                                </Grid>
-                                <TextBlock Grid.Column="1" Text="{x:Bind ShortTitle}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="140" />
-                                <Button
-                                    Grid.Column="2"
-                                    Padding="4"
-                                    Background="Transparent"
-                                    BorderThickness="0"
-                                    AutomationProperties.Name="{loc:Str Key=Common_Close}"
-                                    ToolTipService.ToolTip="{loc:Str Key=Common_Close}"
-                                    Click="OnCloseRoomClick"
-                                    DataContext="{x:Bind}">
-                                    <FontIcon Glyph="&#xE711;" FontSize="11" />
-                                </Button>
-                            </Grid>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
-            </Grid>
+                </Border>
+            </ScrollViewer>
 
             <!-- 방 본문: 종류에 따라 챗봇(말풍선) 또는 터미널(xterm). 탭·RoomManager는 IRoom 공통 -->
-            <Grid x:Name="RoomCard" Grid.Row="1">
+            <Grid x:Name="RoomCard" Visibility="Collapsed">
 
                 <!-- 챗봇 패널: 말풍선 + 입력. DataContext = StreamingRoomViewModel. 지금은 UI 비공개(여는 버튼 없음), 코드는 유지 -->
                 <Grid x:Name="ChatbotPanel" RowSpacing="10" Visibility="Collapsed">

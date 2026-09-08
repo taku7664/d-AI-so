@@ -2,20 +2,29 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Daiso.App.Services;
-using Daiso.Core;
 using Daiso.App.Strings;
+using Daiso.Core;
+using Daiso.Core.Prompts;
 
 namespace Daiso.App.ViewModels;
 
-/// <summary>선택한 폴더에서 Claude 또는 Codex 터미널을 연다. (REQUIREMENTS §4)</summary>
+/// <summary>
+/// 새 터미널 카드의 뷰모델. 도구 → 프로젝트 폴더 → 세션(새 / 기존 이어서) → 시작할 때(프롬프트·규칙) → 옵션 인자 → 실행.
+/// 내장 터미널이 기본이고 새 창은 보조. (REQUIREMENTS §4, ARCHITECTURE §5.3)
+/// </summary>
 public sealed partial class TerminalViewModel : ObservableObject
 {
     private readonly IReadOnlyList<IProvider> _providers;
     private readonly ITerminalLauncher _launcher;
     private readonly ISettingsStore _settings;
     private readonly KnownProjects _knownProjects;
+    private readonly IndexService _index;
+    private readonly IPromptLibrary _prompts;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanLaunch))]
+    [NotifyPropertyChangedFor(nameof(HasRules))]
+    [NotifyPropertyChangedFor(nameof(RulesStatusText))]
     private string? workingDirectory;
 
     [ObservableProperty]
@@ -25,21 +34,23 @@ public sealed partial class TerminalViewModel : ObservableObject
         IEnumerable<IProvider> providers,
         ITerminalLauncher launcher,
         ISettingsStore settings,
-        KnownProjects knownProjects)
+        KnownProjects knownProjects,
+        IndexService index,
+        IPromptLibrary prompts)
     {
-        ArgumentNullException.ThrowIfNull(knownProjects);
-
         ArgumentNullException.ThrowIfNull(providers);
         ArgumentNullException.ThrowIfNull(launcher);
         ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(knownProjects);
+        ArgumentNullException.ThrowIfNull(index);
+        ArgumentNullException.ThrowIfNull(prompts);
 
         _providers = providers.ToList();
         _launcher = launcher;
         _settings = settings;
-
         _knownProjects = knownProjects;
-
-        RecentFolders = new ObservableCollection<string>(_settings.Current.RecentFolders);
+        _index = index;
+        _prompts = prompts;
 
         Tools = new ObservableCollection<ToolLaunchViewModel>(
             ToolLook.InDisplayOrder(_providers, provider => provider.Kind)
@@ -48,11 +59,21 @@ public sealed partial class TerminalViewModel : ObservableObject
         foreach (var tool in Tools)
         {
             tool.LaunchCommand = LaunchCommand;
+            tool.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName is nameof(ToolLaunchViewModel.Arguments) or nameof(ToolLaunchViewModel.IsInstalled))
+                {
+                    OnPropertyChanged(nameof(Preview));
+                }
+            };
         }
 
-        WorkingDirectory = RecentFolders.FirstOrDefault();
+        WorkingDirectory = _settings.Current.RecentFolders.FirstOrDefault();
         RefreshPreviews();
+        LoadPromptChoices();
     }
+
+    // ── 도구 ──────────────────────────────────────────────────────────────
 
     /// <summary>도구별 실행 줄. 탭 하나가 줄 하나다. 순서는 ToolLook.DisplayOrder.</summary>
     public ObservableCollection<ToolLaunchViewModel> Tools { get; }
@@ -60,9 +81,10 @@ public sealed partial class TerminalViewModel : ObservableObject
     /// <summary>지금 보이는 탭.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SelectedTool))]
+    [NotifyPropertyChangedFor(nameof(Preview))]
     private int selectedToolIndex;
 
-    /// <summary>지금 탭의 도구 줄. 인자·프리셋·버튼·미리보기가 여기서 나온다.</summary>
+    /// <summary>지금 탭의 도구 줄. 인자·프리셋·버튼이 여기서 나온다.</summary>
     public ToolLaunchViewModel SelectedTool => Tools[Math.Clamp(SelectedToolIndex, 0, Tools.Count - 1)];
 
     /// <summary>도구의 탭을 앞으로 가져온다.</summary>
@@ -75,6 +97,8 @@ public sealed partial class TerminalViewModel : ObservableObject
             SelectedToolIndex = index;
         }
     }
+
+    partial void OnSelectedToolIndexChanged(int value) => _ = LoadResumeCandidatesAsync();
 
     /// <summary>실행 파일이 PATH에 있는지 다시 본다. 화면이 열릴 때와 설치를 돌린 뒤에 부른다.</summary>
     public async Task RefreshInstalledAsync(CancellationToken ct = default)
@@ -95,7 +119,9 @@ public sealed partial class TerminalViewModel : ObservableObject
         _ => [],
     };
 
-    /// <summary>앱이 이미 아는 프로젝트 폴더. 대화상자 없이 여기서 고른다.</summary>
+    // ── 프로젝트 폴더 ─────────────────────────────────────────────────────
+
+    /// <summary>앱이 이미 아는 프로젝트 폴더(세션 인덱스·최근 폴더). 대화상자 없이 여기서 고른다.</summary>
     public ObservableCollection<string> ProjectChoices { get; } = [];
 
     /// <summary>인덱스·최근 폴더에서 프로젝트 목록을 다시 읽는다.</summary>
@@ -111,31 +137,8 @@ public sealed partial class TerminalViewModel : ObservableObject
         }
     }
 
-    /// <summary>최근에 연 폴더. 최신 것이 앞. 최대 10개.</summary>
-    public ObservableCollection<string> RecentFolders { get; }
-
-    /// <summary>폴더가 정해졌는지. 버튼 활성에 쓴다.</summary>
-    public bool CanLaunch => !string.IsNullOrWhiteSpace(WorkingDirectory);
-
-    /// <summary>최근 폴더가 비었는가. 안내 문구를 띄운다.</summary>
-    public bool HasNoRecentFolders => RecentFolders.Count == 0;
-
-    /// <summary>최근 폴더가 있는가. 목록 표시에 쓴다.</summary>
-    public bool HasRecentFolders => RecentFolders.Count > 0;
-
-    /// <summary>마지막 실행 기록이 있는가.</summary>
-    public bool HasLastCommand => !string.IsNullOrWhiteSpace(LastCommand);
-
-    /// <summary>폴더 유무를 도구 줄에 알린다. 열기 버튼은 폴더가 있어야 눌린다.</summary>
-    private void RefreshPreviews()
-    {
-        foreach (var tool in Tools)
-        {
-            tool.HasFolder = CanLaunch;
-        }
-    }
-
-    partial void OnLastCommandChanged(string? value) => OnPropertyChanged(nameof(HasLastCommand));
+    /// <summary>폴더가 정해졌고 실제로 있는가. 열기 버튼 활성에 쓴다.</summary>
+    public bool CanLaunch => !string.IsNullOrWhiteSpace(WorkingDirectory) && Directory.Exists(WorkingDirectory);
 
     /// <summary>폴더 선택 결과를 받아 히스토리에 넣는다.</summary>
     public void SetFolder(string path)
@@ -147,47 +150,255 @@ public sealed partial class TerminalViewModel : ObservableObject
 
         WorkingDirectory = path;
         Remember(path);
-        OnPropertyChanged(nameof(HasNoRecentFolders));
-        OnPropertyChanged(nameof(HasRecentFolders));
     }
+
+    partial void OnWorkingDirectoryChanged(string? value)
+    {
+        RefreshPreviews();
+        _ = LoadResumeCandidatesAsync();
+    }
+
+    /// <summary>폴더 유무를 도구 줄에 알린다. 열기 버튼은 폴더가 있어야 눌린다.</summary>
+    private void RefreshPreviews()
+    {
+        foreach (var tool in Tools)
+        {
+            tool.HasFolder = CanLaunch;
+        }
+
+        OnPropertyChanged(nameof(Preview));
+    }
+
+    private void Remember(string path)
+    {
+        AppSettings.Remember(_settings.Current.RecentFolders, path);
+        _settings.Save();
+    }
+
+    // ── 세션: 새 세션 / 기존 세션 이어서 ────────────────────────────────────
+
+    /// <summary>0 = 새 세션, 1 = 기존 세션 이어서. RadioButtons가 이 값에 바로 묶인다.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsNewSession))]
+    [NotifyPropertyChangedFor(nameof(IsResume))]
+    [NotifyPropertyChangedFor(nameof(Preview))]
+    private int sessionModeIndex;
+
+    public bool IsNewSession => SessionModeIndex == 0;
+
+    public bool IsResume => SessionModeIndex == 1;
+
+    /// <summary>이 폴더·도구의 지난 세션. 최근 것이 앞. 기존 세션 이어서를 골랐을 때 목록에 보인다.</summary>
+    public ObservableCollection<ResumeCandidateViewModel> ResumeCandidates { get; } = [];
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Preview))]
+    private ResumeCandidateViewModel? selectedResume;
+
+    /// <summary>목록이 비었는가(안내 문구).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(NoResumeCandidatesText))]
+    private bool hasNoResumeCandidates;
+
+    public string NoResumeCandidatesText => UiStrings.Format("Terminal_NoSessionsHere", SelectedTool.Label);
+
+    /// <summary>세션·요약 "이어서 열기"가 넘긴 resume 인자. 목록에서 같은 세션을 찾으면 그것을 고르고, 못 찾아도 이 인자로 연다.</summary>
+    private string? _preparedResumeArguments;
+
+    private int _resumeLoadVersion;
+
+    /// <summary>지금 도구·폴더의 세션을 인덱스에서 읽어 목록을 채운다. 폴더나 탭이 바뀔 때마다.</summary>
+    public async Task LoadResumeCandidatesAsync(CancellationToken ct = default)
+    {
+        var version = ++_resumeLoadVersion;
+        var tool = SelectedTool;
+        var directory = WorkingDirectory;
+
+        ResumeCandidates.Clear();
+        SelectedResume = null;
+        HasNoResumeCandidates = false;
+        OnPropertyChanged(nameof(NoResumeCandidatesText));
+
+        if (string.IsNullOrWhiteSpace(directory))
+        {
+            HasNoResumeCandidates = true;
+            return;
+        }
+
+        IReadOnlyList<SessionInfo> sessions;
+
+        try
+        {
+            sessions = await _index.Index
+                .ListAsync(new SessionFilter(tool.Kind, directory, null, null, false, null, IncludeArchived: false), ct)
+                .ConfigureAwait(true);
+        }
+        catch (Exception ex) when (ex is IOException or InvalidOperationException or OperationCanceledException)
+        {
+            sessions = [];
+        }
+
+        if (version != _resumeLoadVersion)
+        {
+            return; // 그 사이 폴더·탭이 또 바뀌었다
+        }
+
+        foreach (var session in sessions.OrderByDescending(session => session.ModifiedAt).Take(30))
+        {
+            ResumeCandidates.Add(new ResumeCandidateViewModel(session, tool.Provider.BuildResumeArguments(session)));
+        }
+
+        HasNoResumeCandidates = ResumeCandidates.Count == 0;
+
+        if (_preparedResumeArguments is { } prepared)
+        {
+            SelectedResume = ResumeCandidates.FirstOrDefault(candidate => candidate.ResumeArguments == prepared);
+        }
+        else if (IsResume)
+        {
+            SelectedResume = ResumeCandidates.FirstOrDefault();
+        }
+    }
+
+    partial void OnSelectedResumeChanged(ResumeCandidateViewModel? value)
+    {
+        if (value is not null)
+        {
+            _preparedResumeArguments = null; // 사람이 직접 골랐다
+        }
+    }
+
+    partial void OnSessionModeIndexChanged(int value)
+    {
+        if (value == 1 && SelectedResume is null)
+        {
+            SelectedResume = ResumeCandidates.FirstOrDefault();
+        }
+    }
+
+    /// <summary>이어서 열 때 붙는 인자. 새 세션이면 빈 문자열.</summary>
+    private string ResumeArguments => IsResume
+        ? (SelectedResume?.ResumeArguments ?? _preparedResumeArguments ?? string.Empty)
+        : string.Empty;
+
+    // ── 시작할 때: 프롬프트·규칙 (새 세션) ───────────────────────────────────
+
+    /// <summary>고를 수 있는 프롬프트. 첫 항목은 "프롬프트 없음".</summary>
+    public ObservableCollection<PromptChoiceViewModel> PromptChoices { get; } = [];
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Preview))]
+    private PromptChoiceViewModel? selectedPrompt;
+
+    /// <summary>기본 제공 + 내 보관함을 이름순으로. 같은 id면 내 것이 이긴다.</summary>
+    public void LoadPromptChoices()
+    {
+        var current = SelectedPrompt?.Preset?.Id;
+
+        PromptChoices.Clear();
+        PromptChoices.Add(PromptChoiceViewModel.None);
+
+        foreach (var preset in BuiltInPrompts.List()
+            .Concat(_prompts.List())
+            .GroupBy(prompt => prompt.Id, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.Last())
+            .OrderBy(prompt => prompt.Name, StringComparer.CurrentCulture))
+        {
+            PromptChoices.Add(new PromptChoiceViewModel(preset));
+        }
+
+        SelectedPrompt = PromptChoices.FirstOrDefault(choice => choice.Preset?.Id == current) ?? PromptChoices[0];
+    }
+
+    /// <summary>프로젝트 폴더에 규칙 파일(PROJECT_RULES.daiso)이 있는가.</summary>
+    public bool HasRules => CanLaunch && File.Exists(Path.Combine(WorkingDirectory!, InstructionTemplate.DefaultRulesFileName));
+
+    public string RulesStatusText => UiStrings.Get(HasRules ? "Terminal_RulesPresent" : "Terminal_RulesAbsent");
+
+    // ── 실행 ──────────────────────────────────────────────────────────────
+
+    /// <summary>실제로 실행될 명령 한 줄. resume 인자 + 사용자 인자 + 프롬프트 시작 메시지.</summary>
+    public string Preview
+    {
+        get
+        {
+            var tool = SelectedTool;
+
+            if (!tool.IsInstalled)
+            {
+                return $"{tool.Label}  ▸  {tool.Provider.InstallCommand}";
+            }
+
+            var arguments = ComposeArguments(tool, writePrompt: false);
+            return $"{tool.Label}  ▸  {tool.Provider.ExecutableName}{(arguments.Length > 0 ? " " + arguments : string.Empty)}";
+        }
+    }
+
+    /// <summary>
+    /// 이번 실행의 인자를 만든다. <paramref name="writePrompt"/>가 참이면 고른 프롬프트를 프로젝트 docs/prompts에 써 넣고
+    /// 시작 메시지를 첫 메시지 인자로 붙인다(Claude·Codex는 위치 인자, Gemini는 -i). 미리보기는 쓰지 않고 모양만 본다.
+    /// </summary>
+    public string ComposeArguments(ToolLaunchViewModel tool, bool writePrompt)
+    {
+        var parts = new List<string>();
+
+        if (ResumeArguments is { Length: > 0 } resume)
+        {
+            parts.Add(resume.Trim());
+        }
+
+        if (tool.Arguments.Trim() is { Length: > 0 } user)
+        {
+            parts.Add(user);
+        }
+
+        if (IsNewSession && SelectedPrompt?.Preset is { } preset && CanLaunch)
+        {
+            if (writePrompt)
+            {
+                _prompts.WriteIntoProject(preset, WorkingDirectory!);
+            }
+
+            var message = PromptPresetSerializer.StarterMessage(preset).Replace('"', '\'');
+            parts.Add(tool.Kind == ToolKind.Gemini ? $"-i \"{message}\"" : $"\"{message}\"");
+        }
+
+        return string.Join(' ', parts);
+    }
+
+    /// <summary>마지막 실행 기록이 있는가.</summary>
+    public bool HasLastCommand => !string.IsNullOrWhiteSpace(LastCommand);
+
+    partial void OnLastCommandChanged(string? value) => OnPropertyChanged(nameof(HasLastCommand));
 
     /// <summary>세션 "이어서 열기"가 방을 바로 열어 달라고 요청했는가. TerminalPage가 한 번 소비한다.</summary>
     private bool _autoOpen;
 
-    /// <summary>자동 열기가 쓸 도구·인자. 화면 로드 때 탭 기본 선택·빈 바인딩이 덮어써, 소비 시 다시 심는다.</summary>
     private ToolKind? _autoOpenTool;
-    private string _autoOpenArguments = string.Empty;
 
-    /// <summary>세션 "이어서 열기"에서 넘어온 인자를 그 도구 탭에 채우고 탭을 앞으로 가져온다.</summary>
+    /// <summary>세션 "이어서 열기"에서 넘어온 도구·폴더·resume 인자를 심고 "기존 세션 이어서"로 둔다.</summary>
     /// <param name="autoOpen">true면 화면이 뜨는 즉시 방(내장 터미널)을 연다.</param>
     public void PrepareResume(ToolKind tool, string workingDir, string resumeArguments, bool autoOpen = false)
     {
-        SetFolder(workingDir);
+        _preparedResumeArguments = resumeArguments;
         SelectTool(tool);
-        SelectedTool.Arguments = resumeArguments;
+        SetFolder(workingDir);
+        SessionModeIndex = 1;
         _autoOpen = autoOpen;
         _autoOpenTool = tool;
-        _autoOpenArguments = resumeArguments;
+        OnPropertyChanged(nameof(Preview));
     }
 
-    /// <summary>
-    /// 자동 열기 요청을 한 번만 꺼내 온다(다시 부르면 false). 인자를 지금 도구에 다시 심어
-    /// 화면 로드 때 빈 값으로 덮인 것을 되돌린다.
-    /// </summary>
+    /// <summary>자동 열기 요청을 한 번만 꺼내 온다(다시 부르면 false). 화면 로드 때 탭 기본 선택이 도구를 덮어쓴 것을 되돌린다.</summary>
     public bool ConsumeAutoOpen()
     {
         var value = _autoOpen;
         _autoOpen = false;
 
-        if (value)
+        if (value && _autoOpenTool is { } tool)
         {
-            // 화면 로드 때 탭이 기본값(Codex)으로 튈 수 있어 도구를 다시 고르고 인자를 심는다
-            if (_autoOpenTool is { } tool)
-            {
-                SelectTool(tool);
-            }
-
-            SelectedTool.Arguments = _autoOpenArguments;
+            SelectTool(tool);
+            SessionModeIndex = 1;
         }
 
         return value;
@@ -197,7 +408,7 @@ public sealed partial class TerminalViewModel : ObservableObject
     [RelayCommand]
     public void AppendPreset(string? preset) => SelectedTool.AppendPreset(preset ?? string.Empty);
 
-    /// <summary>설치돼 있으면 그 도구를 열고, 아니면 새 터미널에서 설치 명령을 돌린다.</summary>
+    /// <summary>새 창(외부 터미널)으로 연다. 설치돼 있지 않으면 설치 명령을 돌린다.</summary>
     [RelayCommand]
     public async Task LaunchAsync(ToolLaunchViewModel? tool)
     {
@@ -212,16 +423,18 @@ public sealed partial class TerminalViewModel : ObservableObject
             return;
         }
 
-        if (WorkingDirectory is not { Length: > 0 } directory)
+        if (!CanLaunch)
         {
             LastCommand = UiStrings.Get("Terminal_PickFolderFirst");
             return;
         }
 
+        var directory = WorkingDirectory!;
         Remember(directory);
-        LastCommand = $"{directory} > {tool.Provider.ExecutableName} {tool.Arguments}".TrimEnd();
+        var arguments = ComposeArguments(tool, writePrompt: true);
+        LastCommand = $"{directory} > {tool.Provider.ExecutableName} {arguments}".TrimEnd();
 
-        await _launcher.LaunchAsync(directory, tool.Provider.ExecutableName, tool.Arguments).ConfigureAwait(true);
+        await _launcher.LaunchAsync(directory, tool.Provider.ExecutableName, arguments).ConfigureAwait(true);
     }
 
     /// <summary>설치가 끝난 것으로 볼 때까지 실행 파일을 몇 초마다 다시 찾는 최대 시간.</summary>
@@ -231,7 +444,7 @@ public sealed partial class TerminalViewModel : ObservableObject
     /// 새 터미널에서 설치 명령을 돌리고, 실행 파일이 PATH에 나타날 때까지 지켜본다.
     /// 나타나면 버튼이 저절로 열기로 바뀐다. 사람이 터미널을 닫아도 앱은 알 수 없으니 시간이 지나면 지켜보기를 멈춘다.
     /// </summary>
-    private async Task InstallAsync(ToolLaunchViewModel tool)
+    public async Task InstallAsync(ToolLaunchViewModel tool)
     {
         var (executable, arguments) = tool.InstallParts();
         var directory = WorkingDirectory is { Length: > 0 } chosen && Directory.Exists(chosen)
@@ -267,23 +480,44 @@ public sealed partial class TerminalViewModel : ObservableObject
             tool.IsInstalling = false;
         }
     }
+}
 
-    private void Remember(string path)
+/// <summary>기존 세션 목록의 한 줄. 시각 · 첫 프롬프트.</summary>
+public sealed class ResumeCandidateViewModel
+{
+    public ResumeCandidateViewModel(SessionInfo session, string resumeArguments)
     {
-        AppSettings.Remember(_settings.Current.RecentFolders, path);
-        _settings.Save();
+        Session = session;
+        ResumeArguments = resumeArguments;
+    }
 
-        RecentFolders.Clear();
+    public SessionInfo Session { get; }
 
-        foreach (var folder in _settings.Current.RecentFolders)
+    /// <summary>이 세션을 이어서 열 때 붙는 인자(예: --resume id).</summary>
+    public string ResumeArguments { get; }
+
+    public string When => Session.ModifiedAt.LocalDateTime.ToString("MM-dd HH:mm", System.Globalization.CultureInfo.CurrentCulture);
+
+    public string Summary
+    {
+        get
         {
-            RecentFolders.Add(folder);
+            var first = (Session.FirstPrompt ?? string.Empty).ReplaceLineEndings(" ").Trim();
+            return first.Length == 0 ? Session.Id : first.Length > 80 ? first[..80] + "…" : first;
         }
     }
 
-    partial void OnWorkingDirectoryChanged(string? value)
-    {
-        OnPropertyChanged(nameof(CanLaunch));
-        RefreshPreviews();
-    }
+    public string Counts => UiStrings.Format("Terminal_SessionCounts", Session.UserMessageCount, Session.AssistantMessageCount);
+}
+
+/// <summary>프롬프트 선택 한 줄. <see cref="Preset"/>이 null이면 "프롬프트 없음".</summary>
+public sealed class PromptChoiceViewModel
+{
+    public static readonly PromptChoiceViewModel None = new(null);
+
+    public PromptChoiceViewModel(PromptPreset? preset) => Preset = preset;
+
+    public PromptPreset? Preset { get; }
+
+    public string Name => Preset?.Name ?? UiStrings.Get("Terminal_PromptNone");
 }

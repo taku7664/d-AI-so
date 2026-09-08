@@ -9,8 +9,14 @@ using Windows.Storage.Pickers;
 
 namespace Daiso.App.Views;
 
+/// <summary>
+/// 터미널 화면. 위는 탭 띠(새 터미널 + 열린 방), 아래는 새 세션 카드 또는 그 방의 터미널.
+/// 페이지는 캐시된다(NavigationCacheMode=Required). Loaded는 돌아올 때마다 다시 돌므로 한 번만 걸 것은 생성자에 둔다. (ARCHITECTURE §5.3)
+/// </summary>
 public sealed partial class TerminalPage : Page
 {
+    private IRoom? _room;
+
     public TerminalPage()
     {
         InitializeComponent();
@@ -18,8 +24,7 @@ public sealed partial class TerminalPage : Page
         SelectorBarVisuals.ResetPressedOnLeave(ToolTabs);
         ViewModel = App.Services.GetRequiredService<TerminalViewModel>();
 
-        // 페이지는 캐시된다(NavigationCacheMode=Required). Loaded는 돌아올 때마다 다시 돌므로 한 번만 걸 것은 생성자에 둔다
-        App.Rooms.Rooms.CollectionChanged += (_, _) => RefreshOpenRoomsNotice();
+        RoomTabs.ItemsSource = App.Rooms.Rooms;
         Embedded.TitleChanged += (_, title) =>
         {
             if (_room is TerminalRoomViewModel terminal)
@@ -31,6 +36,7 @@ public sealed partial class TerminalPage : Page
         Loaded += async (_, _) =>
         {
             SyncTabFromViewModel();
+            ViewModel.LoadPromptChoices();
             await ViewModel.RefreshInstalledAsync();
             RestoreRooms();
 
@@ -51,10 +57,9 @@ public sealed partial class TerminalPage : Page
 
     public TerminalViewModel ViewModel { get; }
 
-    /// <summary>
-    /// 앱이 아는 프로젝트를 목록으로 보여준다. 세션 인덱스·최근 폴더에 있는 폴더라
-    /// 대화상자를 열 필요가 없다. 목록에 없는 폴더만 "다른 폴더 고르기"로 간다.
-    /// </summary>
+    // ── 새 세션 카드 ───────────────────────────────────────────────────────
+
+    /// <summary>앱이 아는 프로젝트를 목록으로 보여준다. 목록에 없는 폴더만 "다른 폴더 고르기"로 간다.</summary>
     private async void OnProjectFlyoutOpening(object? sender, object e)
     {
         await ViewModel.LoadProjectChoicesAsync();
@@ -66,11 +71,7 @@ public sealed partial class TerminalPage : Page
         for (var i = 0; i < ViewModel.ProjectChoices.Count; i++)
         {
             var path = ViewModel.ProjectChoices[i];
-            var item = new MenuFlyoutItem
-            {
-                Text = labels[i],
-                Icon = new SymbolIcon(Symbol.Folder),
-            };
+            var item = new MenuFlyoutItem { Text = labels[i], Icon = new SymbolIcon(Symbol.Folder) };
 
             ToolTipService.SetToolTip(item, path);
             item.Click += (_, _) => ViewModel.SetFolder(path);
@@ -79,11 +80,7 @@ public sealed partial class TerminalPage : Page
 
         if (ProjectFlyout.Items.Count == 0)
         {
-            ProjectFlyout.Items.Add(new MenuFlyoutItem
-            {
-                Text = UiStrings.Get("Common_NoKnownProjects"),
-                IsEnabled = false,
-            });
+            ProjectFlyout.Items.Add(new MenuFlyoutItem { Text = UiStrings.Get("Common_NoKnownProjects"), IsEnabled = false });
         }
 
         ProjectFlyout.Items.Add(new MenuFlyoutSeparator());
@@ -111,14 +108,6 @@ public sealed partial class TerminalPage : Page
         }
     }
 
-    private void OnRecentSelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (sender is ListView { SelectedItem: string path })
-        {
-            ViewModel.SetFolder(path);
-        }
-    }
-
     /// <summary>탭을 누르면 뷰모델의 도구가 바뀐다.</summary>
     private void OnToolTabChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
     {
@@ -140,65 +129,172 @@ public sealed partial class TerminalPage : Page
         }
     }
 
-    private IRoom? _room;
+    private void OnPresetClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: string preset })
+        {
+            ViewModel.AppendPresetCommand.Execute(preset);
+        }
+    }
 
-    /// <summary>이 화면에 들어오면 이미 열려 있던 방이 있으면 바로 방 화면으로, 없으면 로비로.</summary>
+    /// <summary>새 세션 카드의 "규칙 편집": 이 폴더를 내 규칙 화면에 넘기고 그 화면으로 간다.</summary>
+    private void OnEditRulesClick(object sender, RoutedEventArgs e) => GoToRules(ViewModel.WorkingDirectory);
+
+    private static void GoToRules(string? directory)
+    {
+        if (!string.IsNullOrWhiteSpace(directory))
+        {
+            App.Services.GetRequiredService<RuleMakerViewModel>().ProjectDirectory = directory;
+        }
+
+        (App.MainWindow as ShellWindow)?.NavigateTo("RuleMaker");
+    }
+
+    // ── 탭 띠: 새 터미널 / 방 ──────────────────────────────────────────────
+
+    /// <summary>이 화면에 들어오면 이미 열려 있던 방이 있으면 마지막 방을, 없으면 새 터미널 탭을 보인다.</summary>
     private void RestoreRooms()
     {
-        RoomTabs.ItemsSource = App.Rooms.Rooms;
-
-        if (App.Rooms.Rooms.Count > 0)
+        if (_room is not null && App.Rooms.Rooms.Contains(_room))
         {
-            ShowRoomView();
+            ShowRoom(_room);
+        }
+        else if (App.Rooms.Rooms.Count > 0)
+        {
             SelectRoom(App.Rooms.Rooms[^1]);
         }
         else
         {
-            ShowLobby();
+            ShowNewSession();
         }
     }
 
-    /// <summary>로비를 보인다. 열린 방은 그대로 살아 있고, 있으면 돌아가는 길을 위에 띄운다.</summary>
-    private void ShowLobby()
+    /// <summary>새 터미널 탭을 누르면 새 세션 카드. 열린 방은 그대로 살아 있다.</summary>
+    private void OnNewTabClick(object sender, RoutedEventArgs e) => ShowNewSession();
+
+    private void ShowNewSession()
     {
-        RoomView.Visibility = Visibility.Collapsed;
-        Lobby.Visibility = Visibility.Visible;
-        RefreshOpenRoomsNotice();
+        _room?.MarkInactive();
+        _room = null;
+        RoomTabs.SelectedItem = null;
+        NewTab.IsChecked = true;
+        RoomCard.Visibility = Visibility.Collapsed;
+        RoomTools.Visibility = Visibility.Collapsed;
+        NewSessionPanel.Visibility = Visibility.Visible;
     }
 
-    /// <summary>방 화면을 보인다. 로비는 숨긴다.</summary>
-    private void ShowRoomView()
+    /// <summary>그 방을 화면에 보인다. 방 종류에 맞는 화면(챗봇 말풍선 / 터미널)을 켠다.</summary>
+    private void SelectRoom(IRoom room)
     {
-        Lobby.Visibility = Visibility.Collapsed;
-        RoomView.Visibility = Visibility.Visible;
+        if (ReferenceEquals(_room, room))
+        {
+            ShowRoom(room);
+            return;
+        }
+
+        if (_room is StreamingRoomViewModel previousChat)
+        {
+            previousChat.Bubbles.CollectionChanged -= OnBubblesChanged;
+        }
+
+        _room?.MarkInactive();
+        _room = room;
+        room.MarkActive();
+
+        if (room is StreamingRoomViewModel chat)
+        {
+            chat.Bubbles.CollectionChanged += OnBubblesChanged;
+        }
+
+        ShowRoom(room);
     }
 
-    private void RefreshOpenRoomsNotice()
+    private void ShowRoom(IRoom room)
     {
-        var count = App.Rooms.Rooms.Count;
-        OpenRoomsNotice.Visibility = count > 0 ? Visibility.Visible : Visibility.Collapsed;
-        OpenRoomsText.Text = UiStrings.Format("Terminal_OpenRoomsCount", count);
+        NewTab.IsChecked = false;
+        NewSessionPanel.Visibility = Visibility.Collapsed;
+        RoomTabs.SelectedItem = room;
+        RoomCard.DataContext = room;
+        RoomCard.Visibility = Visibility.Visible;
+
+        if (room is StreamingRoomViewModel chat)
+        {
+            ChatbotPanel.DataContext = chat;
+            ChatbotPanel.Visibility = Visibility.Visible;
+            TerminalPanel.Visibility = Visibility.Collapsed;
+            RoomTools.Visibility = Visibility.Collapsed;
+            RoomInput.Focus(FocusState.Programmatic);
+            ScrollChatToEnd();
+        }
+        else if (room is TerminalRoomViewModel terminal)
+        {
+            TerminalPanel.DataContext = terminal;
+            TerminalPanel.Visibility = Visibility.Visible;
+            ChatbotPanel.Visibility = Visibility.Collapsed;
+            RoomTools.Visibility = Visibility.Visible;
+            _ = BindTerminalAsync(terminal);
+        }
     }
 
-    /// <summary>로비의 "열린 터미널 보기": 마지막에 보던 방(없으면 마지막 방)으로 돌아간다.</summary>
-    private void OnShowRoomsClick(object sender, RoutedEventArgs e)
+    private async Task BindTerminalAsync(TerminalRoomViewModel room)
     {
-        if (App.Rooms.Rooms.Count == 0)
+        try
+        {
+            await Embedded.InitializeAsync();
+            Embedded.BindRoom(room);
+            Embedded.FocusTerminal();
+        }
+        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or InvalidOperationException or IOException)
+        {
+            ShowRoomNote(ex.Message);
+        }
+    }
+
+    private void OnRoomTabChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (RoomTabs.SelectedItem is IRoom room && !ReferenceEquals(room, _room))
+        {
+            SelectRoom(room);
+        }
+    }
+
+    /// <summary>탭의 X. 그 방을 닫고 프로세스를 끝낸다. 보던 방이면 남은 마지막 방(없으면 새 터미널)을 보인다.</summary>
+    private void OnCloseRoomClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: IRoom room })
         {
             return;
         }
 
-        ShowRoomView();
-        var target = _room is not null && App.Rooms.Rooms.Contains(_room) ? _room : App.Rooms.Rooms[^1];
-        _room = null; // SelectRoom이 같은 방이라도 다시 붙이게
-        SelectRoom(target);
+        var wasSelected = ReferenceEquals(room, _room);
+
+        if (room is StreamingRoomViewModel chat)
+        {
+            chat.Bubbles.CollectionChanged -= OnBubblesChanged;
+        }
+
+        App.Rooms.Close(room);
+
+        if (!wasSelected)
+        {
+            return;
+        }
+
+        _room = null;
+
+        if (App.Rooms.Rooms.Count > 0)
+        {
+            SelectRoom(App.Rooms.Rooms[^1]);
+        }
+        else
+        {
+            ShowNewSession();
+        }
     }
 
-    /// <summary>방 머리의 "새 터미널": 로비로 돌아가 다른 도구·폴더를 고른다. 방은 닫지 않는다.</summary>
-    private void OnBackToLobbyClick(object sender, RoutedEventArgs e) => ShowLobby();
+    // ── 방 열기 ───────────────────────────────────────────────────────────
 
-    // 챗봇 방(B 모드, stream-json 말풍선). 지금은 UI 비공개 — TerminalPage.xaml에서 OpenChatbotButton을 빼 둬 이 핸들러는 호출되지 않는다.
-    // 재공개하려면 그 버튼을 되살린다. (ARCHITECTURE §5.3)
+    // 챗봇 방(B 모드, stream-json 말풍선). 지금은 UI 비공개 — 여는 버튼이 없어 이 핸들러는 호출되지 않는다. 재공개하려면 버튼을 되살린다. (ARCHITECTURE §5.3)
     private void OnOpenChatbotClick(object sender, RoutedEventArgs e) => OpenChatbotRoom();
 
     private void OnOpenTerminalClick(object sender, RoutedEventArgs e) => _ = OpenTerminalRoomAsync();
@@ -207,17 +303,14 @@ public sealed partial class TerminalPage : Page
     private (ToolLaunchViewModel Tool, string Directory)? RoomTarget()
     {
         var tool = ViewModel.SelectedTool;
-        var directory = string.IsNullOrWhiteSpace(ViewModel.WorkingDirectory)
-            ? Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
-            : ViewModel.WorkingDirectory;
 
-        if (tool is null || !Directory.Exists(directory))
+        if (tool is null || !ViewModel.CanLaunch)
         {
             ShowRoomNote(UiStrings.Get("Terminal_PickFolderFirst"));
             return null;
         }
 
-        return (tool, directory);
+        return (tool, ViewModel.WorkingDirectory!);
     }
 
     /// <summary>챗봇 방: Claude를 stream-json으로. 말풍선 대화. 지금은 Claude만.</summary>
@@ -253,12 +346,14 @@ public sealed partial class TerminalPage : Page
         }
     }
 
-    /// <summary>터미널 방: 진짜 터미널(xterm + 의사 콘솔). 모든 도구. WebView2 없으면 외부 터미널로.</summary>
+    /// <summary>
+    /// 터미널 방: 진짜 터미널(xterm + 의사 콘솔). 인자는 뷰모델이 합친다(resume + 사용자 인자 + 프롬프트 시작 메시지).
+    /// 미설치면 설치 흐름, 내장이 꺼졌거나 WebView2가 없으면 외부 터미널로.
+    /// </summary>
     private async Task OpenTerminalRoomAsync()
     {
         var settings = App.Services.GetRequiredService<ISettingsStore>().Current;
 
-        // 미설치면 같은 버튼이 설치다. 내장이 꺼졌거나 WebView2가 없으면 외부 터미널로 폴백한다 (ARCHITECTURE §5.3)
         if (!ViewModel.SelectedTool.IsInstalled
             || !settings.UseEmbeddedTerminal
             || !Terminal.TerminalHost.IsRuntimeAvailable())
@@ -278,16 +373,18 @@ public sealed partial class TerminalPage : Page
         {
             await Embedded.InitializeAsync();
 
+            var arguments = ViewModel.ComposeArguments(tool, writePrompt: true);
             var builder = new Daiso.Infrastructure.TerminalCommandBuilder(Daiso.Providers.Common.ExecutableLocator.ExistsOnPath);
-            var shell = builder.BuildShellCommand(tool.Provider.ExecutableName, tool.Arguments);
+            var shell = builder.BuildShellCommand(tool.Provider.ExecutableName, arguments);
             var session = Daiso.Infrastructure.Pty.PtySession.Start($"{shell.FileName} {shell.Arguments}", directory);
             var tail = new Daiso.Infrastructure.SessionTail(tool.Provider, directory, DateTimeOffset.Now);
 
             var room = new TerminalRoomViewModel(tool.Provider.Kind, directory, DispatcherQueue);
             room.Bind(session, tail);
+            ViewModel.LastCommand = $"{directory} > {tool.Provider.ExecutableName} {arguments}".TrimEnd();
             AddAndSelect(room);
         }
-        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or System.Runtime.InteropServices.COMException or InvalidOperationException or IOException)
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or System.Runtime.InteropServices.COMException or InvalidOperationException or IOException or UnauthorizedAccessException)
         {
             ShowRoomNote(ex.Message);
         }
@@ -296,54 +393,19 @@ public sealed partial class TerminalPage : Page
     private void AddAndSelect(IRoom room)
     {
         App.Rooms.Add(room);
-        RoomTabs.ItemsSource = App.Rooms.Rooms;
         EmbeddedStatus.Visibility = Visibility.Collapsed;
-        ShowRoomView();
         SelectRoom(room);
     }
 
-    /// <summary>방을 못 열었거나 붙이지 못했다. 로비의 실행 칸 아래에 사람 말로 알린다.</summary>
+    /// <summary>방을 못 열었거나 붙이지 못했다. 새 세션 카드의 실행 칸 아래에 사람 말로 알린다.</summary>
     private void ShowRoomNote(string text)
     {
         EmbeddedStatus.Text = text;
         EmbeddedStatus.Visibility = Visibility.Visible;
-        ShowLobby();
+        ShowNewSession();
     }
 
-    /// <summary>그 방을 화면에 보인다. 방 종류에 맞는 화면(챗봇 말풍선 / 터미널)을 켠다.</summary>
-    private void SelectRoom(IRoom room)
-    {
-        if (_room is StreamingRoomViewModel previousChat)
-        {
-            previousChat.Bubbles.CollectionChanged -= OnBubblesChanged;
-        }
-
-        _room?.MarkInactive();
-        _room = room;
-        room.MarkActive();
-
-        RoomTabs.SelectedItem = room;
-        RoomCard.DataContext = room;
-
-        if (room is StreamingRoomViewModel chat)
-        {
-            ChatbotPanel.DataContext = chat;
-            ChatbotPanel.Visibility = Visibility.Visible;
-            TerminalPanel.Visibility = Visibility.Collapsed;
-            chat.Bubbles.CollectionChanged += OnBubblesChanged;
-            RoomInput.Focus(FocusState.Programmatic);
-            ScrollChatToEnd();
-        }
-        else if (room is TerminalRoomViewModel terminal)
-        {
-            TerminalPanel.DataContext = terminal;
-            TerminalPanel.Visibility = Visibility.Visible;
-            ChatbotPanel.Visibility = Visibility.Collapsed;
-            _ = BindTerminalAsync(terminal);
-        }
-
-        FindPanel.Visibility = room is TerminalRoomViewModel ? Visibility.Visible : Visibility.Collapsed;
-    }
+    // ── 방 도구 줄: 찾기 · 프롬프트 · 규칙 ─────────────────────────────────
 
     /// <summary>찾기 칸: 글이 바뀌면 다음 것을 찾고, 비우면 표시를 지운다.</summary>
     private void OnFindTextChanged(object sender, TextChangedEventArgs e)
@@ -395,53 +457,75 @@ public sealed partial class TerminalPage : Page
         }
     }
 
-    private async Task BindTerminalAsync(TerminalRoomViewModel room)
+    /// <summary>
+    /// 방의 "프롬프트 넣기": 내 프롬프트 목록. 이 방 폴더에 이미 넣은 것은 체크로 보인다.
+    /// 누르면 그 폴더의 docs/prompts에 써 넣고 시작 메시지를 터미널 입력에 타이핑해 준다(Enter는 사람이 친다).
+    /// </summary>
+    private void OnRoomPromptFlyoutOpening(object? sender, object e)
+    {
+        RoomPromptFlyout.Items.Clear();
+
+        if (_room is not TerminalRoomViewModel room)
+        {
+            return;
+        }
+
+        var library = App.Services.GetRequiredService<Daiso.Core.IPromptLibrary>();
+        var directory = room.ProjectDirectory;
+
+        var prompts = Daiso.Core.BuiltInPrompts.List()
+            .Concat(library.List())
+            .GroupBy(prompt => prompt.Id, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.Last())
+            .OrderBy(prompt => prompt.Name, StringComparer.CurrentCulture)
+            .ToList();
+
+        foreach (var prompt in prompts)
+        {
+            var applied = File.Exists(Path.Combine(directory, "docs", "prompts", prompt.Id + ".md"));
+            var item = new MenuFlyoutItem { Text = prompt.Name, Icon = applied ? new SymbolIcon(Symbol.Accept) : null };
+
+            ToolTipService.SetToolTip(item, applied
+                ? UiStrings.Get("Terminal_PromptApplied")
+                : UiStrings.Format("Terminal_PromptApply", prompt.Name));
+
+            var captured = prompt;
+            item.Click += (_, _) => ApplyPromptToRoom(room, captured);
+            RoomPromptFlyout.Items.Add(item);
+        }
+
+        if (RoomPromptFlyout.Items.Count == 0)
+        {
+            RoomPromptFlyout.Items.Add(new MenuFlyoutItem { Text = UiStrings.Get("Terminal_NoPrompts"), IsEnabled = false });
+        }
+    }
+
+    private void ApplyPromptToRoom(TerminalRoomViewModel room, Daiso.Core.PromptPreset prompt)
     {
         try
         {
-            await Embedded.InitializeAsync();
-            Embedded.BindRoom(room);
+            App.Services.GetRequiredService<Daiso.Core.IPromptLibrary>().WriteIntoProject(prompt, room.ProjectDirectory);
+            room.SendRaw(Daiso.Core.PromptPresetSerializer.StarterMessage(prompt));
             Embedded.FocusTerminal();
         }
-        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or InvalidOperationException or IOException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or DirectoryNotFoundException)
         {
             ShowRoomNote(ex.Message);
         }
     }
 
+    /// <summary>방의 "규칙 편집": 이 방의 폴더를 내 규칙 화면에 넘기고 그 화면으로 간다. 방은 살아 있다.</summary>
+    private void OnRoomRulesClick(object sender, RoutedEventArgs e)
+    {
+        if (_room is TerminalRoomViewModel room)
+        {
+            GoToRules(room.ProjectDirectory);
+        }
+    }
+
+    // ── 챗봇 방 입력(UI 비공개, 코드 유지) ────────────────────────────────
+
     private void OnBubblesChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e) => ScrollChatToEnd();
-
-    private void OnRoomTabChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (RoomTabs.SelectedItem is IRoom room && !ReferenceEquals(room, _room))
-        {
-            SelectRoom(room);
-        }
-    }
-
-    /// <summary>탭의 X. 그 방을 닫고 프로세스를 끝낸다. 남은 방이 있으면 마지막 것을 보인다.</summary>
-    private void OnCloseRoomClick(object sender, RoutedEventArgs e)
-    {
-        if (sender is not FrameworkElement { DataContext: IRoom room })
-        {
-            return;
-        }
-
-        var wasSelected = ReferenceEquals(room, _room);
-        App.Rooms.Close(room);
-
-        if (App.Rooms.Rooms.Count == 0)
-        {
-            _room = null;
-            ShowLobby();
-            return;
-        }
-
-        if (wasSelected)
-        {
-            SelectRoom(App.Rooms.Rooms[^1]);
-        }
-    }
 
     /// <summary>입력이 바뀌면 `/` 명령 제안을 다시 채운다(챗봇 방에서만).</summary>
     private void OnRoomInputTextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
@@ -476,81 +560,4 @@ public sealed partial class TerminalPage : Page
 
     private void ScrollChatToEnd() =>
         DispatcherQueue.TryEnqueue(() => ChatScroll.ChangeView(null, ChatScroll.ScrollableHeight, null, disableAnimation: true));
-
-    /// <summary>
-    /// 내 프롬프트 목록을 연다. 각 프롬프트가 지금 작업 폴더의 프로젝트에 적용됐는지(docs/prompts/&lt;id&gt;.md 있는지)
-    /// 표시하고, 누르면 그 폴더에 써 넣는다. (사용자 요청: 터미널에서 적용 여부 보기)
-    /// </summary>
-    private void OnPromptFlyoutOpening(object? sender, object e)
-    {
-        PromptFlyout.Items.Clear();
-
-        var library = App.Services.GetRequiredService<Daiso.Core.IPromptLibrary>();
-        var directory = ViewModel.WorkingDirectory;
-        var hasFolder = !string.IsNullOrWhiteSpace(directory) && Directory.Exists(directory);
-
-        var prompts = Daiso.Core.BuiltInPrompts.List()
-            .Concat(library.List())
-            .GroupBy(prompt => prompt.Id, StringComparer.OrdinalIgnoreCase)
-            .Select(group => group.Last())
-            .OrderBy(prompt => prompt.Name, StringComparer.CurrentCulture)
-            .ToList();
-
-        foreach (var prompt in prompts)
-        {
-            var applied = hasFolder && File.Exists(Path.Combine(directory!, "docs", "prompts", prompt.Id + ".md"));
-            var item = new MenuFlyoutItem
-            {
-                Text = prompt.Name,
-                Icon = applied ? new SymbolIcon(Symbol.Accept) : null,
-            };
-
-            ToolTipService.SetToolTip(item, applied
-                ? UiStrings.Get("Terminal_PromptApplied")
-                : UiStrings.Format("Terminal_PromptApply", prompt.Name));
-
-            var captured = prompt;
-            item.Click += (_, _) => ApplyPromptToProject(captured);
-            PromptFlyout.Items.Add(item);
-        }
-
-        if (PromptFlyout.Items.Count == 0)
-        {
-            PromptFlyout.Items.Add(new MenuFlyoutItem { Text = UiStrings.Get("Terminal_NoPrompts"), IsEnabled = false });
-        }
-    }
-
-    /// <summary>고른 프롬프트를 작업 폴더의 docs/prompts에 써 넣는다.</summary>
-    private void ApplyPromptToProject(Daiso.Core.PromptPreset prompt)
-    {
-        var directory = ViewModel.WorkingDirectory;
-
-        if (string.IsNullOrWhiteSpace(directory) || !Directory.Exists(directory))
-        {
-            EmbeddedStatus.Text = UiStrings.Get("Terminal_PickFolderFirst");
-            EmbeddedStatus.Visibility = Visibility.Visible;
-            return;
-        }
-
-        try
-        {
-            var path = App.Services.GetRequiredService<Daiso.Core.IPromptLibrary>()
-                .WriteIntoProject(prompt, directory);
-            EmbeddedStatus.Text = UiStrings.Format("Terminal_PromptWritten", path);
-            EmbeddedStatus.Visibility = Visibility.Visible;
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or DirectoryNotFoundException)
-        {
-            EmbeddedStatus.Text = ex.Message;
-            EmbeddedStatus.Visibility = Visibility.Visible;
-        }
-    }
-
-    private void OnPresetClick(object sender, RoutedEventArgs e)
-    {
-        if (sender is FrameworkElement { Tag: string preset })
-        {
-            ViewModel.AppendPresetCommand.Execute(preset);
-        }
-    }
 }
