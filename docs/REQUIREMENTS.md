@@ -1,6 +1,6 @@
 # d-AI-so 요구사항 정리 (v0.3)
 
-> 로컬 전용 AI CLI 유틸리티. Claude Code / Codex CLI를 대상으로 인증 상태 확인, 터미널 실행, 세션 관리, 규칙(Rule) 프리셋 편집을 제공한다.
+> 로컬 전용 AI CLI 유틸리티. Claude Code / Codex CLI / Gemini CLI를 대상으로 인증 상태 확인, 터미널 실행, 세션 관리, 규칙(Rule) 프리셋 편집을 제공한다.
 > 작성일: 2026-09-07
 
 ---
@@ -10,7 +10,7 @@
 | 항목 | 결정 |
 |---|---|
 | 플랫폼 | Windows 10/11, WinUI 3 (Windows App SDK), C# / .NET 8 |
-| 지원 도구 | Claude Code, Codex CLI (확장 가능한 Provider 구조) |
+| 지원 도구 | Claude Code, Codex CLI, Gemini CLI (확장 가능한 Provider 구조) |
 | 네트워크 | 없음. 로컬 파일 읽기/쓰기 + 프로세스 실행만 |
 | 계정/로그인 | 앱 자체 로그인 없음. CLI가 남긴 인증 파일을 읽기만 함 |
 | 배포 | 미정 (MSIX 또는 unpackaged exe) |

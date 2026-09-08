@@ -40,7 +40,7 @@ public sealed partial class ContextDoctorViewModel : ObservableObject
     }
 
     /// <summary>도구 토글 항목.</summary>
-    public IReadOnlyList<string> Tools { get; } = ["Claude", "Codex"];
+    public IReadOnlyList<string> Tools { get; } = ["Claude", "Codex", "Gemini"];
 
     /// <summary>로드 순서대로 정렬된 컨텍스트 파일.</summary>
     public ObservableCollection<ContextFileViewModel> Files { get; } = [];
@@ -89,7 +89,8 @@ public sealed partial class ContextDoctorViewModel : ObservableObject
 
         try
         {
-            var tool = ToolIndex == 1 ? ToolKind.Codex : ToolKind.Claude;
+            // 토글 순서가 ToolKind 순서와 같다
+            var tool = (ToolKind)Math.Clamp(ToolIndex, 0, Tools.Count - 1);
             var report = await _inspector.InspectAsync(tool, directory, ct).ConfigureAwait(true);
 
             foreach (var file in report.Files)

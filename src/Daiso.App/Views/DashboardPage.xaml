@@ -43,12 +43,12 @@
 
                 <TextBlock Text="{loc:Str Key=Dashboard_ToolStatus}" Style="{StaticResource SectionTitleText}" />
 
-                <!-- 도구 카드: 항상 두 개라 폭을 똑같이 나눈다 -->
+                <!-- 도구 카드: 도구 수만큼. 넓으면 한 줄에 셋, 좁으면 줄을 바꾼다 -->
                 <ItemsRepeater ItemsSource="{x:Bind ViewModel.Tools}">
                     <ItemsRepeater.Layout>
                         <UniformGridLayout
-                            MinItemWidth="360"
-                            MaximumRowsOrColumns="2"
+                            MinItemWidth="330"
+                            MaximumRowsOrColumns="3"
                             MinRowSpacing="16"
                             MinColumnSpacing="16"
                             ItemsStretch="Fill" />

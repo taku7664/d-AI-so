@@ -714,7 +714,7 @@
     <value>세션 보기</value>
   </data>
   <data name="Dashboard_ToolStatusHint" xml:space="preserve">
-    <value>두 도구의 로그인 상태와 최근 작업을 한눈에 봅니다</value>
+    <value>도구들의 로그인 상태와 최근 작업을 한눈에 봅니다</value>
   </data>
   <data name="Usage_PriceHint" xml:space="preserve">
     <value>단가표가 비어 있어 추정 비용이 0입니다. 설정의 단가표에 모델 단가를 넣으세요.</value>
@@ -907,7 +907,7 @@
     <value>이 앱이 쓰는 곳</value>
   </data>
   <data name="About_Credits" xml:space="preserve">
-    <value>Claude Code · Codex CLI 는 각 제작사의 상표입니다. 이 앱은 두 도구가 이 PC에 만들어 둔 파일을 읽어 보여주는 별개의 프로그램입니다.</value>
+    <value>Claude Code · Codex CLI · Gemini CLI 는 각 제작사의 상표입니다. 이 앱은 이 도구들이 이 PC에 만들어 둔 파일을 읽어 보여주는 별개의 프로그램입니다.</value>
   </data>
   <data name="Settings_Shortcuts" xml:space="preserve">
     <value>단축키</value>
@@ -1176,5 +1176,11 @@
   </data>
   <data name="Sessions_SearchTitle" xml:space="preserve">
     <value>검색 결과</value>
+  </data>
+  <data name="Terminal_GeminiPresets" xml:space="preserve">
+    <value>Gemini 프리셋</value>
+  </data>
+  <data name="Terminal_OpenGemini" xml:space="preserve">
+    <value>Gemini 열기</value>
   </data>
 </root>

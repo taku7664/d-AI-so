@@ -125,7 +125,7 @@ public sealed partial class SessionsViewModel : ObservableObject
     private IReadOnlyList<MessageViewModel> timeline = [];
 
     /// <summary>도구 필터 항목.</summary>
-    public IReadOnlyList<string> ToolFilters { get; } = [UiStrings.All, "Claude", "Codex"];
+    public IReadOnlyList<string> ToolFilters { get; } = [UiStrings.All, "Claude", "Codex", "Gemini"];
 
     /// <summary>기간 필터 항목.</summary>
     public IReadOnlyList<string> PeriodFilters { get; } =
@@ -556,6 +556,7 @@ public sealed partial class SessionsViewModel : ObservableObject
         {
             1 => ToolKind.Claude,
             2 => ToolKind.Codex,
+            3 => ToolKind.Gemini,
             _ => null,
         };
 
@@ -735,7 +736,7 @@ public sealed partial class SessionRowViewModel : ObservableObject
 
     public SessionInfo Session { get; }
 
-    public string ToolIcon => Session.Tool == ToolKind.Claude ? "🟣" : "⚫";
+    public string ToolIcon => Session.Tool switch { ToolKind.Claude => "🟣", ToolKind.Gemini => "🔵", _ => "⚫" };
 
     public string ToolName => Session.Tool.ToString();
 
@@ -771,12 +772,10 @@ public sealed partial class SessionRowViewModel : ObservableObject
     }
 
     /// <summary>도구 한 글자. 목록에서 아이콘 자리에 쓴다.</summary>
-    public string ToolInitial => Session.Tool == ToolKind.Claude ? "C" : "X";
+    public string ToolInitial => ToolLook.Initial(Session.Tool);
 
-    /// <summary>도구 색. Claude 보라, Codex 회색.</summary>
-    public Brush ToolBrush => new SolidColorBrush(Session.Tool == ToolKind.Claude
-        ? Color.FromArgb(255, 122, 90, 248)
-        : Color.FromArgb(255, 96, 104, 120));
+    /// <summary>도구 색. Claude 보라, Codex 회색, Gemini 파랑.</summary>
+    public Brush ToolBrush => ToolLook.Brush(Session.Tool);
 
     /// <summary>세션 id 앞 8자. 전체 값은 ToolTip에 둔다.</summary>
     public string IdShort => Session.Id.Length <= 8 ? Session.Id : Session.Id[..8];

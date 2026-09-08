@@ -5,4 +5,5 @@ public enum ToolKind
 {
     Claude,
     Codex,
+    Gemini,
 }

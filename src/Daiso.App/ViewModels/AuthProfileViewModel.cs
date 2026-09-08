@@ -103,13 +103,10 @@ public sealed class AuthProfileRowViewModel
     public AuthProfile Profile { get; }
 
     /// <summary>도구 한 글자.</summary>
-    public string ToolInitial => Profile.Tool == ToolKind.Claude ? "C" : "X";
+    public string ToolInitial => ToolLook.Initial(Profile.Tool);
 
     /// <summary>도구 색.</summary>
-    public Microsoft.UI.Xaml.Media.Brush ToolBrush =>
-        new Microsoft.UI.Xaml.Media.SolidColorBrush(Profile.Tool == ToolKind.Claude
-            ? Windows.UI.Color.FromArgb(255, 122, 90, 248)
-            : Windows.UI.Color.FromArgb(255, 96, 104, 120));
+    public Microsoft.UI.Xaml.Media.Brush ToolBrush => ToolLook.Brush(Profile.Tool);
 
     public string Name => Profile.Name;
 

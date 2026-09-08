@@ -213,12 +213,10 @@ public sealed class RecentSessionViewModel
     public SessionInfo Session { get; }
 
     /// <summary>도구 한 글자.</summary>
-    public string ToolInitial => Session.Tool == ToolKind.Claude ? "C" : "X";
+    public string ToolInitial => ToolLook.Initial(Session.Tool);
 
     /// <summary>도구 색.</summary>
-    public Brush ToolBrush => new SolidColorBrush(Session.Tool == ToolKind.Claude
-        ? Color.FromArgb(255, 122, 90, 248)
-        : Color.FromArgb(255, 96, 104, 120));
+    public Brush ToolBrush => ToolLook.Brush(Session.Tool);
 
     /// <summary>프로젝트 이름. 경로 전체는 ToolTip에 둔다.</summary>
     public string ProjectText => Formats.FolderName(Session.ProjectPath);
@@ -254,7 +252,7 @@ public sealed partial class ToolCardViewModel : ObservableObject
     public ToolKind Kind { get; }
 
     /// <summary>카드 제목.</summary>
-    public string Title => Kind == ToolKind.Claude ? "Claude Code" : "Codex CLI";
+    public string Title => ToolLook.Title(Kind);
 
     /// <summary>부가 정보. MCP 커넥터 이름, 구독 등급 등.</summary>
     public ObservableCollection<string> Extras { get; } = [];

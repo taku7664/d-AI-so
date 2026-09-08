@@ -73,6 +73,10 @@ public sealed partial class TerminalViewModel : ObservableObject
     public IReadOnlyList<string> CodexPresets { get; } =
         ["resume ", "--model ", "--sandbox "];
 
+    /// <summary>Gemini 인자 프리셋.</summary>
+    public IReadOnlyList<string> GeminiPresets { get; } =
+        ["--resume ", "--model ", "--sandbox"];
+
     /// <summary>폴더가 정해졌는지. 버튼 활성에 쓴다.</summary>
     public bool CanLaunch => !string.IsNullOrWhiteSpace(WorkingDirectory);
 
@@ -85,6 +89,9 @@ public sealed partial class TerminalViewModel : ObservableObject
     /// <summary>Codex를 눌렀을 때 실제로 실행될 명령.</summary>
     public string CodexPreview => Preview(ToolKind.Codex);
 
+    /// <summary>Gemini를 눌렀을 때 실제로 실행될 명령.</summary>
+    public string GeminiPreview => Preview(ToolKind.Gemini);
+
     /// <summary>마지막 실행 기록이 있는가.</summary>
     public bool HasLastCommand => !string.IsNullOrWhiteSpace(LastCommand);
 
@@ -95,7 +102,7 @@ public sealed partial class TerminalViewModel : ObservableObject
             ?? kind.ToString().ToLowerInvariant();
 
         var command = Arguments.Length > 0 ? $"{executable} {Arguments.Trim()}" : executable;
-        var label = kind == ToolKind.Claude ? "Claude" : "Codex";
+        var label = ToolLook.Short(kind);
 
         return $"{label}  ▸  {command}";
     }
@@ -104,6 +111,7 @@ public sealed partial class TerminalViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(ClaudePreview));
         OnPropertyChanged(nameof(CodexPreview));
+        OnPropertyChanged(nameof(GeminiPreview));
     }
 
     partial void OnLastCommandChanged(string? value) => OnPropertyChanged(nameof(HasLastCommand));
@@ -147,6 +155,10 @@ public sealed partial class TerminalViewModel : ObservableObject
     /// <summary>Codex를 연다.</summary>
     [RelayCommand]
     public Task LaunchCodexAsync() => LaunchAsync(ToolKind.Codex);
+
+    /// <summary>Gemini를 연다.</summary>
+    [RelayCommand]
+    public Task LaunchGeminiAsync() => LaunchAsync(ToolKind.Gemini);
 
     private async Task LaunchAsync(ToolKind kind)
     {

@@ -3,6 +3,7 @@ using Daiso.Core;
 using Daiso.Infrastructure;
 using Daiso.Providers.Claude;
 using Daiso.Providers.Codex;
+using Daiso.Providers.Gemini;
 
 namespace Daiso.Cli;
 
@@ -14,19 +15,19 @@ internal static class Program
 
         사용법:
           daiso auth
-          daiso auth save <이름> --tool claude|codex
-          daiso auth use <이름> --tool claude|codex
+          daiso auth save <이름> --tool claude|codex|gemini
+          daiso auth use <이름> --tool claude|codex|gemini
           daiso auth list
-          daiso auth remove <이름> --tool claude|codex
-          daiso sessions [--tool claude|codex] [--include-archived]
+          daiso auth remove <이름> --tool claude|codex|gemini
+          daiso sessions [--tool claude|codex|gemini] [--include-archived]
           daiso search <query>
           daiso refresh
           daiso usage --days N
           daiso rules render <path>
           daiso rules roundtrip <path>
           daiso rules install <projectDir>
-          daiso rules migrate <projectDir> [--to claude|codex] [--apply]
-          daiso doctor <dir> [--tool claude|codex]
+          daiso rules migrate <projectDir> [--to claude|codex|gemini] [--apply]
+          daiso doctor <dir> [--tool claude|codex|gemini]
           daiso export <sessionId> <out.md>
         """;
 
@@ -87,7 +88,8 @@ internal static class Program
 internal static class Commands
 {
     private static IReadOnlyList<IProvider> Providers { get; } =
-        [new ClaudeProvider(), new CodexProvider()];
+        [new ClaudeProvider(), new CodexProvider(),
+        new GeminiProvider()];
 
     internal static async Task<int> AuthAsync(string[] args)
     {
@@ -142,7 +144,7 @@ internal static class Commands
 
         if (args.Length < 3)
         {
-            Console.Error.WriteLine("사용법: daiso auth save|use|remove <이름> --tool claude|codex");
+            Console.Error.WriteLine("사용법: daiso auth save|use|remove <이름> --tool claude|codex|gemini");
             return 2;
         }
 
@@ -406,7 +408,7 @@ internal static class Commands
         return 0;
     }
 
-    /// <summary>`--to claude|codex` → 대상 도구 기준 방향.</summary>
+    /// <summary>`--to claude|codex|gemini` → 대상 도구 기준 방향.</summary>
     private static MigrationDirection? DirectionOption(string[] args)
     {
         var index = Array.IndexOf(args, "--to");
@@ -428,14 +430,14 @@ internal static class Commands
     {
         if (args.Length < 2)
         {
-            Console.Error.WriteLine("사용법: daiso doctor <dir> [--tool claude|codex]");
+            Console.Error.WriteLine("사용법: daiso doctor <dir> [--tool claude|codex|gemini]");
             return 2;
         }
 
         var directory = Path.GetFullPath(args[1]);
         ToolKind[] tools = ToolOption(args) is { } selected
             ? [selected]
-            : [ToolKind.Claude, ToolKind.Codex];
+            : [ToolKind.Claude, ToolKind.Codex, ToolKind.Gemini];
         var inspector = new ContextInspector(Providers);
 
         foreach (var tool in tools)
@@ -555,6 +557,7 @@ internal static class Commands
         {
             "claude" => ToolKind.Claude,
             "codex" => ToolKind.Codex,
+            "gemini" => ToolKind.Gemini,
             _ => null,
         };
     }

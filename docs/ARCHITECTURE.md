@@ -368,19 +368,43 @@ public sealed record ExportOptions(bool IncludeToolCalls = true, bool IncludeSys
   - 모델: `event_msg.thread_settings_applied.thread_settings.model` 또는 `turn_context.payload.model`
 - resume: `codex resume <id>`
 
+### 4.5 Gemini (`Daiso.Providers.Gemini`)
+
+> 근거: 이 PC의 `~/.gemini`에서 확인한 것은 `oauth_creds.json`·`google_accounts.json`·`projects.json`·`tmp/{이름|해시}/chats/session-*.jsonl`의 **헤더 줄**(`sessionId, projectHash, startTime, lastUpdated, kind`)까지다.
+> 메시지 줄 형식은 Gemini CLI의 대화 기록(`type: user|gemini|info|…`, `content`, `tokens`, `toolCalls`)을 따랐고 fixture로 고정했다. 실제 대화 파일이 생기면 `tests/fixtures/gemini/session-modern.jsonl`과 대조해 파서를 맞춘다.
+
+**인증**
+- `%USERPROFILE%\.gemini\oauth_creds.json` → `access_token`, `refresh_token`, `expiry_date`(ms), `token_type`, `scope`. **값은 읽지 않는다**
+- `refresh_token`이 있으면 CLI가 알아서 갱신하므로 만료 개념 없음 → `SessionExpiresAt = null` → LoggedIn. 없으면 `expiry_date`로 판정
+- 계정: `google_accounts.json`의 `active` 이메일. `AccountLabel`과 `Email` 둘 다 이 값
+- 프로필(§5.7) 파일: `oauth_creds.json`(필수), `google_accounts.json`(선택)
+
+**세션**
+- 루트: `%USERPROFILE%\.gemini	mp\{프로젝트 이름 | SHA-256}\chats\session-*.jsonl`. 아카이브 개념 없음
+- 헤더 줄 → `sessionId`, `projectHash`, `startTime`. `sessionId == "a2a-server"`(Antigravity 서버 세션, 대화 없음)는 목록에서 뺀다
+- 메시지 줄: `type == "user"` → User, `"gemini"` → Assistant(`content`는 문자열 또는 `[{text}]` 조각), `"info"|"warning"|"error"` → System, `toolCalls[]` → 각각 Tool 한 건(이름 + 인자 앞 300자 + 상태. 결과 본문은 넣지 않는다)
+- 프로젝트 경로: `projects.json`의 `{"projects": {"소문자 경로": "이름"}}`으로 폴더 이름 → 경로, 또는 SHA-256(경로) → 경로를 되짚는다. 모르면 null
+- 토큰: 메시지의 `tokens {input, output, cached, thoughts, tool}` — **응답마다 붙는 값이라 날짜별로 더한다**. Input = input + tool, Output = output + thoughts, CacheRead = cached, CacheCreate 0. 모델은 `model`
+- resume: `gemini --resume <id>`
+- 실행 파일: `gemini` (npm 셸 `.cmd`)
+
+**지시문**
+- 파일 `GEMINI.md`. `@import`는 `.md`만 받으므로 `PROJECT_RULES.daiso`는 Codex처럼 읽기 지시문으로 넣는다(`InstructionTemplate`)
+- 마이그레이션(§5.6)은 CLAUDE.md ↔ AGENTS.md 두 방향만이다. GEMINI.md는 연동(마커 블록)만 받는다
+
 ### 4.3 경로 정규화 (`ProjectPathNormalizer`, `Daiso.Providers.Common`)
 - `Path.GetFullPath` 후 드라이브 문자 대문자, 끝 구분자 제거, `\` 통일
 - 그룹핑·필터·OrphansOnly 판정은 정규화 값으로만
 
 ### 4.4 Context 파일 목록 (`ContextFilePatterns`, 로드 순서대로)
 
-| Claude | Codex |
-|---|---|
-| `~/.claude/CLAUDE.md` | `~/.codex/AGENTS.md` |
-| 루트→상위 방향: `{ancestor}/CLAUDE.md`, `{ancestor}/.claude/CLAUDE.md` (드라이브 루트까지) | git 루트→cwd 방향: `{dir}/AGENTS.md` |
-| `{dir}/CLAUDE.md`, `{dir}/.claude/CLAUDE.md`, `{dir}/CLAUDE.local.md` | `{dir}/AGENTS.md` |
-| `{dir}/.claude/rules/*.md` | — |
-| `{dir}/PROJECT_RULES.daiso` | `{dir}/PROJECT_RULES.daiso` |
+| Claude | Codex | Gemini |
+|---|---|---|
+| `~/.claude/CLAUDE.md` | `~/.codex/AGENTS.md` | `~/.gemini/GEMINI.md` |
+| 루트→상위 방향: `{ancestor}/CLAUDE.md`, `{ancestor}/.claude/CLAUDE.md` (드라이브 루트까지) | git 루트→cwd 방향: `{dir}/AGENTS.md` | git 루트→cwd 방향: `{dir}/GEMINI.md` |
+| `{dir}/CLAUDE.md`, `{dir}/.claude/CLAUDE.md`, `{dir}/CLAUDE.local.md` | `{dir}/AGENTS.md` | `{dir}/GEMINI.md` |
+| `{dir}/.claude/rules/*.md` | — | — |
+| `{dir}/PROJECT_RULES.daiso` | `{dir}/PROJECT_RULES.daiso` | `{dir}/PROJECT_RULES.daiso` |
 
 ---
 
@@ -543,6 +567,7 @@ Apply(projectDir, direction, dryRun)
 
 - **좌 목록 · 우 편집기** 화면(내 규칙, 내 프롬프트)은 사이에 `PaneSplitter`를 둔다. 끌어서 왼쪽 판 너비를 바꾸고, 놓으면 `settings.json`의 `PaneWidths[화면]`에 저장돼 다음에 되살아난다. 열의 MinWidth·MaxWidth 안에서만 움직인다. 명령바의 `목록` 토글로 왼쪽 판을 접을 수 있다(좁은 창용)
 - **긴 목록은 보이는 것만 그린다**: 세션 타임라인처럼 수천 건이 될 수 있는 목록은 `ItemsRepeater`(가상화)로 그리고, 파일 읽기·파싱은 `Task.Run`으로 UI 스레드 밖에서 끝낸 뒤 완성된 목록을 **한 번에** 바인딩한다. 한 건씩 `Add`하지 않는다. 메시지 본문은 1,500자에서 접고 `더 보기`로 편다. 필터 토글은 메모리에서 다시 걸고 파일을 다시 읽지 않는다. 다른 항목을 고르면 앞의 읽기는 `CancellationTokenSource`로 취소한다
+- **도구 표시는 `ToolLook` 한 곳**: 이름(`Claude Code`·`Codex CLI`·`Gemini CLI`), 짧은 이름, 배지 한 글자(C·X·G), 색(보라·회색·파랑). 뷰모델은 `ToolKind`로 분기하지 않고 여기를 부른다. 도구가 늘면 `ToolKind`·`ToolLook`·DI·터미널 프리셋·세션 필터·컨텍스트 토글을 늘린다
 - **가속기 풍선 숨김**: 셸 루트 격자는 `KeyboardAcceleratorPlacementMode="Hidden"`. 안 그러면 `Ctrl+1` 같은 풍선이 본문 어디에나 뜬다. 단축키는 설정 화면에 적혀 있다
 - **저장하지 않은 편집 보호**: 편집기가 더티(`IsDirty` — 마지막 열기·저장·새로 만들기 시점과 직렬화 결과가 다름)이면 다른 목록 항목을 고르거나 새로 만들기·열기·최근 파일을 누를 때 `DiscardDialog`로 묻는다. 취소하면 선택을 이전 항목으로 되돌리고 편집기는 그대로다. 목록을 다시 채우며 같은 항목을 되찾는 것과 방금 저장한 사본을 되찾는 것은 묻지 않는다
 

@@ -1,7 +1,7 @@
 namespace Daiso.Core;
 
 /// <summary>
-/// REQUIREMENTS §6.5 지시문. Claude는 `@파일명` import 문법을 쓰고, Codex는 import가 없어 읽기 지시문을 쓴다.
+/// REQUIREMENTS §6.5 지시문. Claude는 `@파일명` import 문법을 쓰고, Codex와 Gemini는 읽기 지시문을 쓴다(Gemini의 @import는 .md만 받는다).
 /// </summary>
 public sealed class InstructionTemplate : IInstructionTemplate
 {
@@ -19,6 +19,8 @@ public sealed class InstructionTemplate : IInstructionTemplate
         {
             ToolKind.Claude => $"@{rulesFileName}\nRules above are YAML. {PriorityOrder}",
             ToolKind.Codex => $"Read and follow the rules in ./{rulesFileName} (YAML). {PriorityOrder}",
+            // Gemini의 @import는 .md만 받는다. Codex처럼 읽기 지시문으로 간다
+            ToolKind.Gemini => $"Read and follow the rules in ./{rulesFileName} (YAML). {PriorityOrder}",
             _ => throw new ArgumentOutOfRangeException(nameof(tool), tool, "알 수 없는 도구"),
         };
     }

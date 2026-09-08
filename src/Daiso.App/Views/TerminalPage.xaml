@@ -117,6 +117,22 @@
                             </DataTemplate>
                         </ItemsRepeater.ItemTemplate>
                     </ItemsRepeater>
+
+                    <TextBlock Text="{loc:Str Key=Terminal_GeminiPresets}" Style="{StaticResource MutedText}" />
+                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.GeminiPresets}">
+                        <ItemsRepeater.Layout>
+                            <UniformGridLayout
+                                MinItemWidth="170"
+                                MinRowSpacing="8"
+                                MinColumnSpacing="8"
+                                ItemsStretch="None" />
+                        </ItemsRepeater.Layout>
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                                <Button Content="{x:Bind}" Tag="{x:Bind}" Click="OnPresetClick" HorizontalAlignment="Stretch" />
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
                 </StackPanel>
             </Border>
 
@@ -145,6 +161,15 @@
                                 <TextBlock Text="{loc:Str Key=Terminal_OpenCodex}" />
                             </StackPanel>
                         </Button>
+                        <Button
+                            AutomationProperties.AutomationId="LaunchGeminiButton"
+                            Command="{x:Bind ViewModel.LaunchGeminiCommand}"
+                            IsEnabled="{x:Bind ViewModel.CanLaunch, Mode=OneWay}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon Glyph="&#xE756;" FontSize="14" />
+                                <TextBlock Text="{loc:Str Key=Terminal_OpenGemini}" />
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
 
                     <StackPanel Spacing="4">
@@ -157,6 +182,11 @@
                         <TextBlock
                             AutomationProperties.AutomationId="CodexPreview"
                             Text="{x:Bind ViewModel.CodexPreview, Mode=OneWay}"
+                            Style="{StaticResource MonoText}"
+                            TextTrimming="CharacterEllipsis" />
+                        <TextBlock
+                            AutomationProperties.AutomationId="GeminiPreview"
+                            Text="{x:Bind ViewModel.GeminiPreview, Mode=OneWay}"
                             Style="{StaticResource MonoText}"
                             TextTrimming="CharacterEllipsis" />
                     </StackPanel>

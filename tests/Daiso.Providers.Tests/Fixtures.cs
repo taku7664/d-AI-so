@@ -20,6 +20,10 @@ internal static class Fixtures
 
     internal static string ReadCodex(string name) => File.ReadAllText(CodexPath(name), Encoding.UTF8);
 
+    internal static string GeminiPath(string name) => Path.Combine(Root, "gemini", name);
+
+    internal static string ReadGemini(string name) => File.ReadAllText(GeminiPath(name), Encoding.UTF8);
+
     private static string Root => Path.Combine(AppContext.BaseDirectory, "fixtures");
 
     /// <summary>테스트마다 지워지는 임시 폴더.</summary>
@@ -89,6 +93,32 @@ internal static class Fixtures
 
         return new ProviderHome(home);
     }
+
+    /// <summary>
+    /// `&lt;home&gt;/.gemini/tmp/{이름|해시}/chats/session-*.jsonl` 구조를 만든다.
+    /// 이름 폴더 하나, 해시 폴더 하나, 그리고 목록에서 빠져야 하는 a2a-server 세션 하나.
+    /// </summary>
+    internal static ProviderHome CreateGeminiHome(string home)
+    {
+        var config = Path.Combine(home, ".gemini");
+        var named = Path.Combine(config, "tmp", "fixture-project", "chats");
+        var hashed = Path.Combine(config, "tmp", GeminiProjectHash, "chats");
+        Directory.CreateDirectory(named);
+        Directory.CreateDirectory(hashed);
+
+        File.Copy(GeminiPath("session-modern.jsonl"), Path.Combine(named, "session-2026-09-01T01-00-7a1b2c3d.jsonl"));
+        File.Copy(GeminiPath("session-modern.jsonl"), Path.Combine(hashed, "session-2026-09-01T01-00-7a1b2c3d.jsonl"));
+        File.Copy(GeminiPath("session-a2a.jsonl"), Path.Combine(named, "session-2026-05-25T13-29-a2a-serv.jsonl"));
+
+        File.Copy(GeminiPath("oauth_creds.json"), Path.Combine(config, "oauth_creds.json"));
+        File.Copy(GeminiPath("google_accounts.json"), Path.Combine(config, "google_accounts.json"));
+        File.Copy(GeminiPath("projects.json"), Path.Combine(config, "projects.json"));
+
+        return new ProviderHome(home);
+    }
+
+    /// <summary>projects.json 의 "c:\\fixture\\project" 를 SHA-256 한 값. 해시 폴더 이름으로 쓴다.</summary>
+    internal const string GeminiProjectHash = "0bb944d27cd15af3778264ff172604204f9e857f28c43df93754b992a4b14444";
 
     internal const string ClaudeSessionId = "11111111-2222-3333-4444-555555555555";
     internal const string CodexLegacySessionId = "01a00000-1111-2222-3333-444444444444";
