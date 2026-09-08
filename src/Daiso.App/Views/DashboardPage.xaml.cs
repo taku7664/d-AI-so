@@ -36,6 +36,9 @@ public sealed partial class DashboardPage : Page
     /// <summary>세션 목록으로 보낸다.</summary>
     private void OnGoToSessionsClick(object sender, RoutedEventArgs e) => Go("Sessions");
 
+    /// <summary>사용량 화면으로 보낸다. 요약의 토큰 수치는 거기서 자세히 본다.</summary>
+    private void OnGoToUsageClick(object sender, RoutedEventArgs e) => Go("Usage");
+
     private static void Go(string tag) => (App.MainWindow as ShellWindow)?.NavigateTo(tag);
 
     /// <summary>최근 세션을 Terminal 화면에 채워 넣고 그 화면으로 보낸다.</summary>

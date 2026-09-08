@@ -137,6 +137,71 @@
                     </ItemsRepeater.ItemTemplate>
                 </ItemsRepeater>
 
+
+                <!-- 최근 세션 -->
+                <Border Style="{StaticResource CardBorder}">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="{loc:Str Key=Dashboard_Recent}" Style="{StaticResource SectionTitleText}" />
+
+                        <Border
+                            Style="{StaticResource NoticeBorder}"
+                            Visibility="{x:Bind ViewModel.HasNoRecentSessions, Mode=OneWay}">
+                            <TextBlock Text="{loc:Str Key=Dashboard_RecentEmpty}" Style="{StaticResource PageSubtitleText}" />
+                        </Border>
+
+                        <ItemsControl
+                            AutomationProperties.AutomationId="RecentSessionList"
+                            ItemsSource="{x:Bind ViewModel.RecentSessions}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:RecentSessionViewModel">
+                                    <Grid ColumnSpacing="12" Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <Border
+                                            Grid.Column="0"
+                                            Width="24"
+                                            Height="24"
+                                            CornerRadius="12"
+                                            VerticalAlignment="Center"
+                                            Background="{x:Bind ToolBrush}">
+                                            <TextBlock
+                                                Text="{x:Bind ToolInitial}"
+                                                Foreground="White"
+                                                FontSize="11"
+                                                FontWeight="SemiBold"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center" />
+                                        </Border>
+
+                                        <StackPanel Grid.Column="1" Spacing="1">
+                                            <TextBlock
+                                                Text="{x:Bind ProjectText}"
+                                                Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                                TextWrapping="NoWrap"
+                                                TextTrimming="CharacterEllipsis"
+                                                ToolTipService.ToolTip="{x:Bind PathText}" />
+                                            <TextBlock Text="{x:Bind MetaText}" Style="{StaticResource MutedText}" />
+                                        </StackPanel>
+
+                                        <Button
+                                            Grid.Column="2"
+                                            AutomationProperties.AutomationId="ResumeRecentButton"
+                                            AutomationProperties.Name="{loc:Str Key=Dashboard_ResumeHere}"
+                                            ToolTipService.ToolTip="{loc:Str Key=Dashboard_ResumeHere}"
+                                            Click="OnResumeRecentClick"
+                                            DataContext="{x:Bind}">
+                                            <FontIcon Glyph="&#xE768;" FontSize="13" />
+                                        </Button>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
                 <!-- 세션 요약 -->
                 <Border Style="{StaticResource CardBorder}">
                     <StackPanel Spacing="14">
@@ -151,11 +216,16 @@
                                 Text="{loc:Str Key=Dashboard_Sessions}"
                                 Style="{StaticResource SectionTitleText}" />
 
-                            <HyperlinkButton
-                                Grid.Column="1"
-                                Content="{loc:Str Key=Dashboard_OpenSessions}"
-                                AutomationProperties.AutomationId="GoToSessionsButton"
-                                Click="OnGoToSessionsClick" />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                <HyperlinkButton
+                                    Content="{loc:Str Key=Dashboard_OpenSessions}"
+                                    AutomationProperties.AutomationId="GoToSessionsButton"
+                                    Click="OnGoToSessionsClick" />
+                                <HyperlinkButton
+                                    Content="{loc:Str Key=Dashboard_OpenUsage}"
+                                    AutomationProperties.AutomationId="GoToUsageButton"
+                                    Click="OnGoToUsageClick" />
+                            </StackPanel>
                         </Grid>
 
                         <Grid ColumnSpacing="28" AutomationProperties.AutomationId="SessionSummary">
@@ -200,8 +270,23 @@
                     </StackPanel>
                 </Border>
 
-                <!-- 로그인 프로필 -->
-                <Border Style="{StaticResource CardBorder}">
+                <!-- 로그인 프로필: 계정을 오갈 때만 쓴다. 접어 두고 필요할 때 편다 -->
+                <Border Style="{StaticResource CardBorder}" Padding="4">
+                    <Expander
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Stretch"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        IsExpanded="False"
+                        AutomationProperties.Name="{loc:Str Key=AuthProfile_Title}"
+                        AutomationProperties.AutomationId="ProfileExpander">
+                        <Expander.Header>
+                            <StackPanel Spacing="2" Margin="0,4,0,4">
+                                <TextBlock Text="{loc:Str Key=AuthProfile_Title}" Style="{StaticResource SectionTitleText}" />
+                                <TextBlock Text="{x:Bind Profiles.CountText, Mode=OneWay}" Style="{StaticResource MutedText}" />
+                            </StackPanel>
+                        </Expander.Header>
+
                     <StackPanel Spacing="12">
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
@@ -209,10 +294,11 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
-                            <StackPanel Grid.Column="0" Spacing="2">
-                                <TextBlock Text="{loc:Str Key=AuthProfile_Title}" Style="{StaticResource SectionTitleText}" />
-                                <TextBlock Text="{loc:Str Key=AuthProfile_Hint}" Style="{StaticResource PageSubtitleText}" />
-                            </StackPanel>
+                            <TextBlock
+                                Grid.Column="0"
+                                VerticalAlignment="Center"
+                                Text="{loc:Str Key=AuthProfile_Hint}"
+                                Style="{StaticResource PageSubtitleText}" />
 
                             <Button
                                 Grid.Column="1"
@@ -287,71 +373,7 @@
                             Text="{x:Bind Profiles.StatusText, Mode=OneWay}"
                             Style="{StaticResource MutedText}" />
                     </StackPanel>
-                </Border>
-
-                <!-- 최근 세션 -->
-                <Border Style="{StaticResource CardBorder}">
-                    <StackPanel Spacing="12">
-                        <TextBlock Text="{loc:Str Key=Dashboard_Recent}" Style="{StaticResource SectionTitleText}" />
-
-                        <Border
-                            Style="{StaticResource NoticeBorder}"
-                            Visibility="{x:Bind ViewModel.HasNoRecentSessions, Mode=OneWay}">
-                            <TextBlock Text="{loc:Str Key=Dashboard_RecentEmpty}" Style="{StaticResource PageSubtitleText}" />
-                        </Border>
-
-                        <ItemsControl
-                            AutomationProperties.AutomationId="RecentSessionList"
-                            ItemsSource="{x:Bind ViewModel.RecentSessions}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="vm:RecentSessionViewModel">
-                                    <Grid ColumnSpacing="12" Margin="0,0,0,10">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-
-                                        <Border
-                                            Grid.Column="0"
-                                            Width="24"
-                                            Height="24"
-                                            CornerRadius="12"
-                                            VerticalAlignment="Center"
-                                            Background="{x:Bind ToolBrush}">
-                                            <TextBlock
-                                                Text="{x:Bind ToolInitial}"
-                                                Foreground="White"
-                                                FontSize="11"
-                                                FontWeight="SemiBold"
-                                                HorizontalAlignment="Center"
-                                                VerticalAlignment="Center" />
-                                        </Border>
-
-                                        <StackPanel Grid.Column="1" Spacing="1">
-                                            <TextBlock
-                                                Text="{x:Bind ProjectText}"
-                                                Style="{ThemeResource BodyStrongTextBlockStyle}"
-                                                TextWrapping="NoWrap"
-                                                TextTrimming="CharacterEllipsis"
-                                                ToolTipService.ToolTip="{x:Bind PathText}" />
-                                            <TextBlock Text="{x:Bind MetaText}" Style="{StaticResource MutedText}" />
-                                        </StackPanel>
-
-                                        <Button
-                                            Grid.Column="2"
-                                            AutomationProperties.AutomationId="ResumeRecentButton"
-                                            AutomationProperties.Name="{loc:Str Key=Dashboard_ResumeHere}"
-                                            ToolTipService.ToolTip="{loc:Str Key=Dashboard_ResumeHere}"
-                                            Click="OnResumeRecentClick"
-                                            DataContext="{x:Bind}">
-                                            <FontIcon Glyph="&#xE768;" FontSize="13" />
-                                        </Button>
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
+                    </Expander>
                 </Border>
 
             </StackPanel>

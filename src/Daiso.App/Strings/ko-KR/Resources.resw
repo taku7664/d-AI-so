@@ -716,6 +716,9 @@
   <data name="Dashboard_StatTokens" xml:space="preserve">
     <value>최근 {0}일 토큰</value>
   </data>
+  <data name="Dashboard_OpenUsage" xml:space="preserve">
+    <value>사용량 보기</value>
+  </data>
   <data name="Dashboard_OpenSessions" xml:space="preserve">
     <value>세션 보기</value>
   </data>
@@ -972,6 +975,12 @@
   </data>
   <data name="AuthProfile_Hint" xml:space="preserve">
     <value>지금 로그인 상태를 이름 붙여 두면 계정을 오갈 때 다시 로그인하지 않아도 됩니다. 저장한 정보는 이 PC의 사용자 계정으로만 풀 수 있게 암호화됩니다.</value>
+  </data>
+  <data name="AuthProfile_Count" xml:space="preserve">
+    <value>보관 중인 계정 {0}개</value>
+  </data>
+  <data name="AuthProfile_CountNone" xml:space="preserve">
+    <value>보관 중인 계정 없음</value>
   </data>
   <data name="AuthProfile_Empty" xml:space="preserve">
     <value>저장한 프로필이 없습니다. 지금 로그인한 계정을 저장해 두세요.</value>
