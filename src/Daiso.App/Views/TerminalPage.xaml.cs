@@ -205,9 +205,11 @@ public sealed partial class TerminalPage : Page
         if (_room is not null)
         {
             _room.Blocks.CollectionChanged -= OnBlocksChanged;
+            _room.MarkInactive();
         }
 
         _room = room;
+        room.MarkActive();
         room.Blocks.CollectionChanged += OnBlocksChanged;
 
         RoomCard.DataContext = room;

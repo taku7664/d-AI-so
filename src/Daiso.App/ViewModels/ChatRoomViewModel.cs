@@ -110,6 +110,26 @@ public sealed partial class ChatRoomViewModel : ObservableObject, IDisposable
 
     public bool IsRunning => !HasExited;
 
+    /// <summary>이 방이 지금 보고 있는 탭인가. 페이지가 정한다. 보고 있으면 새 답이 와도 표시하지 않는다.</summary>
+    public bool IsActiveTab { get; private set; }
+
+    /// <summary>안 본 새 답이 있는가. 다른 탭에 있는 동안 어시스턴트 답이 오면 켜진다. 탭 점으로 보인다.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(UnseenVisibility))]
+    private bool hasUnseen;
+
+    public Visibility UnseenVisibility => HasUnseen ? Visibility.Visible : Visibility.Collapsed;
+
+    /// <summary>이 탭을 보기 시작했다. 안 본 표시를 지운다.</summary>
+    public void MarkActive()
+    {
+        IsActiveTab = true;
+        HasUnseen = false;
+    }
+
+    /// <summary>다른 탭으로 옮겨 갔다.</summary>
+    public void MarkInactive() => IsActiveTab = false;
+
     public Visibility TerminalVisibility => ShowTerminal ? Visibility.Visible : Visibility.Collapsed;
 
     public Visibility ChatVisibility => ShowTerminal ? Visibility.Collapsed : Visibility.Visible;
@@ -217,6 +237,13 @@ public sealed partial class ChatRoomViewModel : ObservableObject, IDisposable
             }
 
             IsWaiting = messages.Count > 0 && Blocks.Count > 0 && Blocks[^1].Role == MessageRole.User;
+
+            // 다른 탭을 보는 동안 어시스턴트 답이 오면 탭에 점을 켠다
+            if (!IsActiveTab && messages.Any(message => message.Role == MessageRole.Assistant))
+            {
+                HasUnseen = true;
+            }
+
             OnPropertyChanged(nameof(EmptyVisibility));
         });
     }

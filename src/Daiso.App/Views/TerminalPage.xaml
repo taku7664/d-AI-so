@@ -229,9 +229,15 @@
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <Border Grid.Column="0" Width="20" Height="20" CornerRadius="10" VerticalAlignment="Center" Background="{x:Bind AvatarBrush}">
-                                        <TextBlock Text="{x:Bind Avatar}" Foreground="White" FontSize="10" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
+                                    <Grid Grid.Column="0" Width="20" Height="20" VerticalAlignment="Center">
+                                        <Border Width="20" Height="20" CornerRadius="10" Background="{x:Bind AvatarBrush}">
+                                            <TextBlock Text="{x:Bind Avatar}" Foreground="White" FontSize="10" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <!-- 안 본 새 답 점 -->
+                                        <Ellipse Width="8" Height="8" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0"
+                                                 Fill="{ThemeResource SystemFillColorAttentionBrush}" Stroke="{ThemeResource CardBackgroundFillColorDefaultBrush}" StrokeThickness="1.5"
+                                                 Visibility="{x:Bind UnseenVisibility, Mode=OneWay}" />
+                                    </Grid>
                                     <TextBlock Grid.Column="1" Text="{x:Bind ShortTitle}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="140" />
                                     <Button
                                         Grid.Column="2"
