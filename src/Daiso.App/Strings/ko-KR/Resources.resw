@@ -1252,4 +1252,7 @@
   <data name="Room_CloseAndQuit" xml:space="preserve">
     <value>닫고 종료</value>
   </data>
+  <data name="Settings_TerminalFontSize" xml:space="preserve">
+    <value>터미널 글자 크기 (px)</value>
+  </data>
 </root>

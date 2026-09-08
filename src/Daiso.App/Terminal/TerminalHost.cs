@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
 using Daiso.App.ViewModels;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -156,10 +157,13 @@ public sealed class TerminalHost : UserControl
         var dark = ActualTheme == ElementTheme.Dark
             || (ActualTheme == ElementTheme.Default && Application.Current.RequestedTheme == ApplicationTheme.Dark);
 
+        var fontSize = Math.Clamp(App.Services.GetRequiredService<Services.ISettingsStore>().Current.TerminalFontSize, 8, 28);
+
         // xterm ITheme. 카드 배경과 비슷한 색을 써 화면 안에서 튀지 않게 한다
         var theme = dark
             ? new
             {
+                fontSize,
                 background = "#1f1f1f",
                 foreground = "#d6d6d6",
                 cursor = "#ffffff",
@@ -169,6 +173,7 @@ public sealed class TerminalHost : UserControl
             }
             : new
             {
+                fontSize,
                 background = "#fbfbfb",
                 foreground = "#1f1f1f",
                 cursor = "#000000",

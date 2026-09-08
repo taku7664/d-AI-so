@@ -289,6 +289,14 @@
                                 AutomationProperties.AutomationId="EmbeddedTerminalToggle"
                                 IsOn="{x:Bind ViewModel.UseEmbeddedTerminal, Mode=TwoWay}" />
                             <TextBlock Text="{loc:Str Key=Settings_EmbeddedTerminalHint}" Style="{StaticResource MutedText}" TextWrapping="Wrap" />
+                            <NumberBox
+                                Header="{loc:Str Key=Settings_TerminalFontSize}"
+                                Width="200"
+                                Minimum="8"
+                                Maximum="28"
+                                SpinButtonPlacementMode="Compact"
+                                AutomationProperties.AutomationId="TerminalFontSizeBox"
+                                Value="{x:Bind ViewModel.TerminalFontSize, Mode=TwoWay}" />
                             <TextBlock
                                 Text="{loc:Str Key=Settings_NoWebView2}"
                                 Style="{StaticResource MutedText}"

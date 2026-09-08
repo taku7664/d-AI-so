@@ -33,6 +33,10 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool useEmbeddedTerminal;
 
+    /// <summary>내장 터미널 글자 크기(px).</summary>
+    [ObservableProperty]
+    private int terminalFontSize;
+
     /// <summary>이 PC에 WebView2 런타임이 있는가. 없으면 토글을 켜도 외부로 간다.</summary>
     public bool WebViewAvailable { get; } = Daiso.App.Terminal.TerminalHost.IsRuntimeAvailable();
 
@@ -106,6 +110,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         CleanupOlderThanDays = current.CleanupOlderThanDays;
         CleanupLargerThanMegabytes = current.CleanupLargerThanMegabytes;
         UseEmbeddedTerminal = current.UseEmbeddedTerminal;
+        TerminalFontSize = current.TerminalFontSize;
         ThemeIndex = current.Theme switch
         {
             "Light" => 1,
@@ -158,6 +163,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         current.CleanupOlderThanDays = Math.Max(0, CleanupOlderThanDays);
         current.CleanupLargerThanMegabytes = Math.Max(0, CleanupLargerThanMegabytes);
         current.UseEmbeddedTerminal = UseEmbeddedTerminal;
+        current.TerminalFontSize = Math.Clamp(TerminalFontSize, 8, 28);
         current.Theme = ThemeIndex switch
         {
             1 => "Light",
