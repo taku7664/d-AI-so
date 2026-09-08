@@ -1264,4 +1264,19 @@
   <data name="Room_FindPrev" xml:space="preserve">
     <value>이전 찾기</value>
   </data>
+  <data name="Terminal_MyPrompts" xml:space="preserve">
+    <value>내 프롬프트</value>
+  </data>
+  <data name="Terminal_PromptApplied" xml:space="preserve">
+    <value>이 폴더에 이미 적용됨</value>
+  </data>
+  <data name="Terminal_PromptApply" xml:space="preserve">
+    <value>{0} 을(를) 이 폴더에 적용</value>
+  </data>
+  <data name="Terminal_PromptWritten" xml:space="preserve">
+    <value>프롬프트를 {0} 에 썼습니다</value>
+  </data>
+  <data name="Terminal_NoPrompts" xml:space="preserve">
+    <value>프롬프트가 없습니다. 내 프롬프트 화면에서 만드세요</value>
+  </data>
 </root>

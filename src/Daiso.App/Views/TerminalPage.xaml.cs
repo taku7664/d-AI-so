@@ -329,6 +329,75 @@ public sealed partial class TerminalPage : Page
     private void ScrollChatToEnd() =>
         DispatcherQueue.TryEnqueue(() => ChatScroll.ChangeView(null, ChatScroll.ScrollableHeight, null, disableAnimation: true));
 
+    /// <summary>
+    /// 내 프롬프트 목록을 연다. 각 프롬프트가 지금 작업 폴더의 프로젝트에 적용됐는지(docs/prompts/&lt;id&gt;.md 있는지)
+    /// 표시하고, 누르면 그 폴더에 써 넣는다. (사용자 요청: 터미널에서 적용 여부 보기)
+    /// </summary>
+    private void OnPromptFlyoutOpening(object? sender, object e)
+    {
+        PromptFlyout.Items.Clear();
+
+        var library = App.Services.GetRequiredService<Daiso.Core.IPromptLibrary>();
+        var directory = ViewModel.WorkingDirectory;
+        var hasFolder = !string.IsNullOrWhiteSpace(directory) && Directory.Exists(directory);
+
+        var prompts = Daiso.Core.BuiltInPrompts.List()
+            .Concat(library.List())
+            .GroupBy(prompt => prompt.Id, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.Last())
+            .OrderBy(prompt => prompt.Name, StringComparer.CurrentCulture)
+            .ToList();
+
+        foreach (var prompt in prompts)
+        {
+            var applied = hasFolder && File.Exists(Path.Combine(directory!, "docs", "prompts", prompt.Id + ".md"));
+            var item = new MenuFlyoutItem
+            {
+                Text = prompt.Name,
+                Icon = applied ? new SymbolIcon(Symbol.Accept) : null,
+            };
+
+            ToolTipService.SetToolTip(item, applied
+                ? UiStrings.Get("Terminal_PromptApplied")
+                : UiStrings.Format("Terminal_PromptApply", prompt.Name));
+
+            var captured = prompt;
+            item.Click += (_, _) => ApplyPromptToProject(captured);
+            PromptFlyout.Items.Add(item);
+        }
+
+        if (PromptFlyout.Items.Count == 0)
+        {
+            PromptFlyout.Items.Add(new MenuFlyoutItem { Text = UiStrings.Get("Terminal_NoPrompts"), IsEnabled = false });
+        }
+    }
+
+    /// <summary>고른 프롬프트를 작업 폴더의 docs/prompts에 써 넣는다.</summary>
+    private void ApplyPromptToProject(Daiso.Core.PromptPreset prompt)
+    {
+        var directory = ViewModel.WorkingDirectory;
+
+        if (string.IsNullOrWhiteSpace(directory) || !Directory.Exists(directory))
+        {
+            EmbeddedStatus.Text = UiStrings.Get("Terminal_PickFolderFirst");
+            EmbeddedStatus.Visibility = Visibility.Visible;
+            return;
+        }
+
+        try
+        {
+            var path = App.Services.GetRequiredService<Daiso.Core.IPromptLibrary>()
+                .WriteIntoProject(prompt, directory);
+            EmbeddedStatus.Text = UiStrings.Format("Terminal_PromptWritten", path);
+            EmbeddedStatus.Visibility = Visibility.Visible;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or DirectoryNotFoundException)
+        {
+            EmbeddedStatus.Text = ex.Message;
+            EmbeddedStatus.Visibility = Visibility.Visible;
+        }
+    }
+
     private void OnPresetClick(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement { Tag: string preset })

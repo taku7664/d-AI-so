@@ -40,18 +40,27 @@
                             Text="{x:Bind ViewModel.WorkingDirectory, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                             PlaceholderText="{loc:Str Key=Terminal_FolderPath}" />
 
-                        <muxc:DropDownButton
-                            Grid.Column="1"
-                            AutomationProperties.AutomationId="ProjectPickerButton">
-                            <muxc:DropDownButton.Content>
-                                <StackPanel Orientation="Horizontal" Spacing="8">
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                            <muxc:DropDownButton
+                                AutomationProperties.AutomationId="PromptPickerButton">
+                                <muxc:DropDownButton.Content>
+                                    <TextBlock Text="{loc:Str Key=Terminal_MyPrompts}" />
+                                </muxc:DropDownButton.Content>
+                                <muxc:DropDownButton.Flyout>
+                                    <MenuFlyout x:Name="PromptFlyout" Opening="OnPromptFlyoutOpening" />
+                                </muxc:DropDownButton.Flyout>
+                            </muxc:DropDownButton>
+
+                            <muxc:DropDownButton
+                                AutomationProperties.AutomationId="ProjectPickerButton">
+                                <muxc:DropDownButton.Content>
                                     <TextBlock Text="{loc:Str Key=Common_KnownProjects}" />
-                                </StackPanel>
-                            </muxc:DropDownButton.Content>
-                            <muxc:DropDownButton.Flyout>
-                                <MenuFlyout x:Name="ProjectFlyout" Opening="OnProjectFlyoutOpening" />
-                            </muxc:DropDownButton.Flyout>
-                        </muxc:DropDownButton>
+                                </muxc:DropDownButton.Content>
+                                <muxc:DropDownButton.Flyout>
+                                    <MenuFlyout x:Name="ProjectFlyout" Opening="OnProjectFlyoutOpening" />
+                                </muxc:DropDownButton.Flyout>
+                            </muxc:DropDownButton>
+                        </StackPanel>
                     </Grid>
 
                     <TextBlock Text="{loc:Str Key=Terminal_RecentFolders}" Style="{StaticResource MutedText}" />
