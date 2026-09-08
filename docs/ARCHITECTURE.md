@@ -500,7 +500,7 @@ Apply(projectDir, direction, dryRun)
 
 - 파일 형식: 맨 위 `---` 사이 앞머리(`name`, `description`, `category`, `output`) + Markdown 본문. `PromptPresetSerializer`가 읽고 쓴다. 모르는 키는 오류
 - 갈래 `PromptCategory`: Planning(기획) · Understanding(파악) · Fixing(수정) · Release(배포)
-- 기본 제공: `Daiso.Core/Resources/Prompts/*.md` 임베디드. `BuiltInPrompts`가 카탈로그 순서로 돌려준다. 첫 세트는 `planning-interview`(소규모 프로젝트 기획 인터뷰), `codebase-tour`(기존 코드베이스 파악)
+- 기본 제공: `Daiso.Core/Resources/Prompts/*.md` 임베디드. `BuiltInPrompts`가 카탈로그 순서로 돌려준다. 첫 세트 7개: 기획 `planning-interview`(소규모 프로젝트 기획 인터뷰) · `feature-plan`(기능 하나 추가 계획), 파악 `codebase-tour`(기존 코드베이스 파악), 수정 `bug-repro`(버그 재현과 원인 추적) · `refactor-plan`(리팩터링 계획), 배포 `release-check`(배포 전 점검) · `retro`(작업 회고). 기록형(BUGFIX·RELEASE_CHECK·RETRO)은 파일 끝에 덧붙이고, 계획형은 있으면 덮어쓰지 않고 묻는다
 - 내 보관함: `%LOCALAPPDATA%\d-AI-so\prompts\*.md`. `IPromptLibrary`(구현 `PromptLibraryStore`). 기본 제공을 고쳐 저장하면 내 것으로 사본이 생긴다
 - **적용 방식**: 본문을 명령줄 인자로 넘기지 않는다(25KB, 길이 한도·인용 문제). 대신 `WriteIntoProject`가 프로젝트의 `docs/prompts/{id}.md`에 **본문만** 쓰고, 시작 메시지 `docs/prompts/{id}.md 파일을 읽고 그 절차대로 진행해 주세요. 결과는 {output} 에 씁니다.`를 만들어 준다. 사용자는 이것을 새 세션의 첫 메시지로 붙인다. 두 도구 공통
 - 기본 제공 프롬프트가 지키는 것(테스트가 검사): 코딩 에이전트가 절차 도중 파일을 만들지 않게 막는 문장, 결과 파일 위치 명시, H1 하나, 기획 인터뷰는 첫 회차 질문 정확히 5개

@@ -177,7 +177,12 @@ public static class BuiltInPrompts
     private static readonly string[] Catalog =
     [
         "planning-interview",
+        "feature-plan",
         "codebase-tour",
+        "bug-repro",
+        "refactor-plan",
+        "release-check",
+        "retro",
     ];
 
     /// <summary>카탈로그 순서대로 읽는다.</summary>
