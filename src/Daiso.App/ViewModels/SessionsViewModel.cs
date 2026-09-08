@@ -837,11 +837,14 @@ public sealed partial class SessionRowViewModel : ObservableObject
         return builder.ToString().Trim();
     }
 
+    /// <summary>도구가 실행 중이라 표시했거나, 이 세션을 지금 앱 안 방으로 돌리고 있으면 실행 중이다.</summary>
+    private bool IsRunning => Session.IsActive || App.Rooms.IsRunning(Session.FilePath);
+
     public string Badges => string.Join(
         " ",
         new[]
         {
-            Session.IsActive ? UiStrings.Get("Sessions_BadgeActive") : null,
+            IsRunning ? UiStrings.Get("Sessions_BadgeActive") : null,
             Session.IsArchived ? UiStrings.Get("Sessions_BadgeArchived") : null,
             IsOrphan ? UiStrings.Get("Sessions_BadgeMissingFolder") : null,
         }.Where(badge => badge is not null));
