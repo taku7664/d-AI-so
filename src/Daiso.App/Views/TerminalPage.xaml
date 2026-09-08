@@ -4,7 +4,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:loc="using:Daiso.App.Strings"
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
-    xmlns:vm="using:Daiso.App.ViewModels">
+    xmlns:vm="using:Daiso.App.ViewModels"
+    xmlns:terminal="using:Daiso.App.Terminal">
 
     <ScrollViewer Padding="{StaticResource PagePadding}" VerticalScrollBarVisibility="Auto">
         <Grid>
@@ -173,6 +174,33 @@
                         </StackPanel>
                     </StackPanel>
                 </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- 스파이크: 의사 콘솔 + xterm 이 이 앱 안에서 도는지 확인하는 임시 카드. 방 화면이 서면 사라진다 (FEATURE_PLAN 5-1) -->
+            <Border Style="{StaticResource CardBorder}">
+                <StackPanel Spacing="10">
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{loc:Str Key=Terminal_EmbeddedExperiment}" Style="{StaticResource SectionTitleText}" />
+                        <Button
+                            Grid.Column="1"
+                            Content="{loc:Str Key=Terminal_OpenHere}"
+                            AutomationProperties.AutomationId="EmbeddedOpenButton"
+                            Click="OnEmbeddedOpenClick" />
+                    </Grid>
+                    <TextBlock
+                        x:Name="EmbeddedStatus"
+                        Style="{StaticResource MutedText}"
+                        TextWrapping="Wrap"
+                        Visibility="Collapsed" />
+                    <terminal:TerminalHost
+                        x:Name="Embedded"
+                        Height="480"
+                        Visibility="Collapsed" />
                 </StackPanel>
             </Border>
 

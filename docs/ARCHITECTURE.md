@@ -470,6 +470,12 @@ RefreshAsync
 - `wt.exe`가 PATH에 있으면 `wt -d <dir> <위 셸 명령>`, 없으면 셸을 직접 새 창으로 실행. **wt 없음이 기본 경로**이며 테스트 대상 (Windows 10 Home 기본 상태에 wt 없음 확인)
 - Codex는 데스크톱 앱이 설치한 네이티브 exe를 쓰지 않는다. PATH의 npm `codex.cmd`만 사용
 
+**내장 터미널(실험, 첫 판 진행 중)** — 앱을 떠나지 않고 CLI를 띄우고 대화를 채팅 블록으로 본다.
+- 엔진: `Daiso.Infrastructure.Pty` — `PseudoConsole`(ConPTY: CreatePseudoConsole + 파이프 + STARTUPINFOEX, 자식 생성 동안만 부모 표준 핸들을 비워 콘솔 핸들을 새로 받게 한다), `PtySession`(FileStream IO, 트리 kill 종료, 초기 출력 버퍼링, conhost 마지막 프레임 정착 대기), `PtyEnvironment`(중첩 Claude Code 표식 제거).
+- 화면: `Daiso.App.Terminal.TerminalHost` — WebView2 + 동봉 xterm.js(`Assets/xterm`, MIT). `SetVirtualHostNameToFolderMapping`으로 로컬만 로드, 네트워크 없음. 앱↔페이지 메시지: out(base64)·paste·theme·focus / in·resize·copy·paste·ready·title. 선택 있으면 Ctrl+C 복사·없으면 중단, Ctrl+V·오른클릭은 앱이 클립보드를 읽어 넣는다, F5·Ctrl+1~7은 페이지에서 먹어 앱 단축키와 겹치지 않게 한다.
+- 종료는 반드시 프로세스 **트리 전체**를 kill 한다. 루트 셸만 죽이면 자식이 콘솔 출력을 잡아 읽기가 안 풀리고, 파이프 핸들 해제와 네이티브 읽기가 겹쳐 힙이 깨진다.
+- WebView2 런타임이 없으면 내장을 못 켠다. `TerminalHost.IsRuntimeAvailable()`로 확인하고 없으면 외부 터미널로 보낸다.
+
 ### 5.4 Context Doctor
 ```
 IContextInspector.InspectAsync(tool, dir)

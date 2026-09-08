@@ -37,6 +37,16 @@ public sealed class TerminalCommandBuilder
             : shell;
     }
 
+    /// <summary>
+    /// 새 창 없이 셸 명령만. 내장 터미널(의사 콘솔)은 wt를 거치지 않고 이 명령을 그대로 띄운다.
+    /// </summary>
+    public TerminalCommand BuildShellCommand(string command, string arguments)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(command);
+
+        return BuildShell(command, arguments ?? string.Empty);
+    }
+
     /// <summary>pwsh → powershell → cmd 순으로 고른다.</summary>
     private TerminalCommand BuildShell(string command, string arguments)
     {

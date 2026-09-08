@@ -123,6 +123,56 @@ public sealed partial class TerminalPage : Page
         }
     }
 
+    private Daiso.Infrastructure.Pty.PtySession? _spikeSession;
+
+    /// <summary>스파이크: 고른 도구를 이 자리의 의사 콘솔에 띄운다. 외부 터미널과 같은 셸 명령을 쓴다.</summary>
+    private async void OnEmbeddedOpenClick(object sender, RoutedEventArgs e)
+    {
+        if (!Terminal.TerminalHost.IsRuntimeAvailable())
+        {
+            EmbeddedStatus.Text = UiStrings.Get("Terminal_NoWebView2");
+            EmbeddedStatus.Visibility = Visibility.Visible;
+            return;
+        }
+
+        var tool = ViewModel.SelectedTool;
+        var directory = string.IsNullOrWhiteSpace(ViewModel.WorkingDirectory)
+            ? Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
+            : ViewModel.WorkingDirectory;
+
+        if (tool is null || !Directory.Exists(directory))
+        {
+            EmbeddedStatus.Text = UiStrings.Get("Terminal_PickFolderFirst");
+            EmbeddedStatus.Visibility = Visibility.Visible;
+            return;
+        }
+
+        _spikeSession?.Dispose();
+
+        var builder = new Daiso.Infrastructure.TerminalCommandBuilder(Daiso.Providers.Common.ExecutableLocator.ExistsOnPath);
+        var shell = builder.BuildShellCommand(tool.Provider.ExecutableName, tool.Arguments);
+        var commandLine = $"{shell.FileName} {shell.Arguments}";
+
+        try
+        {
+            await Embedded.InitializeAsync();
+            _spikeSession = Daiso.Infrastructure.Pty.PtySession.Start(commandLine, directory);
+            Embedded.Attach(_spikeSession);
+            Embedded.Visibility = Visibility.Visible;
+            EmbeddedStatus.Text = commandLine;
+            EmbeddedStatus.Visibility = Visibility.Visible;
+            Embedded.UpdateLayout();
+            Embedded.StartBringIntoView(new BringIntoViewOptions { AnimationDesired = false });
+            Embedded.Ready += (_, _) => Embedded.FocusTerminal();
+            Embedded.FocusTerminal();
+        }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or System.Runtime.InteropServices.COMException or IOException)
+        {
+            EmbeddedStatus.Text = ex.Message;
+            EmbeddedStatus.Visibility = Visibility.Visible;
+        }
+    }
+
     private void OnPresetClick(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement { Tag: string preset })

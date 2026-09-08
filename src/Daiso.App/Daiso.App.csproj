@@ -41,6 +41,8 @@
 
   <ItemGroup>
     <Content Include="Assets\daiso.ico" CopyToOutputDirectory="PreserveNewest" />
+    <!-- 내장 터미널 화면(xterm.js, MIT). 로컬 가상 호스트로만 읽는다. 네트워크 없음 (ARCHITECTURE §5.3) -->
+    <Content Include="Assets\xterm\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <!--

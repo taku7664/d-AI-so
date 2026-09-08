@@ -1210,4 +1210,13 @@
   <data name="RuleMaker_SaveHint" xml:space="preserve">
     <value>이름을 적고 행동이나 규칙을 하나 넣으면 저장할 수 있습니다</value>
   </data>
+  <data name="Terminal_EmbeddedExperiment" xml:space="preserve">
+    <value>앱 안에서 열기 (실험)</value>
+  </data>
+  <data name="Terminal_OpenHere" xml:space="preserve">
+    <value>여기서 열기</value>
+  </data>
+  <data name="Terminal_NoWebView2" xml:space="preserve">
+    <value>WebView2 런타임이 없어 앱 안에서 열 수 없습니다. 외부 터미널로 여세요</value>
+  </data>
 </root>
