@@ -1213,9 +1213,6 @@
   <data name="Terminal_EmbeddedExperiment" xml:space="preserve">
     <value>앱 안에서 열기 (실험)</value>
   </data>
-  <data name="Terminal_OpenHere" xml:space="preserve">
-    <value>여기서 열기</value>
-  </data>
 <data name="Room_ShowChat" xml:space="preserve">
     <value>채팅으로</value>
   </data>
@@ -1273,15 +1270,6 @@
   <data name="Room_ClaudeOnly" xml:space="preserve">
     <value>챗봇은 지금 Claude만 됩니다. Codex·Gemini는 아래 도구 열기로 외부 터미널에서 쓰세요</value>
   </data>
-  <data name="Room_PermissionTitle" xml:space="preserve">
-    <value>도구 실행을 허용할까요?</value>
-  </data>
-  <data name="Room_Allow" xml:space="preserve">
-    <value>허용</value>
-  </data>
-  <data name="Room_Deny" xml:space="preserve">
-    <value>거부</value>
-  </data>
   <data name="Room_PermissionAllowed" xml:space="preserve">
     <value>허용함</value>
   </data>
@@ -1293,5 +1281,11 @@
   </data>
   <data name="Room_SessionEnded" xml:space="preserve">
     <value>세션이 끝났습니다 (코드 {0}). 새로 열어 다시 시작하세요</value>
+  </data>
+  <data name="Terminal_OpenTerminalRoom" xml:space="preserve">
+    <value>터미널로 열기</value>
+  </data>
+  <data name="Terminal_OpenChatbotRoom" xml:space="preserve">
+    <value>챗봇으로 열기</value>
   </data>
 </root>

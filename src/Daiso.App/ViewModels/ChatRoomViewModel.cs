@@ -16,7 +16,7 @@ namespace Daiso.App.ViewModels;
 /// 방은 콘솔을 직접 쥐고 출력을 버퍼에 쌓는다. 그래서 화면(터미널 호스트)이 붙었다 떨어져도
 /// 다시 붙을 때 그동안의 화면을 되돌려 줄 수 있다. 방은 <see cref="RoomManager"/>가 들고 있어 화면 이동에도 살아 있다.
 /// </summary>
-public sealed partial class ChatRoomViewModel : ObservableObject, IDisposable
+public sealed partial class ChatRoomViewModel : ObservableObject, IRoom
 {
     /// <summary>되돌리기용 출력 버퍼 상한. 넘으면 앞부분을 버린다(오래된 스크롤백). 8MB면 긴 세션도 화면 복원에 충분하다.</summary>
     private const int MaxBufferBytes = 8 * 1024 * 1024;

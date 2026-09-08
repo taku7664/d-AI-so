@@ -9,17 +9,17 @@ namespace Daiso.App.ViewModels;
 public sealed class RoomManager
 {
     /// <summary>열린 방. 탭 띠가 이걸 그린다.</summary>
-    public ObservableCollection<StreamingRoomViewModel> Rooms { get; } = [];
+    public ObservableCollection<IRoom> Rooms { get; } = [];
 
     /// <summary>새 방을 더한다.</summary>
-    public void Add(StreamingRoomViewModel room)
+    public void Add(IRoom room)
     {
         ArgumentNullException.ThrowIfNull(room);
         Rooms.Add(room);
     }
 
     /// <summary>방을 닫고 프로세스를 정리한다.</summary>
-    public void Close(StreamingRoomViewModel room)
+    public void Close(IRoom room)
     {
         ArgumentNullException.ThrowIfNull(room);
 

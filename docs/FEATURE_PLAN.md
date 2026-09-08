@@ -139,3 +139,10 @@ CLI는 숨은 진짜 터미널(ConPTY + WebView2 xterm.js)에서 돌고, 채팅 
 - 방 화면을 말풍선 채팅으로 다시 씀(터미널·토글·검색 제거). 입력은 AutoSuggestBox(`/` 선택기 유지). `RoomManager`는 스트리밍 방을 든다.
 - 사용자 피드백 반영: **승인 카드 제거** — 도구는 `--dangerously-skip-permissions`로 묻지 않고 실행(챗봇 흐름을 끊지 않게). Claude만, Codex·Gemini는 외부 터미널 안내.
 - 라이브 확인(스트리밍·도구)은 사용자가 방에 메시지를 보내 본다(Claude 토큰 사용).
+
+### 터미널·챗봇 둘 다 유지 (2026-09-08, 사용자 요청)
+사용자: 터미널 코드를 지우지 말고, 방을 열 때 **터미널** 또는 **챗봇**을 고르게 하라.
+- `IRoom` 공통 인터페이스: `ChatRoomViewModel`(터미널)·`StreamingRoomViewModel`(챗봇) 둘 다 구현. 탭·`RoomManager`는 IRoom.
+- 터미널 화면에 "터미널로 열기"·"챗봇으로 열기" 두 버튼. 방 종류에 맞는 패널(xterm / 말풍선)을 켠다.
+- 챗봇은 Claude만. 터미널은 세 도구 다. 세션 이어서 열기는 Claude면 챗봇, 아니면 터미널.
+- 터미널 코드(ConPTY·xterm·A모드)는 지우지 않고 그대로 살아 있다.

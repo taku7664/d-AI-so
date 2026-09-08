@@ -14,7 +14,7 @@ namespace Daiso.App.ViewModels;
 /// 방 하나 = 챗봇 세션(<see cref="IChatSession"/>) + 말풍선. 터미널 없이 CLI를 대화로 다룬다. (FEATURE_PLAN B 모드)
 /// 엔진 사건을 받아 말풍선을 만들고 자라게 한다. 스트리밍 답은 한 말풍선에 글자를 이어 붙인다.
 /// </summary>
-public sealed partial class StreamingRoomViewModel : ObservableObject, IDisposable
+public sealed partial class StreamingRoomViewModel : ObservableObject, IRoom
 {
     private readonly DispatcherQueue _dispatcher;
     private readonly ToolKind _tool;

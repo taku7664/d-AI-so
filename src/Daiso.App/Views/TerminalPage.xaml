@@ -196,12 +196,17 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{loc:Str Key=Terminal_EmbeddedExperiment}" Style="{StaticResource SectionTitleText}" />
-                        <Button
-                            Grid.Column="1"
-                            Content="{loc:Str Key=Terminal_OpenHere}"
-                            Style="{ThemeResource AccentButtonStyle}"
-                            AutomationProperties.AutomationId="EmbeddedOpenButton"
-                            Click="OnEmbeddedOpenClick" />
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                            <Button
+                                Content="{loc:Str Key=Terminal_OpenTerminalRoom}"
+                                AutomationProperties.AutomationId="OpenTerminalButton"
+                                Click="OnOpenTerminalClick" />
+                            <Button
+                                Content="{loc:Str Key=Terminal_OpenChatbotRoom}"
+                                Style="{ThemeResource AccentButtonStyle}"
+                                AutomationProperties.AutomationId="OpenChatbotButton"
+                                Click="OnOpenChatbotClick" />
+                        </StackPanel>
                     </Grid>
                     <TextBlock
                         x:Name="EmbeddedStatus"
@@ -231,7 +236,7 @@
                             </Style>
                         </ListView.ItemContainerStyle>
                         <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="vm:ChatRoomViewModel">
+                            <DataTemplate x:DataType="vm:IRoom">
                                 <Grid ColumnSpacing="8" Padding="6,2">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
@@ -264,119 +269,102 @@
                         </ListView.ItemTemplate>
                     </ListView>
 
-                    <!-- 방 UI. DataContext = 선택된 ChatRoomViewModel -->
-                    <!-- 대화 방(챗봇): 말풍선 + 입력. 터미널은 없다. 엔진은 stream-json. (FEATURE_PLAN B 모드) -->
+                    <!-- 대화 방: 종류에 따라 챗봇(말풍선) 또는 터미널(xterm). 탭·RoomManager는 IRoom 공통 -->
                     <StackPanel x:Name="RoomCard" Spacing="10" Visibility="Collapsed">
-                        <Grid ColumnSpacing="12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{Binding Title}" Style="{ThemeResource BodyStrongTextBlockStyle}" VerticalAlignment="Center" />
-                            <Border Grid.Column="1" Style="{StaticResource PillBorder}" Visibility="{Binding ThinkingVisibility}">
+                        <TextBlock Text="{Binding Title}" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+
+                        <!-- 챗봇 패널: 말풍선 + 입력. DataContext = StreamingRoomViewModel -->
+                        <StackPanel x:Name="ChatbotPanel" Spacing="10" Visibility="Collapsed">
+                            <Border Style="{StaticResource PillBorder}" HorizontalAlignment="Left" Visibility="{Binding ThinkingVisibility}">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <muxc:ProgressRing Width="12" Height="12" IsActive="True" />
                                     <TextBlock Text="{loc:Str Key=Room_Thinking}" FontSize="12" />
                                 </StackPanel>
                             </Border>
-                        </Grid>
 
-                        <Border Style="{StaticResource CardBorder}" Background="{ThemeResource LayerFillColorDefaultBrush}" Height="460">
-                            <Grid>
-                                <Border Style="{StaticResource NoticeBorder}" VerticalAlignment="Top" Visibility="{Binding EmptyVisibility}">
-                                    <TextBlock Text="{loc:Str Key=Room_ChatEmpty}" Style="{StaticResource PageSubtitleText}" />
-                                </Border>
-
-                                <ScrollViewer x:Name="ChatScroll" VerticalScrollBarVisibility="Auto">
-                                    <ItemsRepeater AutomationProperties.AutomationId="ChatBubbles" ItemsSource="{Binding Bubbles}">
-                                        <ItemsRepeater.Layout>
-                                            <StackLayout Spacing="8" />
-                                        </ItemsRepeater.Layout>
-                                        <ItemsRepeater.ItemTemplate>
-                                            <DataTemplate x:DataType="vm:ChatBubbleViewModel">
-                                                <Grid>
-                                                    <Border Visibility="{x:Bind UserVisibility}" HorizontalAlignment="Right" MaxWidth="640"
-                                                            Background="{ThemeResource AccentFillColorDefaultBrush}" CornerRadius="10" Padding="12,8">
-                                                        <TextBlock Text="{x:Bind Text, Mode=OneWay}" Foreground="White" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
-                                                    </Border>
-
-                                                    <Grid Visibility="{x:Bind AssistantVisibility}" ColumnSpacing="10">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="28" />
-                                                            <ColumnDefinition Width="*" />
-                                                        </Grid.ColumnDefinitions>
-                                                        <Border Grid.Column="0" Width="28" Height="28" CornerRadius="14" VerticalAlignment="Top" Background="{x:Bind AvatarBrush}">
-                                                            <TextBlock Text="{x:Bind Avatar}" Foreground="White" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Border Style="{StaticResource CardBorder}" Background="{ThemeResource LayerFillColorDefaultBrush}" Height="440">
+                                <Grid>
+                                    <Border Style="{StaticResource NoticeBorder}" VerticalAlignment="Top" Visibility="{Binding EmptyVisibility}">
+                                        <TextBlock Text="{loc:Str Key=Room_ChatEmpty}" Style="{StaticResource PageSubtitleText}" />
+                                    </Border>
+                                    <ScrollViewer x:Name="ChatScroll" VerticalScrollBarVisibility="Auto">
+                                        <ItemsRepeater AutomationProperties.AutomationId="ChatBubbles" ItemsSource="{Binding Bubbles}">
+                                            <ItemsRepeater.Layout>
+                                                <StackLayout Spacing="8" />
+                                            </ItemsRepeater.Layout>
+                                            <ItemsRepeater.ItemTemplate>
+                                                <DataTemplate x:DataType="vm:ChatBubbleViewModel">
+                                                    <Grid>
+                                                        <Border Visibility="{x:Bind UserVisibility}" HorizontalAlignment="Right" MaxWidth="640"
+                                                                Background="{ThemeResource AccentFillColorDefaultBrush}" CornerRadius="10" Padding="12,8">
+                                                            <TextBlock Text="{x:Bind Text, Mode=OneWay}" Foreground="White" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
                                                         </Border>
-                                                        <StackPanel Grid.Column="1" Spacing="2">
-                                                            <TextBlock Text="{x:Bind SpeakerText}" Style="{ThemeResource BodyStrongTextBlockStyle}" FontSize="13" />
-                                                            <TextBlock Text="{x:Bind Text, Mode=OneWay}" Style="{ThemeResource BodyTextBlockStyle}" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
-                                                        </StackPanel>
+                                                        <Grid Visibility="{x:Bind AssistantVisibility}" ColumnSpacing="10">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="28" />
+                                                                <ColumnDefinition Width="*" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <Border Grid.Column="0" Width="28" Height="28" CornerRadius="14" VerticalAlignment="Top" Background="{x:Bind AvatarBrush}">
+                                                                <TextBlock Text="{x:Bind Avatar}" Foreground="White" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                            </Border>
+                                                            <StackPanel Grid.Column="1" Spacing="2">
+                                                                <TextBlock Text="{x:Bind SpeakerText}" Style="{ThemeResource BodyStrongTextBlockStyle}" FontSize="13" />
+                                                                <TextBlock Text="{x:Bind Text, Mode=OneWay}" Style="{ThemeResource BodyTextBlockStyle}" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
+                                                            </StackPanel>
+                                                        </Grid>
+                                                        <muxc:Expander Visibility="{x:Bind ToolVisibility}" HorizontalAlignment="Stretch">
+                                                            <muxc:Expander.Header>
+                                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                    <FontIcon Glyph="&#xE756;" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                                                    <TextBlock Text="{x:Bind Text, Mode=OneWay}" Style="{StaticResource MutedText}" TextTrimming="CharacterEllipsis" MaxWidth="560" />
+                                                                </StackPanel>
+                                                            </muxc:Expander.Header>
+                                                            <TextBlock Text="{x:Bind ResultText, Mode=OneWay}" Style="{StaticResource MonoText}" TextWrapping="Wrap" IsTextSelectionEnabled="True" Visibility="{x:Bind ResultVisibility, Mode=OneWay}" />
+                                                        </muxc:Expander>
                                                     </Grid>
+                                                </DataTemplate>
+                                            </ItemsRepeater.ItemTemplate>
+                                        </ItemsRepeater>
+                                    </ScrollViewer>
+                                </Grid>
+                            </Border>
 
-                                                    <muxc:Expander Visibility="{x:Bind ToolVisibility}" HorizontalAlignment="Stretch">
-                                                        <muxc:Expander.Header>
-                                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                                <FontIcon Glyph="&#xE756;" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                                                                <TextBlock Text="{x:Bind Text, Mode=OneWay}" Style="{StaticResource MutedText}" TextTrimming="CharacterEllipsis" MaxWidth="560" />
-                                                            </StackPanel>
-                                                        </muxc:Expander.Header>
-                                                        <TextBlock Text="{x:Bind ResultText, Mode=OneWay}" Style="{StaticResource MonoText}" TextWrapping="Wrap" IsTextSelectionEnabled="True" Visibility="{x:Bind ResultVisibility, Mode=OneWay}" />
-                                                    </muxc:Expander>
-
-                                                    <Border Visibility="{x:Bind PermissionVisibility}" Style="{StaticResource CardBorder}" Background="{ThemeResource SystemFillColorCautionBackgroundBrush}">
-                                                        <StackPanel Spacing="8">
-                                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                                <FontIcon Glyph="&#xE7BA;" FontSize="14" />
-                                                                <TextBlock Text="{loc:Str Key=Room_PermissionTitle}" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                                                                <TextBlock Text="{x:Bind PermissionTool}" Style="{StaticResource MutedText}" VerticalAlignment="Center" />
-                                                            </StackPanel>
-                                                            <TextBlock Text="{x:Bind Text, Mode=OneWay}" Style="{StaticResource MonoText}" TextWrapping="Wrap" />
-                                                            <StackPanel Orientation="Horizontal" Spacing="8" Visibility="{x:Bind PendingVisibility, Mode=OneWay}">
-                                                                <Button Content="{loc:Str Key=Room_Allow}" Style="{ThemeResource AccentButtonStyle}" Command="{x:Bind AllowCommand}" AutomationProperties.AutomationId="RoomAllowButton" />
-                                                                <Button Content="{loc:Str Key=Room_Deny}" Command="{x:Bind DenyCommand}" AutomationProperties.AutomationId="RoomDenyButton" />
-                                                            </StackPanel>
-                                                            <TextBlock Text="{x:Bind DecisionText, Mode=OneWay}" Style="{StaticResource MutedText}" Visibility="{x:Bind DecidedVisibility, Mode=OneWay}" />
-                                                        </StackPanel>
-                                                    </Border>
-                                                </Grid>
-                                            </DataTemplate>
-                                        </ItemsRepeater.ItemTemplate>
-                                    </ItemsRepeater>
-                                </ScrollViewer>
+                            <Grid ColumnSpacing="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <AutoSuggestBox
+                                    x:Name="RoomInput"
+                                    Grid.Column="0"
+                                    AutomationProperties.AutomationId="RoomInputBox"
+                                    PlaceholderText="{loc:Str Key=Room_InputPlaceholder}"
+                                    Text="{Binding Input, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    ItemsSource="{Binding Suggestions}"
+                                    TextChanged="OnRoomInputTextChanged"
+                                    SuggestionChosen="OnRoomSuggestionChosen"
+                                    QuerySubmitted="OnRoomQuerySubmitted">
+                                    <AutoSuggestBox.ItemTemplate>
+                                        <DataTemplate x:DataType="prompts:SlashCommand">
+                                            <Grid ColumnSpacing="10" Padding="0,2">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" MinWidth="120" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="{x:Bind Invocation}" Style="{StaticResource MonoText}" Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+                                                <TextBlock Grid.Column="1" Text="{x:Bind Description}" Style="{StaticResource MutedText}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </AutoSuggestBox.ItemTemplate>
+                                </AutoSuggestBox>
+                                <Button Grid.Column="1" Style="{ThemeResource AccentButtonStyle}" Content="{loc:Str Key=Room_Send}"
+                                        AutomationProperties.AutomationId="RoomSendButton" Command="{Binding SendCommand}" />
                             </Grid>
-                        </Border>
+                        </StackPanel>
 
-                        <Grid ColumnSpacing="8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <AutoSuggestBox
-                                x:Name="RoomInput"
-                                Grid.Column="0"
-                                AutomationProperties.AutomationId="RoomInputBox"
-                                PlaceholderText="{loc:Str Key=Room_InputPlaceholder}"
-                                Text="{Binding Input, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                ItemsSource="{Binding Suggestions}"
-                                TextChanged="OnRoomInputTextChanged"
-                                SuggestionChosen="OnRoomSuggestionChosen"
-                                QuerySubmitted="OnRoomQuerySubmitted">
-                                <AutoSuggestBox.ItemTemplate>
-                                    <DataTemplate x:DataType="prompts:SlashCommand">
-                                        <Grid ColumnSpacing="10" Padding="0,2">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto" MinWidth="120" />
-                                                <ColumnDefinition Width="*" />
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock Grid.Column="0" Text="{x:Bind Invocation}" Style="{StaticResource MonoText}" Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
-                                            <TextBlock Grid.Column="1" Text="{x:Bind Description}" Style="{StaticResource MutedText}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                                        </Grid>
-                                    </DataTemplate>
-                                </AutoSuggestBox.ItemTemplate>
-                            </AutoSuggestBox>
-                            <Button Grid.Column="1" Style="{ThemeResource AccentButtonStyle}" Content="{loc:Str Key=Room_Send}"
-                                    AutomationProperties.AutomationId="RoomSendButton" Command="{Binding SendCommand}" />
+                        <!-- 터미널 패널: 진짜 터미널(xterm). DataContext = ChatRoomViewModel -->
+                        <Grid x:Name="TerminalPanel" Height="480" Visibility="Collapsed">
+                            <terminal:TerminalHost x:Name="Embedded" />
                         </Grid>
                     </StackPanel>
                 </StackPanel>
