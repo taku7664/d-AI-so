@@ -1291,4 +1291,7 @@
   <data name="Room_TurnError" xml:space="preserve">
     <value>오류: {0}</value>
   </data>
+  <data name="Room_SessionEnded" xml:space="preserve">
+    <value>세션이 끝났습니다 (코드 {0}). 새로 열어 다시 시작하세요</value>
+  </data>
 </root>

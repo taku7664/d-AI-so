@@ -108,12 +108,23 @@ public sealed partial class StreamingRoomViewModel : ObservableObject, IDisposab
     {
         _session = session;
         session.Event += OnEvent;
-        session.Exited += _ => _dispatcher.TryEnqueue(() => HasExited = true);
+        session.Exited += code => _dispatcher.TryEnqueue(() => OnExited(code));
     }
 
     private void OnEvent(ChatEvent chatEvent)
     {
         _dispatcher.TryEnqueue(() => Apply(chatEvent));
+    }
+
+    private void OnExited(int code)
+    {
+        HasExited = true;
+        IsWaiting = false;
+        _openAssistant = null;
+
+        // 답 없이 끝났으면(=엔진이 곧장 죽음) 사람이 원인을 알 수 있게 알린다
+        Bubbles.Add(ChatBubbleViewModel.ForTool(UiStrings.Format("Room_SessionEnded", code), _tool));
+        OnPropertyChanged(nameof(EmptyVisibility));
     }
 
     private void Apply(ChatEvent chatEvent)
