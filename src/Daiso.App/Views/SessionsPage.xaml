@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:loc="using:Daiso.App.Strings"
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
+    xmlns:controls="using:Daiso.App.Controls"
     xmlns:vm="using:Daiso.App.ViewModels">
 
     <Grid Padding="{StaticResource PagePadding}" RowSpacing="14">
@@ -158,9 +159,11 @@
 
         <!-- 본문: 프로젝트 · 세션 · 상세 -->
         <Grid Grid.Row="2" ColumnSpacing="14">
+            <!-- 목록은 고정 폭(구분선을 끌어 조절, 설정에 기억), 상세는 남은 폭 전부. 상세가 400px 고정이라 대화가 좁게 보이던 것을 고침 -->
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" MinWidth="320" />
-                <ColumnDefinition Width="400" />
+                <ColumnDefinition Width="460" MinWidth="340" MaxWidth="900" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" MinWidth="360" />
             </Grid.ColumnDefinitions>
 
             <!-- 목록 (일반 목록 또는 검색 결과 트리) -->
@@ -298,8 +301,10 @@
                 </Grid>
             </Border>
 
+            <controls:PaneSplitter Grid.Column="1" SettingsKey="Sessions" />
+
             <!-- 오른쪽: 상세 · 컨텍스트 -->
-            <Border Grid.Column="1" Style="{StaticResource CardBorder}" Padding="4,0,4,4">
+            <Border Grid.Column="2" Style="{StaticResource CardBorder}" Padding="4,0,4,4">
                 <muxc:Pivot Padding="8,4,8,0">
 
                     <muxc:PivotItem Header="{loc:Str Key=Sessions_Detail}">

@@ -17,7 +17,8 @@
 문서와 코드가 어긋났던 것:
 - **찾기가 죽어 있었다** → 방 머리에 찾기 칸을 되살렸다(글 바뀌면 다음, Enter 다음·Shift+Enter 이전, Esc 비우고 터미널로). 터미널 방에서만 보인다.
 - `TerminalHost.TitleChanged`·`Ready` 구독자 없음 → `TitleChanged`는 방 `Title`(탭 툴팁)에 프로세스 제목을 붙인다. `IRoom`이 `INotifyPropertyChanged`가 되어 탭이 따라간다. `Ready`는 호스트 안에서 크기 동기화·테마·밀린 출력 재생에 쓴다.
-- "터미널로 열기"가 설정 `UseEmbeddedTerminal`을 무시 → 따른다.
+- "터미널로 열기"가 설정 `UseEmbeddedTerminal`을 무시 → 따르게 했다가, 09-09에 그 설정 자체를 뺐다(새 창 열기 버튼이 있어 겹침).
+- **스크롤하면 화면이 깨지고 같은 줄이 두 번 쌓임(치명적, 09-09 사용자 보고)** → 원인은 xterm 뷰포트 스크롤바가 `auto`라 스크롤백이 생기는 순간 폭이 줄어 fit → resize → ConPTY 재그리기. `overflow-y: scroll`로 폭을 고정하고, `PtySession.Resize`는 크기가 바뀔 때만 보낸다.
 
 동작상 버그:
 1. 탭 전환 때 `clear()` → `reset()`으로. 모드(대체 화면·bracketed paste)와 스크롤백까지 초기화한 뒤 새 방 버퍼를 재생한다.

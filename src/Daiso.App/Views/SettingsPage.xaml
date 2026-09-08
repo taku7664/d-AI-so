@@ -283,12 +283,6 @@
                             SelectedIndex="{x:Bind ViewModel.ThemeIndex, Mode=TwoWay}" />
 
                         <StackPanel Spacing="2">
-                            <ToggleSwitch
-                                Header="{loc:Str Key=Settings_EmbeddedTerminal}"
-                                IsEnabled="{x:Bind ViewModel.WebViewAvailable}"
-                                AutomationProperties.AutomationId="EmbeddedTerminalToggle"
-                                IsOn="{x:Bind ViewModel.UseEmbeddedTerminal, Mode=TwoWay}" />
-                            <TextBlock Text="{loc:Str Key=Settings_EmbeddedTerminalHint}" Style="{StaticResource MutedText}" TextWrapping="Wrap" />
                             <NumberBox
                                 Header="{loc:Str Key=Settings_TerminalFontSize}"
                                 Width="200"

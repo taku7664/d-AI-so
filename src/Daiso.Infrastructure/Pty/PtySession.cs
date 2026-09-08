@@ -89,14 +89,11 @@ public sealed class PtySession : IDisposable
     /// </summary>
     public static PtySession Start(string commandLine, string workingDirectory, int columns = 120, int rows = 30)
     {
-        var console = PseudoConsole.Start(
-            commandLine,
-            workingDirectory,
-            (short)Math.Clamp(columns, 2, short.MaxValue),
-            (short)Math.Clamp(rows, 1, short.MaxValue),
-            PtyEnvironment.ToBlock(PtyEnvironment.Sanitized()));
+        var cols = (short)Math.Clamp(columns, 2, short.MaxValue);
+        var lines = (short)Math.Clamp(rows, 1, short.MaxValue);
+        var console = PseudoConsole.Start(commandLine, workingDirectory, cols, lines, PtyEnvironment.ToBlock(PtyEnvironment.Sanitized()));
 
-        return new PtySession(console, commandLine);
+        return new PtySession(console, commandLine) { _columns = cols, _rows = lines };
     }
 
     /// <summary>키 입력·붙여넣기를 콘솔에 넣는다.</summary>
@@ -122,8 +119,24 @@ public sealed class PtySession : IDisposable
         }
     }
 
-    public void Resize(int columns, int rows) =>
-        _console.Resize((short)Math.Clamp(columns, 2, short.MaxValue), (short)Math.Clamp(rows, 1, short.MaxValue));
+    /// <summary>크기가 실제로 바뀔 때만 콘솔에 알린다. 같은 크기를 다시 보내면 ConPTY가 화면을 다시 그려 줄이 겹쳐 보인다.</summary>
+    public void Resize(int columns, int rows)
+    {
+        var cols = (short)Math.Clamp(columns, 2, short.MaxValue);
+        var lines = (short)Math.Clamp(rows, 1, short.MaxValue);
+
+        if (cols == _columns && lines == _rows)
+        {
+            return;
+        }
+
+        _columns = cols;
+        _rows = lines;
+        _console.Resize(cols, lines);
+    }
+
+    private short _columns;
+    private short _rows;
 
     /// <summary>강제 종료. 방을 닫을 때 프로세스가 아직 살아 있으면 쓴다.</summary>
     public void Kill() => KillTree();

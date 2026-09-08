@@ -68,7 +68,8 @@ public sealed partial class TerminalViewModel : ObservableObject
             };
         }
 
-        WorkingDirectory = _settings.Current.RecentFolders.FirstOrDefault();
+        RecentFolders = new ObservableCollection<string>(_settings.Current.RecentFolders);
+        WorkingDirectory = RecentFolders.FirstOrDefault();
         RefreshPreviews();
         LoadPromptChoices();
     }
@@ -120,6 +121,9 @@ public sealed partial class TerminalViewModel : ObservableObject
     };
 
     // ── 프로젝트 폴더 ─────────────────────────────────────────────────────
+
+    /// <summary>최근에 연 폴더. 최신 것이 앞. 폴더 콤보박스의 목록.</summary>
+    public ObservableCollection<string> RecentFolders { get; }
 
     /// <summary>앱이 이미 아는 프로젝트 폴더(세션 인덱스·최근 폴더). 대화상자 없이 여기서 고른다.</summary>
     public ObservableCollection<string> ProjectChoices { get; } = [];
@@ -173,6 +177,18 @@ public sealed partial class TerminalViewModel : ObservableObject
     {
         AppSettings.Remember(_settings.Current.RecentFolders, path);
         _settings.Save();
+
+        // 콤보박스 목록을 설정과 맞춘다. 지금 고른 값은 그대로 두어 텍스트가 튀지 않게 한다
+        var keep = WorkingDirectory;
+        RecentFolders.Clear();
+
+        foreach (var folder in _settings.Current.RecentFolders)
+        {
+            RecentFolders.Add(folder);
+        }
+
+        WorkingDirectory = keep;
+        OnPropertyChanged(nameof(WorkingDirectory)); // 값이 같아도 콤보박스 글을 다시 맞춘다(목록을 비우는 동안 글이 지워질 수 있다)
     }
 
     // ── 세션: 새 세션 / 기존 세션 이어서 ────────────────────────────────────

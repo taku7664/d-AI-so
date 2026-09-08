@@ -48,11 +48,46 @@ public sealed partial class TerminalPage : Page
         };
         ViewModel.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName == nameof(TerminalViewModel.SelectedToolIndex))
+            switch (e.PropertyName)
             {
-                SyncTabFromViewModel();
+                case nameof(TerminalViewModel.SelectedToolIndex):
+                    SyncTabFromViewModel();
+                    break;
+                case nameof(TerminalViewModel.WorkingDirectory):
+                    SyncFolderBox();
+                    break;
+                default:
+                    break;
             }
         };
+        FolderBox.Loaded += (_, _) => SyncFolderBox();
+    }
+
+    /// <summary>뷰모델의 폴더를 콤보박스 글에 맞춘다(아는 프로젝트·이어서 열기·최근 목록 갱신 뒤).</summary>
+    private void SyncFolderBox()
+    {
+        var value = ViewModel.WorkingDirectory ?? string.Empty;
+
+        if (!string.Equals(FolderBox.Text, value, StringComparison.Ordinal))
+        {
+            FolderBox.Text = value;
+        }
+    }
+
+    /// <summary>직접 친 경로(Enter 또는 포커스 이동).</summary>
+    private void OnFolderTextSubmitted(ComboBox sender, ComboBoxTextSubmittedEventArgs args)
+    {
+        ViewModel.SetFolder(args.Text.Trim());
+        args.Handled = true;
+    }
+
+    /// <summary>최근 폴더 목록에서 고름.</summary>
+    private void OnFolderSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (FolderBox.SelectedItem is string path && !string.Equals(path, ViewModel.WorkingDirectory, StringComparison.Ordinal))
+        {
+            ViewModel.SetFolder(path);
+        }
     }
 
     public TerminalViewModel ViewModel { get; }
@@ -348,15 +383,11 @@ public sealed partial class TerminalPage : Page
 
     /// <summary>
     /// 터미널 방: 진짜 터미널(xterm + 의사 콘솔). 인자는 뷰모델이 합친다(resume + 사용자 인자 + 프롬프트 시작 메시지).
-    /// 미설치면 설치 흐름, 내장이 꺼졌거나 WebView2가 없으면 외부 터미널로.
+    /// 미설치면 설치 흐름, WebView2가 없으면 외부 터미널로.
     /// </summary>
     private async Task OpenTerminalRoomAsync()
     {
-        var settings = App.Services.GetRequiredService<ISettingsStore>().Current;
-
-        if (!ViewModel.SelectedTool.IsInstalled
-            || !settings.UseEmbeddedTerminal
-            || !Terminal.TerminalHost.IsRuntimeAvailable())
+        if (!ViewModel.SelectedTool.IsInstalled || !Terminal.TerminalHost.IsRuntimeAvailable())
         {
             await ViewModel.LaunchAsync(ViewModel.SelectedTool);
             return;

@@ -1216,12 +1216,6 @@
   <data name="Room_Send" xml:space="preserve">
     <value>보내기</value>
   </data>
-<data name="Settings_EmbeddedTerminal" xml:space="preserve">
-    <value>터미널을 앱 안에서 연다</value>
-  </data>
-  <data name="Settings_EmbeddedTerminalHint" xml:space="preserve">
-    <value>끄면 외부 터미널로 엽니다. 채팅 블록은 앱 안에서 열 때만 보입니다</value>
-  </data>
   <data name="Settings_NoWebView2" xml:space="preserve">
     <value>이 PC에 WebView2 런타임이 없어 앱 안에서 열 수 없습니다. Microsoft Edge WebView2 런타임을 설치하면 됩니다</value>
   </data>

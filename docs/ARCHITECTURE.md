@@ -469,7 +469,7 @@ RefreshAsync
 인자 합치기  TerminalViewModel.ComposeArguments = [resume 인자] [사용자 인자] [프롬프트 시작 메시지]
              프롬프트를 골랐으면 IPromptLibrary.WriteIntoProject(docs/prompts/{id}.md) 후 PromptPresetSerializer.StarterMessage를
              첫 메시지 인자로 붙인다: Claude·Codex는 `"메시지"`(위치 인자), Gemini는 `-i "메시지"`. 메시지 안 큰따옴표는 홑따옴표로
-터미널로 열기  설치됨 + UseEmbeddedTerminal + WebView2 있음 → 내장 방(아래 "내장 터미널"). 아니면 외부 열기 또는 설치로 폴백
+터미널로 열기  설치됨 + WebView2 있음 → 내장 방(아래 "내장 터미널"). 아니면 외부 열기 또는 설치로 폴백
 새 창에서 열기 → ITerminalLauncher.LaunchAsync(dir, "claude"|"codex"|"gemini", 합친 인자)
 설치   폴더 없어도 됨 → ITerminalLauncher.LaunchAsync(dir|home, "npm", "install -g <패키지>")   (IProvider.InstallCommand)
        → 버튼은 "설치 중…"으로 잠기고 3초마다 IsInstalledAsync. 실행 파일이 보이면 "열기"로 돌아온다. 5분이 지나면 지켜보기를 멈추고 안내
@@ -485,11 +485,12 @@ RefreshAsync
 - 화면: `Daiso.App.Terminal.TerminalHost` — WebView2 + 동봉 xterm.js(`Assets/xterm`, xterm·fit·search, MIT). `SetVirtualHostNameToFolderMapping`으로 로컬만 로드, 네트워크 없음. 앱↔페이지 메시지: out(base64)·paste·theme·focus·fit·reset·find·find-clear / in·resize·copy·paste·ready(cols,rows)·title. 방을 바꿀 때는 `reset`(clear가 아니라)으로 모드·스크롤백까지 초기화한 뒤 재생하고, 지금 xterm 크기를 그 방 콘솔에 다시 알린다(비활성 중 창 크기가 바뀌어도 따라잡는다). 페이지 메시지 처리는 클립보드 잠김 등 예외를 감싼다(async void). 초기화가 도중에 실패하면 플래그를 되돌려 다음 호출이 다시 시도한다. 설정 `Changed`를 구독해 글자 크기가 열린 방에 즉시 반영된다. 선택 있으면 Ctrl+C 복사·없으면 중단, Ctrl+V·오른클릭 붙여넣기, F5·Ctrl+1~7은 페이지에서 먹어 앱 단축키와 안 겹치게. 찾기는 방 머리의 찾기 칸(xterm search 애드온): 글이 바뀌면 다음, Enter 다음·Shift+Enter 이전, Esc는 비우고 터미널로 포커스. 터미널 방에서만 보인다.
 - 종료는 반드시 프로세스 **트리 전체**를 kill 한다. 루트 셸만 죽이면 자식이 콘솔 출력을 잡아 읽기가 안 풀리고, 파이프 핸들 해제와 네이티브 읽기가 겹쳐 힙이 깨진다. 방 닫기(`TerminalRoomViewModel.Dispose`)는 트리 kill만 UI 스레드에서 바로 하고(앱 종료 때도 고아가 안 남게), 읽기 루프 종료를 기다리는 핸들 정리(`PtySession.Dispose`)는 백그라운드로 보내 UI가 굳지 않게 한다.
 - 방 = `TerminalRoomViewModel`(공통 `IRoom` 구현. `IRoom`은 `INotifyPropertyChanged`라 탭이 제목·안 본 점을 따라간다). `RoomManager`(싱글턴)가 방을 들고 있어 화면을 옮겨도 산다. 탭 띠가 `RoomManager.Rooms`(IRoom)를 그리고, 탭을 고르면 하나뿐인 `TerminalHost`를 `BindRoom`으로 그 방에 다시 가리킨다. 출력 버퍼는 `Daiso.Infrastructure.Pty.OutputReplayBuffer`(순수, 테스트 있음): 8MB까지 쌓고, `Attach`가 스냅샷·싱크 교체를 한 잠금 안에서 원자적으로 해 지난 화면을 되돌린다(중복·누락 없음). 세대 번호로 옛 방의 늦은 출력이 새 방에 안 섞이게 한다. 프로세스가 OSC 0 제목을 보내면 방 `Title`(탭 툴팁) 뒤에 붙는다. `TerminalPage`는 `NavigationCacheMode=Required`라 화면을 떠났다 돌아와도 WebView2를 다시 만들거나 버퍼를 재생하지 않는다.
-- 열기: 새 터미널 카드의 **"터미널로 열기"** → `PtySession.Start`(셸 명령) + `TerminalRoomViewModel` + 탭 추가 → 그 방 탭으로 전환 → `TerminalHost.BindRoom`. 미설치면 설치 흐름, WebView2가 없거나 설정 `UseEmbeddedTerminal`(기본 켬)이 꺼졌으면 외부 터미널(`ITerminalLauncher`)로 폴백. 탭 띠의 "새 터미널"은 카드로 돌아갈 뿐 방을 닫지 않는다.
+- 열기: 새 터미널 카드의 **"터미널로 열기"** → `PtySession.Start`(셸 명령) + `TerminalRoomViewModel` + 탭 추가 → 그 방 탭으로 전환 → `TerminalHost.BindRoom`. 미설치면 설치 흐름, WebView2가 없으면 외부 터미널(`ITerminalLauncher`)로 폴백. (2026-09-09: "터미널을 앱 안에서 연다" 설정은 뺐다. 새 창 열기 버튼이 따로 있어 스위치가 겹쳤다.) 탭 띠의 "새 터미널"은 카드로 돌아갈 뿐 방을 닫지 않는다.
 - 방 도구 줄의 프롬프트: `WriteIntoProject` 뒤 시작 메시지를 `SendRaw`로 터미널 입력에 넣는다(Enter는 사람이 친다). 규칙 편집: `RuleMakerViewModel.ProjectDirectory`에 방 폴더를 넣고 내 규칙 화면으로 간다. 방은 살아 있다.
 - 이어서 열기: 세션·요약의 "이어서 열기"가 `TerminalViewModel.PrepareResume(tool, dir, args, autoOpen:true)`로 도구·폴더를 심고 세션 모드를 "기존 세션 이어서"로 두고(목록에서 같은 세션을 찾아 고른다) 터미널로 이동, 화면 로드 때 `ConsumeAutoOpen()`이 도구를 다시 고르고 터미널 방을 연다.
 - 앱 종료: 살아 있는 방이 있으면 `AppWindow.Closing`이 한 번 묻고, 계속하면 `App.Rooms.DisposeAll`이 프로세스 트리를 정리한다.
-- 설정: `UseEmbeddedTerminal`(기본 켬), 터미널 글자 크기(px).
+- 설정: 터미널 글자 크기(px).
+- **화면 깨짐 방지**: xterm 뷰포트의 스크롤바는 `overflow-y: scroll`로 항상 자리를 잡는다. `auto`면 스크롤백이 생기는 순간 폭이 줄어 fit이 열 수를 바꾸고 ConPTY가 화면을 다시 그려 같은 줄이 두 번 쌓인다. `PtySession.Resize`도 크기가 실제로 바뀔 때만 콘솔에 보낸다.
 
 **챗봇 (B 모드 — 코드만 남기고 UI 비공개)** — 터미널 대신 CLI를 구조화 스트리밍(JSON)으로 다뤄 말풍선 대화로 만드는 코드가 있다. 지금은 **"챗봇으로 열기" 버튼을 빼서 화면에 안 나온다**. 재공개하려면 `TerminalPage`의 그 버튼(`OpenChatbotButton`, `OnOpenChatbotClick`)을 되살린다.
 - `ClaudeChatSession`(`claude --print --output-format stream-json --input-format stream-json --include-partial-messages --dangerously-skip-permissions`, stdin/stdout JSON, 트리 kill), `ClaudeStreamParser`(줄 → `ChatEvent`: 파서 테스트로 실제 이벤트 모양 고정), `StreamingRoomViewModel`·`ChatBubbleViewModel`(말풍선, 글자 단위 스트리밍, 도구 호출 카드). 도구 승인은 묻지 않는다. Claude만.

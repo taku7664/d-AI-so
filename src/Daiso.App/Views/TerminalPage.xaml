@@ -167,12 +167,19 @@
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBox
+                                    <!-- 편집 가능 콤보박스: 직접 치거나 최근 폴더에서 고른다. 목록은 아는 프로젝트(인덱스+최근)와 다르게 최근에 연 것만 -->
+                                    <!-- Text는 x:Bind 대신 코드에서 잇는다. 편집형 ComboBox는 로드 때 SelectedItem=null로 Text를 비워 바인딩 값을 덮는다 -->
+                                    <ComboBox
+                                        x:Name="FolderBox"
                                         Grid.Column="0"
+                                        HorizontalAlignment="Stretch"
+                                        IsEditable="True"
                                         AutomationProperties.AutomationId="WorkingDirBox"
                                         AutomationProperties.Name="{loc:Str Key=Terminal_FolderPath}"
                                         FontFamily="Consolas"
-                                        Text="{x:Bind ViewModel.WorkingDirectory, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        ItemsSource="{x:Bind ViewModel.RecentFolders}"
+                                        TextSubmitted="OnFolderTextSubmitted"
+                                        SelectionChanged="OnFolderSelectionChanged"
                                         PlaceholderText="{loc:Str Key=Terminal_FolderPath}" />
                                     <muxc:DropDownButton Grid.Column="1" AutomationProperties.AutomationId="ProjectPickerButton">
                                         <muxc:DropDownButton.Content>

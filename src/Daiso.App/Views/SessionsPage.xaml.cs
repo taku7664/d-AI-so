@@ -136,10 +136,8 @@ public sealed partial class SessionsPage : Page
             return;
         }
 
-        var settings = App.Services.GetRequiredService<Services.ISettingsStore>().Current;
-
-        // 내장이 켜져 있고 WebView2가 있으면 방으로 연다. 아니면 기존처럼 외부 터미널로
-        if (settings.UseEmbeddedTerminal && Terminal.TerminalHost.IsRuntimeAvailable())
+        // WebView2가 있으면 앱 안 방으로 연다. 없으면 기존처럼 외부 터미널로
+        if (Terminal.TerminalHost.IsRuntimeAvailable())
         {
             var provider = App.Services.GetRequiredService<IEnumerable<Daiso.Core.IProvider>>()
                 .First(p => p.Kind == row.Session.Tool);

@@ -7,7 +7,9 @@
 <style>
   html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: var(--bg, #1e1e1e); }
   #term { position: absolute; inset: 0; padding: 6px 0 0 8px; }
-  .xterm .xterm-viewport { overflow-y: auto; }
+  /* 스크롤바는 항상 자리를 잡는다. auto면 스크롤백이 생기는 순간 폭이 줄어 fit이 열 수를 바꾸고,
+     ConPTY가 화면을 다시 그려 같은 줄이 두 번 쌓인다(치명적 버그였다) */
+  .xterm .xterm-viewport { overflow-y: scroll; }
   .xterm .xterm-viewport::-webkit-scrollbar { width: 10px; }
   .xterm .xterm-viewport::-webkit-scrollbar-thumb { background: rgba(128,128,128,.35); border-radius: 5px; }
 </style>
