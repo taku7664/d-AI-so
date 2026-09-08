@@ -47,6 +47,7 @@ public sealed partial class ToolLaunchViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(CanPress))]
     [NotifyPropertyChangedFor(nameof(Hint))]
     [NotifyPropertyChangedFor(nameof(HasHint))]
+    [NotifyPropertyChangedFor(nameof(Preview))]
     private bool isInstalled;
 
     /// <summary>설치를 눌러 새 터미널이 돌고 있는가. 확인될 때까지 버튼을 잠근다.</summary>
@@ -60,9 +61,34 @@ public sealed partial class ToolLaunchViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(CanPress))]
     private bool hasFolder;
 
-    /// <summary>버튼을 누르면 실제로 실행될 명령.</summary>
+    /// <summary>이 도구에 붙일 인자. 탭마다 따로 기억한다.</summary>
     [ObservableProperty]
-    private string preview = string.Empty;
+    [NotifyPropertyChangedFor(nameof(Preview))]
+    private string arguments = string.Empty;
+
+    /// <summary>버튼을 누르면 실제로 실행될 명령. 설치 전이면 설치 명령이 보인다. 셸 감싸기는 실행 시점에 붙는다.</summary>
+    public string Preview
+    {
+        get
+        {
+            var command = IsInstalled
+                ? (Arguments.Trim().Length > 0 ? $"{Provider.ExecutableName} {Arguments.Trim()}" : Provider.ExecutableName)
+                : Provider.InstallCommand;
+
+            return $"{Label}  ▸  {command}";
+        }
+    }
+
+    /// <summary>프리셋을 인자 뒤에 붙인다.</summary>
+    public void AppendPreset(string preset)
+    {
+        if (string.IsNullOrEmpty(preset))
+        {
+            return;
+        }
+
+        Arguments = Arguments.Length == 0 ? preset : $"{Arguments.TrimEnd()} {preset}";
+    }
 
     public string ButtonText => IsInstalling
         ? UiStrings.Format("Terminal_Installing", Label)

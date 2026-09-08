@@ -19,9 +19,6 @@ public sealed partial class TerminalViewModel : ObservableObject
     private string? workingDirectory;
 
     [ObservableProperty]
-    private string arguments = string.Empty;
-
-    [ObservableProperty]
     private string? lastCommand;
 
     public TerminalViewModel(
@@ -45,7 +42,8 @@ public sealed partial class TerminalViewModel : ObservableObject
         RecentFolders = new ObservableCollection<string>(_settings.Current.RecentFolders);
 
         Tools = new ObservableCollection<ToolLaunchViewModel>(
-            _providers.Select(provider => new ToolLaunchViewModel(provider, PresetsFor(provider.Kind))));
+            ToolLook.InDisplayOrder(_providers, provider => provider.Kind)
+                .Select(provider => new ToolLaunchViewModel(provider, PresetsFor(provider.Kind))));
 
         foreach (var tool in Tools)
         {
@@ -56,8 +54,27 @@ public sealed partial class TerminalViewModel : ObservableObject
         RefreshPreviews();
     }
 
-    /// <summary>도구별 실행 줄. 설치 여부에 따라 열기·설치 버튼이 된다.</summary>
+    /// <summary>도구별 실행 줄. 탭 하나가 줄 하나다. 순서는 ToolLook.DisplayOrder.</summary>
     public ObservableCollection<ToolLaunchViewModel> Tools { get; }
+
+    /// <summary>지금 보이는 탭.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SelectedTool))]
+    private int selectedToolIndex;
+
+    /// <summary>지금 탭의 도구 줄. 인자·프리셋·버튼·미리보기가 여기서 나온다.</summary>
+    public ToolLaunchViewModel SelectedTool => Tools[Math.Clamp(SelectedToolIndex, 0, Tools.Count - 1)];
+
+    /// <summary>도구의 탭을 앞으로 가져온다.</summary>
+    public void SelectTool(ToolKind kind)
+    {
+        var index = Tools.ToList().FindIndex(tool => tool.Kind == kind);
+
+        if (index >= 0)
+        {
+            SelectedToolIndex = index;
+        }
+    }
 
     /// <summary>실행 파일이 PATH에 있는지 다시 본다. 화면이 열릴 때와 설치를 돌린 뒤에 부른다.</summary>
     public async Task RefreshInstalledAsync(CancellationToken ct = default)
@@ -106,21 +123,14 @@ public sealed partial class TerminalViewModel : ObservableObject
     /// <summary>마지막 실행 기록이 있는가.</summary>
     public bool HasLastCommand => !string.IsNullOrWhiteSpace(LastCommand);
 
-    /// <summary>버튼을 누르기 전에 무엇이 실행될지 보여준다. 설치 전이면 설치 명령이 보인다. 셸 감싸기는 실행 시점에 붙는다.</summary>
+    /// <summary>폴더 유무를 도구 줄에 알린다. 열기 버튼은 폴더가 있어야 눌린다.</summary>
     private void RefreshPreviews()
     {
         foreach (var tool in Tools)
         {
-            var command = tool.IsInstalled
-                ? (Arguments.Length > 0 ? $"{tool.Provider.ExecutableName} {Arguments.Trim()}" : tool.Provider.ExecutableName)
-                : tool.Provider.InstallCommand;
-
-            tool.Preview = $"{tool.Label}  ▸  {command}";
             tool.HasFolder = CanLaunch;
         }
     }
-
-    partial void OnArgumentsChanged(string value) => RefreshPreviews();
 
     partial void OnLastCommandChanged(string? value) => OnPropertyChanged(nameof(HasLastCommand));
 
@@ -137,24 +147,17 @@ public sealed partial class TerminalViewModel : ObservableObject
         OnPropertyChanged(nameof(HasNoRecentFolders));
     }
 
-    /// <summary>세션 "이어서 열기"에서 넘어온 인자를 채운다.</summary>
-    public void PrepareResume(string workingDir, string resumeArguments)
+    /// <summary>세션 "이어서 열기"에서 넘어온 인자를 그 도구 탭에 채우고 탭을 앞으로 가져온다.</summary>
+    public void PrepareResume(ToolKind tool, string workingDir, string resumeArguments)
     {
         SetFolder(workingDir);
-        Arguments = resumeArguments;
+        SelectTool(tool);
+        SelectedTool.Arguments = resumeArguments;
     }
 
-    /// <summary>프리셋을 인자 입력란 뒤에 붙인다.</summary>
+    /// <summary>프리셋을 지금 탭의 인자 뒤에 붙인다.</summary>
     [RelayCommand]
-    public void AppendPreset(string? preset)
-    {
-        if (string.IsNullOrEmpty(preset))
-        {
-            return;
-        }
-
-        Arguments = Arguments.Length == 0 ? preset : $"{Arguments.TrimEnd()} {preset}";
-    }
+    public void AppendPreset(string? preset) => SelectedTool.AppendPreset(preset ?? string.Empty);
 
     /// <summary>설치돼 있으면 그 도구를 열고, 아니면 새 터미널에서 설치 명령을 돌린다.</summary>
     [RelayCommand]
@@ -178,9 +181,9 @@ public sealed partial class TerminalViewModel : ObservableObject
         }
 
         Remember(directory);
-        LastCommand = $"{directory} > {tool.Provider.ExecutableName} {Arguments}".TrimEnd();
+        LastCommand = $"{directory} > {tool.Provider.ExecutableName} {tool.Arguments}".TrimEnd();
 
-        await _launcher.LaunchAsync(directory, tool.Provider.ExecutableName, Arguments).ConfigureAwait(true);
+        await _launcher.LaunchAsync(directory, tool.Provider.ExecutableName, tool.Arguments).ConfigureAwait(true);
     }
 
     /// <summary>설치가 끝난 것으로 볼 때까지 실행 파일을 몇 초마다 다시 찾는 최대 시간.</summary>

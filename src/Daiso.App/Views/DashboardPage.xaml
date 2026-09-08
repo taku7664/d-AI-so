@@ -41,10 +41,18 @@
                     IsIndeterminate="True"
                     Visibility="{x:Bind ViewModel.IsBusy, Mode=OneWay}" />
 
+                <!-- 탭: 전체 · 도구별. 카드·최근 세션·통계가 탭을 따라간다 -->
+                <muxc:SelectorBar x:Name="ToolTabs" SelectionChanged="OnToolTabChanged" AutomationProperties.AutomationId="ToolTabs">
+                    <muxc:SelectorBarItem Text="{loc:Str Key=Common_All}" IsSelected="True" AutomationProperties.AutomationId="ToolTabAll" />
+                    <muxc:SelectorBarItem Text="Codex" AutomationProperties.AutomationId="ToolTabCodex" />
+                    <muxc:SelectorBarItem Text="Claude" AutomationProperties.AutomationId="ToolTabClaude" />
+                    <muxc:SelectorBarItem Text="Gemini" AutomationProperties.AutomationId="ToolTabGemini" />
+                </muxc:SelectorBar>
+
                 <TextBlock Text="{loc:Str Key=Dashboard_ToolStatus}" Style="{StaticResource SectionTitleText}" />
 
                 <!-- 도구 카드: 도구 수만큼. 넓으면 한 줄에 셋, 좁으면 줄을 바꾼다 -->
-                <ItemsRepeater ItemsSource="{x:Bind ViewModel.Tools}">
+                <ItemsRepeater ItemsSource="{x:Bind ViewModel.VisibleTools}">
                     <ItemsRepeater.Layout>
                         <UniformGridLayout
                             MinItemWidth="330"

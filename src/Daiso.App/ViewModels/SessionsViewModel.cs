@@ -125,7 +125,7 @@ public sealed partial class SessionsViewModel : ObservableObject
     private IReadOnlyList<MessageViewModel> timeline = [];
 
     /// <summary>도구 필터 항목.</summary>
-    public IReadOnlyList<string> ToolFilters { get; } = [UiStrings.All, "Claude", "Codex", "Gemini"];
+    public IReadOnlyList<string> ToolFilters { get; } = [UiStrings.All, .. ToolLook.DisplayOrder.Select(ToolLook.Short)];
 
     /// <summary>기간 필터 항목.</summary>
     public IReadOnlyList<string> PeriodFilters { get; } =
@@ -554,13 +554,10 @@ public sealed partial class SessionsViewModel : ObservableObject
             _ => null,
         };
 
-        ToolKind? tool = ToolFilterIndex switch
-        {
-            1 => ToolKind.Claude,
-            2 => ToolKind.Codex,
-            3 => ToolKind.Gemini,
-            _ => null,
-        };
+        // 0은 전체, 그 뒤는 ToolLook.DisplayOrder 순서
+        ToolKind? tool = ToolFilterIndex >= 1 && ToolFilterIndex <= ToolLook.DisplayOrder.Count
+            ? ToolLook.DisplayOrder[ToolFilterIndex - 1]
+            : null;
 
         return new SessionFilter(
             tool,

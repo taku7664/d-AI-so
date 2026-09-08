@@ -46,7 +46,76 @@ public sealed partial class DashboardViewModel : ObservableObject
         _indexService = indexService;
 
         Tools = new ObservableCollection<ToolCardViewModel>(
-            _providers.Select(provider => new ToolCardViewModel(provider.Kind)));
+            ToolLook.InDisplayOrder(_providers, provider => provider.Kind)
+                .Select(provider => new ToolCardViewModel(provider.Kind)));
+        VisibleTools = new ObservableCollection<ToolCardViewModel>(Tools);
+    }
+
+    /// <summary>탭. 0은 전체, 그 뒤는 <see cref="ToolLook.DisplayOrder"/> 순서의 도구 하나.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SelectedTool))]
+    private int selectedTabIndex;
+
+    /// <summary>지금 탭의 도구. 전체면 null.</summary>
+    public ToolKind? SelectedTool =>
+        SelectedTabIndex >= 1 && SelectedTabIndex <= ToolLook.DisplayOrder.Count
+            ? ToolLook.DisplayOrder[SelectedTabIndex - 1]
+            : null;
+
+    /// <summary>지금 탭에 보이는 도구 카드. 전체면 셋, 도구 탭이면 그 하나.</summary>
+    public ObservableCollection<ToolCardViewModel> VisibleTools { get; }
+
+    /// <summary>마지막으로 읽은 세션 전부. 탭이 바뀌면 여기서 다시 거른다.</summary>
+    private IReadOnlyList<SessionInfo> _allSessions = [];
+
+    partial void OnSelectedTabIndexChanged(int value) => _ = ApplyTabAsync(default);
+
+    /// <summary>탭에 맞게 카드·최근 세션·통계를 다시 계산한다. 파일은 다시 읽지 않고 인덱스만 묻는다.</summary>
+    private async Task ApplyTabAsync(CancellationToken ct)
+    {
+        var tool = SelectedTool;
+
+        VisibleTools.Clear();
+        foreach (var card in Tools.Where(card => tool is null || card.Kind == tool))
+        {
+            VisibleTools.Add(card);
+        }
+
+        var sessions = tool is null ? _allSessions : _allSessions.Where(session => session.Tool == tool).ToList();
+
+        SessionCount = sessions.Count;
+        TotalSizeBytes = sessions.Sum(session => session.SizeBytes);
+
+        RecentSessions.Clear();
+        foreach (var session in sessions.OrderByDescending(session => session.ModifiedAt).Take(RecentSessionCount))
+        {
+            RecentSessions.Add(new RecentSessionViewModel(session));
+        }
+
+        OnPropertyChanged(nameof(HasRecentSessions));
+        OnPropertyChanged(nameof(HasNoRecentSessions));
+
+        try
+        {
+            var to = DateOnly.FromDateTime(DateTime.UtcNow);
+            var usage = await _indexService.Index
+                .GetUsageAsync(to.AddDays(-(UsageDays - 1)), to, tool, ct)
+                .ConfigureAwait(true);
+
+            RecentUsage = usage.Days.Aggregate(TokenUsage.Zero, (total, day) => total.Add(day.Usage));
+        }
+        catch (Exception ex) when (ex is IOException or InvalidOperationException)
+        {
+            RecentUsage = TokenUsage.Zero;
+        }
+
+        OnPropertyChanged(nameof(TotalSizeText));
+        OnPropertyChanged(nameof(RecentUsageText));
+        OnPropertyChanged(nameof(RecentUsageExact));
+        OnPropertyChanged(nameof(SessionSummaryText));
+        OnPropertyChanged(nameof(SessionCountText));
+        OnPropertyChanged(nameof(RecentTokensText));
+        OnPropertyChanged(nameof(RecentTokensExact));
     }
 
     /// <summary>요약에 보여줄 최근 세션 수.</summary>
@@ -61,7 +130,7 @@ public sealed partial class DashboardViewModel : ObservableObject
     /// <summary>최근 세션이 없는가. 첫 실행 안내에 쓴다.</summary>
     public bool HasNoRecentSessions => RecentSessions.Count == 0;
 
-    /// <summary>도구 카드. Claude, Codex 순서.</summary>
+    /// <summary>도구 카드 전부. 순서는 ToolLook.DisplayOrder.</summary>
     public ObservableCollection<ToolCardViewModel> Tools { get; }
 
     /// <summary>최근 며칠을 요약하는지.</summary>
@@ -115,6 +184,7 @@ public sealed partial class DashboardViewModel : ObservableObject
         var terminal = App.Services.GetRequiredService<TerminalViewModel>();
 
         terminal.PrepareResume(
+            session.Tool,
             session.ProjectPath ?? string.Empty,
             provider.BuildResumeArguments(session));
     }
@@ -140,39 +210,11 @@ public sealed partial class DashboardViewModel : ObservableObject
                     await provider.GetAuthStatusAsync(ct).ConfigureAwait(true));
             }
 
-            var sessions = await _indexService.Index
+            _allSessions = await _indexService.Index
                 .ListAsync(SessionFilter.All, ct)
                 .ConfigureAwait(true);
 
-            SessionCount = sessions.Count;
-            TotalSizeBytes = sessions.Sum(session => session.SizeBytes);
-
-            RecentSessions.Clear();
-
-            foreach (var session in sessions
-                .OrderByDescending(session => session.ModifiedAt)
-                .Take(RecentSessionCount))
-            {
-                RecentSessions.Add(new RecentSessionViewModel(session));
-            }
-
-            OnPropertyChanged(nameof(HasRecentSessions));
-            OnPropertyChanged(nameof(HasNoRecentSessions));
-
-            var to = DateOnly.FromDateTime(DateTime.UtcNow);
-            var usage = await _indexService.Index
-                .GetUsageAsync(to.AddDays(-(UsageDays - 1)), to, ct)
-                .ConfigureAwait(true);
-
-            RecentUsage = usage.Days.Aggregate(TokenUsage.Zero, (total, day) => total.Add(day.Usage));
-
-            OnPropertyChanged(nameof(TotalSizeText));
-            OnPropertyChanged(nameof(RecentUsageText));
-            OnPropertyChanged(nameof(RecentUsageExact));
-            OnPropertyChanged(nameof(SessionSummaryText));
-            OnPropertyChanged(nameof(SessionCountText));
-            OnPropertyChanged(nameof(RecentTokensText));
-            OnPropertyChanged(nameof(RecentTokensExact));
+            await ApplyTabAsync(ct).ConfigureAwait(true);
         }
         finally
         {

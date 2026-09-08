@@ -57,6 +57,17 @@ public sealed partial class DashboardPage : Page
         }
     }
 
+    /// <summary>탭을 누르면 뷰모델이 카드·최근 세션·통계를 다시 거른다.</summary>
+    private void OnToolTabChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
+    {
+        var index = sender.Items.IndexOf(sender.SelectedItem);
+
+        if (index >= 0 && index != ViewModel.SelectedTabIndex)
+        {
+            ViewModel.SelectedTabIndex = index;
+        }
+    }
+
     /// <summary>세션 목록으로 보낸다.</summary>
     private void OnGoToSessionsClick(object sender, RoutedEventArgs e) => Go("Sessions");
 

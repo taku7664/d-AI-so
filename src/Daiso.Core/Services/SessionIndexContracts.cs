@@ -14,6 +14,9 @@ public interface ISessionIndex
     Task<IReadOnlyList<SearchHit>> SearchAsync(string query, CancellationToken ct);
 
     Task<UsageSummary> GetUsageAsync(DateOnly from, DateOnly to, CancellationToken ct);
+
+    /// <summary>같은 요약을 도구 하나로 좁혀서. <paramref name="tool"/>이 null이면 전체와 같다. (요약 화면의 도구 탭)</summary>
+    Task<UsageSummary> GetUsageAsync(DateOnly from, DateOnly to, ToolKind? tool, CancellationToken ct);
 }
 
 public sealed record IndexProgress(int Done, int Total, string CurrentFile);

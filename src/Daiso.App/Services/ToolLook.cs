@@ -8,6 +8,27 @@ namespace Daiso.App.Services;
 /// <summary>도구별 표시 규칙 한 곳. 이름·한 글자·색. 도구가 늘면 여기만 늘린다. (ARCHITECTURE §6.2)</summary>
 public static class ToolLook
 {
+    /// <summary>화면에 도구를 늘어놓는 순서. 탭·카드·필터가 모두 이 순서를 따른다.</summary>
+    public static readonly IReadOnlyList<ToolKind> DisplayOrder = [ToolKind.Codex, ToolKind.Claude, ToolKind.Gemini];
+
+    /// <summary>표시 순서상 위치. 모르는 도구는 맨 뒤.</summary>
+    public static int Rank(ToolKind kind)
+    {
+        for (var i = 0; i < DisplayOrder.Count; i++)
+        {
+            if (DisplayOrder[i] == kind)
+            {
+                return i;
+            }
+        }
+
+        return int.MaxValue;
+    }
+
+    /// <summary>표시 순서대로 정렬한다.</summary>
+    public static IEnumerable<T> InDisplayOrder<T>(IEnumerable<T> items, Func<T, ToolKind> kindOf) =>
+        items.OrderBy(item => Rank(kindOf(item)));
+
     /// <summary>카드 제목에 쓰는 정식 이름.</summary>
     public static string Title(ToolKind kind) => kind switch
     {

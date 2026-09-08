@@ -323,6 +323,31 @@ public sealed class SqliteSessionIndexTests : IDisposable
     }
 
     [Fact]
+    public async Task Usage_can_be_narrowed_to_one_tool()
+    {
+        var claude = new FakeProvider(ToolKind.Claude, usageIsAdditive: true);
+        var claudePath = Path.Combine(_directory, "claude.jsonl");
+        claude.Sessions.Add(Session(claudePath, ToolKind.Claude, new DateTimeOffset(2026, 9, 1, 0, 0, 0, TimeSpan.Zero)));
+        claude.SetUsage(claudePath, new UsageDay(new DateOnly(2026, 9, 1), new TokenUsage(10, 1, 0, 0, "claude-opus-5")));
+
+        var gemini = new FakeProvider(ToolKind.Gemini, usageIsAdditive: true);
+        var geminiPath = Path.Combine(_directory, "gemini.jsonl");
+        gemini.Sessions.Add(Session(geminiPath, ToolKind.Gemini, new DateTimeOffset(2026, 9, 1, 0, 0, 0, TimeSpan.Zero)));
+        gemini.SetUsage(geminiPath, new UsageDay(new DateOnly(2026, 9, 1), new TokenUsage(100, 5, 0, 0, "gemini-2.5-pro")));
+
+        using var index = new SqliteSessionIndex([claude, gemini], DatabasePath());
+        await index.RefreshAsync(default);
+
+        var from = new DateOnly(2026, 9, 1);
+        var to = new DateOnly(2026, 9, 30);
+
+        (await index.GetUsageAsync(from, to, default)).Days.Single().Usage.Input.Should().Be(110);
+        (await index.GetUsageAsync(from, to, ToolKind.Gemini, default)).Days.Single().Usage.Input.Should().Be(100);
+        (await index.GetUsageAsync(from, to, ToolKind.Claude, default)).Days.Single().Usage.Input.Should().Be(10);
+        (await index.GetUsageAsync(from, to, ToolKind.Codex, default)).Days.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task Usage_outside_the_requested_range_is_ignored()
     {
         var provider = new FakeProvider();

@@ -429,3 +429,18 @@ Gemini를 넣고 보니 터미널의 `Gemini 열기`는 설치가 안 된 PC에�
 덤으로 잡은 것: 세션 파일이 잠기거나 지워진 채 고르면 `async void` 핸들러에서 IOException이 튀어 앱이 죽을 수 있었다. 뷰모델에서 잡아 `세션 파일을 읽지 못했습니다: …`로 보여준다.
 전역 `CrashReporter`는 이미 있었다.
 
+## 20차 — 요약·터미널 탭
+
+도구가 셋이 되자 요약 카드 셋과 터미널 버튼 셋이 한 화면에 나란히 놓여 어디를 봐야 할지 흐려졌다. 두 화면에 탭 띠(`SelectorBar`)를 넣었다.
+
+| 화면 | 탭 | 탭이 바꾸는 것 |
+|---|---|---|
+| 요약 | `전체 · Codex · Claude · Gemini` | 도구 카드(전체면 셋, 도구 탭이면 그 하나), 최근 세션, 세션 수·용량, 최근 7일 토큰(인덱스에 도구로 좁혀 다시 물음) |
+| 터미널 | `Codex · Claude · Gemini` | 옵션 인자(탭마다 따로 기억), 프리셋, 열기/설치 버튼, 실행될 명령. 작업 폴더는 공통이라 탭 위에 둠 |
+
+도구 순서를 `ToolLook.DisplayOrder`(Codex → Claude → Gemini) 한 곳으로 모아 요약 탭·카드, 터미널 탭, 세션 필터, 컨텍스트 토글이 같은 순서를 쓴다.
+
+앱에서 확인: 요약 전체 탭 카드 순서 `Codex CLI, Claude Code, Gemini CLI` → Codex 탭 `Codex CLI`만 → Gemini 탭 `Gemini CLI`만. 터미널 Claude 탭에 `--continue`를 넣고 Gemini 탭으로 갔다가 돌아와도 `claude --continue`가 남아 있다.
+
+중간에 잡은 것: 순서 정렬에 컬렉션 식을 `List`로 캐스팅한 코드가 들어가 앱이 켜지자마자 죽었다(`InvalidCastException`). `CrashReporter`가 남긴 로그로 바로 찾았고, 캐스팅 없는 탐색으로 고쳤다.
+

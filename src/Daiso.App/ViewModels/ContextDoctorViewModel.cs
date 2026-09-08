@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Daiso.Core;
+using Daiso.App.Services;
 using Daiso.App.Strings;
 
 namespace Daiso.App.ViewModels;
@@ -40,7 +41,7 @@ public sealed partial class ContextDoctorViewModel : ObservableObject
     }
 
     /// <summary>도구 토글 항목.</summary>
-    public IReadOnlyList<string> Tools { get; } = ["Claude", "Codex", "Gemini"];
+    public IReadOnlyList<string> Tools { get; } = [.. ToolLook.DisplayOrder.Select(ToolLook.Short)];
 
     /// <summary>로드 순서대로 정렬된 컨텍스트 파일.</summary>
     public ObservableCollection<ContextFileViewModel> Files { get; } = [];
@@ -89,8 +90,8 @@ public sealed partial class ContextDoctorViewModel : ObservableObject
 
         try
         {
-            // 토글 순서가 ToolKind 순서와 같다
-            var tool = (ToolKind)Math.Clamp(ToolIndex, 0, Tools.Count - 1);
+            // 토글 순서는 ToolLook.DisplayOrder 순서
+            var tool = ToolLook.DisplayOrder[Math.Clamp(ToolIndex, 0, Tools.Count - 1)];
             var report = await _inspector.InspectAsync(tool, directory, ct).ConfigureAwait(true);
 
             foreach (var file in report.Files)

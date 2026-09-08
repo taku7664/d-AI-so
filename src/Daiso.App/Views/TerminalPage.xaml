@@ -76,110 +76,82 @@
                 </StackPanel>
             </Border>
 
-            <!-- 인자 -->
+            <!-- 도구 탭: 탭마다 그 도구의 인자·프리셋·실행. 순서는 ToolLook.DisplayOrder -->
+            <muxc:SelectorBar x:Name="ToolTabs" SelectionChanged="OnToolTabChanged" AutomationProperties.AutomationId="ToolTabs">
+                <muxc:SelectorBarItem Text="Codex" IsSelected="True" AutomationProperties.AutomationId="ToolTabCodex" />
+                <muxc:SelectorBarItem Text="Claude" AutomationProperties.AutomationId="ToolTabClaude" />
+                <muxc:SelectorBarItem Text="Gemini" AutomationProperties.AutomationId="ToolTabGemini" />
+            </muxc:SelectorBar>
+
             <Border Style="{StaticResource CardBorder}">
-                <StackPanel Spacing="10">
-                    <TextBlock Text="{loc:Str Key=Terminal_OptionArgs}" Style="{StaticResource SectionTitleText}" />
+                <StackPanel Spacing="14">
+                    <!-- 인자 -->
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="{loc:Str Key=Terminal_OptionArgs}" Style="{StaticResource SectionTitleText}" />
+                        <TextBox
+                            AutomationProperties.AutomationId="ArgumentsBox"
+                            AutomationProperties.Name="{loc:Str Key=Terminal_OptionArgs}"
+                            Text="{x:Bind ViewModel.SelectedTool.Arguments, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            PlaceholderText="{loc:Str Key=Terminal_ArgsPlaceholder}" />
 
-                    <TextBox
-                        AutomationProperties.AutomationId="ArgumentsBox"
-                        AutomationProperties.Name="{loc:Str Key=Terminal_OptionArgs}"
-                        Text="{x:Bind ViewModel.Arguments, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                        PlaceholderText="{loc:Str Key=Terminal_ArgsPlaceholder}" />
-
-                    <!-- 도구마다 프리셋 한 묶음 -->
-                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.Tools}">
-                        <ItemsRepeater.Layout>
-                            <StackLayout Spacing="10" />
-                        </ItemsRepeater.Layout>
-                        <ItemsRepeater.ItemTemplate>
-                            <DataTemplate x:DataType="vm:ToolLaunchViewModel">
-                                <StackPanel Spacing="6">
-                                    <TextBlock Text="{x:Bind PresetsTitle}" Style="{StaticResource MutedText}" />
-                                    <ItemsRepeater ItemsSource="{x:Bind Presets}">
-                                        <ItemsRepeater.Layout>
-                                            <UniformGridLayout
-                                                MinItemWidth="170"
-                                                MinRowSpacing="8"
-                                                MinColumnSpacing="8"
-                                                ItemsStretch="None" />
-                                        </ItemsRepeater.Layout>
-                                        <ItemsRepeater.ItemTemplate>
-                                            <DataTemplate x:DataType="x:String">
-                                                <Button Content="{x:Bind}" Tag="{x:Bind}" Click="OnPresetClick" HorizontalAlignment="Stretch" />
-                                            </DataTemplate>
-                                        </ItemsRepeater.ItemTemplate>
-                                    </ItemsRepeater>
-                                </StackPanel>
-                            </DataTemplate>
-                        </ItemsRepeater.ItemTemplate>
-                    </ItemsRepeater>
-                </StackPanel>
-            </Border>
-
-            <!-- 실행 -->
-            <Border Style="{StaticResource CardBorder}">
-                <StackPanel Spacing="12">
-                    <TextBlock Text="{loc:Str Key=Terminal_Launch}" Style="{StaticResource SectionTitleText}" />
-
-                    <!-- 도구마다 버튼 하나. 설치돼 있으면 열기, 아니면 설치. 설치가 도는 동안은 잠긴다 -->
-                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.Tools}">
-                        <ItemsRepeater.Layout>
-                            <UniformGridLayout
-                                MinItemWidth="240"
-                                MinRowSpacing="10"
-                                MinColumnSpacing="10"
-                                ItemsStretch="Fill" />
-                        </ItemsRepeater.Layout>
-                        <ItemsRepeater.ItemTemplate>
-                            <DataTemplate x:DataType="vm:ToolLaunchViewModel">
-                                <StackPanel Spacing="6">
-                                    <Button
-                                        HorizontalAlignment="Stretch"
-                                        AutomationProperties.AutomationId="{x:Bind AutomationId}"
-                                        Command="{x:Bind LaunchCommand, Mode=OneWay}"
-                                        CommandParameter="{x:Bind}"
-                                        IsEnabled="{x:Bind CanPress, Mode=OneWay}">
-                                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
-                                            <FontIcon Glyph="{x:Bind Glyph, Mode=OneWay}" FontSize="14" />
-                                            <TextBlock Text="{x:Bind ButtonText, Mode=OneWay}" />
-                                        </StackPanel>
-                                    </Button>
-                                    <TextBlock
-                                        Text="{x:Bind Hint, Mode=OneWay}"
-                                        Visibility="{x:Bind HasHint, Mode=OneWay}"
-                                        Style="{StaticResource MutedText}"
-                                        TextWrapping="Wrap" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </ItemsRepeater.ItemTemplate>
-                    </ItemsRepeater>
-
-                    <StackPanel Spacing="4">
-                        <TextBlock Text="{loc:Str Key=Terminal_Preview}" Style="{StaticResource MutedText}" />
-                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.Tools}">
+                        <TextBlock Text="{x:Bind ViewModel.SelectedTool.PresetsTitle, Mode=OneWay}" Style="{StaticResource MutedText}" />
+                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.SelectedTool.Presets, Mode=OneWay}">
                             <ItemsRepeater.Layout>
-                                <StackLayout Spacing="2" />
+                                <UniformGridLayout
+                                    MinItemWidth="170"
+                                    MinRowSpacing="8"
+                                    MinColumnSpacing="8"
+                                    ItemsStretch="None" />
                             </ItemsRepeater.Layout>
                             <ItemsRepeater.ItemTemplate>
-                                <DataTemplate x:DataType="vm:ToolLaunchViewModel">
-                                    <TextBlock
-                                        Text="{x:Bind Preview, Mode=OneWay}"
-                                        Style="{StaticResource MonoText}"
-                                        TextTrimming="CharacterEllipsis" />
+                                <DataTemplate x:DataType="x:String">
+                                    <Button Content="{x:Bind}" Tag="{x:Bind}" Click="OnPresetClick" HorizontalAlignment="Stretch" />
                                 </DataTemplate>
                             </ItemsRepeater.ItemTemplate>
                         </ItemsRepeater>
                     </StackPanel>
 
-                    <StackPanel Spacing="4" Visibility="{x:Bind ViewModel.HasLastCommand, Mode=OneWay}">
-                        <TextBlock Text="{loc:Str Key=Terminal_LastCommand}" Style="{StaticResource MutedText}" />
-                        <TextBlock
-                            AutomationProperties.AutomationId="LastCommand"
-                            Text="{x:Bind ViewModel.LastCommand, Mode=OneWay}"
-                            Style="{StaticResource MonoText}"
-                            TextTrimming="None"
-                            TextWrapping="Wrap" />
+                    <!-- 실행: 설치돼 있으면 열기, 아니면 설치. 설치가 도는 동안은 잠긴다 -->
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="{loc:Str Key=Terminal_Launch}" Style="{StaticResource SectionTitleText}" />
+
+                        <StackPanel Spacing="6" HorizontalAlignment="Left" MinWidth="260">
+                            <Button
+                                HorizontalAlignment="Stretch"
+                                Style="{ThemeResource AccentButtonStyle}"
+                                AutomationProperties.AutomationId="LaunchButton"
+                                Command="{x:Bind ViewModel.LaunchCommand}"
+                                CommandParameter="{x:Bind ViewModel.SelectedTool, Mode=OneWay}"
+                                IsEnabled="{x:Bind ViewModel.SelectedTool.CanPress, Mode=OneWay}">
+                                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                                    <FontIcon Glyph="{x:Bind ViewModel.SelectedTool.Glyph, Mode=OneWay}" FontSize="14" />
+                                    <TextBlock Text="{x:Bind ViewModel.SelectedTool.ButtonText, Mode=OneWay}" />
+                                </StackPanel>
+                            </Button>
+                            <TextBlock
+                                Text="{x:Bind ViewModel.SelectedTool.Hint, Mode=OneWay}"
+                                Visibility="{x:Bind ViewModel.SelectedTool.HasHint, Mode=OneWay}"
+                                Style="{StaticResource MutedText}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="{loc:Str Key=Terminal_Preview}" Style="{StaticResource MutedText}" />
+                            <TextBlock
+                                AutomationProperties.AutomationId="LaunchPreview"
+                                Text="{x:Bind ViewModel.SelectedTool.Preview, Mode=OneWay}"
+                                Style="{StaticResource MonoText}"
+                                TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+
+                        <StackPanel Spacing="4" Visibility="{x:Bind ViewModel.HasLastCommand, Mode=OneWay}">
+                            <TextBlock Text="{loc:Str Key=Terminal_LastCommand}" Style="{StaticResource MutedText}" />
+                            <TextBlock
+                                Text="{x:Bind ViewModel.LastCommand, Mode=OneWay}"
+                                Style="{StaticResource MonoText}"
+                                TextWrapping="Wrap"
+                                IsTextSelectionEnabled="True" />
+                        </StackPanel>
                     </StackPanel>
                 </StackPanel>
             </Border>

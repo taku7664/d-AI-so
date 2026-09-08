@@ -238,19 +238,34 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
     }
 
     /// <inheritdoc />
-    public Task<UsageSummary> GetUsageAsync(DateOnly from, DateOnly to, CancellationToken ct)
+    public Task<UsageSummary> GetUsageAsync(DateOnly from, DateOnly to, CancellationToken ct) =>
+        GetUsageAsync(from, to, tool: null, ct);
+
+    /// <inheritdoc />
+    public Task<UsageSummary> GetUsageAsync(DateOnly from, DateOnly to, ToolKind? tool, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
         using var connection = OpenRead();
         using var command = connection.CreateCommand();
-        command.CommandText = """
-            SELECT date, project, model, input, output, cache_create, cache_read
-            FROM usage_daily
-            WHERE date >= $from AND date <= $to
-            """;
+        command.CommandText = tool is null
+            ? """
+              SELECT date, project, model, input, output, cache_create, cache_read
+              FROM usage_daily
+              WHERE date >= $from AND date <= $to
+              """
+            : """
+              SELECT date, project, model, input, output, cache_create, cache_read
+              FROM usage_daily
+              WHERE date >= $from AND date <= $to AND tool = $tool
+              """;
         command.Parameters.AddWithValue("$from", Text(from));
         command.Parameters.AddWithValue("$to", Text(to));
+
+        if (tool is { } kind)
+        {
+            command.Parameters.AddWithValue("$tool", kind.ToString());
+        }
 
         var days = new Dictionary<DateOnly, TokenUsage>();
         var byProject = new Dictionary<string, TokenUsage>(StringComparer.OrdinalIgnoreCase);

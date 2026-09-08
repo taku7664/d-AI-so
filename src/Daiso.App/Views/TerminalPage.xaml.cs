@@ -15,7 +15,18 @@ public sealed partial class TerminalPage : Page
         InitializeComponent();
         ViewModel = App.Services.GetRequiredService<TerminalViewModel>();
 
-        Loaded += async (_, _) => await ViewModel.RefreshInstalledAsync();
+        Loaded += async (_, _) =>
+        {
+            SyncTabFromViewModel();
+            await ViewModel.RefreshInstalledAsync();
+        };
+        ViewModel.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(TerminalViewModel.SelectedToolIndex))
+            {
+                SyncTabFromViewModel();
+            }
+        };
     }
 
     public TerminalViewModel ViewModel { get; }
@@ -85,6 +96,27 @@ public sealed partial class TerminalPage : Page
         if (sender is ListView { SelectedItem: string path })
         {
             ViewModel.SetFolder(path);
+        }
+    }
+
+    /// <summary>탭을 누르면 뷰모델의 도구가 바뀐다.</summary>
+    private void OnToolTabChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
+    {
+        var index = sender.Items.IndexOf(sender.SelectedItem);
+
+        if (index >= 0 && index != ViewModel.SelectedToolIndex)
+        {
+            ViewModel.SelectedToolIndex = index;
+        }
+    }
+
+    /// <summary>이어서 열기처럼 뷰모델이 탭을 바꾸면 탭 띠도 따라간다.</summary>
+    private void SyncTabFromViewModel()
+    {
+        if (ViewModel.SelectedToolIndex >= 0 && ViewModel.SelectedToolIndex < ToolTabs.Items.Count
+            && !ReferenceEquals(ToolTabs.SelectedItem, ToolTabs.Items[ViewModel.SelectedToolIndex]))
+        {
+            ToolTabs.SelectedItem = ToolTabs.Items[ViewModel.SelectedToolIndex];
         }
     }
 

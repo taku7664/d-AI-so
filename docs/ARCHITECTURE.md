@@ -449,6 +449,7 @@ RefreshAsync
 
 ### 5.3 터미널
 ```
+화면은 작업 폴더(공통) 아래 탭 띠 `Codex · Claude · Gemini`. 탭마다 그 도구의 인자·프리셋·버튼·미리보기(ToolLaunchViewModel). 인자는 탭별로 따로 기억한다
 화면 열림 → 도구마다 IProvider.IsInstalledAsync → 버튼이 "{도구} 열기" 또는 "{도구} 설치"
 열기   폴더 선택 + 도구 선택 (+ 세션 → BuildResumeArguments)
        → ITerminalLauncher.LaunchAsync(dir, "claude"|"codex"|"gemini", args)
@@ -559,6 +560,8 @@ Apply(projectDir, direction, dryRun)
 
 ### 6.1 요약 화면의 순서
 
+제목 아래 **탭 띠(`SelectorBar`)**: `전체 · Codex · Claude · Gemini`. 도구 탭을 고르면 카드·최근 세션·세션 수·용량·최근 7일 토큰이 그 도구로 좁혀진다(토큰은 `ISessionIndex.GetUsageAsync(from, to, tool, ct)`). 파일은 다시 읽지 않고 메모리의 세션 목록과 인덱스만 쓴다.
+
 카드는 **쓰는 빈도** 순으로 놓는다. 요약을 여는 가장 흔한 이유가 "하던 것 이어서 열기"다.
 
 1. 도구 상태 — 지금 로그인돼 있는지. 만료 임박이면 여기서 바로 보인다
@@ -572,6 +575,7 @@ Apply(projectDir, direction, dryRun)
 
 - **좌 목록 · 우 편집기** 화면(내 규칙, 내 프롬프트)은 사이에 `PaneSplitter`를 둔다. 끌어서 왼쪽 판 너비를 바꾸고, 놓으면 `settings.json`의 `PaneWidths[화면]`에 저장돼 다음에 되살아난다. 열의 MinWidth·MaxWidth 안에서만 움직인다. 명령바의 `목록` 토글로 왼쪽 판을 접을 수 있다(좁은 창용)
 - **긴 목록은 보이는 것만 그린다**: 세션 타임라인처럼 수천 건이 될 수 있는 목록은 `ItemsRepeater`(가상화)로 그리고, 파일 읽기·파싱은 `Task.Run`으로 UI 스레드 밖에서 끝낸 뒤 완성된 목록을 **한 번에** 바인딩한다. 한 건씩 `Add`하지 않는다. 메시지 본문은 1,500자에서 접고 `더 보기`로 편다. 필터 토글은 메모리에서 다시 걸고 파일을 다시 읽지 않는다. 다른 항목을 고르면 앞의 읽기는 `CancellationTokenSource`로 취소한다
+- **도구 순서는 `ToolLook.DisplayOrder` = Codex → Claude → Gemini**. 요약 탭·카드, 터미널 탭, 세션 필터, 컨텍스트 토글이 전부 이 순서다
 - **도구 표시는 `ToolLook` 한 곳**: 이름(`Claude Code`·`Codex CLI`·`Gemini CLI`), 짧은 이름, 배지 한 글자(C·X·G), 색(보라·회색·파랑). 뷰모델은 `ToolKind`로 분기하지 않고 여기를 부른다. 도구가 늘면 `ToolKind`·`ToolLook`·DI·터미널 프리셋·세션 필터·컨텍스트 토글을 늘린다
 - **가속기 풍선 숨김**: 셸 루트 격자는 `KeyboardAcceleratorPlacementMode="Hidden"`. 안 그러면 `Ctrl+1` 같은 풍선이 본문 어디에나 뜬다. 단축키는 설정 화면에 적혀 있다
 - **저장하지 않은 편집 보호**: 편집기가 더티(`IsDirty` — 마지막 열기·저장·새로 만들기 시점과 직렬화 결과가 다름)이면 다른 목록 항목을 고르거나 새로 만들기·열기·최근 파일을 누를 때 `DiscardDialog`로 묻는다. 취소하면 선택을 이전 항목으로 되돌리고 편집기는 그대로다. 목록을 다시 채우며 같은 항목을 되찾는 것과 방금 저장한 사본을 되찾는 것은 묻지 않는다
