@@ -1,6 +1,7 @@
 using Daiso.App.Services;
 using Daiso.App.ViewModels;
 using Daiso.App.Views;
+using Daiso.App.Strings;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Extensions.DependencyInjection;
@@ -41,6 +42,7 @@ public sealed partial class ShellWindow : Window
         Navigate("Dashboard");
         _viewModel.StartBackgroundRefresh();
 
+        AppWindow.Closing += OnClosing;
         Closed += OnClosed;
     }
 
@@ -238,8 +240,43 @@ public sealed partial class ShellWindow : Window
             RootGrid.DispatcherQueue.TryEnqueue(() => ApplyTheme(theme));
     }
 
+    private bool _closeConfirmed;
+
+    /// <summary>
+    /// 앱을 닫을 때 살아 있는 대화 방이 있으면 한 번 묻는다. 계속 닫으면 방을 정리해 자식 CLI를 끝낸다.
+    /// AppWindow.Closing은 취소할 수 있어(Window.Closed는 못 한다) 여기서 확인 대화를 띄운다.
+    /// </summary>
+    private async void OnClosing(AppWindow sender, AppWindowClosingEventArgs args)
+    {
+        if (_closeConfirmed || !App.HasRunningRooms())
+        {
+            App.DisposeRooms();
+            return;
+        }
+
+        args.Cancel = true;
+
+        var dialog = new ContentDialog
+        {
+            XamlRoot = RootGrid.XamlRoot,
+            Title = UiStrings.Get("Room_CloseTitle"),
+            Content = new TextBlock { Text = UiStrings.Get("Room_CloseBody"), TextWrapping = TextWrapping.Wrap },
+            PrimaryButtonText = UiStrings.Get("Room_CloseAndQuit"),
+            CloseButtonText = UiStrings.Get("Common_Cancel"),
+            DefaultButton = ContentDialogButton.Close,
+        };
+
+        if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+        {
+            _closeConfirmed = true;
+            App.DisposeRooms();
+            Close();
+        }
+    }
+
     private void OnClosed(object sender, WindowEventArgs args)
     {
+        App.DisposeRooms();
         _settings.Current.WindowWidth = AppWindow.Size.Width;
         _settings.Current.WindowHeight = AppWindow.Size.Height;
         _settings.Save();

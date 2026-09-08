@@ -282,6 +282,21 @@
                             ItemsSource="{x:Bind ViewModel.Themes}"
                             SelectedIndex="{x:Bind ViewModel.ThemeIndex, Mode=TwoWay}" />
 
+                        <StackPanel Spacing="2">
+                            <ToggleSwitch
+                                Header="{loc:Str Key=Settings_EmbeddedTerminal}"
+                                IsEnabled="{x:Bind ViewModel.WebViewAvailable}"
+                                AutomationProperties.AutomationId="EmbeddedTerminalToggle"
+                                IsOn="{x:Bind ViewModel.UseEmbeddedTerminal, Mode=TwoWay}" />
+                            <TextBlock Text="{loc:Str Key=Settings_EmbeddedTerminalHint}" Style="{StaticResource MutedText}" TextWrapping="Wrap" />
+                            <TextBlock
+                                Text="{loc:Str Key=Settings_NoWebView2}"
+                                Style="{StaticResource MutedText}"
+                                TextWrapping="Wrap"
+                                Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                                Visibility="{x:Bind ViewModel.NoWebViewVisibility}" />
+                        </StackPanel>
+
                         <Button
                             HorizontalAlignment="Left"
                             AutomationProperties.AutomationId="RebuildIndexButton"

@@ -1216,10 +1216,7 @@
   <data name="Terminal_OpenHere" xml:space="preserve">
     <value>여기서 열기</value>
   </data>
-  <data name="Terminal_NoWebView2" xml:space="preserve">
-    <value>WebView2 런타임이 없어 앱 안에서 열 수 없습니다. 외부 터미널로 여세요</value>
-  </data>
-  <data name="Room_ShowChat" xml:space="preserve">
+<data name="Room_ShowChat" xml:space="preserve">
     <value>채팅으로</value>
   </data>
   <data name="Room_ShowTerminal" xml:space="preserve">
@@ -1236,5 +1233,23 @@
   </data>
   <data name="Room_Empty" xml:space="preserve">
     <value>대화를 시작하면 여기에 블록으로 쌓입니다. 아래 칸에 쓰거나 터미널로 바꿔 직접 조작하세요</value>
+  </data>
+  <data name="Settings_EmbeddedTerminal" xml:space="preserve">
+    <value>터미널을 앱 안에서 연다</value>
+  </data>
+  <data name="Settings_EmbeddedTerminalHint" xml:space="preserve">
+    <value>끄면 외부 터미널로 엽니다. 채팅 블록은 앱 안에서 열 때만 보입니다</value>
+  </data>
+  <data name="Settings_NoWebView2" xml:space="preserve">
+    <value>이 PC에 WebView2 런타임이 없어 앱 안에서 열 수 없습니다. Microsoft Edge WebView2 런타임을 설치하면 됩니다</value>
+  </data>
+  <data name="Room_CloseTitle" xml:space="preserve">
+    <value>열려 있는 대화가 있습니다</value>
+  </data>
+  <data name="Room_CloseBody" xml:space="preserve">
+    <value>앱을 닫으면 실행 중인 CLI가 함께 종료됩니다. 계속할까요?</value>
+  </data>
+  <data name="Room_CloseAndQuit" xml:space="preserve">
+    <value>닫고 종료</value>
   </data>
 </root>

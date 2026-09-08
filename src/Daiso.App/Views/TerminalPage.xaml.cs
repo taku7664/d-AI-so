@@ -128,10 +128,12 @@ public sealed partial class TerminalPage : Page
     /// <summary>고른 도구로 방을 연다. 의사 콘솔 + 세션 tail을 만들어 채팅·터미널에 잇는다.</summary>
     private async void OnEmbeddedOpenClick(object sender, RoutedEventArgs e)
     {
-        if (!Terminal.TerminalHost.IsRuntimeAvailable())
+        var settings = App.Services.GetRequiredService<Services.ISettingsStore>().Current;
+
+        // 설정이 껐거나 WebView2가 없으면 외부 터미널로 연다
+        if (!settings.UseEmbeddedTerminal || !Terminal.TerminalHost.IsRuntimeAvailable())
         {
-            EmbeddedStatus.Text = UiStrings.Get("Terminal_NoWebView2");
-            EmbeddedStatus.Visibility = Visibility.Visible;
+            await ViewModel.LaunchAsync(ViewModel.SelectedTool);
             return;
         }
 
@@ -162,6 +164,7 @@ public sealed partial class TerminalPage : Page
             var tail = new Daiso.Infrastructure.SessionTail(tool.Provider, directory, DateTimeOffset.Now);
 
             _room = new ChatRoomViewModel(tool.Provider.Kind, directory, DispatcherQueue);
+            App.RegisterRoom(_room);
             _room.Bind(session, tail);
             _room.Blocks.CollectionChanged += (_, _) => ScrollChatToEnd();
 

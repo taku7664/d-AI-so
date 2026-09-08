@@ -29,6 +29,16 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private int themeIndex;
 
+    /// <summary>터미널을 앱 안에서 열지. 끄면 항상 외부 터미널로 연다.</summary>
+    [ObservableProperty]
+    private bool useEmbeddedTerminal;
+
+    /// <summary>이 PC에 WebView2 런타임이 있는가. 없으면 토글을 켜도 외부로 간다.</summary>
+    public bool WebViewAvailable { get; } = Daiso.App.Terminal.TerminalHost.IsRuntimeAvailable();
+
+    public Microsoft.UI.Xaml.Visibility NoWebViewVisibility =>
+        WebViewAvailable ? Microsoft.UI.Xaml.Visibility.Collapsed : Microsoft.UI.Xaml.Visibility.Visible;
+
     [ObservableProperty]
     private string? statusText;
 
@@ -95,6 +105,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         IndexDatabasePath = current.IndexDatabasePath;
         CleanupOlderThanDays = current.CleanupOlderThanDays;
         CleanupLargerThanMegabytes = current.CleanupLargerThanMegabytes;
+        UseEmbeddedTerminal = current.UseEmbeddedTerminal;
         ThemeIndex = current.Theme switch
         {
             "Light" => 1,
@@ -146,6 +157,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         current.IndexDatabasePath = Blank(IndexDatabasePath);
         current.CleanupOlderThanDays = Math.Max(0, CleanupOlderThanDays);
         current.CleanupLargerThanMegabytes = Math.Max(0, CleanupLargerThanMegabytes);
+        current.UseEmbeddedTerminal = UseEmbeddedTerminal;
         current.Theme = ThemeIndex switch
         {
             1 => "Light",
