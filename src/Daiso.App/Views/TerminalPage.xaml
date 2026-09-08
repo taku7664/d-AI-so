@@ -265,172 +265,88 @@
                     </ListView>
 
                     <!-- 방 UI. DataContext = 선택된 ChatRoomViewModel -->
+                    <!-- 대화 방(챗봇): 말풍선 + 입력. 터미널은 없다. 엔진은 stream-json. (FEATURE_PLAN B 모드) -->
                     <StackPanel x:Name="RoomCard" Spacing="10" Visibility="Collapsed">
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding Title}" Style="{ThemeResource BodyStrongTextBlockStyle}" VerticalAlignment="Center" />
-                                <Border Style="{StaticResource PillBorder}" Visibility="{Binding ThinkingVisibility}">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <muxc:ProgressRing Width="12" Height="12" IsActive="True" />
-                                        <TextBlock Text="{loc:Str Key=Room_Thinking}" FontSize="12" />
-                                    </StackPanel>
-                                </Border>
-                            </StackPanel>
-
-                            <!-- 터미널 화면에서만: 찾기. Enter 다음, Shift+Enter 이전 -->
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" Visibility="{Binding TerminalVisibility}">
-                                <TextBox
-                                    x:Name="RoomFindBox"
-                                    Width="180"
-                                    PlaceholderText="{loc:Str Key=Room_FindPlaceholder}"
-                                    AutomationProperties.AutomationId="RoomFindBox"
-                                    KeyDown="OnRoomFindKeyDown"
-                                    TextChanged="OnRoomFindTextChanged" />
-                                <Button
-                                    AutomationProperties.Name="{loc:Str Key=Room_FindPrev}"
-                                    ToolTipService.ToolTip="{loc:Str Key=Room_FindPrev}"
-                                    Click="OnRoomFindPrevClick">
-                                    <FontIcon Glyph="&#xE70E;" FontSize="12" />
-                                </Button>
-                                <Button
-                                    AutomationProperties.Name="{loc:Str Key=Room_FindNext}"
-                                    ToolTipService.ToolTip="{loc:Str Key=Room_FindNext}"
-                                    Click="OnRoomFindNextClick">
-                                    <FontIcon Glyph="&#xE70D;" FontSize="12" />
-                                </Button>
-                            </StackPanel>
-
-                            <Button
-                                Grid.Column="2"
-                                Content="{Binding ToggleLabel}"
-                                Command="{Binding ToggleViewCommand}"
-                                AutomationProperties.AutomationId="RoomToggleButton" />
-                        </Grid>
-
-                        <!-- 터미널(원시)과 채팅(블록)은 같은 자리 -->
-                        <Grid Height="460">
-                            <terminal:TerminalHost
-                                x:Name="Embedded"
-                                Visibility="{Binding TerminalVisibility}" />
-
-                            <Border
-                                Style="{StaticResource CardBorder}"
-                                Background="{ThemeResource LayerFillColorDefaultBrush}"
-                                Visibility="{Binding ChatVisibility}">
-                                <Grid>
-                                    <Border
-                                        Style="{StaticResource NoticeBorder}"
-                                        VerticalAlignment="Top"
-                                        Visibility="{Binding EmptyVisibility}">
-                                        <TextBlock Text="{loc:Str Key=Room_Empty}" Style="{StaticResource PageSubtitleText}" />
-                                    </Border>
-
-                                    <ScrollViewer x:Name="ChatScroll" VerticalScrollBarVisibility="Auto">
-                                        <ItemsRepeater
-                                            AutomationProperties.AutomationId="ChatBlocks"
-                                            ItemsSource="{Binding Blocks}">
-                                            <ItemsRepeater.Layout>
-                                                <StackLayout Spacing="2" />
-                                            </ItemsRepeater.Layout>
-                                            <ItemsRepeater.ItemTemplate>
-                                                <DataTemplate x:DataType="vm:ChatBlockViewModel">
-                                                    <Grid Padding="6,4" ColumnSpacing="10" Background="Transparent">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="36" />
-                                                            <ColumnDefinition Width="*" />
-                                                        </Grid.ColumnDefinitions>
-
-                                                        <!-- 왼쪽: 아바타(어시스턴트 첫 블록) 또는 사용자 강조 세로줄 -->
-                                                        <Border
-                                                            Grid.Column="0"
-                                                            Width="28"
-                                                            Height="28"
-                                                            CornerRadius="14"
-                                                            VerticalAlignment="Top"
-                                                            Background="{x:Bind AvatarBrush}"
-                                                            Visibility="{x:Bind AvatarVisibility}">
-                                                            <TextBlock
-                                                                Text="{x:Bind Avatar}"
-                                                                Foreground="White"
-                                                                FontSize="12"
-                                                                FontWeight="SemiBold"
-                                                                HorizontalAlignment="Center"
-                                                                VerticalAlignment="Center" />
-                                                        </Border>
-                                                        <Rectangle
-                                                            Grid.Column="0"
-                                                            Width="3"
-                                                            RadiusX="1.5"
-                                                            RadiusY="1.5"
-                                                            HorizontalAlignment="Left"
-                                                            Margin="12,2,0,2"
-                                                            VerticalAlignment="Stretch"
-                                                            Fill="{ThemeResource AccentFillColorDefaultBrush}"
-                                                            Visibility="{x:Bind UserBarVisibility}" />
-
-                                                        <StackPanel Grid.Column="1" Spacing="2">
-                                                            <Grid Visibility="{x:Bind HeaderVisibility}" ColumnSpacing="8">
-                                                                <Grid.ColumnDefinitions>
-                                                                    <ColumnDefinition Width="Auto" />
-                                                                    <ColumnDefinition Width="*" />
-                                                                </Grid.ColumnDefinitions>
-                                                                <TextBlock Grid.Column="0" Text="{x:Bind SpeakerText}" Style="{ThemeResource BodyStrongTextBlockStyle}" FontSize="13" />
-                                                                <TextBlock
-                                                                    Grid.Column="1"
-                                                                    Text="{x:Bind TimeText}"
-                                                                    Style="{StaticResource MutedText}"
-                                                                    VerticalAlignment="Center"
-                                                                    ToolTipService.ToolTip="{x:Bind FullTimeText}" />
-                                                            </Grid>
-
-                                                            <!-- 보통 말(사용자·어시스턴트) -->
-                                                            <StackPanel Spacing="2" Visibility="{x:Bind PlainVisibility}">
-                                                                <TextBlock
-                                                                    Text="{x:Bind DisplayText, Mode=OneWay}"
-                                                                    Style="{ThemeResource BodyTextBlockStyle}"
-                                                                    TextWrapping="Wrap"
-                                                                    IsTextSelectionEnabled="True" />
-                                                                <HyperlinkButton
-                                                                    Content="{x:Bind MoreText, Mode=OneWay}"
-                                                                    Visibility="{x:Bind MoreVisibility}"
-                                                                    Command="{x:Bind ToggleExpandedCommand}"
-                                                                    Padding="0"
-                                                                    FontSize="12" />
-                                                            </StackPanel>
-
-                                                            <!-- 도구 호출·시스템: 접힌 회색 블록 -->
-                                                            <muxc:Expander
-                                                                HorizontalAlignment="Stretch"
-                                                                Visibility="{x:Bind CollapsibleVisibility}">
-                                                                <muxc:Expander.Header>
-                                                                    <TextBlock Style="{StaticResource MutedText}">
-                                                                        <Run Text="{x:Bind RoleText}" />
-                                                                        <Run Text="·" />
-                                                                        <Run Text="{x:Bind TimeText}" />
-                                                                    </TextBlock>
-                                                                </muxc:Expander.Header>
-                                                                <TextBlock
-                                                                    Text="{x:Bind DisplayText, Mode=OneWay}"
-                                                                    Style="{StaticResource MonoText}"
-                                                                    TextWrapping="Wrap"
-                                                                    IsTextSelectionEnabled="True" />
-                                                            </muxc:Expander>
-                                                        </StackPanel>
-                                                    </Grid>
-                                                </DataTemplate>
-                                            </ItemsRepeater.ItemTemplate>
-                                        </ItemsRepeater>
-                                    </ScrollViewer>
-                                </Grid>
+                            <TextBlock Grid.Column="0" Text="{Binding Title}" Style="{ThemeResource BodyStrongTextBlockStyle}" VerticalAlignment="Center" />
+                            <Border Grid.Column="1" Style="{StaticResource PillBorder}" Visibility="{Binding ThinkingVisibility}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <muxc:ProgressRing Width="12" Height="12" IsActive="True" />
+                                    <TextBlock Text="{loc:Str Key=Room_Thinking}" FontSize="12" />
+                                </StackPanel>
                             </Border>
                         </Grid>
 
-                        <!-- 입력 칸: Enter 보냄, Shift+Enter 줄바꿈 -->
+                        <Border Style="{StaticResource CardBorder}" Background="{ThemeResource LayerFillColorDefaultBrush}" Height="460">
+                            <Grid>
+                                <Border Style="{StaticResource NoticeBorder}" VerticalAlignment="Top" Visibility="{Binding EmptyVisibility}">
+                                    <TextBlock Text="{loc:Str Key=Room_ChatEmpty}" Style="{StaticResource PageSubtitleText}" />
+                                </Border>
+
+                                <ScrollViewer x:Name="ChatScroll" VerticalScrollBarVisibility="Auto">
+                                    <ItemsRepeater AutomationProperties.AutomationId="ChatBubbles" ItemsSource="{Binding Bubbles}">
+                                        <ItemsRepeater.Layout>
+                                            <StackLayout Spacing="8" />
+                                        </ItemsRepeater.Layout>
+                                        <ItemsRepeater.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:ChatBubbleViewModel">
+                                                <Grid>
+                                                    <Border Visibility="{x:Bind UserVisibility}" HorizontalAlignment="Right" MaxWidth="640"
+                                                            Background="{ThemeResource AccentFillColorDefaultBrush}" CornerRadius="10" Padding="12,8">
+                                                        <TextBlock Text="{x:Bind Text, Mode=OneWay}" Foreground="White" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
+                                                    </Border>
+
+                                                    <Grid Visibility="{x:Bind AssistantVisibility}" ColumnSpacing="10">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="28" />
+                                                            <ColumnDefinition Width="*" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <Border Grid.Column="0" Width="28" Height="28" CornerRadius="14" VerticalAlignment="Top" Background="{x:Bind AvatarBrush}">
+                                                            <TextBlock Text="{x:Bind Avatar}" Foreground="White" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                        </Border>
+                                                        <StackPanel Grid.Column="1" Spacing="2">
+                                                            <TextBlock Text="{x:Bind SpeakerText}" Style="{ThemeResource BodyStrongTextBlockStyle}" FontSize="13" />
+                                                            <TextBlock Text="{x:Bind Text, Mode=OneWay}" Style="{ThemeResource BodyTextBlockStyle}" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
+                                                        </StackPanel>
+                                                    </Grid>
+
+                                                    <muxc:Expander Visibility="{x:Bind ToolVisibility}" HorizontalAlignment="Stretch">
+                                                        <muxc:Expander.Header>
+                                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                <FontIcon Glyph="&#xE756;" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                                                <TextBlock Text="{x:Bind Text, Mode=OneWay}" Style="{StaticResource MutedText}" TextTrimming="CharacterEllipsis" MaxWidth="560" />
+                                                            </StackPanel>
+                                                        </muxc:Expander.Header>
+                                                        <TextBlock Text="{x:Bind ResultText, Mode=OneWay}" Style="{StaticResource MonoText}" TextWrapping="Wrap" IsTextSelectionEnabled="True" Visibility="{x:Bind ResultVisibility, Mode=OneWay}" />
+                                                    </muxc:Expander>
+
+                                                    <Border Visibility="{x:Bind PermissionVisibility}" Style="{StaticResource CardBorder}" Background="{ThemeResource SystemFillColorCautionBackgroundBrush}">
+                                                        <StackPanel Spacing="8">
+                                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                <FontIcon Glyph="&#xE7BA;" FontSize="14" />
+                                                                <TextBlock Text="{loc:Str Key=Room_PermissionTitle}" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                                                                <TextBlock Text="{x:Bind PermissionTool}" Style="{StaticResource MutedText}" VerticalAlignment="Center" />
+                                                            </StackPanel>
+                                                            <TextBlock Text="{x:Bind Text, Mode=OneWay}" Style="{StaticResource MonoText}" TextWrapping="Wrap" />
+                                                            <StackPanel Orientation="Horizontal" Spacing="8" Visibility="{x:Bind PendingVisibility, Mode=OneWay}">
+                                                                <Button Content="{loc:Str Key=Room_Allow}" Style="{ThemeResource AccentButtonStyle}" Command="{x:Bind AllowCommand}" AutomationProperties.AutomationId="RoomAllowButton" />
+                                                                <Button Content="{loc:Str Key=Room_Deny}" Command="{x:Bind DenyCommand}" AutomationProperties.AutomationId="RoomDenyButton" />
+                                                            </StackPanel>
+                                                            <TextBlock Text="{x:Bind DecisionText, Mode=OneWay}" Style="{StaticResource MutedText}" Visibility="{x:Bind DecidedVisibility, Mode=OneWay}" />
+                                                        </StackPanel>
+                                                    </Border>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsRepeater.ItemTemplate>
+                                    </ItemsRepeater>
+                                </ScrollViewer>
+                            </Grid>
+                        </Border>
+
                         <Grid ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -459,12 +375,8 @@
                                     </DataTemplate>
                                 </AutoSuggestBox.ItemTemplate>
                             </AutoSuggestBox>
-                            <Button
-                                Grid.Column="1"
-                                Style="{ThemeResource AccentButtonStyle}"
-                                Content="{loc:Str Key=Room_Send}"
-                                AutomationProperties.AutomationId="RoomSendButton"
-                                Command="{Binding SendCommand}" />
+                            <Button Grid.Column="1" Style="{ThemeResource AccentButtonStyle}" Content="{loc:Str Key=Room_Send}"
+                                    AutomationProperties.AutomationId="RoomSendButton" Command="{Binding SendCommand}" />
                         </Grid>
                     </StackPanel>
                 </StackPanel>

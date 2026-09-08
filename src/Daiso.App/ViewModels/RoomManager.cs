@@ -9,17 +9,17 @@ namespace Daiso.App.ViewModels;
 public sealed class RoomManager
 {
     /// <summary>열린 방. 탭 띠가 이걸 그린다.</summary>
-    public ObservableCollection<ChatRoomViewModel> Rooms { get; } = [];
+    public ObservableCollection<StreamingRoomViewModel> Rooms { get; } = [];
 
     /// <summary>새 방을 더한다.</summary>
-    public void Add(ChatRoomViewModel room)
+    public void Add(StreamingRoomViewModel room)
     {
         ArgumentNullException.ThrowIfNull(room);
         Rooms.Add(room);
     }
 
     /// <summary>방을 닫고 프로세스를 정리한다.</summary>
-    public void Close(ChatRoomViewModel room)
+    public void Close(StreamingRoomViewModel room)
     {
         ArgumentNullException.ThrowIfNull(room);
 
@@ -29,12 +29,6 @@ public sealed class RoomManager
 
     /// <summary>살아 있는 방이 있는가. 앱을 닫을 때 물어볼지 판단한다.</summary>
     public bool HasRooms => Rooms.Count > 0;
-
-    /// <summary>이 프로젝트의 이 세션 파일을 지금 방으로 돌리고 있는가. "실행 중" 표시에 쓴다.</summary>
-    public bool IsRunning(string? sessionFilePath) =>
-        !string.IsNullOrEmpty(sessionFilePath)
-        && Rooms.Any(room => room.IsRunning
-            && string.Equals(room.ActiveSessionFile, sessionFilePath, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>모든 방을 정리한다(자식 프로세스 트리 kill). 앱 종료 때.</summary>
     public void DisposeAll()

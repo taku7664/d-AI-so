@@ -27,7 +27,7 @@ public sealed partial class TerminalPage : Page
             // 세션 "이어서 열기"가 방을 바로 열어 달라고 했으면 새 방을 연다
             if (ViewModel.ConsumeAutoOpen())
             {
-                await OpenRoomAsync();
+                OpenRoom();
             }
         };
         ViewModel.PropertyChanged += (_, e) =>
@@ -130,7 +130,7 @@ public sealed partial class TerminalPage : Page
         }
     }
 
-    private ChatRoomViewModel? _room;
+    private StreamingRoomViewModel? _room;
 
     /// <summary>이 화면에 처음 들어오면 이미 열려 있던 방들을 탭으로 되돌린다.</summary>
     private void RestoreRooms()
@@ -140,24 +140,15 @@ public sealed partial class TerminalPage : Page
         if (App.Rooms.Rooms.Count > 0)
         {
             RoomTabs.Visibility = Visibility.Visible;
-            _ = SelectRoomAsync(App.Rooms.Rooms[^1]);
+            SelectRoom(App.Rooms.Rooms[^1]);
         }
     }
 
-    private void OnEmbeddedOpenClick(object sender, RoutedEventArgs e) => _ = OpenRoomAsync();
+    private void OnEmbeddedOpenClick(object sender, RoutedEventArgs e) => OpenRoom();
 
-    /// <summary>고른 도구로 새 방을 연다. 의사 콘솔 + 세션 tail을 만들어 탭에 더하고 그 방을 보인다.</summary>
-    private async Task OpenRoomAsync()
+    /// <summary>고른 도구로 새 챗봇 방을 연다. 터미널 없이 stream-json 엔진에 잇는다. (지금은 Claude만)</summary>
+    private void OpenRoom()
     {
-        var settings = App.Services.GetRequiredService<Services.ISettingsStore>().Current;
-
-        // 설정이 껐거나 WebView2가 없으면 외부 터미널로 연다
-        if (!settings.UseEmbeddedTerminal || !Terminal.TerminalHost.IsRuntimeAvailable())
-        {
-            await ViewModel.LaunchAsync(ViewModel.SelectedTool);
-            return;
-        }
-
         var tool = ViewModel.SelectedTool;
         var directory = string.IsNullOrWhiteSpace(ViewModel.WorkingDirectory)
             ? Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
@@ -165,124 +156,80 @@ public sealed partial class TerminalPage : Page
 
         if (tool is null || !Directory.Exists(directory))
         {
-            EmbeddedStatus.Text = UiStrings.Get("Terminal_PickFolderFirst");
-            EmbeddedStatus.Visibility = Visibility.Visible;
+            ShowRoomNote(UiStrings.Get("Terminal_PickFolderFirst"));
             return;
         }
 
-        var builder = new Daiso.Infrastructure.TerminalCommandBuilder(Daiso.Providers.Common.ExecutableLocator.ExistsOnPath);
-        var shell = builder.BuildShellCommand(tool.Provider.ExecutableName, tool.Arguments);
-        var commandLine = $"{shell.FileName} {shell.Arguments}";
+        // 챗봇 엔진은 지금 Claude만. 그 밖은 외부 터미널로 안내한다
+        if (tool.Provider.Kind != Daiso.Core.ToolKind.Claude)
+        {
+            ShowRoomNote(UiStrings.Get("Room_ClaudeOnly"));
+            return;
+        }
 
         try
         {
-            await Embedded.InitializeAsync();
+            var extra = string.IsNullOrWhiteSpace(tool.Arguments) ? string.Empty : " " + tool.Arguments.Trim();
+            var claudeArgs = "--print --output-format stream-json --input-format stream-json --include-partial-messages --verbose --dangerously-skip-permissions" + extra;
+            var session = Daiso.Infrastructure.Chat.ClaudeChatSession.Start("cmd.exe", $"/c claude {claudeArgs}", directory);
 
-            var session = Daiso.Infrastructure.Pty.PtySession.Start(commandLine, directory);
-            var tail = new Daiso.Infrastructure.SessionTail(tool.Provider, directory, DateTimeOffset.Now);
-
-            var room = new ChatRoomViewModel(tool.Provider.Kind, directory, DispatcherQueue);
+            var room = new StreamingRoomViewModel(tool.Provider.Kind, directory, DispatcherQueue);
             room.SetCommands(App.Services.GetRequiredService<Daiso.Infrastructure.SlashCommandReader>().Read(tool.Provider.Kind, directory));
-            room.Bind(session, tail);
+            room.Bind(session);
             App.Rooms.Add(room);
 
             RoomTabs.ItemsSource = App.Rooms.Rooms;
             RoomTabs.Visibility = Visibility.Visible;
             EmbeddedStatus.Visibility = Visibility.Collapsed;
 
-            await SelectRoomAsync(room);
+            SelectRoom(room);
         }
-        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or System.Runtime.InteropServices.COMException or InvalidOperationException or IOException)
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or IOException)
         {
-            EmbeddedStatus.Text = ex.Message;
-            EmbeddedStatus.Visibility = Visibility.Visible;
+            ShowRoomNote(ex.Message);
         }
     }
 
-    /// <summary>그 방을 화면에 보인다. 하나뿐인 터미널 호스트를 그 방으로 다시 가리키고(버퍼 되돌림) 채팅·입력을 잇는다.</summary>
-    private async Task SelectRoomAsync(ChatRoomViewModel room)
+    private void ShowRoomNote(string text)
+    {
+        EmbeddedStatus.Text = text;
+        EmbeddedStatus.Visibility = Visibility.Visible;
+    }
+
+    /// <summary>그 방을 화면에 보인다. 말풍선·입력을 잇는다.</summary>
+    private void SelectRoom(StreamingRoomViewModel room)
     {
         if (_room is not null)
         {
-            _room.Blocks.CollectionChanged -= OnBlocksChanged;
+            _room.Bubbles.CollectionChanged -= OnBubblesChanged;
             _room.MarkInactive();
         }
 
         _room = room;
         room.MarkActive();
-        room.Blocks.CollectionChanged += OnBlocksChanged;
+        room.Bubbles.CollectionChanged += OnBubblesChanged;
 
         RoomCard.DataContext = room;
         RoomCard.Visibility = Visibility.Visible;
         RoomTabs.SelectedItem = room;
-
-        try
-        {
-            await Embedded.InitializeAsync();
-            Embedded.BindRoom(room);
-
-            // 채팅이 기본이면 입력칸으로, 터미널을 보고 있으면 터미널로 포커스
-            if (room.ShowTerminal)
-            {
-                Embedded.FocusTerminal();
-            }
-            else
-            {
-                RoomInput.Focus(FocusState.Programmatic);
-            }
-        }
-        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or InvalidOperationException or IOException)
-        {
-            // WebView2를 못 띄웠다. 방(프로세스)은 살아 있으니 채팅으로 두고 안내만 한다
-            EmbeddedStatus.Text = ex.Message;
-            EmbeddedStatus.Visibility = Visibility.Visible;
-        }
-
+        RoomInput.Focus(FocusState.Programmatic);
         ScrollChatToEnd();
     }
 
-    private void OnBlocksChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e) => ScrollChatToEnd();
+    private void OnBubblesChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e) => ScrollChatToEnd();
 
-    /// <summary>찾기 칸에서 Enter는 다음, Shift+Enter는 이전.</summary>
-    private void OnRoomFindKeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
+    private void OnRoomTabChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (e.Key != Windows.System.VirtualKey.Enter)
+        if (RoomTabs.SelectedItem is StreamingRoomViewModel room && !ReferenceEquals(room, _room))
         {
-            return;
-        }
-
-        e.Handled = true;
-        var shift = Microsoft.UI.Input.InputKeyboardSource
-            .GetKeyStateForCurrentThread(Windows.System.VirtualKey.Shift)
-            .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
-
-        Embedded.Find(RoomFindBox.Text, previous: shift);
-    }
-
-    private void OnRoomFindTextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (RoomFindBox.Text.Length == 0)
-        {
-            Embedded.ClearFind();
-        }
-    }
-
-    private void OnRoomFindNextClick(object sender, RoutedEventArgs e) => Embedded.Find(RoomFindBox.Text, previous: false);
-
-    private void OnRoomFindPrevClick(object sender, RoutedEventArgs e) => Embedded.Find(RoomFindBox.Text, previous: true);
-
-    private async void OnRoomTabChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (RoomTabs.SelectedItem is ChatRoomViewModel room && !ReferenceEquals(room, _room))
-        {
-            await SelectRoomAsync(room);
+            SelectRoom(room);
         }
     }
 
     /// <summary>탭의 X. 그 방을 닫고 프로세스를 끝낸다. 남은 방이 있으면 마지막 것을 보인다.</summary>
-    private async void OnCloseRoomClick(object sender, RoutedEventArgs e)
+    private void OnCloseRoomClick(object sender, RoutedEventArgs e)
     {
-        if (sender is not FrameworkElement { DataContext: ChatRoomViewModel room })
+        if (sender is not FrameworkElement { DataContext: StreamingRoomViewModel room })
         {
             return;
         }
@@ -300,7 +247,7 @@ public sealed partial class TerminalPage : Page
 
         if (wasSelected)
         {
-            await SelectRoomAsync(App.Rooms.Rooms[^1]);
+            SelectRoom(App.Rooms.Rooms[^1]);
         }
     }
 
@@ -313,7 +260,7 @@ public sealed partial class TerminalPage : Page
         }
     }
 
-    /// <summary>제안을 고르면 그 명령을 입력에 채운다(바로 보내지 않는다. 인자를 더 붙일 수 있게).</summary>
+    /// <summary>제안을 고르면 그 명령을 입력에 채운다(바로 보내지 않는다).</summary>
     private void OnRoomSuggestionChosen(AutoSuggestBox sender, AutoSuggestBoxSuggestionChosenEventArgs args)
     {
         if (args.SelectedItem is Daiso.Core.Prompts.SlashCommand command)
@@ -322,7 +269,7 @@ public sealed partial class TerminalPage : Page
         }
     }
 
-    /// <summary>Enter(또는 돋보기)로 제출하면 콘솔로 보낸다. 제안을 고른 경우는 채우기만 하고 보내지 않는다.</summary>
+    /// <summary>Enter로 제출하면 보낸다. 제안을 고른 경우는 채우기만 한다.</summary>
     private void OnRoomQuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
     {
         if (_room is null || args.ChosenSuggestion is not null)

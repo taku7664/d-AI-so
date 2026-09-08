@@ -133,3 +133,9 @@ CLI는 숨은 진짜 터미널(ConPTY + WebView2 xterm.js)에서 돌고, 채팅 
 - 순서: Claude 먼저 → Codex·Gemini는 각 프로토콜로 나중.
 
 진행: `ChatEvent`(사건 모델)·`ClaudeStreamParser`(줄→사건, 테스트 7건)·`IChatSession`·`ClaudeChatSession`(프로세스 stdin/stdout 엔진, 트리 kill) 완성. 다음은 방 UI를 이 엔진에 잇고 스트리밍 말풍선·승인 카드를 그리기. 라이브 확인은 Claude 토큰을 쓰므로 사용자가 한 턴 돌려 본다.
+
+### 챗봇 UI 구현 (2026-09-08)
+- `StreamingRoomViewModel`·`ChatBubbleViewModel`: 엔진 사건을 말풍선으로. 어시스턴트 답은 스트리밍으로 자라고, 도구 호출은 접힌 카드.
+- 방 화면을 말풍선 채팅으로 다시 씀(터미널·토글·검색 제거). 입력은 AutoSuggestBox(`/` 선택기 유지). `RoomManager`는 스트리밍 방을 든다.
+- 사용자 피드백 반영: **승인 카드 제거** — 도구는 `--dangerously-skip-permissions`로 묻지 않고 실행(챗봇 흐름을 끊지 않게). Claude만, Codex·Gemini는 외부 터미널 안내.
+- 라이브 확인(스트리밍·도구)은 사용자가 방에 메시지를 보내 본다(Claude 토큰 사용).
