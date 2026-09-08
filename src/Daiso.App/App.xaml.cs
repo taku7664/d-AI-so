@@ -88,6 +88,7 @@ public partial class App : Application
                 provider.GetRequiredService<IEnumerable<IProvider>>(),
                 provider.GetRequiredService<IContextAnalyzer>()));
         services.AddSingleton<IProjectFactsReader, ProjectFactsReader>();
+        services.AddSingleton(provider => new SlashCommandReader(provider.GetRequiredService<ProviderHome>()));
         services.AddSingleton<ISessionExporter>(provider =>
             new MarkdownSessionExporter(provider.GetRequiredService<IEnumerable<IProvider>>()));
         services.AddSingleton<ISessionIndex>(provider =>
