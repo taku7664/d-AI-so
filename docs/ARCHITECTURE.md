@@ -370,8 +370,9 @@ public sealed record ExportOptions(bool IncludeToolCalls = true, bool IncludeSys
 
 ### 4.5 Gemini (`Daiso.Providers.Gemini`)
 
-> 근거: 이 PC의 `~/.gemini`에서 확인한 것은 `oauth_creds.json`·`google_accounts.json`·`projects.json`·`tmp/{이름|해시}/chats/session-*.jsonl`의 **헤더 줄**(`sessionId, projectHash, startTime, lastUpdated, kind`)까지다.
-> 메시지 줄 형식은 Gemini CLI의 대화 기록(`type: user|gemini|info|…`, `content`, `tokens`, `toolCalls`)을 따랐고 fixture로 고정했다. 실제 대화 파일이 생기면 `tests/fixtures/gemini/session-modern.jsonl`과 대조해 파서를 맞춘다.
+> 근거: 이 PC의 `~/.gemini` 실제 파일(`oauth_creds.json`·`google_accounts.json`·`projects.json`·`tmp/{이름|해시}/chats/session-*.jsonl` 헤더 줄)과,
+> 설치한 Gemini CLI 0.58.0 번들의 `chatRecordingTypes.ts`/`chatRecordingService.ts`/`sessionOperations.ts` 소스를 대조했다: 첫 줄은 `sessionId`가 있는 헤더 레코드, 메시지는 `type: user|gemini|…`, `content`(문자열 또는 Part 배열), `thoughts`, `toolCalls`, `tokens {input, output, cached, thoughts, tool}` (usageMetadata에서 그대로 옮긴 값). 파일 이름은 `session-…-<짧은 id>.json|.jsonl`.
+> 아직 안 다루는 것: 옛 단일 `.json` 파일(통째로 다시 쓰이는 형식이라 증분 인덱스와 맞지 않음), `content` 안에 `functionCall` 조각으로 들어간 도구 호출.
 
 **인증**
 - `%USERPROFILE%\.gemini\oauth_creds.json` → `access_token`, `refresh_token`, `expiry_date`(ms), `token_type`, `scope`. **값은 읽지 않는다**
