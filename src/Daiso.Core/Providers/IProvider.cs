@@ -29,7 +29,13 @@ public interface IProvider
     /// <summary>본문을 스캔해 카운트·사용량까지 채운다.</summary>
     Task<SessionInfo> ReadSessionInfoAsync(string filePath, CancellationToken ct);
 
-    /// <summary><paramref name="fromByteOffset"/>부터 이어 읽는다. jsonl은 append-only다.</summary>
+    /// <summary>
+    /// 세션 파일이 뒤에만 붙는 로그인가. true면 인덱스가 커진 만큼만 이어 읽고, false면 바뀔 때마다 처음부터 다시 읽는다.
+    /// Claude·Codex는 true, Gemini는 목록 교체·되감기 레코드가 있어 false다. (ARCHITECTURE §5.1)
+    /// </summary>
+    bool AppendOnlySessions { get; }
+
+    /// <summary><paramref name="fromByteOffset"/>부터 이어 읽는다. <see cref="AppendOnlySessions"/>가 false인 도구는 오프셋을 무시하고 처음부터 읽는다.</summary>
     IAsyncEnumerable<SessionMessage> ReadMessagesAsync(string filePath, long fromByteOffset, CancellationToken ct);
 
     /// <summary>세션을 이어서 열기 위한 명령 인자. "--resume &lt;id&gt;" | "resume &lt;id&gt;".</summary>

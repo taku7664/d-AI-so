@@ -76,15 +76,33 @@
                 </StackPanel>
             </Border>
 
-            <!-- 도구 탭: 탭마다 그 도구의 인자·프리셋·실행. 순서는 ToolLook.DisplayOrder -->
-            <muxc:SelectorBar x:Name="ToolTabs" SelectionChanged="OnToolTabChanged" AutomationProperties.AutomationId="ToolTabs">
-                <muxc:SelectorBarItem Text="Codex" IsSelected="True" AutomationProperties.AutomationId="ToolTabCodex" />
-                <muxc:SelectorBarItem Text="Claude" AutomationProperties.AutomationId="ToolTabClaude" />
-                <muxc:SelectorBarItem Text="Gemini" AutomationProperties.AutomationId="ToolTabGemini" />
-            </muxc:SelectorBar>
+            <!-- 도구 탭이 붙은 카드: 탭 띠가 카드 머리에 있고 그 아래 내용이 탭을 따른다. 순서는 ToolLook.DisplayOrder -->
+            <Border Style="{StaticResource CardBorder}" Padding="0">
+                <StackPanel>
+                    <Border
+                        Padding="12,8,12,0"
+                        BorderThickness="0,0,0,1"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+                        <muxc:SelectorBar x:Name="ToolTabs" SelectionChanged="OnToolTabChanged" AutomationProperties.AutomationId="ToolTabs">
+                            <muxc:SelectorBarItem Text="Codex" IsSelected="True" AutomationProperties.AutomationId="ToolTabCodex">
+                                <muxc:SelectorBarItem.Icon>
+                                    <FontIcon Glyph="&#xE756;" />
+                                </muxc:SelectorBarItem.Icon>
+                            </muxc:SelectorBarItem>
+                            <muxc:SelectorBarItem Text="Claude" AutomationProperties.AutomationId="ToolTabClaude">
+                                <muxc:SelectorBarItem.Icon>
+                                    <FontIcon Glyph="&#xE756;" />
+                                </muxc:SelectorBarItem.Icon>
+                            </muxc:SelectorBarItem>
+                            <muxc:SelectorBarItem Text="Gemini" AutomationProperties.AutomationId="ToolTabGemini">
+                                <muxc:SelectorBarItem.Icon>
+                                    <FontIcon Glyph="&#xE756;" />
+                                </muxc:SelectorBarItem.Icon>
+                            </muxc:SelectorBarItem>
+                        </muxc:SelectorBar>
+                    </Border>
 
-            <Border Style="{StaticResource CardBorder}">
-                <StackPanel Spacing="14">
+                <StackPanel Spacing="14" Padding="20,16,20,20">
                     <!-- 인자 -->
                     <StackPanel Spacing="10">
                         <TextBlock Text="{loc:Str Key=Terminal_OptionArgs}" Style="{StaticResource SectionTitleText}" />
@@ -153,6 +171,7 @@
                                 IsTextSelectionEnabled="True" />
                         </StackPanel>
                     </StackPanel>
+                </StackPanel>
                 </StackPanel>
             </Border>
 

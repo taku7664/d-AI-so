@@ -92,7 +92,7 @@ public sealed partial class UsageViewModel : ObservableObject
                 _ => new DateOnly(2000, 1, 1),
             };
 
-            _summary = await _indexService.Index.GetUsageAsync(from, to, ct).ConfigureAwait(true);
+            _summary = await _indexService.Index.GetUsageAsync(from, to, SelectedTool, ct).ConfigureAwait(true);
             Recalculate();
 
             StatusText = UiStrings.Format("Usage_Range", from, to, Days.Count);
@@ -172,6 +172,19 @@ public sealed partial class UsageViewModel : ObservableObject
     }
 
     partial void OnPeriodIndexChanged(int value) => _ = LoadCommand.ExecuteAsync(null);
+
+    /// <summary>탭. 0은 전체, 그 뒤는 <see cref="Services.ToolLook.DisplayOrder"/> 순서의 도구 하나. (요약과 같은 규칙)</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SelectedTool))]
+    private int selectedTabIndex;
+
+    /// <summary>지금 탭의 도구. 전체면 null.</summary>
+    public ToolKind? SelectedTool =>
+        SelectedTabIndex >= 1 && SelectedTabIndex <= Services.ToolLook.DisplayOrder.Count
+            ? Services.ToolLook.DisplayOrder[SelectedTabIndex - 1]
+            : null;
+
+    partial void OnSelectedTabIndexChanged(int value) => _ = LoadCommand.ExecuteAsync(null);
 }
 
 /// <summary>일별 막대 한 줄.</summary>

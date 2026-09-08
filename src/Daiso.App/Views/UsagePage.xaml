@@ -7,10 +7,14 @@
     xmlns:vm="using:Daiso.App.ViewModels">
 
     <ScrollViewer Padding="{StaticResource PagePadding}" VerticalScrollBarVisibility="Auto">
-            <StackPanel
+            <!-- 폭은 열이 정한다: 최대 폭까지 채우고 남는 자리는 오른쪽 빈 열로. 내용이 적은 탭에서도 제목 줄이 움직이지 않는다 -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MinWidth="720" MaxWidth="{StaticResource ContentMaxWidth}" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" HorizontalAlignment="Stretch"
                 Spacing="16"
-                HorizontalAlignment="Left"
-                MaxWidth="{StaticResource ContentMaxWidth}"
                 Margin="0,4,0,20">
 
                 <!-- 제목 · 기간 -->
@@ -49,6 +53,14 @@
                         </StackPanel>
                     </Button>
                 </Grid>
+
+                <!-- 탭: 전체 · 도구별. 아래 모든 카드가 탭을 따른다 (요약과 같은 규칙) -->
+                <muxc:SelectorBar x:Name="ToolTabs" SelectionChanged="OnToolTabChanged" AutomationProperties.AutomationId="ToolTabs">
+                    <muxc:SelectorBarItem Text="{loc:Str Key=Common_All}" IsSelected="True" AutomationProperties.AutomationId="ToolTabAll" />
+                    <muxc:SelectorBarItem Text="Codex" AutomationProperties.AutomationId="ToolTabCodex" />
+                    <muxc:SelectorBarItem Text="Claude" AutomationProperties.AutomationId="ToolTabClaude" />
+                    <muxc:SelectorBarItem Text="Gemini" AutomationProperties.AutomationId="ToolTabGemini" />
+                </muxc:SelectorBar>
 
                 <!-- 추정 비용 -->
                 <Border Style="{StaticResource CardBorder}">
@@ -244,5 +256,6 @@
                     Style="{StaticResource PageSubtitleText}" />
 
             </StackPanel>
+        </Grid>
         </ScrollViewer>
 </Page>

@@ -18,6 +18,17 @@ public sealed partial class UsagePage : Page
 
     public UsageViewModel Usage { get; }
 
+    /// <summary>탭을 누르면 뷰모델이 그 도구로 좁혀 다시 읽는다.</summary>
+    private void OnToolTabChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
+    {
+        var index = sender.Items.IndexOf(sender.SelectedItem);
+
+        if (index >= 0 && index != Usage.SelectedTabIndex)
+        {
+            Usage.SelectedTabIndex = index;
+        }
+    }
+
     /// <summary>단가를 넣을 수 있는 설정으로 보낸다.</summary>
     private void OnGoToPricesClick(object sender, RoutedEventArgs e) =>
         (App.MainWindow as ShellWindow)?.NavigateTo("Settings");

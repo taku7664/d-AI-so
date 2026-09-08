@@ -39,6 +39,10 @@ public sealed class GeminiProvider : IProvider, IUsageReader
     public string InstallCommand => "npm install -g @google/gemini-cli";
 
     /// <inheritdoc />
+    /// <remarks>기록에 목록 교체(`$set.messages`)와 되감기(`$rewindTo`)가 있어 중간부터 이어 읽을 수 없다.</remarks>
+    public bool AppendOnlySessions => false;
+
+    /// <inheritdoc />
     public string RulesFileName => RulesFile;
 
     /// <summary>`~/.gemini`.</summary>
@@ -130,57 +134,43 @@ public sealed class GeminiProvider : IProvider, IUsageReader
 
         var info = new FileInfo(filePath);
         var projects = await LoadProjectMapAsync(ct).ConfigureAwait(false);
+        var transcript = await ReplayAsync(filePath, ct).ConfigureAwait(false);
 
-        string? sessionId = null;
-        string? projectHash = null;
-        string? model = null;
-        DateTimeOffset? startedAt = null;
         string? firstPrompt = null;
+        string? model = null;
         var users = 0;
         var assistants = 0;
         var usage = TokenUsage.Zero;
 
-        await foreach (var line in JsonlReader.ReadLinesAsync(filePath, 0, ct).ConfigureAwait(false))
+        foreach (var message in transcript.Messages)
         {
-            var record = GeminiRecordParser.Parse(line);
-            if (record is null)
-            {
-                continue;
-            }
+            model ??= message.Model;
 
-            sessionId ??= record.SessionId;
-            projectHash ??= record.ProjectHash;
-            startedAt ??= record.StartTime;
-            model ??= record.Model;
-
-            if (record.Usage is { } u)
+            if (message.Usage is { } u)
             {
                 usage = usage.Add(u);
             }
 
-            foreach (var message in record.Messages)
+            switch (message.Type)
             {
-                switch (message.Role)
-                {
-                    case MessageRole.User:
-                        users++;
-                        firstPrompt ??= Shorten(message.Text);
-                        break;
-                    case MessageRole.Assistant:
-                        assistants++;
-                        break;
-                    default:
-                        break;
-                }
+                case "user" when message.Text.Length > 0:
+                    users++;
+                    firstPrompt ??= Shorten(message.Text);
+                    break;
+                case "gemini" when message.Text.Length > 0:
+                    assistants++;
+                    break;
+                default:
+                    break;
             }
         }
 
         return new SessionInfo(
             ToolKind.Gemini,
-            sessionId ?? SessionIdFromFileName(filePath),
+            transcript.SessionId ?? SessionIdFromFileName(filePath),
             filePath,
-            ProjectPathNormalizer.Normalize(ResolveProject(filePath, projectHash, projects)),
-            startedAt ?? new DateTimeOffset(info.CreationTimeUtc, TimeSpan.Zero),
+            ProjectPathNormalizer.Normalize(ResolveProject(filePath, transcript.ProjectHash, projects)),
+            transcript.StartTime ?? new DateTimeOffset(info.CreationTimeUtc, TimeSpan.Zero),
             new DateTimeOffset(info.LastWriteTimeUtc, TimeSpan.Zero),
             info.Exists ? info.Length : 0,
             users,
@@ -193,6 +183,7 @@ public sealed class GeminiProvider : IProvider, IUsageReader
     }
 
     /// <inheritdoc />
+    /// <remarks>오프셋은 무시한다. 기록을 처음부터 리플레이해야 최종 상태가 나온다.</remarks>
     public async IAsyncEnumerable<SessionMessage> ReadMessagesAsync(
         string filePath,
         long fromByteOffset,
@@ -200,18 +191,11 @@ public sealed class GeminiProvider : IProvider, IUsageReader
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
 
-        await foreach (var line in JsonlReader.ReadLinesAsync(filePath, fromByteOffset, ct).ConfigureAwait(false))
-        {
-            var record = GeminiRecordParser.Parse(line);
-            if (record is null)
-            {
-                continue;
-            }
+        var transcript = await ReplayAsync(filePath, ct).ConfigureAwait(false);
 
-            foreach (var message in record.Messages)
-            {
-                yield return message;
-            }
+        foreach (var message in GeminiTranscriptReader.Flatten(transcript))
+        {
+            yield return message;
         }
     }
 
@@ -235,22 +219,17 @@ public sealed class GeminiProvider : IProvider, IUsageReader
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
 
+        var transcript = await ReplayAsync(filePath, ct).ConfigureAwait(false);
         var byDay = new Dictionary<DateOnly, TokenUsage>();
 
-        await foreach (var line in JsonlReader.ReadLinesAsync(filePath, fromByteOffset, ct).ConfigureAwait(false))
+        foreach (var message in transcript.Messages)
         {
-            var record = GeminiRecordParser.Parse(line);
-            if (record?.Usage is not { } usage)
+            if (message.Usage is not { } usage)
             {
                 continue;
             }
 
-            var date = DateOnly.FromDateTime((record.Timestamp ?? default).UtcDateTime);
-            if (date == default)
-            {
-                date = sessionDate;
-            }
-
+            var date = message.At == default ? sessionDate : DateOnly.FromDateTime(message.At.UtcDateTime);
             byDay[date] = byDay.TryGetValue(date, out var existing) ? existing.Add(usage) : usage;
         }
 
@@ -258,6 +237,19 @@ public sealed class GeminiProvider : IProvider, IUsageReader
         {
             yield return new UsageDay(date, usage);
         }
+    }
+
+    /// <summary>파일을 처음부터 끝까지 리플레이한다.</summary>
+    private static async Task<GeminiTranscript> ReplayAsync(string filePath, CancellationToken ct)
+    {
+        var reader = new GeminiTranscriptReader();
+
+        await foreach (var line in JsonlReader.ReadLinesAsync(filePath, 0, ct).ConfigureAwait(false))
+        {
+            reader.Apply(line);
+        }
+
+        return reader.Result();
     }
 
     /// <summary>헤더 줄만 읽어 메타를 만든다. 서버 세션은 null을 돌려 목록에서 뺀다.</summary>
@@ -273,23 +265,17 @@ public sealed class GeminiProvider : IProvider, IUsageReader
         string? projectHash = null;
         DateTimeOffset? startedAt = null;
 
+        var header = new GeminiTranscriptReader();
+
         foreach (var line in await JsonlReader.ReadHeadLinesAsync(filePath, MetaScanLines, ct).ConfigureAwait(false))
         {
-            var record = GeminiRecordParser.Parse(line);
-            if (record is null)
-            {
-                continue;
-            }
-
-            sessionId ??= record.SessionId;
-            projectHash ??= record.ProjectHash;
-            startedAt ??= record.StartTime;
-
-            if (sessionId is not null)
-            {
-                break;
-            }
+            header.Apply(line);
         }
+
+        var meta = header.Result();
+        sessionId = meta.SessionId;
+        projectHash = meta.ProjectHash;
+        startedAt = meta.StartTime;
 
         if (string.Equals(sessionId, ServerSessionId, StringComparison.Ordinal))
         {

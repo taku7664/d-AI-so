@@ -5,101 +5,179 @@ using Daiso.Providers.Common;
 
 namespace Daiso.Providers.Gemini;
 
-/// <summary>Gemini 대화 기록 jsonl 한 줄에서 뽑아낸 것. (ARCHITECTURE §4.5)</summary>
-internal sealed record GeminiRecord(
+/// <summary>대화 기록을 끝까지 리플레이한 결과. (ARCHITECTURE §4.5)</summary>
+internal sealed record GeminiTranscript(
     string? SessionId,
     string? ProjectHash,
     DateTimeOffset? StartTime,
-    DateTimeOffset? Timestamp,
+    IReadOnlyList<GeminiMessage> Messages);
+
+/// <summary>리플레이가 끝난 뒤의 메시지 한 건. 같은 id가 다시 오면 이것이 덧씌워진 결과다.</summary>
+internal sealed record GeminiMessage(
+    string Id,
+    DateTimeOffset At,
+    string Type,
+    string Text,
     string? Model,
     TokenUsage? Usage,
-    IReadOnlyList<SessionMessage> Messages);
+    IReadOnlyList<string> ToolCalls);
 
 /// <summary>
-/// `~/.gemini/tmp/{project}/chats/session-*.jsonl` 의 줄을 <see cref="GeminiRecord"/>로 바꾼다.
+/// `~/.gemini/tmp/{project}/chats/session-*.jsonl` 은 append-only 메시지 로그가 **아니다**. 레코드 네 가지를 순서대로 리플레이해야 최종 상태가 나온다.
+/// (Gemini CLI 0.58 `chatRecordingService`의 읽기 코드와 같은 규칙)
 ///
-/// - 헤더 줄: <c>{sessionId, projectHash, startTime, lastUpdated, kind}</c>. 메시지가 없다
-/// - 메시지 줄: <c>{id, timestamp, type, content, tokens?, model?, toolCalls?}</c>
-///   · <c>type == "user"</c> → User, <c>"gemini"</c> → Assistant, <c>"info" | "warning" | "error"</c> → System
-///   · <c>content</c>는 문자열이거나 <c>[{text}]</c> 조각 배열이다
-///   · <c>toolCalls[]</c>는 각각 Tool 메시지 하나로 낸다(이름 + 인자 앞부분). 결과 본문은 넣지 않는다
-///   · <c>tokens</c>는 메시지마다 붙는 그 응답의 사용량이라 날짜별로 더한다
+/// | 레코드 | 판별 | 뜻 |
+/// |---|---|---|
+/// | 헤더 | `sessionId`·`projectHash` 문자열 | 세션 메타. 첫 줄 |
+/// | 메시지 | `id` 문자열 | 같은 id가 이미 있으면 그 자리에서 덧씀(토큰이 나중에 붙는다). 없으면 뒤에 붙임 |
+/// | `$set` | `$set` 객체 | `$set.messages` 배열이 있으면 **목록 전체 교체**. 그 밖(`lastUpdated`, `memoryScratchpad`, `summary`)은 무시 |
+/// | `$rewindTo` | 문자열 | 그 id부터 끝까지 잘라냄 |
+///
+/// 그래서 파일 중간부터 이어 읽을 수 없다. 항상 처음부터 끝까지 읽는다(<see cref="GeminiProvider.AppendOnlySessions"/> = false).
 /// </summary>
-internal static class GeminiRecordParser
+internal sealed class GeminiTranscriptReader
 {
     private const int ToolArgsPreview = 300;
-    private static readonly IReadOnlyList<SessionMessage> NoMessages = [];
 
-    internal static GeminiRecord? Parse(string line)
+    private readonly List<string> _order = [];
+    private readonly Dictionary<string, GeminiMessage> _byId = new(StringComparer.Ordinal);
+
+    private string? _sessionId;
+    private string? _projectHash;
+    private DateTimeOffset? _startTime;
+
+    /// <summary>줄 하나를 적용한다. 파싱할 수 없는 줄은 건너뛴다.</summary>
+    internal void Apply(string line)
     {
         using var document = JsonHelpers.TryParseLine(line);
         if (document?.RootElement is not { ValueKind: JsonValueKind.Object } root)
         {
-            return null;
+            return;
         }
 
-        var type = root.Prop("type").Text();
-
-        // 헤더 줄에는 type이 없고 sessionId·projectHash가 있다
-        if (type is null)
+        if (root.Prop("$rewindTo") is { ValueKind: JsonValueKind.String } rewind)
         {
-            if (root.Prop("sessionId").Text() is null)
+            RewindTo(rewind.GetString()!);
+            return;
+        }
+
+        if (root.Prop("$set") is { ValueKind: JsonValueKind.Object } set)
+        {
+            if (set.Prop("messages") is { ValueKind: JsonValueKind.Array } replaced)
             {
-                return null;
+                _order.Clear();
+                _byId.Clear();
+
+                foreach (var item in replaced.EnumerateArray())
+                {
+                    Upsert(item);
+                }
             }
 
-            return new GeminiRecord(
-                root.Prop("sessionId").Text(),
-                root.Prop("projectHash").Text(),
-                root.Prop("startTime").Timestamp(),
-                null,
-                null,
-                null,
-                NoMessages);
+            return;
         }
 
-        var at = root.Prop("timestamp").Timestamp() ?? default;
-        var messages = new List<SessionMessage>();
-
-        switch (type)
+        if (root.Prop("id") is { ValueKind: JsonValueKind.String })
         {
-            case "user":
-                Add(messages, at, MessageRole.User, ContentText(root.Prop("content")));
-                break;
-            case "gemini":
-                Add(messages, at, MessageRole.Assistant, ContentText(root.Prop("content")));
-
-                foreach (var call in root.Prop("toolCalls").Items())
-                {
-                    Add(messages, call.Prop("timestamp").Timestamp() ?? at, MessageRole.Tool, ToolCallText(call));
-                }
-
-                break;
-            case "info":
-            case "warning":
-            case "error":
-                Add(messages, at, MessageRole.System, ContentText(root.Prop("content")));
-                break;
-            default:
-                break;
+            Upsert(root);
+            return;
         }
 
-        return new GeminiRecord(
-            null,
-            null,
-            null,
-            at == default ? null : at,
-            root.Prop("model").Text(),
-            Usage(root.Prop("tokens"), root.Prop("model").Text()),
-            messages);
+        if (root.Prop("sessionId") is { ValueKind: JsonValueKind.String })
+        {
+            _sessionId ??= root.Prop("sessionId").Text();
+            _projectHash ??= root.Prop("projectHash").Text();
+            _startTime ??= root.Prop("startTime").Timestamp();
+        }
     }
 
-    private static void Add(List<SessionMessage> messages, DateTimeOffset at, MessageRole role, string text)
+    /// <summary>지금까지 적용한 결과.</summary>
+    internal GeminiTranscript Result() =>
+        new(_sessionId, _projectHash, _startTime, _order.Select(id => _byId[id]).ToList());
+
+    /// <summary>리플레이 결과를 화면·인덱스가 쓰는 메시지 열로 편다. 도구 호출은 어시스턴트 말 뒤에 Tool 한 건씩.</summary>
+    internal static IEnumerable<SessionMessage> Flatten(GeminiTranscript transcript)
     {
-        if (text.Length > 0)
+        foreach (var message in transcript.Messages)
         {
-            messages.Add(new SessionMessage(at, role, text, IsSidechain: false));
+            var role = message.Type switch
+            {
+                "user" => MessageRole.User,
+                "gemini" => MessageRole.Assistant,
+                "info" or "warning" or "error" => MessageRole.System,
+                _ => (MessageRole?)null,
+            };
+
+            if (role is null)
+            {
+                continue;
+            }
+
+            if (message.Text.Length > 0)
+            {
+                yield return new SessionMessage(message.At, role.Value, message.Text, IsSidechain: false);
+            }
+
+            foreach (var call in message.ToolCalls)
+            {
+                yield return new SessionMessage(message.At, MessageRole.Tool, call, IsSidechain: false);
+            }
         }
+    }
+
+    private void Upsert(JsonElement element)
+    {
+        var id = element.Prop("id").Text();
+        if (id is null)
+        {
+            return;
+        }
+
+        var parsed = Parse(id, element);
+
+        if (!_byId.ContainsKey(id))
+        {
+            _order.Add(id);
+        }
+
+        _byId[id] = parsed;
+    }
+
+    private void RewindTo(string id)
+    {
+        var index = _order.IndexOf(id);
+        if (index < 0)
+        {
+            return;
+        }
+
+        foreach (var removed in _order.Skip(index))
+        {
+            _byId.Remove(removed);
+        }
+
+        _order.RemoveRange(index, _order.Count - index);
+    }
+
+    private static GeminiMessage Parse(string id, JsonElement element)
+    {
+        var type = element.Prop("type").Text() ?? string.Empty;
+        var model = element.Prop("model").Text();
+        var calls = new List<string>();
+
+        foreach (var call in element.Prop("toolCalls").Items())
+        {
+            calls.Add(ToolCallText(call));
+        }
+
+        return new GeminiMessage(
+            id,
+            element.Prop("timestamp").Timestamp() ?? default,
+            type,
+            ContentText(element.Prop("content")),
+            model,
+            Usage(element.Prop("tokens"), model),
+            calls);
     }
 
     /// <summary>문자열이면 그대로, 조각 배열이면 text 조각을 줄바꿈으로 이어 붙인다.</summary>
@@ -150,7 +228,7 @@ internal static class GeminiRecordParser
     }
 
     /// <summary>
-    /// <c>tokens: {input, output, cached, thoughts, tool, total}</c>.
+    /// <c>tokens: {input, output, cached, thoughts, tool, total}</c> — API usageMetadata를 그대로 옮긴 값.
     /// 도구 프롬프트 토큰은 입력 쪽, 사고 토큰은 출력 쪽으로 더한다. 캐시는 읽기만 있다.
     /// </summary>
     private static TokenUsage? Usage(JsonElement? tokens, string? model)

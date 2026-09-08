@@ -382,8 +382,15 @@ public sealed record ExportOptions(bool IncludeToolCalls = true, bool IncludeSys
 
 **세션**
 - 루트: `%USERPROFILE%\.gemini	mp\{프로젝트 이름 | SHA-256}\chats\session-*.jsonl`. 아카이브 개념 없음
-- 헤더 줄 → `sessionId`, `projectHash`, `startTime`. `sessionId == "a2a-server"`(Antigravity 서버 세션, 대화 없음)는 목록에서 뺀다
-- 메시지 줄: `type == "user"` → User, `"gemini"` → Assistant(`content`는 문자열 또는 `[{text}]` 조각), `"info"|"warning"|"error"` → System, `toolCalls[]` → 각각 Tool 한 건(이름 + 인자 앞 300자 + 상태. 결과 본문은 넣지 않는다)
+- **append-only 로그가 아니다. 레코드 네 가지를 순서대로 리플레이해야 최종 상태가 나온다** (`GeminiTranscriptReader`, CLI 0.58 읽기 코드와 같은 규칙)
+  | 레코드 | 판별 | 뜻 |
+  |---|---|---|
+  | 헤더 | `sessionId`·`projectHash` 문자열 | 첫 줄. `startTime`. `sessionId == "a2a-server"`(Antigravity 서버 세션)는 목록에서 뺀다 |
+  | 메시지 | `id` 문자열 | 같은 id가 이미 있으면 그 자리에서 덧씀(응답 토큰이 나중에 붙는다). 없으면 뒤에 붙임 |
+  | `$set` | `$set` 객체 | `$set.messages` 배열이 있으면 **목록 전체 교체**(컨텍스트 관리가 쓴다). `lastUpdated`·`memoryScratchpad`·`summary`는 무시 |
+  | `$rewindTo` | 문자열 | 그 id부터 끝까지 잘라냄 |
+- 그래서 `IProvider.AppendOnlySessions = false`. 인덱스는 이 도구의 파일이 바뀌면 오프셋을 버리고 처음부터 다시 읽는다(§5.1). `ReadMessagesAsync`의 오프셋도 무시한다
+- 메시지 → `type == "user"` → User, `"gemini"` → Assistant(`content`는 문자열 또는 `[{text}]` 조각), `"info"|"warning"|"error"` → System, `toolCalls[]` → 각각 Tool 한 건(이름 + 인자 앞 300자 + 상태. 결과 본문은 넣지 않는다)
 - 프로젝트 경로: `projects.json`의 `{"projects": {"소문자 경로": "이름"}}`으로 폴더 이름 → 경로, 또는 SHA-256(경로) → 경로를 되짚는다. 모르면 null
 - 토큰: 메시지의 `tokens {input, output, cached, thoughts, tool}` — **응답마다 붙는 값이라 날짜별로 더한다**. Input = input + tool, Output = output + thoughts, CacheRead = cached, CacheCreate 0. 모델은 `model`
 - resume: `gemini --resume <id>`
@@ -417,7 +424,8 @@ RefreshAsync
   → 각 IProvider.EnumerateSessionsAsync  (파일 경로, size, mtime만)
   → sessions 테이블의 (size, mtime, last_offset) 와 비교
      · 신규          → offset 0부터 ReadMessagesAsync
-     · size 증가     → last_offset부터 이어 읽기 (jsonl은 append-only)
+     · size 증가     → last_offset부터 이어 읽기 (IProvider.AppendOnlySessions 인 도구만. Gemini는 처음부터)
+     · 파서 형식 버전(PRAGMA user_version) 이 코드의 상수와 다르면 → 표를 비우고 전부 처음부터. 파서를 고치면 상수를 올린다
      · size 감소/변경 → offset 0부터 재파싱 (재작성된 경우)
      · 동일          → 건너뜀
   → messages_fts 삽입, usage_daily 갱신, last_offset = 파일 끝
@@ -575,6 +583,8 @@ Apply(projectDir, direction, dryRun)
 
 - **좌 목록 · 우 편집기** 화면(내 규칙, 내 프롬프트)은 사이에 `PaneSplitter`를 둔다. 끌어서 왼쪽 판 너비를 바꾸고, 놓으면 `settings.json`의 `PaneWidths[화면]`에 저장돼 다음에 되살아난다. 열의 MinWidth·MaxWidth 안에서만 움직인다. 명령바의 `목록` 토글로 왼쪽 판을 접을 수 있다(좁은 창용)
 - **긴 목록은 보이는 것만 그린다**: 세션 타임라인처럼 수천 건이 될 수 있는 목록은 `ItemsRepeater`(가상화)로 그리고, 파일 읽기·파싱은 `Task.Run`으로 UI 스레드 밖에서 끝낸 뒤 완성된 목록을 **한 번에** 바인딩한다. 한 건씩 `Add`하지 않는다. 메시지 본문은 1,500자에서 접고 `더 보기`로 편다. 필터 토글은 메모리에서 다시 걸고 파일을 다시 읽지 않는다. 다른 항목을 고르면 앞의 읽기는 `CancellationTokenSource`로 취소한다
+- **도구 탭 두 꼴**: 화면 전체를 거르는 탭(요약·사용량)은 제목 아래 독립 띠 `전체 · Codex · Claude · Gemini`. 카드 하나만 거르는 탭(터미널)은 **그 카드 머리에 붙여** 아래에 구분선을 두고 아이콘을 넣는다. 떠 있는 띠는 어디 것인지 읽히지 않는다
+- 화면 루트는 터미널처럼 `폭 * · MinWidth 720 · MaxWidth 1280` 열 하나 + 빈 열의 격자에 담는다. 탭을 좁혀 내용이 줄어도 카드 폭과 제목 줄 자리가 움직이지 않는다
 - **도구 순서는 `ToolLook.DisplayOrder` = Codex → Claude → Gemini**. 요약 탭·카드, 터미널 탭, 세션 필터, 컨텍스트 토글이 전부 이 순서다
 - **도구 표시는 `ToolLook` 한 곳**: 이름(`Claude Code`·`Codex CLI`·`Gemini CLI`), 짧은 이름, 배지 한 글자(C·X·G), 색(보라·회색·파랑). 뷰모델은 `ToolKind`로 분기하지 않고 여기를 부른다. 도구가 늘면 `ToolKind`·`ToolLook`·DI·터미널 프리셋·세션 필터·컨텍스트 토글을 늘린다
 - **가속기 풍선 숨김**: 셸 루트 격자는 `KeyboardAcceleratorPlacementMode="Hidden"`. 안 그러면 `Ctrl+1` 같은 풍선이 본문 어디에나 뜬다. 단축키는 설정 화면에 적혀 있다

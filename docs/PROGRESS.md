@@ -37,6 +37,7 @@
 - **터미널 설치 버튼**: 미설치 도구는 `{도구} 설치`가 되고 새 터미널에서 `npm install -g`. 설치가 보이면 저절로 `열기`
 - **코드 점검 안전망**: 산출물 폴더 하나(`AppendPlatformToOutputPath=false`) + `tools/run-app.ps1`, 문구 키 정합성 테스트, 타임라인 바쁨 플래그 분리, 세션 파일 IO 오류를 상태 줄로 (UX 19차)
 - **요약·터미널 탭**: 요약 `전체·Codex·Claude·Gemini`(카드·최근 세션·통계·토큰이 탭을 따름), 터미널 `Codex·Claude·Gemini`(인자는 탭별). 도구 순서는 `ToolLook.DisplayOrder` 한 곳 (UX 20차)
+- **사용량 탭 + 터미널 탭 붙이기**: 사용량에 `전체·Codex·Claude·Gemini`, 터미널 탭 띠는 카드 머리에 (UX 21차)
 - 빌드 경고 0 / 오류 0, 테스트 308건 + Slow 2건 통과 (2026-09-08)
 - 완성 상태 6항목 확인 결과는 README "수동 확인 체크리스트"에 있다
 

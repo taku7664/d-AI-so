@@ -41,6 +41,9 @@ internal sealed class FakeProvider : IProvider, IUsageReader
     public string InstallCommand => "npm install -g fake";
 
     /// <inheritdoc />
+    public bool AppendOnlySessions => true;
+
+    /// <inheritdoc />
     public string RulesFileName => "FAKE.md";
 
     internal void SetMessages(string filePath, params SessionMessage[] messages) =>

@@ -4,22 +4,33 @@ using Daiso.Providers.Gemini;
 
 namespace Daiso.Providers.Tests.Gemini;
 
-/// <summary>ARCHITECTURE §4.5 — 헤더 줄 + 메시지 줄 jsonl.</summary>
+/// <summary>
+/// ARCHITECTURE §4.5 — 기록은 리플레이해야 한다. fixture에는 같은 id 덧쓰기(m2에 토큰이 나중에 붙음),
+/// `$rewindTo`(m9 삭제), `$set.messages`(목록 교체 + m4 추가)가 모두 들어 있다.
+/// </summary>
 public sealed class GeminiSessionParsingTests
 {
     private readonly GeminiProvider _provider = new(new ProviderHome(Path.GetTempPath()));
 
     [Fact]
-    public async Task Counts_users_and_assistants_and_takes_the_first_prompt()
+    public async Task Replay_gives_the_final_state_not_the_raw_line_count()
     {
         var info = await _provider.ReadSessionInfoAsync(Fixtures.GeminiPath("session-modern.jsonl"), default);
 
         info.Tool.Should().Be(ToolKind.Gemini);
         info.Id.Should().Be("7a1b2c3d-1111-2222-3333-444455556666");
-        info.UserMessageCount.Should().Be(2);
-        info.AssistantMessageCount.Should().Be(2);
+        info.UserMessageCount.Should().Be(2, because: "m1, m4. 되감긴 m9는 빠진다");
+        info.AssistantMessageCount.Should().Be(2, because: "m2, m5. m2는 두 번 나오지만 한 건이다");
         info.FirstPrompt.Should().Be("더미 질문 1");
         info.StartedAt.Should().Be(new DateTimeOffset(2026, 9, 1, 1, 0, 0, TimeSpan.Zero));
+    }
+
+    [Fact]
+    public async Task A_rewound_message_never_reaches_the_stream()
+    {
+        var messages = await Read(Fixtures.GeminiPath("session-modern.jsonl"));
+
+        messages.Should().NotContain(m => m.Text.Contains("REWOUND", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -52,7 +63,7 @@ public sealed class GeminiSessionParsingTests
     }
 
     [Fact]
-    public async Task Tokens_are_added_per_message_and_split_by_day()
+    public async Task Tokens_attached_later_to_the_same_id_count_once_and_split_by_day()
     {
         var days = new List<UsageDay>();
 
@@ -62,7 +73,7 @@ public sealed class GeminiSessionParsingTests
         }
 
         days.Should().HaveCount(2);
-        // 9/1: input 100 + tool 5, output 40 + thoughts 10, cached 20
+        // 9/1: m2 한 번만 — input 100 + tool 5, output 40 + thoughts 10, cached 20
         days[0].Date.Should().Be(new DateOnly(2026, 9, 1));
         days[0].Usage.Input.Should().Be(105);
         days[0].Usage.Output.Should().Be(50);
@@ -72,13 +83,29 @@ public sealed class GeminiSessionParsingTests
     }
 
     [Fact]
-    public async Task Session_info_sums_the_usage_of_the_whole_file()
+    public async Task Session_info_sums_the_usage_of_the_final_state()
     {
         var info = await _provider.ReadSessionInfoAsync(Fixtures.GeminiPath("session-modern.jsonl"), default);
 
         info.Usage.Input.Should().Be(305);
         info.Usage.Output.Should().Be(110);
         info.Usage.Model.Should().Be("gemini-2.5-pro");
+    }
+
+    [Fact]
+    public async Task Reading_from_an_offset_still_replays_the_whole_file()
+    {
+        // 중간부터 읽으면 $set 교체와 되감기를 놓친다. 오프셋을 받아도 처음부터 읽는다
+        var fromStart = await Read(Fixtures.GeminiPath("session-modern.jsonl"));
+        var fromMiddle = new List<SessionMessage>();
+
+        await foreach (var message in _provider.ReadMessagesAsync(Fixtures.GeminiPath("session-modern.jsonl"), 500, default))
+        {
+            fromMiddle.Add(message);
+        }
+
+        fromMiddle.Should().Equal(fromStart);
+        _provider.AppendOnlySessions.Should().BeFalse();
     }
 
     [Fact]

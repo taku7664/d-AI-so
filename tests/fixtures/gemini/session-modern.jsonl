@@ -1,6 +1,10 @@
 {"sessionId":"7a1b2c3d-1111-2222-3333-444455556666","projectHash":"f0e1d2c3b4a5968778695a4b3c2d1e0f00112233445566778899aabbccddeeff","startTime":"2026-09-01T01:00:00.000Z","lastUpdated":"2026-09-01T01:05:00.000Z","kind":"main"}
 {"id":"m1","timestamp":"2026-09-01T01:00:05.000Z","type":"user","content":"더미 질문 1"}
+{"$set":{"lastUpdated":"2026-09-01T01:00:05.000Z"}}
+{"id":"m2","timestamp":"2026-09-01T01:00:09.000Z","type":"gemini","content":[{"text":"더미 답변 1"}],"model":"gemini-2.5-pro","toolCalls":[{"id":"t1","name":"read_file","args":{"path":"README.md"},"status":"success","timestamp":"2026-09-01T01:00:08.000Z","result":"이 결과 본문은 화면에 나오지 않아야 한다 RESULT_BODY"}]}
 {"id":"m2","timestamp":"2026-09-01T01:00:09.000Z","type":"gemini","content":[{"text":"더미 답변 1"}],"model":"gemini-2.5-pro","tokens":{"input":100,"output":40,"cached":20,"thoughts":10,"tool":5,"total":175},"toolCalls":[{"id":"t1","name":"read_file","args":{"path":"README.md"},"status":"success","timestamp":"2026-09-01T01:00:08.000Z","result":"이 결과 본문은 화면에 나오지 않아야 한다 RESULT_BODY"}]}
 {"id":"m3","timestamp":"2026-09-01T01:02:00.000Z","type":"info","content":"컨텍스트 요약됨"}
-{"id":"m4","timestamp":"2026-09-02T01:03:00.000Z","type":"user","content":[{"text":"더미 질문 2"}]}
+{"id":"m9","timestamp":"2026-09-01T01:02:30.000Z","type":"user","content":"되감기로 사라져야 하는 질문 REWOUND"}
+{"$rewindTo":"m9"}
+{"$set":{"messages":[{"id":"m1","timestamp":"2026-09-01T01:00:05.000Z","type":"user","content":[{"text":"더미 질문 1"}]},{"id":"m2","timestamp":"2026-09-01T01:00:09.000Z","type":"gemini","content":[{"text":"더미 답변 1"}],"model":"gemini-2.5-pro","tokens":{"input":100,"output":40,"cached":20,"thoughts":10,"tool":5,"total":175},"toolCalls":[{"id":"t1","name":"read_file","args":{"path":"README.md"},"status":"success"}]},{"id":"m3","timestamp":"2026-09-01T01:02:00.000Z","type":"info","content":"컨텍스트 요약됨"},{"id":"m4","timestamp":"2026-09-02T01:03:00.000Z","type":"user","content":[{"text":"더미 질문 2"}]}],"lastUpdated":"2026-09-02T01:03:00.000Z"}}
 {"id":"m5","timestamp":"2026-09-02T01:03:30.000Z","type":"gemini","content":"더미 답변 2","model":"gemini-2.5-pro","tokens":{"input":200,"output":60,"cached":0,"thoughts":0,"tool":0,"total":260}}

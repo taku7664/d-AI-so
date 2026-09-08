@@ -138,7 +138,8 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
                     }
 
                     // 커진 파일은 이전 오프셋부터, 줄어들었거나 새 파일은 처음부터 읽는다.
-                    var append = previous is not null && session.SizeBytes > previous.SizeBytes;
+                    // 뒤에만 붙는 로그가 아닌 도구(Gemini)는 커졌어도 처음부터 다시 읽는다. 중간 레코드가 앞을 바꾼다.
+                    var append = provider.AppendOnlySessions && previous is not null && session.SizeBytes > previous.SizeBytes;
                     var offset = append ? previous!.LastOffset : 0;
 
                     await IndexAsync(provider, session, offset, append ? previous : null, ct).ConfigureAwait(false);
@@ -650,7 +651,34 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
 
     private const int SessionColumnCount = 18;
 
-    private void CreateSchema() => Execute("""
+    /// <summary>
+    /// 인덱스에 든 내용의 형식 버전. 파서(레코드 해석)를 고치면 올린다.
+    /// DB의 PRAGMA user_version 과 다르면 표를 비워 다음 갱신이 전부 처음부터 읽게 한다. 크기·수정 시각이 같은 파일은 다시 열지 않기 때문이다.
+    /// 2: Gemini 기록을 리플레이 방식으로 읽기 시작.
+    /// </summary>
+    private const int IndexFormatVersion = 2;
+
+    private void CreateSchema()
+    {
+        Execute(SchemaSql);
+        EnsureFormatVersion();
+    }
+
+    private void EnsureFormatVersion()
+    {
+        using var read = _connection.CreateCommand();
+        read.CommandText = "PRAGMA user_version;";
+        var current = Convert.ToInt32(read.ExecuteScalar(), System.Globalization.CultureInfo.InvariantCulture);
+
+        if (current == IndexFormatVersion)
+        {
+            return;
+        }
+
+        Execute($"DELETE FROM messages_fts; DELETE FROM sessions; DELETE FROM usage_daily; PRAGMA user_version = {IndexFormatVersion};");
+    }
+
+    private const string SchemaSql = """
         PRAGMA journal_mode = WAL;
 
         CREATE TABLE IF NOT EXISTS sessions (
@@ -699,7 +727,7 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
             cache_read   INTEGER NOT NULL DEFAULT 0,
             PRIMARY KEY (date, tool, project, model, file_path)
         );
-        """);
+        """;
 
     private void Execute(string sql)
     {
