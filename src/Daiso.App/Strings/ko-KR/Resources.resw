@@ -95,15 +95,6 @@
   <data name="Common_Inspect" xml:space="preserve">
     <value>검사</value>
   </data>
-  <data name="Common_All" xml:space="preserve">
-    <value>전체</value>
-  </data>
-  <data name="Common_Present" xml:space="preserve">
-    <value>있음</value>
-  </data>
-  <data name="Common_Absent" xml:space="preserve">
-    <value>없음</value>
-  </data>
   <data name="Common_Unknown" xml:space="preserve">
     <value>(알 수 없음)</value>
   </data>
@@ -132,9 +123,6 @@
   <!-- ── Dashboard ──────────────────────────────────────────────────────── -->
   <data name="Dashboard_ToolStatus" xml:space="preserve">
     <value>도구 상태</value>
-  </data>
-  <data name="Dashboard_Login" xml:space="preserve">
-    <value>로그인 하기</value>
   </data>
   <data name="Dashboard_Sessions" xml:space="preserve">
     <value>세션</value>
@@ -170,12 +158,6 @@
   </data>
   <data name="Auth_NoInfo" xml:space="preserve">
     <value>로그인 정보 없음</value>
-  </data>
-  <data name="Auth_Installed" xml:space="preserve">
-    <value>설치됨</value>
-  </data>
-  <data name="Auth_NotInstalled" xml:space="preserve">
-    <value>설치되지 않음</value>
   </data>
   <data name="Auth_NoExpiry" xml:space="preserve">
     <value>만료 정보 없음</value>
@@ -338,15 +320,6 @@
     <value>선택 {0}건
 회수 용량 {1}
 방식: {2}</value>
-  </data>
-  <data name="Sessions_MoveToRecycleBin" xml:space="preserve">
-    <value>휴지통으로 이동</value>
-  </data>
-  <data name="Sessions_PermanentPreviewTitle" xml:space="preserve">
-    <value>영구 삭제 미리보기</value>
-  </data>
-  <data name="Sessions_DeletePreviewTitle" xml:space="preserve">
-    <value>삭제 미리보기</value>
   </data>
   <data name="Sessions_ConfirmPermanentTitle" xml:space="preserve">
     <value>정말 영구 삭제할까요?</value>
@@ -743,9 +716,6 @@
   <data name="Auth_ExpiresToday" xml:space="preserve">
     <value>{0:yyyy-MM-dd}까지 · 오늘 만료</value>
   </data>
-  <data name="Auth_ReLogin" xml:space="preserve">
-    <value>다시 로그인</value>
-  </data>
   <data name="Dashboard_StatSessions" xml:space="preserve">
     <value>세션</value>
   </data>
@@ -791,9 +761,6 @@
   <!-- Sessions (2차 정리) -->
   <data name="Sessions_Title" xml:space="preserve">
     <value>세션</value>
-  </data>
-  <data name="Sessions_ListHeader" xml:space="preserve">
-    <value>세션 목록</value>
   </data>
   <data name="Sessions_NoPrompt" xml:space="preserve">
     <value>(첫 메시지 없음)</value>
@@ -899,9 +866,6 @@
   <data name="Sessions_ProjectFilter" xml:space="preserve">
     <value>프로젝트</value>
   </data>
-  <data name="Sessions_SearchTitle" xml:space="preserve">
-    <value>검색 결과</value>
-  </data>
   <!-- Sessions 표시 옵션 -->
   <data name="Sessions_MoreFilters" xml:space="preserve">
     <value>필터</value>
@@ -933,18 +897,6 @@
     <value>이 세션에는 보여줄 메시지가 없습니다.</value>
   </data>
   <!-- 세션 상세 (대화 중심) -->
-  <data name="Role_User" xml:space="preserve">
-    <value>사용자</value>
-  </data>
-  <data name="Role_Assistant" xml:space="preserve">
-    <value>어시스턴트</value>
-  </data>
-  <data name="Role_Tool" xml:space="preserve">
-    <value>도구</value>
-  </data>
-  <data name="Role_System" xml:space="preserve">
-    <value>시스템</value>
-  </data>
   <data name="Sessions_ShowToolCalls" xml:space="preserve">
     <value>도구 호출 보기</value>
   </data>
@@ -1009,9 +961,6 @@
     <value>규칙 저장 / 열기</value>
   </data>
   <!-- 로그인 프로필 (ARCHITECTURE §5.7) -->
-  <data name="AuthProfile_Title" xml:space="preserve">
-    <value>로그인 프로필</value>
-  </data>
   <data name="AuthProfile_Hint" xml:space="preserve">
     <value>지금 로그인 상태를 이름 붙여 두면 계정을 오갈 때 다시 로그인하지 않아도 됩니다. 저장한 정보는 이 PC의 사용자 계정으로만 풀 수 있게 암호화됩니다.</value>
   </data>
