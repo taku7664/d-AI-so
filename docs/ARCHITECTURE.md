@@ -476,7 +476,7 @@ RefreshAsync
 - 종료는 반드시 프로세스 **트리 전체**를 kill 한다. 루트 셸만 죽이면 자식이 콘솔 출력을 잡아 읽기가 안 풀리고, 파이프 핸들 해제와 네이티브 읽기가 겹쳐 힙이 깨진다.
 - WebView2 런타임이 없으면 내장을 못 켠다. `TerminalHost.IsRuntimeAvailable()`로 확인하고 없으면 외부 터미널로 보낸다.
 - 세션 목록의 "실행 중" 배지는 `Session.IsActive`(도구 표식) 또는 `RoomManager.IsRunning(파일)`(앱 안 방이 그 세션을 tail 중)이면 켜진다.
-- 방은 `RoomManager`(싱글턴)가 들고 있어 화면을 옮겨도 살아 있다. 터미널 화면의 탭 띠가 `RoomManager.Rooms`를 그리고, 탭을 고르면 하나뿐인 `TerminalHost`를 `BindRoom`으로 그 방에 다시 가리킨다. 방이 콘솔 출력을 8MB까지 버퍼링해, 탭을 다시 보거나 화면을 다시 열면 `ReplayInto`로 지난 화면을 되돌린다(WebView2 호스트를 방마다 새로 만들지 않는다). "여기서 열기"는 새 방을 더한다.
+- 방은 `RoomManager`(싱글턴)가 들고 있어 화면을 옮겨도 살아 있다. 터미널 화면의 탭 띠가 `RoomManager.Rooms`를 그리고, 탭을 고르면 하나뿐인 `TerminalHost`를 `BindRoom`으로 그 방에 다시 가리킨다. 방이 콘솔 출력을 8MB까지 버퍼링해, 탭을 다시 보거나 화면을 다시 열면 `AttachHost`가 버퍼 스냅샷과 구독을 한 잠금 안에서 원자적으로 잡아 지난 화면을 되돌린다(덩어리 중복·누락 없음). 호스트가 하나뿐이라 세대 번호로 이전 방의 늦은 출력이 새 방 화면에 섞이지 않게 막는다(WebView2 호스트를 방마다 새로 만들지 않는다). "여기서 열기"는 새 방을 더한다.
 - 세션·요약의 "이어서 열기"는 내장이 켜져 있으면 `TerminalViewModel.PrepareResume(tool, dir, args, autoOpen:true)` 뒤 터미널로 이동하고, 화면 로드 때 `ConsumeAutoOpen()`이 도구를 다시 고르고 인자를 다시 심은 뒤 방을 연다(탭 기본 선택·TwoWay 바인딩이 덮어쓰는 것을 되돌린다). 내장이 꺼졌거나 WebView2가 없으면 외부 터미널로.
 - 설정 `UseEmbeddedTerminal`(기본 켬)이 꺼졌거나 WebView2가 없으면 "여기서 열기"는 외부 터미널로 폴백한다. 방은 `App.RegisterRoom`으로 등록되어 페이지를 옮겨도 살아 있고, `AppWindow.Closing`이 살아 있는 방이 있으면 한 번 묻고 계속하면 `App.DisposeRooms`가 프로세스 트리를 정리한다.
 - 채팅 블록: `SessionTail`이 방을 연 뒤 **새로 만들어진** 세션 파일(생성 시각 기준)을 초당 폴링으로 잡아 provider로 다시 읽고, 지난번보다 늘어난 만큼만 흘린다. 이미 열려 있던 다른 세션은 잡지 않는다. `ChatRoomViewModel`이 블록으로 쌓고(같은 화자 연속이면 머리 생략), `ChatBlockViewModel`이 아바타·시각(호버 툴팁 전체 날짜)·도구 호출 접힘·사용자 세로줄을 그린다. 입력 칸 → `PtySession.Write`(끝에 CR), 터미널↔채팅은 같은 자리 토글. A 방식이라 스트리밍은 "쓰는 중…"만, 글자 단위는 아직 없다.

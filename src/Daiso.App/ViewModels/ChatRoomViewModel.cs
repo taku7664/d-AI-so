@@ -59,8 +59,8 @@ public sealed partial class ChatRoomViewModel : ObservableObject, IDisposable
     /// <summary>채팅 블록. 세션 파일 tail이 새 메시지를 붙일 때마다 늘어난다.</summary>
     public ObservableCollection<ChatBlockViewModel> Blocks { get; } = [];
 
-    /// <summary>콘솔 출력 한 덩어리(base64 아닌 원시 바이트). 지금 붙은 터미널 호스트가 받는다. UI 스레드에서 온다.</summary>
-    public event Action<byte[]>? OutputChunk;
+    /// <summary>지금 이 방 화면을 그리는 호스트 하나. 방마다 호스트는 하나뿐이다(같은 호스트를 탭마다 다시 가리킨다).</summary>
+    private Action<byte[]>? _sink;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(TerminalVisibility))]
@@ -105,8 +105,11 @@ public sealed partial class ChatRoomViewModel : ObservableObject, IDisposable
         tail.Start();
     }
 
-    /// <summary>지금까지 쌓인 화면을 새로 붙는 호스트에 되돌려 준다. 탭을 다시 보거나 화면을 다시 열 때.</summary>
-    public void ReplayInto(Action<byte[]> sink)
+    /// <summary>
+    /// 호스트를 이 방에 붙인다. 지금까지 쌓인 화면을 되돌리고, 그 뒤 출력을 이 호스트로 보낸다.
+    /// 스냅샷과 구독을 한 잠금 안에서 원자적으로 해, 되돌리는 사이에 온 덩어리가 두 번 그려지거나 빠지지 않게 한다.
+    /// </summary>
+    public void AttachHost(Action<byte[]> sink)
     {
         ArgumentNullException.ThrowIfNull(sink);
 
@@ -114,11 +117,24 @@ public sealed partial class ChatRoomViewModel : ObservableObject, IDisposable
         lock (_bufferGate)
         {
             snapshot = [.. _buffer];
+            _sink = sink;
         }
 
         foreach (var chunk in snapshot)
         {
             sink(chunk);
+        }
+    }
+
+    /// <summary>이 호스트가 지금 이 방을 그리는 호스트면 떼어 낸다. 다른 방으로 옮겨 갈 때.</summary>
+    public void DetachHost(Action<byte[]> sink)
+    {
+        lock (_bufferGate)
+        {
+            if (ReferenceEquals(_sink, sink))
+            {
+                _sink = null;
+            }
         }
     }
 
@@ -136,6 +152,10 @@ public sealed partial class ChatRoomViewModel : ObservableObject, IDisposable
 
     private void OnOutput(byte[] chunk)
     {
+        Action<byte[]>? sink;
+
+        // 버퍼에 넣는 것과 지금 호스트를 잡는 것을 한 잠금 안에서. AttachHost의 스냅샷과 겹쳐도
+        // 이 덩어리는 (스냅샷에 들어가 되돌려지거나) 또는 (붙은 호스트로 보내지거나) 정확히 한 번만 간다.
         lock (_bufferGate)
         {
             _buffer.AddLast(chunk);
@@ -146,9 +166,14 @@ public sealed partial class ChatRoomViewModel : ObservableObject, IDisposable
                 _bufferBytes -= first.Value.Length;
                 _buffer.RemoveFirst();
             }
+
+            sink = _sink;
         }
 
-        _dispatcher.TryEnqueue(() => OutputChunk?.Invoke(chunk));
+        if (sink is not null)
+        {
+            _dispatcher.TryEnqueue(() => sink(chunk));
+        }
     }
 
     private void OnMessages(IReadOnlyList<SessionMessage> messages)

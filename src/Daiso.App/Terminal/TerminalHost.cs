@@ -21,6 +21,8 @@ public sealed class TerminalHost : UserControl
     private readonly WebView2 _web = new();
     private readonly List<string> _pendingOut = [];
     private ChatRoomViewModel? _room;
+    private Action<byte[]>? _roomSink;
+    private int _generation;
     private bool _ready;
     private bool _initialized;
 
@@ -100,21 +102,28 @@ public sealed class TerminalHost : UserControl
             return;
         }
 
-        if (_room is not null)
+        // 이전 방에서 떼어 낸다. 세대 번호를 올려, 떼어 내는 순간 이미 큐에 오른 이전 방의 늦은 덩어리는 버린다.
+        // 호스트가 하나뿐이라 이 방어가 없으면 옛 방의 바이트가 새 방 화면에 섞여 들어온다.
+        if (_room is not null && _roomSink is not null)
         {
-            _room.OutputChunk -= OnRoomOutput;
+            _room.DetachHost(_roomSink);
         }
 
         _room = room;
-        room.OutputChunk += OnRoomOutput;
+        var generation = ++_generation;
+        _roomSink = bytes =>
+        {
+            if (generation == _generation)
+            {
+                PostOutput(Convert.ToBase64String(bytes));
+            }
+        };
 
-        // 화면을 비우고 이 방의 버퍼를 통째로 되돌린다
+        // 화면을 비우고 이 방의 버퍼를 통째로 되돌린 뒤 이후 출력을 받는다(원자적 붙이기)
         Post(new { type = "clear" });
         _pendingOut.Clear();
-        room.ReplayInto(chunk => PostOutput(Convert.ToBase64String(chunk)));
+        room.AttachHost(_roomSink);
     }
-
-    private void OnRoomOutput(byte[] bytes) => PostOutput(Convert.ToBase64String(bytes));
 
     /// <summary>키보드 포커스를 터미널로.</summary>
     public void FocusTerminal()
