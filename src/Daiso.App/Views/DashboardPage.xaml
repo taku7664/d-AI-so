@@ -125,17 +125,10 @@
                                         HorizontalAlignment="Stretch"
                                         HorizontalContentAlignment="Left"
                                         Visibility="{x:Bind HasExtras, Mode=OneWay}">
-                                        <ItemsControl ItemsSource="{x:Bind Extras}">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate x:DataType="x:String">
-                                                    <TextBlock
-                                                        Text="{x:Bind}"
-                                                        Style="{StaticResource MutedText}"
-                                                        TextTrimming="None"
-                                                        TextWrapping="Wrap" />
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
+                                        <!-- 세션 화면의 부가 정보 줄과 같은 것이다. 사전에서 가져다 쓴다 -->
+                                        <ItemsControl
+                                            ItemsSource="{x:Bind Extras}"
+                                            ItemTemplate="{StaticResource ExtraLineTemplate}" />
                                     </Expander>
 
                                     <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">

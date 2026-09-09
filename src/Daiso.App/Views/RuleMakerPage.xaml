@@ -86,21 +86,8 @@
                         SelectedItem="{x:Bind ViewModel.SelectedGalleryItem, Mode=TwoWay}"
                         SelectionMode="Single"
                         SelectionChanged="OnGallerySelectionChanged"
-                        ContainerContentChanging="OnGalleryContainerChanging">
-                        <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="vm:PresetGalleryItemViewModel">
-                                <StackPanel Spacing="{StaticResource GapTiny}" Margin="0,6,0,6" ToolTipService.ToolTip="{x:Bind Description}">
-                                    <TextBlock Text="{x:Bind Badge}" Style="{StaticResource MutedText}" />
-                                    <TextBlock Text="{x:Bind Name}" Style="{ThemeResource BodyStrongTextBlockStyle}" TextTrimming="CharacterEllipsis" />
-                                    <TextBlock
-                                        Text="{x:Bind Description}"
-                                        Style="{StaticResource MutedText}"
-                                        TextTrimming="CharacterEllipsis"
-                                        TextWrapping="NoWrap" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
+                        ContainerContentChanging="OnGalleryContainerChanging"
+                        ItemTemplate="{StaticResource PresetGalleryItemTemplate}" />
 
                     <!-- 고르면 편집기에 실린다. 지금 편집 중인 것 뒤에 붙이고 싶을 때만 이 버튼 -->
                     <Button
@@ -306,18 +293,8 @@
                                         AutomationProperties.AutomationId="RuleList"
                                         ItemsSource="{x:Bind ViewModel.Rules}"
                                         SelectedItem="{x:Bind ViewModel.SelectedRule, Mode=TwoWay}"
-                                        MaxHeight="150">
-                                        <ListView.ItemTemplate>
-                                            <DataTemplate x:DataType="vm:RuleEditViewModel">
-                                                <TextBlock
-                                                    Text="{x:Bind Summary, Mode=OneWay}"
-                                                    TextWrapping="NoWrap"
-                                                    TextTrimming="CharacterEllipsis"
-                                                    ToolTipService.ToolTip="{x:Bind Summary, Mode=OneWay}"
-                                                    Padding="0,6" />
-                                            </DataTemplate>
-                                        </ListView.ItemTemplate>
-                                    </ListView>
+                                        MaxHeight="150"
+                                        ItemTemplate="{StaticResource RuleEditTemplate}" />
                                 </StackPanel>
                             </Border>
 

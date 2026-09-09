@@ -566,34 +566,17 @@
                                         SelectionMode="Single"
                                         BorderThickness="1"
                                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                                        CornerRadius="{StaticResource RadiusSmall}">
+                                        CornerRadius="{StaticResource RadiusSmall}"
+                                        ItemTemplate="{StaticResource ResumeCandidateTemplate}">
                                         <ListView.ItemContainerStyle>
                                             <Style TargetType="ListViewItem">
                                                 <Setter Property="Height" Value="40" />
                                                 <Setter Property="MinHeight" Value="40" />
                                             </Style>
                                         </ListView.ItemContainerStyle>
-                                        <ListView.ItemTemplate>
-                                            <DataTemplate x:DataType="vm:ResumeCandidateViewModel">
-                                                <Grid ColumnSpacing="{StaticResource GapLarge}" ToolTipService.ToolTip="{x:Bind Summary}">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="Auto" />
-                                                        <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="Auto" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <TextBlock Grid.Column="0" Text="{x:Bind When}" Style="{StaticResource MutedText}" VerticalAlignment="Center" MinWidth="72" />
-                                                    <TextBlock Grid.Column="1" Text="{x:Bind Summary}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                                                    <TextBlock
-                                                        Grid.Column="2"
-                                                        Text="{x:Bind Counts}"
-                                                        ToolTipService.ToolTip="{x:Bind CountsTip}"
-                                                        Style="{StaticResource MutedText}"
-                                                        VerticalAlignment="Center" />
-                                                </Grid>
-                                            </DataTemplate>
-                                        </ListView.ItemTemplate>
                                         <ListView.GroupStyle>
-                                            <GroupStyle>
+                                            <GroupStyle
+                                            HeaderTemplate="{StaticResource ResumeGroupTemplate}">
                                                 <GroupStyle.HeaderContainerStyle>
                                                     <Style TargetType="ListViewHeaderItem">
                                                         <Setter Property="Height" Value="40" />
@@ -602,11 +585,6 @@
                                                         <Setter Property="Padding" Value="12,0" />
                                                     </Style>
                                                 </GroupStyle.HeaderContainerStyle>
-                                                <GroupStyle.HeaderTemplate>
-                                                    <DataTemplate x:DataType="vm:ResumeGroupViewModel">
-                                                        <TextBlock Text="{x:Bind Title}" Style="{StaticResource MutedText}" VerticalAlignment="Center" />
-                                                    </DataTemplate>
-                                                </GroupStyle.HeaderTemplate>
                                             </GroupStyle>
                                         </ListView.GroupStyle>
                                     </ListView>
@@ -779,42 +757,11 @@
                                 <TextBlock Text="{loc:Str Key=Room_ChatEmpty}" Style="{StaticResource PageSubtitleText}" />
                             </Border>
                             <ScrollViewer x:Name="ChatScroll" VerticalScrollBarVisibility="Auto">
-                                <ItemsRepeater AutomationProperties.AutomationId="ChatBubbles" ItemsSource="{Binding Bubbles}">
+                                <ItemsRepeater AutomationProperties.AutomationId="ChatBubbles" ItemsSource="{Binding Bubbles}"
+                                ItemTemplate="{StaticResource ChatBubbleTemplate}">
                                     <ItemsRepeater.Layout>
                                         <StackLayout Spacing="{StaticResource GapMedium}" />
                                     </ItemsRepeater.Layout>
-                                    <ItemsRepeater.ItemTemplate>
-                                        <DataTemplate x:DataType="vm:ChatBubbleViewModel">
-                                            <Grid>
-                                                <Border Visibility="{x:Bind UserVisibility}" HorizontalAlignment="Right" MaxWidth="640"
-                                                        Background="{ThemeResource AccentFillColorDefaultBrush}" CornerRadius="{StaticResource RadiusPill}" Padding="12,8">
-                                                    <TextBlock Text="{x:Bind Text, Mode=OneWay}" Foreground="White" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
-                                                </Border>
-                                                <Grid Visibility="{x:Bind AssistantVisibility}" ColumnSpacing="{StaticResource GapMedium}">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="28" />
-                                                        <ColumnDefinition Width="*" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <Border Grid.Column="0" Width="28" Height="28" CornerRadius="{StaticResource RadiusRound}" VerticalAlignment="Top" Background="{x:Bind AvatarBrush}">
-                                                        <TextBlock Text="{x:Bind Avatar}" Foreground="White" FontSize="{StaticResource CaptionFontSize}" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                                    </Border>
-                                                    <StackPanel Grid.Column="1" Spacing="{StaticResource GapTiny}">
-                                                        <TextBlock Text="{x:Bind SpeakerText}" Style="{ThemeResource BodyStrongTextBlockStyle}" FontSize="{StaticResource BodyFontSize}" />
-                                                        <TextBlock Text="{x:Bind Text, Mode=OneWay}" Style="{ThemeResource BodyTextBlockStyle}" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
-                                                    </StackPanel>
-                                                </Grid>
-                                                <muxc:Expander Visibility="{x:Bind ToolVisibility}" HorizontalAlignment="Stretch">
-                                                    <muxc:Expander.Header>
-                                                        <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
-                                                            <FontIcon Glyph="&#xE756;" FontSize="{StaticResource CaptionFontSize}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                                                            <TextBlock Text="{x:Bind Text, Mode=OneWay}" Style="{StaticResource MutedText}" TextTrimming="CharacterEllipsis" MaxWidth="560" />
-                                                        </StackPanel>
-                                                    </muxc:Expander.Header>
-                                                    <TextBlock Text="{x:Bind ResultText, Mode=OneWay}" Style="{StaticResource MonoText}" TextWrapping="Wrap" IsTextSelectionEnabled="True" Visibility="{x:Bind ResultVisibility, Mode=OneWay}" />
-                                                </muxc:Expander>
-                                            </Grid>
-                                        </DataTemplate>
-                                    </ItemsRepeater.ItemTemplate>
                                 </ItemsRepeater>
                             </ScrollViewer>
                         </Grid>
@@ -834,19 +781,8 @@
                             ItemsSource="{Binding Suggestions}"
                             TextChanged="OnRoomInputTextChanged"
                             SuggestionChosen="OnRoomSuggestionChosen"
-                            QuerySubmitted="OnRoomQuerySubmitted">
-                            <AutoSuggestBox.ItemTemplate>
-                                <DataTemplate x:DataType="prompts:SlashCommand">
-                                    <Grid ColumnSpacing="{StaticResource GapMedium}" Padding="0,2">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" MinWidth="120" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="{x:Bind Invocation}" Style="{StaticResource MonoText}" Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
-                                        <TextBlock Grid.Column="1" Text="{x:Bind Description}" Style="{StaticResource MutedText}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                                    </Grid>
-                                </DataTemplate>
-                            </AutoSuggestBox.ItemTemplate>
+                            QuerySubmitted="OnRoomQuerySubmitted"
+                            ItemTemplate="{StaticResource SlashCommandTemplate}">
                         </AutoSuggestBox>
                         <Button Grid.Column="1" Style="{ThemeResource AccentButtonStyle}" Content="{loc:Str Key=Room_Send}"
                                 AutomationProperties.AutomationId="RoomSendButton" Command="{Binding SendCommand}" />

@@ -31,7 +31,7 @@ public sealed class PageDepthTests
     {
         ["ShellWindow.xaml"] = 6,
         ["PromptsPage.xaml"] = 10,
-        ["UsagePage.xaml"] = 10,
+        ["UsagePage.xaml"] = 9,
         ["SessionsPage.xaml"] = 11,
         ["ItemTemplates.xaml"] = 7,
         ["SettingsPage.xaml"] = 12,

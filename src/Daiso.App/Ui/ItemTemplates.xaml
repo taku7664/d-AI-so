@@ -15,7 +15,8 @@
     xmlns:loc="using:Daiso.App.Strings"
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
     xmlns:controls="using:Daiso.App.Controls"
-    xmlns:vm="using:Daiso.App.ViewModels">
+    xmlns:vm="using:Daiso.App.ViewModels"
+    xmlns:prompts="using:Daiso.Core.Prompts">
 
     <DataTemplate x:Key="PromptGalleryItemTemplate" x:DataType="vm:PromptGalleryItemViewModel">
         <StackPanel Spacing="{StaticResource GapTiny}" Margin="0,6,0,6" ToolTipService.ToolTip="{x:Bind Description}">
@@ -209,6 +210,155 @@
             Style="{StaticResource MutedText}"
             TextTrimming="None"
             TextWrapping="Wrap" />
+    </DataTemplate>
+
+    <DataTemplate x:Key="PresetGalleryItemTemplate" x:DataType="vm:PresetGalleryItemViewModel">
+        <StackPanel Spacing="{StaticResource GapTiny}" Margin="0,6,0,6" ToolTipService.ToolTip="{x:Bind Description}">
+            <TextBlock Text="{x:Bind Badge}" Style="{StaticResource MutedText}" />
+            <TextBlock Text="{x:Bind Name}" Style="{ThemeResource BodyStrongTextBlockStyle}" TextTrimming="CharacterEllipsis" />
+            <TextBlock
+                Text="{x:Bind Description}"
+                Style="{StaticResource MutedText}"
+                TextTrimming="CharacterEllipsis"
+                TextWrapping="NoWrap" />
+        </StackPanel>
+    </DataTemplate>
+
+    <DataTemplate x:Key="RuleEditTemplate" x:DataType="vm:RuleEditViewModel">
+        <TextBlock
+            Text="{x:Bind Summary, Mode=OneWay}"
+            TextWrapping="NoWrap"
+            TextTrimming="CharacterEllipsis"
+            ToolTipService.ToolTip="{x:Bind Summary, Mode=OneWay}"
+            Padding="0,6" />
+    </DataTemplate>
+
+    <DataTemplate x:Key="ResumeCandidateTemplate" x:DataType="vm:ResumeCandidateViewModel">
+        <Grid ColumnSpacing="{StaticResource GapLarge}" ToolTipService.ToolTip="{x:Bind Summary}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="{x:Bind When}" Style="{StaticResource MutedText}" VerticalAlignment="Center" MinWidth="72" />
+            <TextBlock Grid.Column="1" Text="{x:Bind Summary}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+            <TextBlock
+                Grid.Column="2"
+                Text="{x:Bind Counts}"
+                ToolTipService.ToolTip="{x:Bind CountsTip}"
+                Style="{StaticResource MutedText}"
+                VerticalAlignment="Center" />
+        </Grid>
+    </DataTemplate>
+
+    <DataTemplate x:Key="ResumeGroupTemplate" x:DataType="vm:ResumeGroupViewModel">
+        <TextBlock Text="{x:Bind Title}" Style="{StaticResource MutedText}" VerticalAlignment="Center" />
+    </DataTemplate>
+
+    <DataTemplate x:Key="ChatBubbleTemplate" x:DataType="vm:ChatBubbleViewModel">
+        <Grid>
+            <Border Visibility="{x:Bind UserVisibility}" HorizontalAlignment="Right" MaxWidth="640"
+                    Background="{ThemeResource AccentFillColorDefaultBrush}" CornerRadius="{StaticResource RadiusPill}" Padding="12,8">
+                <TextBlock Text="{x:Bind Text, Mode=OneWay}" Foreground="White" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
+            </Border>
+            <Grid Visibility="{x:Bind AssistantVisibility}" ColumnSpacing="{StaticResource GapMedium}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="28" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border Grid.Column="0" Width="28" Height="28" CornerRadius="{StaticResource RadiusRound}" VerticalAlignment="Top" Background="{x:Bind AvatarBrush}">
+                    <TextBlock Text="{x:Bind Avatar}" Foreground="White" FontSize="{StaticResource CaptionFontSize}" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+                <StackPanel Grid.Column="1" Spacing="{StaticResource GapTiny}">
+                    <TextBlock Text="{x:Bind SpeakerText}" Style="{ThemeResource BodyStrongTextBlockStyle}" FontSize="{StaticResource BodyFontSize}" />
+                    <TextBlock Text="{x:Bind Text, Mode=OneWay}" Style="{ThemeResource BodyTextBlockStyle}" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
+                </StackPanel>
+            </Grid>
+            <muxc:Expander Visibility="{x:Bind ToolVisibility}" HorizontalAlignment="Stretch">
+                <muxc:Expander.Header>
+                    <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
+                        <FontIcon Glyph="&#xE756;" FontSize="{StaticResource CaptionFontSize}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Text="{x:Bind Text, Mode=OneWay}" Style="{StaticResource MutedText}" TextTrimming="CharacterEllipsis" MaxWidth="560" />
+                    </StackPanel>
+                </muxc:Expander.Header>
+                <TextBlock Text="{x:Bind ResultText, Mode=OneWay}" Style="{StaticResource MonoText}" TextWrapping="Wrap" IsTextSelectionEnabled="True" Visibility="{x:Bind ResultVisibility, Mode=OneWay}" />
+            </muxc:Expander>
+        </Grid>
+    </DataTemplate>
+
+    <DataTemplate x:Key="SlashCommandTemplate" x:DataType="prompts:SlashCommand">
+        <Grid ColumnSpacing="{StaticResource GapMedium}" Padding="0,2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" MinWidth="120" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="{x:Bind Invocation}" Style="{StaticResource MonoText}" Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+            <TextBlock Grid.Column="1" Text="{x:Bind Description}" Style="{StaticResource MutedText}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+        </Grid>
+    </DataTemplate>
+
+    <DataTemplate x:Key="UsageProjectRowTemplate" x:DataType="vm:UsageRowViewModel">
+        <Grid ColumnSpacing="{StaticResource GapLarge}" Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="100" />
+                <ColumnDefinition Width="70" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Spacing="{StaticResource GapHair}">
+                <TextBlock
+                    Text="{x:Bind PrimaryText}"
+                    TextTrimming="CharacterEllipsis"
+                    ToolTipService.ToolTip="{x:Bind Label}" />
+                <TextBlock
+                    Text="{x:Bind SecondaryText}"
+                    Style="{StaticResource MonoText}"
+                    Visibility="{x:Bind HasSecondary}" />
+            </StackPanel>
+            <TextBlock
+                Grid.Column="1"
+                Text="{x:Bind TotalText}"
+                Style="{StaticResource NumberText}"
+                VerticalAlignment="Center"
+                ToolTipService.ToolTip="{x:Bind TotalExact}" />
+            <TextBlock
+                Grid.Column="2"
+                Text="{x:Bind PercentText}"
+                Style="{StaticResource NumberText}"
+                VerticalAlignment="Center" />
+        </Grid>
+    </DataTemplate>
+
+    <DataTemplate x:Key="UsageModelRowTemplate" x:DataType="vm:UsageRowViewModel">
+        <Grid ColumnSpacing="{StaticResource GapLarge}" Margin="0,0,0,6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="100" />
+                <ColumnDefinition Width="70" />
+                <ColumnDefinition Width="110" />
+            </Grid.ColumnDefinitions>
+            <TextBlock
+                Grid.Column="0"
+                Text="{x:Bind PrimaryText}"
+                TextTrimming="CharacterEllipsis"
+                VerticalAlignment="Center"
+                ToolTipService.ToolTip="{x:Bind Label}" />
+            <TextBlock
+                Grid.Column="1"
+                Text="{x:Bind TotalText}"
+                Style="{StaticResource NumberText}"
+                VerticalAlignment="Center"
+                ToolTipService.ToolTip="{x:Bind TotalExact}" />
+            <TextBlock
+                Grid.Column="2"
+                Text="{x:Bind PercentText}"
+                Style="{StaticResource NumberText}"
+                VerticalAlignment="Center" />
+            <TextBlock
+                Grid.Column="3"
+                Text="{x:Bind CostText}"
+                Style="{StaticResource NumberText}"
+                VerticalAlignment="Center" />
+        </Grid>
     </DataTemplate>
 
 </ResourceDictionary>

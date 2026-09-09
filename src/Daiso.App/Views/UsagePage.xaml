@@ -168,43 +168,8 @@
                             <TextBlock Grid.Column="2" Text="{loc:Str Key=Usage_ShareColumn}" Style="{StaticResource MutedText}" HorizontalTextAlignment="Right" />
                         </Grid>
 
-                        <ItemsControl ItemsSource="{x:Bind Usage.TopProjects}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="vm:UsageRowViewModel">
-                                    <Grid ColumnSpacing="{StaticResource GapLarge}" Margin="0,0,0,8">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="100" />
-                                            <ColumnDefinition Width="70" />
-                                        </Grid.ColumnDefinitions>
-
-                                        <StackPanel Grid.Column="0" Spacing="{StaticResource GapHair}">
-                                            <TextBlock
-                                                Text="{x:Bind PrimaryText}"
-                                                TextTrimming="CharacterEllipsis"
-                                                ToolTipService.ToolTip="{x:Bind Label}" />
-                                            <TextBlock
-                                                Text="{x:Bind SecondaryText}"
-                                                Style="{StaticResource MonoText}"
-                                                Visibility="{x:Bind HasSecondary}" />
-                                        </StackPanel>
-
-                                        <TextBlock
-                                            Grid.Column="1"
-                                            Text="{x:Bind TotalText}"
-                                            Style="{StaticResource NumberText}"
-                                            VerticalAlignment="Center"
-                                            ToolTipService.ToolTip="{x:Bind TotalExact}" />
-
-                                        <TextBlock
-                                            Grid.Column="2"
-                                            Text="{x:Bind PercentText}"
-                                            Style="{StaticResource NumberText}"
-                                            VerticalAlignment="Center" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                        <ItemsControl ItemsSource="{x:Bind Usage.TopProjects}"
+                        ItemTemplate="{StaticResource UsageProjectRowTemplate}" />
                     </StackPanel>
                 </Border>
 
@@ -226,43 +191,8 @@
                             <TextBlock Grid.Column="3" Text="{loc:Str Key=Usage_CostColumn}" Style="{StaticResource MutedText}" HorizontalTextAlignment="Right" />
                         </Grid>
 
-                        <ItemsControl ItemsSource="{x:Bind Usage.ByModel}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="vm:UsageRowViewModel">
-                                    <Grid ColumnSpacing="{StaticResource GapLarge}" Margin="0,0,0,6">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="100" />
-                                            <ColumnDefinition Width="70" />
-                                            <ColumnDefinition Width="110" />
-                                        </Grid.ColumnDefinitions>
-
-                                        <TextBlock
-                                            Grid.Column="0"
-                                            Text="{x:Bind PrimaryText}"
-                                            TextTrimming="CharacterEllipsis"
-                                            VerticalAlignment="Center"
-                                            ToolTipService.ToolTip="{x:Bind Label}" />
-                                        <TextBlock
-                                            Grid.Column="1"
-                                            Text="{x:Bind TotalText}"
-                                            Style="{StaticResource NumberText}"
-                                            VerticalAlignment="Center"
-                                            ToolTipService.ToolTip="{x:Bind TotalExact}" />
-                                        <TextBlock
-                                            Grid.Column="2"
-                                            Text="{x:Bind PercentText}"
-                                            Style="{StaticResource NumberText}"
-                                            VerticalAlignment="Center" />
-                                        <TextBlock
-                                            Grid.Column="3"
-                                            Text="{x:Bind CostText}"
-                                            Style="{StaticResource NumberText}"
-                                            VerticalAlignment="Center" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                        <ItemsControl ItemsSource="{x:Bind Usage.ByModel}"
+                        ItemTemplate="{StaticResource UsageModelRowTemplate}" />
                     </StackPanel>
                 </Border>
 
