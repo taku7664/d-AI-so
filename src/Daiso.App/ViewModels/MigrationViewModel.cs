@@ -63,6 +63,9 @@ public sealed partial class MigrationViewModel : ObservableObject
             : UiStrings.Get("Migration_BothMissing");
     }
 
+    /// <summary>바뀐 파일 이름. 값은 제공자가 정한다 — 화면이 파일 이름을 직접 적지 않는다.</summary>
+    public string TargetFileName(ToolKind tool) => _service.RulesFileName(tool);
+
     /// <summary>고른 방향으로 대상 파일 하나를 쓴다.</summary>
     public MigrationResult Apply(MigrationDirection direction)
     {
@@ -72,7 +75,7 @@ public sealed partial class MigrationViewModel : ObservableObject
         }
 
         var result = _service.Apply(directory, direction, dryRun: false);
-        var target = result.Target == ToolKind.Claude ? "CLAUDE.md" : "AGENTS.md";
+        var target = TargetFileName(result.Target);
 
         StatusText = result.Warnings.Count == 0
             ? UiStrings.Format("Migration_Updated", target)

@@ -21,6 +21,12 @@ public interface IInstructionMigrationService
 
     /// <summary>고른 방향으로 대상 파일 하나만 쓴다. <paramref name="dryRun"/>이면 내용만 만들고 쓰지 않는다.</summary>
     MigrationResult Apply(string projectDir, MigrationDirection direction, bool dryRun);
+
+    /// <summary>
+    /// 그 도구의 지시문 파일 이름. 값은 <see cref="IProvider.RulesFileName"/> 하나에서 온다.
+    /// 화면이 "CLAUDE.md" / "AGENTS.md" 를 다시 적으면 제공자가 이름을 바꿔도 안내 문구만 옛 이름으로 남는다.
+    /// </summary>
+    string RulesFileName(ToolKind tool);
 }
 
 /// <summary>

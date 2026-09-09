@@ -54,6 +54,10 @@ public sealed class InstructionMigrationService : IInstructionMigrationService
     }
 
     /// <inheritdoc />
+    /// <inheritdoc />
+    public string RulesFileName(ToolKind tool) =>
+        tool == ToolKind.Claude ? _claudeFileName : _codexFileName;
+
     public InstructionMigrationPlan Plan(string projectDir)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(projectDir);

@@ -345,7 +345,7 @@ public sealed partial class RuleMakerPage : Page, IPageHeaderSource
         try
         {
             var result = migration.Apply(direction.Value);
-            var target = result.Target == ToolKind.Claude ? "CLAUDE.md" : "AGENTS.md";
+            var target = migration.TargetFileName(result.Target);
 
             await ShowAsync(
                 UiStrings.Format("Migration_Updated", target),
