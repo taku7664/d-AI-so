@@ -89,15 +89,6 @@
     term.focus();
   });
 
-  // 진단: 휠을 굴릴 때 버퍼 상태를 앱에 알린다 (스크롤이 안 된다는 보고의 원인 추적. 원인을 찾으면 지운다)
-  var diagLast = 0;
-  document.addEventListener('wheel', function (e) {
-    var now = Date.now(); if (now - diagLast < 500) return; diagLast = now;
-    var b = term.buffer.active;
-    post({ type: 'diag', text: 'wheel dy=' + Math.round(e.deltaY) + ' buffer=' + b.type + ' length=' + b.length + ' baseY=' + b.baseY + ' viewportY=' + b.viewportY
-      + ' rows=' + term.rows + ' mouse=' + (term.modes ? term.modes.mouseTrackingMode : '?') + ' alt=' + (term.buffer.active === term.buffer.alternate) });
-  }, { passive: true });
-
   term.onData(function (d) { post({ type: 'in', data: d }); });
   term.onBinary(function (d) { post({ type: 'in', data: d }); });
   term.onResize(function (s) { post({ type: 'resize', cols: s.cols, rows: s.rows }); });
