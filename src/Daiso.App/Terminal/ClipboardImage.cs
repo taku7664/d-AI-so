@@ -6,7 +6,7 @@ using Windows.Storage;
 namespace Daiso.App.Terminal;
 
 /// <summary>
-/// 그림 파일을 시스템 클립보드에 CF_DIB 로 올린다. CLI(Claude Code·Codex·Gemini)가 그림을 읽을 때 쓰는 게 이 옛 형식이라
+/// 그림 파일을 시스템 클립보드에 CF_DIB 로 올린다. CLI(Claude Code·Codex·Antigravity)가 그림을 읽을 때 쓰는 게 이 옛 형식이라
 /// (PowerShell <c>Get-Clipboard -Format Image</c> 등), WinRT <c>DataPackage.SetBitmap</c> 으로 올린 스트림은 못 읽는다.
 /// 32bpp BGRA, 위에서 아래로(높이 음수) 한 가지 꼴만 만든다.
 /// </summary>

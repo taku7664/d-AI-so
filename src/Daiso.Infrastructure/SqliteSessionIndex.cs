@@ -656,8 +656,9 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
     /// DB의 PRAGMA user_version 과 다르면 표를 비워 다음 갱신이 전부 처음부터 읽게 한다. 크기·수정 시각이 같은 파일은 다시 열지 않기 때문이다.
     /// 2: Gemini 기록을 리플레이 방식으로 읽기 시작.
     /// 3: Gemini 프로젝트 경로를 디스크의 실제 대소문자로 저장.
+    /// 4: `ToolKind.Gemini` → `ToolKind.Antigravity`. tool 열에 도구 이름이 문자열로 들어가므로 옛 행("Gemini")은 Enum.Parse 가 못 읽는다.
     /// </summary>
-    private const int IndexFormatVersion = 3;
+    private const int IndexFormatVersion = 4;
 
     private void CreateSchema()
     {

@@ -148,11 +148,10 @@ public sealed partial class TerminalViewModel : ObservableObject
             new("Terminal_PresetModel", "--model "),
             new("Terminal_PresetSandbox", "--sandbox "),
         ],
-        ToolKind.Gemini =>
-        [
-            new("Terminal_PresetModel", "--model "),
-            new("Terminal_PresetSandbox", "--sandbox"),
-        ],
+        // Antigravity(`agy`)의 플래그는 아직 확인하지 못했다. 공식 문서는 TUI 안의 슬래시 명령만 싣고 플래그 목록이 없다.
+        // 확인 안 된 플래그를 버튼으로 내주면 누르는 대로 실패하는 명령이 만들어지므로 비워 둔다 —
+        // `자세한 설정`의 입력칸으로 직접 칠 수는 있다. `agy --help` 를 보고 채운다
+        ToolKind.Antigravity => [],
         _ => [],
     };
 
@@ -788,7 +787,7 @@ public sealed partial class TerminalViewModel : ObservableObject
 
     /// <summary>
     /// 이번 실행의 인자를 만든다. <paramref name="writePrompt"/>가 참이면 고른 프롬프트를 프로젝트 docs/prompts에 써 넣고
-    /// 시작 메시지를 첫 메시지 인자로 붙인다(Claude·Codex는 위치 인자, Gemini는 -i). 미리보기는 쓰지 않고 모양만 본다.
+    /// 시작 메시지를 첫 메시지 인자로 붙인다(Claude·Codex는 위치 인자, Antigravity는 -p). 미리보기는 쓰지 않고 모양만 본다.
     /// </summary>
     public string ComposeArguments(ToolLaunchViewModel tool, bool writePrompt)
     {
@@ -812,7 +811,10 @@ public sealed partial class TerminalViewModel : ObservableObject
             }
 
             var message = PromptPresetSerializer.StarterMessage(preset).Replace('"', '\'');
-            parts.Add(tool.Kind == ToolKind.Gemini ? $"-i \"{message}\"" : $"\"{message}\"");
+
+            // `-p` 는 Antigravity 이전 도구의 `-i` 를 대신하는 값으로, 공식 문서에는 플래그 표가 없어 아직 확인하지 못했다.
+            // 프롬프트를 골랐는데 아무것도 넘기지 않으면 조용히 실패하므로 넘기는 쪽을 고르고, `agy --help` 로 맞춘다
+            parts.Add(tool.Kind == ToolKind.Antigravity ? $"-p \"{message}\"" : $"\"{message}\"");
         }
 
         return string.Join(' ', parts);

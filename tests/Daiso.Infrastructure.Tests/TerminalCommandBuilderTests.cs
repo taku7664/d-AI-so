@@ -97,9 +97,27 @@ public sealed class TerminalCommandBuilderTests
     public void Quoted_first_message_is_escaped_for_powershell_but_left_alone_for_cmd()
     {
         var pwsh = Builder("pwsh").BuildShellCommand("claude", "\"docs/prompts/x.md 파일을 읽고 진행\"");
-        var cmd = Builder().BuildShellCommand("gemini", "-i \"docs/prompts/x.md 파일을 읽고 진행\"");
+        var cmd = Builder().BuildShellCommand("agy", "-p \"docs/prompts/x.md 파일을 읽고 진행\"");
 
         pwsh.Arguments.Should().Be("-NoExit -Command \"& claude \\\"docs/prompts/x.md 파일을 읽고 진행\\\"\"");
-        cmd.Arguments.Should().Be("/k gemini -i \"docs/prompts/x.md 파일을 읽고 진행\"");
+        cmd.Arguments.Should().Be("/k agy -p \"docs/prompts/x.md 파일을 읽고 진행\"");
+    }
+
+    /// <summary>
+    /// Antigravity 설치 명령은 PowerShell 문법(`irm … | iex`)이다. 첫 빈칸에서 쪼개 셸로 감싸도 파이프가 살아 있어야 한다 —
+    /// `&amp; irm <url> | iex` 는 PowerShell 에서 `(&amp; irm <url>) | iex` 로 읽힌다. 이스케이프를 손보다 파이프를 잃으면 설치가 조용히 실패한다.
+    /// </summary>
+    [Fact]
+    public void The_antigravity_install_command_keeps_its_pipe_when_wrapped_in_powershell()
+    {
+        // 문구의 정본은 AntigravityProvider.InstallCommand 이고, 그 값 자체는 InstallCommandTests 가 잠근다.
+        // 여기서는 같은 문자열이 셸 포장을 지나도 성립하는지만 본다(이 테스트 프로젝트는 제공자를 참조하지 않는다)
+        const string install = "irm https://antigravity.google/cli/install.ps1 | iex";
+        var space = install.IndexOf(' ', StringComparison.Ordinal);
+
+        var wrapped = Builder("pwsh").BuildShellCommand(install[..space], install[(space + 1)..]);
+
+        wrapped.FileName.Should().Be("pwsh");
+        wrapped.Arguments.Should().Be("-NoExit -Command \"& irm https://antigravity.google/cli/install.ps1 | iex\"");
     }
 }

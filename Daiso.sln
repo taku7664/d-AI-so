@@ -29,7 +29,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Daiso.Providers.Common", "s
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Daiso.App", "src\Daiso.App\Daiso.App.csproj", "{42EDB77B-4072-4220-B87D-B94B50065638}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Daiso.Providers.Gemini", "src\Daiso.Providers.Gemini\Daiso.Providers.Gemini.csproj", "{40317DAA-4E2A-4881-BA54-61840A8819CE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Daiso.Providers.Antigravity", "src\Daiso.Providers.Antigravity\Daiso.Providers.Antigravity.csproj", "{40317DAA-4E2A-4881-BA54-61840A8819CE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

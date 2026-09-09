@@ -70,7 +70,7 @@
             <muxc:SelectorBarItem Text="{loc:Str Key=Common_All}" IsSelected="True" AutomationProperties.AutomationId="ToolTabAll" />
             <muxc:SelectorBarItem Text="Codex" AutomationProperties.AutomationId="ToolTabCodex" />
             <muxc:SelectorBarItem Text="Claude" AutomationProperties.AutomationId="ToolTabClaude" />
-            <muxc:SelectorBarItem Text="Gemini" AutomationProperties.AutomationId="ToolTabGemini" />
+            <muxc:SelectorBarItem Text="Antigravity" AutomationProperties.AutomationId="ToolTabAntigravity" />
         </muxc:SelectorBar>
 
         <StackPanel Orientation="Horizontal" Spacing="12">

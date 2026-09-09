@@ -1,23 +1,23 @@
 using Daiso.Core;
 using Daiso.Providers.Common;
-using Daiso.Providers.Gemini;
+using Daiso.Providers.Antigravity;
 
-namespace Daiso.Providers.Tests.Gemini;
+namespace Daiso.Providers.Tests.Antigravity;
 
 /// <summary>
 /// ARCHITECTURE §4.5 — 기록은 리플레이해야 한다. fixture에는 같은 id 덧쓰기(m2에 토큰이 나중에 붙음),
 /// `$rewindTo`(m9 삭제), `$set.messages`(목록 교체 + m4 추가)가 모두 들어 있다.
 /// </summary>
-public sealed class GeminiSessionParsingTests
+public sealed class AntigravitySessionParsingTests
 {
-    private readonly GeminiProvider _provider = new(new ProviderHome(Path.GetTempPath()));
+    private readonly AntigravityProvider _provider = new(new ProviderHome(Path.GetTempPath()));
 
     [Fact]
     public async Task Replay_gives_the_final_state_not_the_raw_line_count()
     {
         var info = await _provider.ReadSessionInfoAsync(Fixtures.GeminiPath("session-modern.jsonl"), default);
 
-        info.Tool.Should().Be(ToolKind.Gemini);
+        info.Tool.Should().Be(ToolKind.Antigravity);
         info.Id.Should().Be("7a1b2c3d-1111-2222-3333-444455556666");
         info.UserMessageCount.Should().Be(2, because: "m1, m4. 되감긴 m9는 빠진다");
         info.AssistantMessageCount.Should().Be(2, because: "m2, m5. m2는 두 번 나오지만 한 건이다");
@@ -111,7 +111,7 @@ public sealed class GeminiSessionParsingTests
     [Fact]
     public void Resume_uses_the_session_id()
     {
-        var session = new SessionInfo(ToolKind.Gemini, "abc", "x", null, default, default, 0, 0, 0, null, TokenUsage.Zero, null, false, false);
+        var session = new SessionInfo(ToolKind.Antigravity, "abc", "x", null, default, default, 0, 0, 0, null, TokenUsage.Zero, null, false, false);
 
         _provider.BuildResumeArguments(session).Should().Be("--resume abc");
     }

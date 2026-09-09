@@ -106,7 +106,7 @@ public sealed class TerminalHost : UserControl
 
     /// <summary>
     /// CLI 의 입력 줄을 비운다. 입력 줄은 CLI 것이라 우리가 지울 수 없고 키만 보낼 수 있다:
-    /// Ctrl+E(줄 끝으로) 뒤 Ctrl+U(줄 앞까지 지우기). Claude Code·Codex·Gemini 의 줄 편집기가 다 readline 꼴이라 통한다.
+    /// Ctrl+E(줄 끝으로) 뒤 Ctrl+U(줄 앞까지 지우기). Claude Code·Codex·Antigravity 의 줄 편집기가 다 readline 꼴이라 통한다.
     /// 여러 줄로 이어 쓴 입력은 마지막 줄만 지워질 수 있다.
     /// </summary>
     public void ClearInput() => _room?.SendRaw("\x05\x15");

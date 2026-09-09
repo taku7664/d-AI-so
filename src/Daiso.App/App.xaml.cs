@@ -4,7 +4,7 @@ using Daiso.Core;
 using Daiso.Infrastructure;
 using Daiso.Providers.Claude;
 using Daiso.Providers.Codex;
-using Daiso.Providers.Gemini;
+using Daiso.Providers.Antigravity;
 using Daiso.Providers.Common;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
@@ -81,7 +81,7 @@ public partial class App : Application
         services.AddSingleton<IProvider>(provider =>
             new CodexProvider(provider.GetRequiredService<ProviderHome>()));
         services.AddSingleton<IProvider>(provider =>
-            new GeminiProvider(provider.GetRequiredService<ProviderHome>()));
+            new AntigravityProvider(provider.GetRequiredService<ProviderHome>()));
 
         // Infrastructure
         services.AddSingleton<IRuleFileService, RuleFileService>();

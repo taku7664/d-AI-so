@@ -3,7 +3,7 @@ using Daiso.Core;
 using Daiso.Infrastructure;
 using Daiso.Providers.Claude;
 using Daiso.Providers.Codex;
-using Daiso.Providers.Gemini;
+using Daiso.Providers.Antigravity;
 
 namespace Daiso.Cli;
 
@@ -15,19 +15,19 @@ internal static class Program
 
         사용법:
           daiso auth
-          daiso auth save <이름> --tool claude|codex|gemini
-          daiso auth use <이름> --tool claude|codex|gemini
+          daiso auth save <이름> --tool claude|codex|antigravity
+          daiso auth use <이름> --tool claude|codex|antigravity
           daiso auth list
-          daiso auth remove <이름> --tool claude|codex|gemini
-          daiso sessions [--tool claude|codex|gemini] [--include-archived]
+          daiso auth remove <이름> --tool claude|codex|antigravity
+          daiso sessions [--tool claude|codex|antigravity] [--include-archived]
           daiso search <query>
           daiso refresh
           daiso usage --days N
           daiso rules render <path>
           daiso rules roundtrip <path>
           daiso rules install <projectDir>
-          daiso rules migrate <projectDir> [--to claude|codex|gemini] [--apply]
-          daiso doctor <dir> [--tool claude|codex|gemini]
+          daiso rules migrate <projectDir> [--to claude|codex|antigravity] [--apply]
+          daiso doctor <dir> [--tool claude|codex|antigravity]
           daiso export <sessionId> <out.md>
         """;
 
@@ -89,7 +89,7 @@ internal static class Commands
 {
     private static IReadOnlyList<IProvider> Providers { get; } =
         [new ClaudeProvider(), new CodexProvider(),
-        new GeminiProvider()];
+        new AntigravityProvider()];
 
     internal static async Task<int> AuthAsync(string[] args)
     {
@@ -144,7 +144,7 @@ internal static class Commands
 
         if (args.Length < 3)
         {
-            Console.Error.WriteLine("사용법: daiso auth save|use|remove <이름> --tool claude|codex|gemini");
+            Console.Error.WriteLine("사용법: daiso auth save|use|remove <이름> --tool claude|codex|antigravity");
             return 2;
         }
 
@@ -408,7 +408,7 @@ internal static class Commands
         return 0;
     }
 
-    /// <summary>`--to claude|codex|gemini` → 대상 도구 기준 방향.</summary>
+    /// <summary>`--to claude|codex|antigravity` → 대상 도구 기준 방향.</summary>
     private static MigrationDirection? DirectionOption(string[] args)
     {
         var index = Array.IndexOf(args, "--to");
@@ -430,14 +430,14 @@ internal static class Commands
     {
         if (args.Length < 2)
         {
-            Console.Error.WriteLine("사용법: daiso doctor <dir> [--tool claude|codex|gemini]");
+            Console.Error.WriteLine("사용법: daiso doctor <dir> [--tool claude|codex|antigravity]");
             return 2;
         }
 
         var directory = Path.GetFullPath(args[1]);
         ToolKind[] tools = ToolOption(args) is { } selected
             ? [selected]
-            : [ToolKind.Claude, ToolKind.Codex, ToolKind.Gemini];
+            : [ToolKind.Claude, ToolKind.Codex, ToolKind.Antigravity];
         var inspector = new ContextInspector(Providers);
 
         foreach (var tool in tools)
@@ -557,7 +557,9 @@ internal static class Commands
         {
             "claude" => ToolKind.Claude,
             "codex" => ToolKind.Codex,
-            "gemini" => ToolKind.Gemini,
+            "antigravity" or "agy" => ToolKind.Antigravity,
+            // 은퇴한 이름도 받아 준다. 스크립트·메모에 `--tool gemini` 가 남아 있어도 돌아가야 한다
+            "gemini" => ToolKind.Antigravity,
             _ => null,
         };
     }

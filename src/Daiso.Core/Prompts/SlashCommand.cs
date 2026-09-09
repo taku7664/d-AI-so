@@ -56,16 +56,18 @@ public static class BuiltInSlashCommands
         ("quit", "종료"),
     ];
 
-    private static readonly (string Name, string Description)[] Gemini =
+    /// <summary>Antigravity CLI(`agy`)의 내장 명령. 공식 CLI 참고 문서의 슬래시 명령 표를 따른다.</summary>
+    private static readonly (string Name, string Description)[] Antigravity =
     [
-        ("chat", "대화 저장·불러오기"),
-        ("clear", "화면을 비움"),
-        ("compress", "대화를 요약해 컨텍스트를 줄임"),
-        ("help", "명령 도움말"),
-        ("memory", "GEMINI.md 관리"),
-        ("stats", "세션 통계"),
-        ("tools", "쓸 수 있는 도구 목록"),
-        ("quit", "종료"),
+        ("agents", "하위 에이전트 관리"),
+        ("boost", "더 센 모델로 이번 요청을 다시"),
+        ("clear", "새 대화 시작"),
+        ("config", "설정 열기"),
+        ("fork", "앞 지점에서 대화를 갈라내기"),
+        ("keybindings", "단축키 편집"),
+        ("permissions", "권한 관리"),
+        ("resume", "지난 대화 골라 이어서"),
+        ("rewind", "대화를 앞 지점으로 되감기"),
     ];
 
     /// <summary>그 도구의 내장 명령들.</summary>
@@ -75,7 +77,7 @@ public static class BuiltInSlashCommands
         {
             ToolKind.Claude => Claude,
             ToolKind.Codex => Codex,
-            ToolKind.Gemini => Gemini,
+            ToolKind.Antigravity => Antigravity,
             _ => [],
         };
 

@@ -1,11 +1,11 @@
 using Daiso.Core;
 using Daiso.Providers.Common;
-using Daiso.Providers.Gemini;
+using Daiso.Providers.Antigravity;
 
-namespace Daiso.Providers.Tests.Gemini;
+namespace Daiso.Providers.Tests.Antigravity;
 
 /// <summary>임시 홈 폴더로 세션 열거·프로젝트 되짚기·서버 세션 제외를 확인한다.</summary>
-public sealed class GeminiProviderTests : IDisposable
+public sealed class AntigravityProviderTests : IDisposable
 {
     private readonly string _home = Fixtures.CreateTempDirectory();
 
@@ -24,20 +24,20 @@ public sealed class GeminiProviderTests : IDisposable
     [Fact]
     public async Task Named_and_hashed_project_folders_are_both_listed_and_server_sessions_are_skipped()
     {
-        var provider = new GeminiProvider(Fixtures.CreateGeminiHome(_home));
+        var provider = new AntigravityProvider(Fixtures.CreateGeminiHome(_home));
 
         var sessions = await Enumerate(provider);
 
         // 이름 폴더 1 + 해시 폴더 1. a2a-server는 빠진다
         sessions.Should().HaveCount(2);
-        sessions.Should().OnlyContain(s => s.Tool == ToolKind.Gemini);
+        sessions.Should().OnlyContain(s => s.Tool == ToolKind.Antigravity);
         sessions.Should().NotContain(s => s.Id == "a2a-server");
     }
 
     [Fact]
     public async Task The_project_path_comes_back_from_projects_json_by_name_or_hash()
     {
-        var provider = new GeminiProvider(Fixtures.CreateGeminiHome(_home));
+        var provider = new AntigravityProvider(Fixtures.CreateGeminiHome(_home));
 
         var sessions = await Enumerate(provider);
 
@@ -47,7 +47,7 @@ public sealed class GeminiProviderTests : IDisposable
     [Fact]
     public async Task Enumeration_reads_only_the_header()
     {
-        var provider = new GeminiProvider(Fixtures.CreateGeminiHome(_home));
+        var provider = new AntigravityProvider(Fixtures.CreateGeminiHome(_home));
 
         var session = (await Enumerate(provider)).First();
 
@@ -59,7 +59,7 @@ public sealed class GeminiProviderTests : IDisposable
     [Fact]
     public async Task An_empty_home_yields_no_sessions()
     {
-        var provider = new GeminiProvider(new ProviderHome(_home));
+        var provider = new AntigravityProvider(new ProviderHome(_home));
 
         (await Enumerate(provider)).Should().BeEmpty();
     }
@@ -67,7 +67,7 @@ public sealed class GeminiProviderTests : IDisposable
     [Fact]
     public async Task Auth_reads_both_home_files()
     {
-        var provider = new GeminiProvider(Fixtures.CreateGeminiHome(_home));
+        var provider = new AntigravityProvider(Fixtures.CreateGeminiHome(_home));
 
         var status = await provider.GetAuthStatusAsync(default);
 
@@ -78,7 +78,7 @@ public sealed class GeminiProviderTests : IDisposable
     [Fact]
     public void Context_files_start_at_the_global_GEMINI_md_and_end_with_the_preset()
     {
-        var provider = new GeminiProvider(new ProviderHome(_home));
+        var provider = new AntigravityProvider(new ProviderHome(_home));
         var project = Path.Combine(_home, "proj");
         Directory.CreateDirectory(Path.Combine(project, ".git"));
 
@@ -89,7 +89,7 @@ public sealed class GeminiProviderTests : IDisposable
         patterns.Last().Should().EndWith("PROJECT_RULES.daiso");
     }
 
-    private static async Task<List<SessionInfo>> Enumerate(GeminiProvider provider)
+    private static async Task<List<SessionInfo>> Enumerate(AntigravityProvider provider)
     {
         var list = new List<SessionInfo>();
 

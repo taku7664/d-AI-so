@@ -34,7 +34,7 @@ public interface IProvider
 
     /// <summary>
     /// 세션 파일이 뒤에만 붙는 로그인가. true면 인덱스가 커진 만큼만 이어 읽고, false면 바뀔 때마다 처음부터 다시 읽는다.
-    /// Claude·Codex는 true, Gemini는 목록 교체·되감기 레코드가 있어 false다. (ARCHITECTURE §5.1)
+    /// Claude·Codex는 true, Antigravity는 목록 교체·되감기 레코드가 있어 false다. (ARCHITECTURE §5.1)
     /// </summary>
     bool AppendOnlySessions { get; }
 
@@ -46,7 +46,7 @@ public interface IProvider
 
     /// <summary>
     /// CLI 가 클립보드의 그림을 읽어 첨부하게 하는 키 입력(터미널로 보내는 바이트). 터미널은 키만 보낼 수 있으므로 그림은 CLI 가 스스로 읽는다.
-    /// Claude Code 는 Windows 에서 Alt+V(ESC v — Ctrl+V 는 터미널이 먹는다고 보고 피한다), Codex CLI·Gemini CLI 는 Ctrl+V(0x16).
+    /// Claude Code 는 Windows 에서 Alt+V(ESC v — Ctrl+V 는 터미널이 먹는다고 보고 피한다), Codex CLI·Antigravity CLI 는 Ctrl+V(0x16).
     /// </summary>
     string ImagePasteKeys { get; }
 

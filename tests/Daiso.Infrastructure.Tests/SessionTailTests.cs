@@ -13,7 +13,7 @@ public sealed class SessionTailTests
         var file = Path.Combine(root.FullName, "session-a.jsonl");
         await File.WriteAllTextAsync(file, "seed");
 
-        var provider = new FakeProvider(ToolKind.Gemini) { SessionsRoot = root.FullName };
+        var provider = new FakeProvider(ToolKind.Antigravity) { SessionsRoot = root.FullName };
         provider.Sessions.Add(Session(file, project));
         provider.SetMessages(file, Msg("첫 질문", MessageRole.User));
 
@@ -50,7 +50,7 @@ public sealed class SessionTailTests
         File.SetCreationTimeUtc(file, DateTime.UtcNow.AddMinutes(-10));
         File.SetLastWriteTimeUtc(file, DateTime.UtcNow.AddMinutes(-10));
 
-        var provider = new FakeProvider(ToolKind.Gemini) { SessionsRoot = root.FullName };
+        var provider = new FakeProvider(ToolKind.Antigravity) { SessionsRoot = root.FullName };
         provider.Sessions.Add(Session(file, project));
         provider.SetMessages(file, Msg("옛 대화", MessageRole.User));
 
@@ -67,7 +67,7 @@ public sealed class SessionTailTests
     }
 
     private static SessionInfo Session(string file, string project) =>
-        new(ToolKind.Gemini, Path.GetFileNameWithoutExtension(file), file, project, default, default, 0, 0, 0, null, TokenUsage.Zero, null, false, false);
+        new(ToolKind.Antigravity, Path.GetFileNameWithoutExtension(file), file, project, default, default, 0, 0, 0, null, TokenUsage.Zero, null, false, false);
 
     private static SessionMessage Msg(string text, MessageRole role) =>
         new(DateTimeOffset.UtcNow, role, text, false);

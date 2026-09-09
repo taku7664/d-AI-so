@@ -3,10 +3,17 @@ using System.Text;
 using Daiso.Core;
 using Daiso.Providers.Common;
 
-namespace Daiso.Providers.Gemini;
+namespace Daiso.Providers.Antigravity;
 
-/// <summary>Gemini CLI 어댑터. (ARCHITECTURE §4.5)</summary>
-public sealed class GeminiProvider : IProvider, IUsageReader
+/// <summary>
+/// Google Antigravity CLI(`agy`) 어댑터. (ARCHITECTURE §4.5)
+/// <para>
+/// 2026-06-18 부터 개인 계정(무료·AI Pro·Ultra)에서 Gemini CLI 가 요청을 멈추고 Antigravity CLI 가 그 자리를 받았다.
+/// 그래서 <b>실행·설치·설정은 Antigravity 쪽</b>이고, <b>세션 기록과 로그인 파일은 아직 `~/.gemini` 쪽</b>이다 —
+/// 이 PC 에 남은 기록은 은퇴한 Gemini CLI 가 쓴 것이고, 그것을 지울 이유가 없으므로 계속 읽어 목록·검색·사용량에 보여 준다.
+/// </para>
+/// </summary>
+public sealed class AntigravityProvider : IProvider, IUsageReader
 {
     private const string RulesFile = "GEMINI.md";
     private const string RulesPresetFile = "PROJECT_RULES.daiso";
@@ -18,25 +25,29 @@ public sealed class GeminiProvider : IProvider, IUsageReader
 
     private readonly ProviderHome _home;
 
-    public GeminiProvider()
+    public AntigravityProvider()
         : this(ProviderHome.FromUserProfile())
     {
     }
 
-    public GeminiProvider(ProviderHome home)
+    public AntigravityProvider(ProviderHome home)
     {
         ArgumentNullException.ThrowIfNull(home);
         _home = home;
     }
 
     /// <inheritdoc />
-    public ToolKind Kind => ToolKind.Gemini;
+    public ToolKind Kind => ToolKind.Antigravity;
 
     /// <inheritdoc />
-    public string ExecutableName => "gemini";
+    public string ExecutableName => "agy";
 
     /// <inheritdoc />
-    public string InstallCommand => "npm install -g @google/gemini-cli";
+    /// <remarks>
+    /// npm 패키지가 아니다. Go 로 만든 단일 실행 파일이라 공식 설치 스크립트를 받아 돌린다.
+    /// 설치되는 곳은 `%LOCALAPPDATA%\agy\bin` 이고 설치 스크립트가 PATH 에 넣는다.
+    /// </remarks>
+    public string InstallCommand => "irm https://antigravity.google/cli/install.ps1 | iex";
 
     /// <inheritdoc />
     /// <remarks>기록에 목록 교체(`$set.messages`)와 되감기(`$rewindTo`)가 있어 중간부터 이어 읽을 수 없다.</remarks>
@@ -45,11 +56,24 @@ public sealed class GeminiProvider : IProvider, IUsageReader
     /// <inheritdoc />
     public string RulesFileName => RulesFile;
 
-    /// <summary>`~/.gemini`.</summary>
-    public string ConfigDirectory => _home.Combine(".gemini");
+    /// <summary>
+    /// `~/.gemini`. Antigravity CLI 도 상태를 이 폴더 밑에 둔다(공식 설치 문서). 은퇴한 Gemini CLI 의 기록·로그인 파일도 여기 있다.
+    /// </summary>
+    public string HomeDirectory => _home.Combine(".gemini");
 
-    /// <summary>프로젝트별 임시 폴더 루트. 그 아래 `{name|hash}/chats/session-*.jsonl`.</summary>
-    public string SessionsRoot => Path.Combine(ConfigDirectory, "tmp");
+    /// <summary>`~/.gemini/antigravity-cli`. `settings.json`·`keybindings.json` 이 있는 곳.</summary>
+    public string ConfigDirectory => Path.Combine(HomeDirectory, "antigravity-cli");
+
+    /// <summary>
+    /// 세션 기록 루트. 그 아래 `{name|hash}/chats/session-*.jsonl`.
+    /// <para>
+    /// 은퇴한 Gemini CLI 가 쓴 `~/.gemini/tmp` 다. Antigravity CLI 가 자기 기록을 어디에 어떤 형식으로 쓰는지는
+    /// 아직 확인하지 못했다 — 같은 계열인 Antigravity IDE 는 `~/.gemini/antigravity/conversations/*.pb` 에 <b>암호화</b>해 두므로
+    /// (12만 바이트에 읽을 수 있는 문자열이 하나도 없다) CLI 도 그렇다면 앱이 읽을 길이 없다.
+    /// `agy` 를 깐 뒤 실제 파일을 보고 정한다.
+    /// </para>
+    /// </summary>
+    public string SessionsRoot => Path.Combine(HomeDirectory, "tmp");
 
     /// <inheritdoc />
     public IReadOnlyList<string> ContextFilePatterns(string projectDir)
@@ -57,9 +81,9 @@ public sealed class GeminiProvider : IProvider, IUsageReader
         ArgumentException.ThrowIfNullOrWhiteSpace(projectDir);
 
         var dir = ProjectPathNormalizer.Normalize(projectDir) ?? projectDir;
-        var patterns = new List<string> { Path.Combine(ConfigDirectory, RulesFile) };
+        var patterns = new List<string> { Path.Combine(HomeDirectory, RulesFile) };
 
-        // 프로젝트 루트(git) → cwd 방향으로 GEMINI.md를 쌓는다.
+        // 프로젝트 루트(git) → cwd 방향으로 GEMINI.md를 쌓는다. Antigravity 가 이 이름을 그대로 읽는지는 확인 대상이다.
         foreach (var directory in GitRootChain(dir))
         {
             patterns.Add(Path.Combine(directory, RulesFile));
@@ -78,19 +102,24 @@ public sealed class GeminiProvider : IProvider, IUsageReader
     }
 
     /// <inheritdoc />
+    /// <remarks>
+    /// Antigravity CLI 는 로그인 토큰을 파일이 아니라 <b>Windows 자격 증명 관리자</b>에 넣는다. 앱이 읽을 수 없고, 읽으려 들지도 않는다.
+    /// 그래서 필수 파일이 없다 — 여기 있는 둘은 은퇴한 Gemini CLI 가 남긴 것과 Antigravity 의 설정 파일이고, 있으면 참고만 한다.
+    /// </remarks>
     public IReadOnlyList<AuthFile> AuthFiles =>
     [
-        new AuthFile(Path.Combine(ConfigDirectory, "oauth_creds.json"), Required: true),
-        new AuthFile(Path.Combine(ConfigDirectory, "google_accounts.json"), Required: false),
+        new AuthFile(Path.Combine(HomeDirectory, "oauth_creds.json"), Required: false),
+        new AuthFile(Path.Combine(ConfigDirectory, "settings.json"), Required: false),
     ];
 
     /// <inheritdoc />
     public async Task<AuthStatus> GetAuthStatusAsync(CancellationToken ct)
     {
-        var oauth = await ReadTextOrNullAsync(Path.Combine(ConfigDirectory, "oauth_creds.json"), ct).ConfigureAwait(false);
-        var accounts = await ReadTextOrNullAsync(Path.Combine(ConfigDirectory, "google_accounts.json"), ct).ConfigureAwait(false);
+        var oauth = await ReadTextOrNullAsync(Path.Combine(HomeDirectory, "oauth_creds.json"), ct).ConfigureAwait(false);
+        var accounts = await ReadTextOrNullAsync(Path.Combine(HomeDirectory, "google_accounts.json"), ct).ConfigureAwait(false);
+        var settings = await ReadTextOrNullAsync(Path.Combine(ConfigDirectory, "settings.json"), ct).ConfigureAwait(false);
 
-        return GeminiAuthReader.Read(oauth, accounts, DateTimeOffset.UtcNow);
+        return AntigravityAuthReader.Read(oauth, accounts, settings, DateTimeOffset.UtcNow);
     }
 
     /// <inheritdoc />
@@ -166,7 +195,7 @@ public sealed class GeminiProvider : IProvider, IUsageReader
         }
 
         return new SessionInfo(
-            ToolKind.Gemini,
+            ToolKind.Antigravity,
             transcript.SessionId ?? SessionIdFromFileName(filePath),
             filePath,
             ProjectPathNormalizer.Normalize(ResolveProject(filePath, transcript.ProjectHash, projects)),
@@ -200,9 +229,13 @@ public sealed class GeminiProvider : IProvider, IUsageReader
     }
 
     /// <inheritdoc />
-    /// <summary>Ctrl+V. Gemini CLI 는 이 키로 클립보드 그림을 첨부한다.</summary>
+    /// <summary>Ctrl+V. Antigravity CLI 도 Gemini CLI 와 같은 readline 꼴이라 이 키로 클립보드 그림을 첨부한다.</summary>
     public string ImagePasteKeys => "\x16";
 
+    /// <remarks>
+    /// <b>`agy` 의 이어서 열기 플래그는 아직 확인하지 못했다.</b> 공식 문서는 TUI 안의 `/resume` 슬래시 명령만 적어 두었고
+    /// 플래그 목록을 싣지 않았다. 지금 값은 은퇴한 Gemini CLI 의 것이라, `agy --help` 를 보고 맞춘 뒤 여기를 고친다.
+    /// </remarks>
     public string BuildResumeArguments(SessionInfo session)
     {
         ArgumentNullException.ThrowIfNull(session);
@@ -210,7 +243,7 @@ public sealed class GeminiProvider : IProvider, IUsageReader
     }
 
     /// <inheritdoc />
-    /// <remarks>Gemini는 응답마다 그 응답의 토큰이 붙으므로 날짜별로 더한다.</remarks>
+    /// <remarks>이 기록 형식은 응답마다 그 응답의 토큰이 붙으므로 날짜별로 더한다.</remarks>
     public bool UsageIsAdditive => true;
 
     /// <inheritdoc />
@@ -286,7 +319,7 @@ public sealed class GeminiProvider : IProvider, IUsageReader
         }
 
         return new SessionInfo(
-            ToolKind.Gemini,
+            ToolKind.Antigravity,
             sessionId ?? SessionIdFromFileName(filePath),
             filePath,
             ProjectPathNormalizer.Normalize(projects.Resolve(projectDirectoryName) ?? projects.Resolve(projectHash)),
@@ -313,7 +346,7 @@ public sealed class GeminiProvider : IProvider, IUsageReader
     }
 
     private async Task<GeminiProjectMap> LoadProjectMapAsync(CancellationToken ct) =>
-        GeminiProjectMap.From(await ReadTextOrNullAsync(Path.Combine(ConfigDirectory, "projects.json"), ct).ConfigureAwait(false));
+        GeminiProjectMap.From(await ReadTextOrNullAsync(Path.Combine(HomeDirectory, "projects.json"), ct).ConfigureAwait(false));
 
     /// <summary>`session-2026-05-25T14-57-a1b2c3d4.jsonl` 의 마지막 조각.</summary>
     private static string SessionIdFromFileName(string filePath)

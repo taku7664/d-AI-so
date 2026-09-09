@@ -93,7 +93,7 @@ public sealed class SessionTail : IDisposable
         }
 
         // 크기·수정시각이 바뀔 때만(=대개 한 턴에 한 번) 여기 온다. 처음부터 다시 읽어 최종 상태를 만든다.
-        // Gemini는 되감기·목록 교체가 있어 반드시 처음부터라야 하고, Claude·Codex도 턴 경계에서만 읽으므로 부담이 크지 않다.
+        // Antigravity는 되감기·목록 교체가 있어 반드시 처음부터라야 하고, Claude·Codex도 턴 경계에서만 읽으므로 부담이 크지 않다.
         _lastSize = info.Length;
         _lastWriteUtc = info.LastWriteTimeUtc;
 

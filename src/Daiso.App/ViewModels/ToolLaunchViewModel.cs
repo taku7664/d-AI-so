@@ -58,6 +58,9 @@ public sealed partial class ToolLaunchViewModel : ObservableObject
     /// <summary>프리셋 묶음 제목.</summary>
     public string PresetsTitle => UiStrings.Format("Terminal_PresetsFor", Label);
 
+    /// <summary>프리셋 버튼이 하나라도 있는가. 없으면 제목("{도구} 프리셋")도 감춘다 — 제목만 뜬 빈 칸은 고장으로 읽힌다.</summary>
+    public bool HasPresets => Presets.Count > 0;
+
     /// <summary>UI 자동화 식별자.</summary>
     public string AutomationId => $"Launch{Kind}Button";
 

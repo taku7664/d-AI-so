@@ -748,7 +748,7 @@ public sealed partial class SessionRowViewModel : ObservableObject
 
     public SessionInfo Session { get; }
 
-    public string ToolIcon => Session.Tool switch { ToolKind.Claude => "🟣", ToolKind.Gemini => "🔵", _ => "⚫" };
+    public string ToolIcon => Session.Tool switch { ToolKind.Claude => "🟣", ToolKind.Antigravity => "🔵", _ => "⚫" };
 
     public string ToolName => Session.Tool.ToString();
 
@@ -786,7 +786,7 @@ public sealed partial class SessionRowViewModel : ObservableObject
     /// <summary>도구 한 글자. 목록에서 아이콘 자리에 쓴다.</summary>
     public string ToolInitial => ToolLook.Initial(Session.Tool);
 
-    /// <summary>도구 색. Claude 보라, Codex 회색, Gemini 파랑.</summary>
+    /// <summary>도구 색. Claude 주황, Codex 초록, Antigravity 파랑.</summary>
     public Brush ToolBrush => ToolLook.Brush(Session.Tool);
 
     /// <summary>세션 id 앞 8자. 전체 값은 ToolTip에 둔다.</summary>

@@ -3,7 +3,10 @@ using System.Text.Json;
 using Daiso.Core;
 using Daiso.Providers.Common;
 
-namespace Daiso.Providers.Gemini;
+namespace Daiso.Providers.Antigravity;
+
+// 이 파일의 형식 이름을 Gemini 로 둔 이유: 파싱 대상이 은퇴한 Gemini CLI 가 남긴 기록(`~/.gemini/tmp/**/chats/session-*.jsonl`)이다.
+// 도구는 Antigravity 로 바뀌었지만 디스크에 있는 옛 기록은 그대로이고, 그것을 읽는 코드의 이름은 그 형식을 가리켜야 한다.
 
 /// <summary>대화 기록을 끝까지 리플레이한 결과. (ARCHITECTURE §4.5)</summary>
 internal sealed record GeminiTranscript(
@@ -33,7 +36,7 @@ internal sealed record GeminiMessage(
 /// | `$set` | `$set` 객체 | `$set.messages` 배열이 있으면 **목록 전체 교체**. 그 밖(`lastUpdated`, `memoryScratchpad`, `summary`)은 무시 |
 /// | `$rewindTo` | 문자열 | 그 id부터 끝까지 잘라냄 |
 ///
-/// 그래서 파일 중간부터 이어 읽을 수 없다. 항상 처음부터 끝까지 읽는다(<see cref="GeminiProvider.AppendOnlySessions"/> = false).
+/// 그래서 파일 중간부터 이어 읽을 수 없다. 항상 처음부터 끝까지 읽는다(<see cref="AntigravityProvider.AppendOnlySessions"/> = false).
 /// </summary>
 internal sealed class GeminiTranscriptReader
 {

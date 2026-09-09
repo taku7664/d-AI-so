@@ -639,7 +639,7 @@
                                                 ToolTipService.ToolTip="{loc:Str Key=Terminal_ArgsTip}"
                                                 Text="{x:Bind ViewModel.SelectedTool.Arguments, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                 PlaceholderText="{loc:Str Key=Terminal_ArgsPlaceholder}" />
-                                            <TextBlock Text="{x:Bind ViewModel.SelectedTool.PresetsTitle, Mode=OneWay}" Style="{StaticResource MutedText}" />
+                                            <TextBlock Text="{x:Bind ViewModel.SelectedTool.PresetsTitle, Mode=OneWay}" Style="{StaticResource MutedText}" Visibility="{x:Bind ViewModel.SelectedTool.HasPresets, Mode=OneWay}" />
                                             <ItemsRepeater ItemsSource="{x:Bind ViewModel.SelectedTool.Presets, Mode=OneWay}">
                                                 <ItemsRepeater.Layout>
                                                     <UniformGridLayout MinItemWidth="160" MinRowSpacing="8" MinColumnSpacing="8" ItemsStretch="Fill" />

@@ -59,7 +59,7 @@ public sealed class SlashCommandReaderTests
     }
 
     [Fact]
-    public void Gemini_reads_toml_description_and_folder_namespaces_the_name()
+    public void Antigravity_reads_toml_description_and_folder_namespaces_the_name()
     {
         var home = Directory.CreateTempSubdirectory("daiso-slash-gem-");
         try
@@ -69,10 +69,10 @@ public sealed class SlashCommandReaderTests
             File.WriteAllText(Path.Combine(cmd, "commit.toml"), "description = \"커밋 메시지 작성\"\nprompt = \"...\"");
 
             var reader = new SlashCommandReader(new ProviderHome(home.FullName));
-            var commands = reader.Read(ToolKind.Gemini, null);
+            var commands = reader.Read(ToolKind.Antigravity, null);
 
             commands.Should().Contain(c => c.Name == "git:commit" && c.Description == "커밋 메시지 작성" && c.Source == SlashCommandSource.User);
-            commands.Should().Contain(c => c.Name == "compress" && c.Source == SlashCommandSource.BuiltIn);
+            commands.Should().Contain(c => c.Name == "resume" && c.Source == SlashCommandSource.BuiltIn);
         }
         finally
         {

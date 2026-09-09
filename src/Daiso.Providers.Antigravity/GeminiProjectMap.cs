@@ -3,7 +3,9 @@ using System.Text;
 using System.Text.Json;
 using Daiso.Providers.Common;
 
-namespace Daiso.Providers.Gemini;
+namespace Daiso.Providers.Antigravity;
+
+// 이름을 Gemini 로 둔 이유는 GeminiRecord.cs 와 같다 — 읽는 대상이 옛 Gemini CLI 의 `~/.gemini/projects.json` 이다.
 
 /// <summary>
 /// Gemini는 세션을 프로젝트 경로 대신 이름 또는 SHA-256 해시 폴더에 둔다. `~/.gemini/projects.json`이

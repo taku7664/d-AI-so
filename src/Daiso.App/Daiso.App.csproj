@@ -65,7 +65,7 @@
     <ProjectReference Include="..\Daiso.Core\Daiso.Core.csproj" />
     <ProjectReference Include="..\Daiso.Providers.Claude\Daiso.Providers.Claude.csproj" />
     <ProjectReference Include="..\Daiso.Providers.Codex\Daiso.Providers.Codex.csproj" />
-    <ProjectReference Include="..\Daiso.Providers.Gemini\Daiso.Providers.Gemini.csproj" />
+    <ProjectReference Include="..\Daiso.Providers.Antigravity\Daiso.Providers.Antigravity.csproj" />
     <ProjectReference Include="..\Daiso.Infrastructure\Daiso.Infrastructure.csproj" />
   </ItemGroup>
 

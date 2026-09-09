@@ -12,7 +12,10 @@ namespace Daiso.Infrastructure;
 /// |---|---|---|---|
 /// | Claude | `~/.claude/commands/*.md` | `&lt;proj&gt;/.claude/commands/*.md` | `~/.claude/skills/*/SKILL.md` |
 /// | Codex  | `~/.codex/prompts/*.md`   | (없음) | |
-/// | Gemini | `~/.gemini/commands/*.toml`| `&lt;proj&gt;/.gemini/commands/*.toml` | |
+/// | Antigravity | `~/.gemini/commands/*.toml`| `&lt;proj&gt;/.gemini/commands/*.toml` | |
+///
+/// Antigravity 줄의 경로는 은퇴한 Gemini CLI 의 것이다. `agy` 는 확장 대신 플러그인(`agy plugin install`)을 쓰는데
+/// 사용자 명령을 어디에 두는지 아직 확인하지 못했다. 옛 파일이 남아 있으면 그대로 읽어 준다.
 /// </summary>
 public sealed class SlashCommandReader
 {
@@ -37,7 +40,7 @@ public sealed class SlashCommandReader
                 AddMarkdown(result, _home.Combine(".codex", "prompts"), SlashCommandSource.User);
                 break;
 
-            case ToolKind.Gemini:
+            case ToolKind.Antigravity:
                 AddToml(result, _home.Combine(".gemini", "commands"), SlashCommandSource.User);
                 AddToml(result, ProjectDir(projectDirectory, ".gemini", "commands"), SlashCommandSource.Project);
                 break;
