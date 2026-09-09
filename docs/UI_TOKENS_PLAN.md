@@ -29,7 +29,7 @@
 
 | 파일 | 범위 안 곳 | 상태 |
 |---|---:|---|
-| TerminalPage.xaml | 77 | ⬜ |
+| TerminalPage.xaml | 83 | ✅ W8 |
 | SessionsPage.xaml | 43 | ✅ W7 |
 | RuleMakerPage.xaml | 42 | ✅ W6 |
 | DashboardPage.xaml | 31 | ✅ W4 |
@@ -39,7 +39,7 @@
 | ShellWindow.xaml | 5 | ✅ W1 |
 | App.xaml (스타일 안) | 9 | ✅ W0 |
 
-> 합계 **262곳**. `{StaticResource}` 를 뺀 날 숫자만 센 것이고, `obj/` 의 빌드 생성 사본은 제외했다.
+> 합계 **268곳**. `{StaticResource}` 를 뺀 날 숫자만 센 것이고, `obj/` 의 빌드 생성 사본은 제외했다.
 
 ---
 
@@ -166,7 +166,7 @@
 | W5 | SettingsPage.xaml | ✅ |
 | W6 | RuleMakerPage.xaml | ✅ |
 | W7 | SessionsPage.xaml | ✅ |
-| W8 | TerminalPage.xaml | ⬜ |
+| W8 | TerminalPage.xaml | ✅ |
 | W9 | 가드 테스트 · App.xaml 기존 스타일 정리 · 마무리 | ⬜ |
 
 ## 7. 작업 기록
@@ -183,3 +183,8 @@
 - **W4~W5** — DashboardPage(31) · SettingsPage(26). 값 57곳 전부 동일, 남은 날 숫자 0. 빌드 경고 0.
 - **W6~W7** — RuleMakerPage(42) · SessionsPage(43). 값 85곳 전부 동일. 빌드 경고 0.
   SessionsPage 의 `Spacing="0"` 한 곳은 토큰을 만들지 않고 두었다 (§2 규칙 3).
+- **W8** — TerminalPage(83). 값 전부 동일. 빌드 경고 0.
+  - *도중에 잡은 것:* 치환 도구가 `<Setter Property="CornerRadius" Value="4" />` 형태를 몰라 6곳을 건너뛰고 있었다.
+    **검증 스크립트가 이 누락을 잡았다** — 검증기는 처음부터 `<Setter>` 를 같은 자리로 세고 있었기 때문이다.
+    도구가 서로를 감시하게 둔 것이 값어치를 했다. 다른 화면에는 `<Setter>` 형태가 없다(확인함).
+  - 이 때문에 TerminalPage 의 실제 곳 수는 77 이 아니라 83 이고, 합계는 268 이다.
