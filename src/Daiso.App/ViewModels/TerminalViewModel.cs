@@ -230,8 +230,29 @@ public sealed partial class TerminalViewModel : ObservableObject
             return;
         }
 
+        // 사람이 고른 것이다. 기억해 둔 기본값과 구분한다
+        FolderChosen = true;
         WorkingDirectory = path;
         Remember(path);
+
+        // 고른 값이 이미 들어 있던 값과 같으면 WorkingDirectory 가 안 바뀌어 알림이 오지 않는다.
+        // 그때도 답한 것이므로 여기서 직접 넘긴다
+        AdvanceFromFolder();
+    }
+
+    /// <summary>미리 채워 둔 폴더를 그대로 쓰겠다고 확인한다.</summary>
+    [RelayCommand]
+    public void ConfirmFolder() => SetFolder(WorkingDirectory ?? string.Empty);
+
+    /// <summary>폴더 답이 끝났으면 다음 단계로 연다.</summary>
+    private void AdvanceFromFolder()
+    {
+        if (FolderDone && CurrentStep == TerminalStep.Folder)
+        {
+            CurrentStep = TerminalStep.Session;
+        }
+
+        RefreshSteps();
     }
 
     partial void OnWorkingDirectoryChanged(string? value)
@@ -242,12 +263,7 @@ public sealed partial class TerminalViewModel : ObservableObject
         // 폴더가 바뀌면 그 폴더의 세션 목록이 통째로 달라진다. 고른 세션은 못 쓴다
         InvalidateSession("Terminal_StepInvalidByFolder");
 
-        if (CanLaunch && CurrentStep == TerminalStep.Folder)
-        {
-            CurrentStep = TerminalStep.Session;
-        }
-
-        RefreshSteps();
+        AdvanceFromFolder();
     }
 
     /// <summary>폴더 유무를 도구 줄에 알린다. 열기 버튼은 폴더가 있어야 눌린다.</summary>
@@ -507,6 +523,14 @@ public sealed partial class TerminalViewModel : ObservableObject
     [ObservableProperty]
     private bool toolChosen;
 
+    /// <summary>
+    /// 사람이 폴더를 골랐는가. <see cref="WorkingDirectory"/>는 <b>마지막에 쓴 폴더로 미리 채워지므로</b>
+    /// "값이 있다"와 "사람이 답했다"가 다르다 — 그걸 구분하지 않아서, AI만 고르면 폴더 단계가
+    /// 답이 된 것처럼 통째로 건너뛰어졌다. <see cref="ToolChosen"/>·<see cref="SessionModeChosen"/>과 같은 이유다.
+    /// </summary>
+    [ObservableProperty]
+    private bool folderChosen;
+
     /// <summary>사람이 새로/이어서를 골랐는가. <see cref="SessionModeIndex"/>는 기본값이 있어 이것과 따로 본다.</summary>
     [ObservableProperty]
     private bool sessionModeChosen;
@@ -519,7 +543,10 @@ public sealed partial class TerminalViewModel : ObservableObject
 
     public bool ToolDone => ToolChosen;
 
-    public bool FolderDone => ToolDone && CanLaunch;
+    public bool FolderDone => ToolDone && FolderChosen && CanLaunch;
+
+    /// <summary>미리 채워 둔 폴더가 있는데 아직 확인받지 못했다. 그 자리에 확인 단추를 낸다.</summary>
+    public bool FolderNeedsConfirm => FolderExpanded && CanLaunch && !FolderChosen;
 
     public bool SessionDone => FolderDone && SessionModeChosen && (IsNewSession || SelectedResume is not null);
 
@@ -722,7 +749,7 @@ public sealed partial class TerminalViewModel : ObservableObject
 
     private static readonly string[] StepDependentProperties =
     [
-        nameof(ToolDone), nameof(FolderDone), nameof(SessionDone),
+        nameof(ToolDone), nameof(FolderDone), nameof(SessionDone), nameof(FolderNeedsConfirm),
         nameof(ToolExpanded), nameof(FolderExpanded), nameof(SessionExpanded),
         nameof(FolderReachable), nameof(SessionReachable),
         nameof(ToolMarkDone), nameof(ToolMarkPending),
