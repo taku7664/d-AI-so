@@ -208,27 +208,46 @@ public sealed partial class SessionsViewModel : ObservableObject
     public Microsoft.UI.Xaml.Visibility SearchTreeVisibility =>
         HasSearchResults ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
 
+    /// <summary>
+    /// 몇 번째 읽기인가. 여기는 읽기가 겹칠 수 있는 자리다 —
+    /// <c>LoadCommand</c> 와, 삭제 뒤 직접 부르는 <c>await LoadAsync(default)</c> 는 서로를 끊지 않는다.
+    /// <para>
+    /// 예전에는 <c>IsBusy</c> 를 보고 되돌아갔는데, 그러면 나중 요청이 통째로 버려졌다.
+    /// 필터를 바꾸거나 세션을 지운 직후 목록이 옛 값 그대로 남던 원인이다.
+    /// 이제는 둘 다 돌되 <b>마지막 요청만 화면에 쓴다</b>.
+    /// </para>
+    /// </summary>
+    private int loadGeneration;
+
     /// <summary>목록을 인덱스에서 다시 읽는다.</summary>
     [RelayCommand]
     public async Task LoadAsync(CancellationToken ct)
     {
-        if (IsBusy)
-        {
-            return;
-        }
+        var generation = ++loadGeneration;
 
         IsBusy = true;
 
         try
         {
-            _allSessions = [.. await _indexService.Index.ListAsync(BuildFilter(), ct).ConfigureAwait(true)];
+            var sessions = await _indexService.Index.ListAsync(BuildFilter(), ct).ConfigureAwait(true);
+
+            // 기다리는 동안 더 새로운 읽기가 시작됐으면 그쪽이 쓴다. 늦게 온 옛 결과로 화면을 덮지 않는다
+            if (generation != loadGeneration)
+            {
+                return;
+            }
+
+            _allSessions = [.. sessions];
             RebuildProjects();
             ApplyProjectSelection();
             StatusText = UiStrings.Format("Sessions_Overview", Projects.Count, _allSessions.Count);
         }
         finally
         {
-            IsBusy = false;
+            if (generation == loadGeneration)
+            {
+                IsBusy = false;
+            }
         }
     }
 
