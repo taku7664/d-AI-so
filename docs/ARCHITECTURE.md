@@ -425,7 +425,11 @@ public sealed record ExportOptions(bool IncludeToolCalls = true, bool IncludeSys
 - 토큰: 메시지의 `tokens {input, output, cached, thoughts, tool}` — **응답마다 붙는 값이라 날짜별로 더한다**. Input = input + tool, Output = output + thoughts, CacheRead = cached, CacheCreate 0. 모델은 `model`
 - resume: `agy --conversation <id>` (확인). 최근 대화만 이어려면 `--continue`
 - 실행 파일: `agy` (`%LOCALAPPDATA%\agy\bin\agy.exe`). `ExecutableLocator` 가 `.exe` 도 찾는다.
-  다만 설치 감지는 **PATH 와 기본 설치 경로를 함께** 본다 — 설치 스크립트는 사용자 PATH 레지스트리에 등록하므로 이미 떠 있던 앱의 PATH 사본에는 없다
+  다만 설치 감지(`IsInstalledAsync`)는 **PATH 와 기본 설치 경로를 함께** 본다 — 설치 스크립트는 사용자 PATH 레지스트리에 등록하므로 이미 떠 있던 앱의 PATH 사본에는 없다
+- **띄울 때도 같은 문제가 있다.** 이름만 셸에 넘기면 그 셸도 앱의 낡은 환경을 물려받아 "그런 명령 없다"고 한다.
+  그래서 `IProvider.LaunchTarget`(기본값은 `ExecutableName`)을 두고, Antigravity 는 PATH 에서 못 찾으면 **절대 경로**를 준다.
+  앱을 다시 켜지 않아도 방금 깐 도구가 열린다. 띄우는 곳·미리보기는 전부 이 값을 쓴다 — 이름은 문서·테스트가 잠그는 고정값으로 남긴다.
+  경로에 빈칸이 있을 수 있으므로 `TerminalCommandBuilder` 가 명령을 따옴표로 감싼다
 - 설치: **앱은 명령을 돌리지 않고 공식 안내 페이지(`https://antigravity.google/docs/cli/install/`)를 브라우저로 연다** (`IProvider.InstallUri`, `IUriOpener`).
   공식 명령은 `irm https://antigravity.google/cli/install.ps1 | iex` 이고 화면에는 그대로 보여 주지만 실행은 사람이 한다.
   이유: 원격 스크립트를 메모리에서 실행하는 이 꼴은 **백신이 흔히 차단한다**(이 PC 에서 실제로 차단됐다). 앱이 사용자에게 백신을 끄라고 할 수는 없고,
