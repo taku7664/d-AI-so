@@ -38,6 +38,8 @@ public sealed partial class TerminalViewModel : ObservableObject
     private readonly IndexService _index;
     private readonly IPromptLibrary _prompts;
 
+    private readonly IUriOpener _uriOpener;
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanLaunch))]
     [NotifyPropertyChangedFor(nameof(HasRules))]
@@ -54,7 +56,8 @@ public sealed partial class TerminalViewModel : ObservableObject
         ISettingsStore settings,
         KnownProjects knownProjects,
         IndexService index,
-        IPromptLibrary prompts)
+        IPromptLibrary prompts,
+        IUriOpener uriOpener)
     {
         ArgumentNullException.ThrowIfNull(providers);
         ArgumentNullException.ThrowIfNull(launcher);
@@ -62,6 +65,7 @@ public sealed partial class TerminalViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(knownProjects);
         ArgumentNullException.ThrowIfNull(index);
         ArgumentNullException.ThrowIfNull(prompts);
+        ArgumentNullException.ThrowIfNull(uriOpener);
 
         _providers = providers.ToList();
         _launcher = launcher;
@@ -69,6 +73,7 @@ public sealed partial class TerminalViewModel : ObservableObject
         _knownProjects = knownProjects;
         _index = index;
         _prompts = prompts;
+        _uriOpener = uriOpener;
 
         Tools = new ObservableCollection<ToolLaunchViewModel>(
             ToolLook.InDisplayOrder(_providers, provider => provider.Kind)
@@ -628,6 +633,13 @@ public sealed partial class TerminalViewModel : ObservableObject
                 return UiStrings.Get("Terminal_StepNeedTool");
             }
 
+            // 안 깔린 도구는 다음 할 일이 "설치"다. 남은 단계를 재촉하면 설치 버튼 위에서 딴 말을 하는 셈이다 —
+            // 무엇을 해야 하는지는 아래 설치 안내 한 줄이 말한다
+            if (!SelectedTool.IsInstalled)
+            {
+                return string.Empty;
+            }
+
             if (!FolderDone)
             {
                 return UiStrings.Get("Terminal_StepNeedFolder");
@@ -645,7 +657,11 @@ public sealed partial class TerminalViewModel : ObservableObject
     public bool HasRemainingHint => RemainingHint.Length > 0;
 
     /// <summary>필수 셋이 다 찼고 도구도 누를 수 있는가.</summary>
-    public bool CanStart => SessionDone && SelectedTool.CanPress;
+    /// <summary>
+    /// 시작 버튼을 누를 수 있는가. <b>안 깔린 도구는 이 버튼이 설치 버튼</b>이므로 3단계(무엇부터 할까요?)를 묻지 않는다 —
+    /// 설치에는 세션 선택이 필요 없는데 잠가 두면, 깔려고 온 사람이 쓸 수 없는 단계부터 답해야 한다.
+    /// </summary>
+    public bool CanStart => SelectedTool.CanPress && (SessionDone || !SelectedTool.IsInstalled);
 
     /// <summary>AI를 고른다. 탭·카드 어느 쪽에서 부르든 여기로 온다.</summary>
     public void ChooseTool(int index)
@@ -747,7 +763,7 @@ public sealed partial class TerminalViewModel : ObservableObject
 
             if (!tool.IsInstalled)
             {
-                return tool.Provider.InstallCommand;
+                return tool.InstallOpensPage ? tool.Provider.InstallUri! : tool.Provider.InstallCommand;
             }
 
             var arguments = ComposeArguments(tool, writePrompt: false);
@@ -767,7 +783,9 @@ public sealed partial class TerminalViewModel : ObservableObject
 
             if (!tool.IsInstalled)
             {
-                return UiStrings.Format("Terminal_SentenceInstall", tool.Label);
+                return UiStrings.Format(
+                    tool.InstallOpensPage ? "Terminal_SentenceInstallPage" : "Terminal_SentenceInstall",
+                    tool.Label);
             }
 
             if (!SessionDone)
@@ -903,22 +921,39 @@ public sealed partial class TerminalViewModel : ObservableObject
     private static readonly TimeSpan InstallWatch = TimeSpan.FromMinutes(5);
 
     /// <summary>
-    /// 새 터미널에서 설치 명령을 돌리고, 실행 파일이 PATH에 나타날 때까지 지켜본다.
-    /// 나타나면 버튼이 저절로 열기로 바뀐다. 사람이 터미널을 닫아도 앱은 알 수 없으니 시간이 지나면 지켜보기를 멈춘다.
+    /// 설치를 시작하고, 실행 파일이 PATH에 나타날 때까지 지켜본다.
+    /// 나타나면 버튼이 저절로 열기로 바뀐다. 사람이 창을 닫아도 앱은 알 수 없으니 시간이 지나면 지켜보기를 멈춘다.
+    /// <para>
+    /// 시작하는 방법은 도구마다 다르다. npm 도구는 새 터미널에서 설치 명령을 돌리고,
+    /// <see cref="ToolLaunchViewModel.InstallOpensPage"/> 인 도구(Antigravity)는 공식 안내 페이지를 브라우저로 연다 —
+    /// 앱이 원격 스크립트를 대신 돌리지 않는다(<see cref="IProvider.InstallUri"/>).
+    /// 어느 쪽이든 지켜보기는 같다. 사람이 딴 데서 깔아도 버튼이 따라온다.
+    /// </para>
     /// </summary>
     public async Task InstallAsync(ToolLaunchViewModel tool)
     {
-        var (executable, arguments) = tool.InstallParts();
-        var directory = WorkingDirectory is { Length: > 0 } chosen && Directory.Exists(chosen)
-            ? chosen
-            : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        ArgumentNullException.ThrowIfNull(tool);
 
         tool.IsInstalling = true;
-        LastCommand = UiStrings.Format("Terminal_InstallStarted", tool.Label);
+        LastCommand = UiStrings.Format(
+            tool.InstallOpensPage ? "Terminal_InstallPageOpened" : "Terminal_InstallStarted",
+            tool.Label);
 
         try
         {
-            await _launcher.LaunchAsync(directory, executable, arguments).ConfigureAwait(true);
+            if (tool.InstallOpensPage)
+            {
+                _uriOpener.Open(tool.Provider.InstallUri!);
+            }
+            else
+            {
+                var (executable, arguments) = tool.InstallParts();
+                var directory = WorkingDirectory is { Length: > 0 } chosen && Directory.Exists(chosen)
+                    ? chosen
+                    : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+                await _launcher.LaunchAsync(directory, executable, arguments).ConfigureAwait(true);
+            }
 
             var deadline = DateTimeOffset.UtcNow + InstallWatch;
 

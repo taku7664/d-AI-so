@@ -100,7 +100,7 @@ public sealed partial class ToolLaunchViewModel : ObservableObject
         {
             var command = IsInstalled
                 ? (Arguments.Trim().Length > 0 ? $"{Provider.ExecutableName} {Arguments.Trim()}" : Provider.ExecutableName)
-                : Provider.InstallCommand;
+                : InstallOpensPage ? Provider.InstallUri! : Provider.InstallCommand;
 
             return $"{Label}  ▸  {command}";
         }
@@ -119,24 +119,39 @@ public sealed partial class ToolLaunchViewModel : ObservableObject
 
     public string ButtonText => IsInstalling
         ? UiStrings.Format("Terminal_Installing", Label)
-        : UiStrings.Format(IsInstalled ? "Terminal_Open" : "Terminal_Install", Label);
+        : UiStrings.Format(IsInstalled ? "Terminal_Open" : InstallOpensPage ? "Terminal_InstallPage" : "Terminal_Install", Label);
 
     /// <summary>기본 버튼(앱 안 터미널) 글. 설치 전이면 설치, 설치 중이면 잠금 문구. 외부 열기 버튼의 툴팁은 <see cref="ButtonText"/>.</summary>
     public string EmbeddedButtonText => IsInstalling
         ? UiStrings.Format("Terminal_Installing", Label)
-        : IsInstalled ? UiStrings.Get("Terminal_OpenTerminalRoom") : UiStrings.Format("Terminal_Install", Label);
+        : IsInstalled
+            ? UiStrings.Get("Terminal_OpenTerminalRoom")
+            : UiStrings.Format(InstallOpensPage ? "Terminal_InstallPage" : "Terminal_Install", Label);
 
     /// <summary>열기는 터미널 아이콘, 설치는 내려받기 아이콘.</summary>
     public string Glyph => IsInstalled ? "" : "";
 
     public bool CanPress => !IsInstalling && (!IsInstalled || HasFolder);
 
-    /// <summary>미설치일 때 버튼 아래 한 줄.</summary>
-    public string Hint => IsInstalled ? string.Empty : UiStrings.Format("Terminal_InstallHint", Provider.InstallCommand);
+    /// <summary>설치가 셸 명령이 아니라 안내 페이지인가. 버튼이 하는 일이 달라진다.</summary>
+    public bool InstallOpensPage => Provider.InstallUri is { Length: > 0 };
+
+    /// <summary>
+    /// 미설치일 때 버튼 아래 한 줄. 안내 페이지를 여는 도구는 <b>앱이 스크립트를 돌리지 않는다는 것</b>까지 말한다 —
+    /// 버튼을 눌렀는데 터미널이 안 뜨면 고장으로 읽히고, 백신에 걸린 명령을 그대로 보여 주기만 하면 막힌 길을 안내하는 셈이다.
+    /// </summary>
+    public string Hint => IsInstalled
+        ? string.Empty
+        : InstallOpensPage
+            ? UiStrings.Format("Terminal_InstallPageHint", Provider.InstallCommand)
+            : UiStrings.Format("Terminal_InstallHint", Provider.InstallCommand);
 
     public bool HasHint => !IsInstalled;
 
-    /// <summary>설치 명령의 실행 파일과 인자. "npm install -g x" → ("npm", "install -g x").</summary>
+    /// <summary>
+    /// 설치 명령의 실행 파일과 인자. "npm install -g x" → ("npm", "install -g x").
+    /// <see cref="InstallOpensPage"/> 인 도구에는 쓰지 않는다.
+    /// </summary>
     public (string Executable, string Arguments) InstallParts()
     {
         var command = Provider.InstallCommand.Trim();

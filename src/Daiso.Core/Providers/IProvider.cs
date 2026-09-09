@@ -16,6 +16,17 @@ public interface IProvider
     /// <summary>실행 파일이 없을 때 새 터미널에서 돌릴 설치 명령 한 줄. 예: <c>npm install -g @openai/codex</c>.</summary>
     string InstallCommand { get; }
 
+    /// <summary>
+    /// 설치 안내 페이지. null이 아니면 앱은 <see cref="InstallCommand"/>를 <b>돌리지 않고</b> 이 주소를 브라우저로 연다.
+    /// <para>
+    /// npm 으로 깔리는 도구(Claude·Codex)는 null이다 — 셸 명령 한 줄이 그대로 설치다.
+    /// Antigravity 처럼 "원격 스크립트를 받아 실행"하는 설치는 다르다: 그 꼴은 백신이 흔히 차단하고
+    /// (`irm … | iex` 는 메모리에서 코드를 실행하는 모양이라 특히 그렇다), 앱이 사용자에게 백신을 끄라고 할 수는 없다.
+    /// 앱이 남의 스크립트를 대신 실행해 주는 것도 옳지 않다. 그래서 공식 안내 페이지를 열고 판단은 사람에게 맡긴다.
+    /// </para>
+    /// </summary>
+    string? InstallUri => null;
+
     /// <summary>도구가 읽는 프로젝트 지시문 파일 이름. "CLAUDE.md" | "AGENTS.md" | "GEMINI.md".</summary>
     string RulesFileName { get; }
 

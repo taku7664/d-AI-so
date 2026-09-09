@@ -46,8 +46,15 @@ public sealed class AntigravityProvider : IProvider, IUsageReader
     /// <remarks>
     /// npm 패키지가 아니다. Go 로 만든 단일 실행 파일이라 공식 설치 스크립트를 받아 돌린다.
     /// 설치되는 곳은 `%LOCALAPPDATA%\agy\bin` 이고 설치 스크립트가 PATH 에 넣는다.
+    /// <para>
+    /// <b>앱이 이 명령을 돌리지는 않는다.</b> <see cref="InstallUri"/> 가 있으므로 안내 페이지를 열 뿐이다 —
+    /// 이 값은 화면에 "공식 설치 명령은 이것"이라고 보여 주는 용도다. 이유는 <see cref="IProvider.InstallUri"/> 주석에 있다.
+    /// </para>
     /// </remarks>
     public string InstallCommand => "irm https://antigravity.google/cli/install.ps1 | iex";
+
+    /// <inheritdoc />
+    public string? InstallUri => "https://antigravity.google/docs/cli/install/";
 
     /// <inheritdoc />
     /// <remarks>기록에 목록 교체(`$set.messages`)와 되감기(`$rewindTo`)가 있어 중간부터 이어 읽을 수 없다.</remarks>

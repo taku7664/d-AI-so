@@ -45,4 +45,25 @@ public sealed class InstallCommandTests
     {
         new AntigravityProvider(new ProviderHome(Path.GetTempPath())).ExecutableName.Should().Be("agy");
     }
+
+    /// <summary>
+    /// Antigravity 는 앱이 설치 명령을 대신 돌리지 않고 공식 안내 페이지를 연다.
+    /// `irm … | iex` 를 앱이 실행하면 백신이 흔히 차단하고, 사용자에게 백신을 끄라고 할 수는 없다 (IProvider.InstallUri).
+    /// </summary>
+    [Fact]
+    public void Antigravity_points_at_an_official_install_page()
+    {
+        var uri = new AntigravityProvider(new ProviderHome(Path.GetTempPath())).InstallUri;
+
+        uri.Should().NotBeNull();
+        new Uri(uri!).Host.Should().Be("antigravity.google", because: "안내 페이지는 공식 도메인이어야 한다");
+    }
+
+    /// <summary>npm 으로 깔리는 도구는 안내 페이지가 없다 — 셸 명령 한 줄이 그대로 설치다.</summary>
+    [Theory]
+    [MemberData(nameof(NpmProviders))]
+    public void Npm_providers_have_no_install_page(IProvider provider)
+    {
+        provider.InstallUri.Should().BeNull();
+    }
 }

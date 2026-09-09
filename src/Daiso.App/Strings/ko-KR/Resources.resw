@@ -1183,6 +1183,15 @@
   <data name="Terminal_InstallHint" xml:space="preserve">
     <value>설치되지 않았습니다. 누르면 새 터미널에서 실행합니다: {0}</value>
   </data>
+  <data name="Terminal_InstallPage" xml:space="preserve">
+    <value>{0} 설치 안내 열기</value>
+  </data>
+  <data name="Terminal_InstallPageHint" xml:space="preserve">
+    <value>설치되지 않았습니다. 누르면 공식 설치 안내를 브라우저로 엽니다. 이 앱은 내려받은 스크립트를 대신 실행하지 않습니다. 공식 명령: {0}</value>
+  </data>
+  <data name="Terminal_InstallPageOpened" xml:space="preserve">
+    <value>{0} 설치 안내를 브라우저로 열었습니다. 설치가 끝나면 버튼이 열기로 바뀝니다</value>
+  </data>
   <data name="Terminal_InstallStarted" xml:space="preserve">
     <value>{0} 설치를 새 터미널에서 시작했습니다. 끝나면 버튼이 열기로 바뀝니다</value>
   </data>
@@ -1326,6 +1335,9 @@
   </data>
   <data name="Terminal_SentenceResume" xml:space="preserve">
     <value>{0} 로 {1} 폴더에서 {2} 하던 대화를 이어서 엽니다</value>
+  </data>
+  <data name="Terminal_SentenceInstallPage" xml:space="preserve">
+    <value>{0} 가 설치돼 있지 않습니다. 누르면 공식 설치 안내를 브라우저로 엽니다</value>
   </data>
   <data name="Terminal_SentenceInstall" xml:space="preserve">
     <value>{0} 가 설치돼 있지 않습니다. 누르면 설치를 시작합니다</value>

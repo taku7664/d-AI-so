@@ -91,6 +91,7 @@ public partial class App : Application
             new InstructionMigrationService(provider.GetServices<IProvider>()));
         services.AddSingleton<IFileDisposer, RecycleBinFileDisposer>();
         services.AddSingleton<ITerminalLauncher, WindowsTerminalLauncher>();
+        services.AddSingleton<IUriOpener, ShellUriOpener>();
         services.AddSingleton<IContextInspector>(provider =>
             new ContextInspector(
                 provider.GetRequiredService<IEnumerable<IProvider>>(),
