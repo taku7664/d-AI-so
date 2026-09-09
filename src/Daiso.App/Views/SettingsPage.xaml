@@ -278,26 +278,27 @@
                         <ComboBox
                             Header="{loc:Str Key=Settings_Theme}"
                             Width="200"
+                            HorizontalAlignment="Left"
                             AutomationProperties.AutomationId="ThemeCombo"
                             ItemsSource="{x:Bind ViewModel.Themes}"
                             SelectedIndex="{x:Bind ViewModel.ThemeIndex, Mode=TwoWay}" />
 
-                        <StackPanel Spacing="2">
-                            <NumberBox
-                                Header="{loc:Str Key=Settings_TerminalFontSize}"
-                                Width="200"
-                                Minimum="8"
-                                Maximum="28"
-                                SpinButtonPlacementMode="Compact"
-                                AutomationProperties.AutomationId="TerminalFontSizeBox"
-                                Value="{x:Bind ViewModel.TerminalFontSize, Mode=TwoWay}" />
-                            <TextBlock
-                                Text="{loc:Str Key=Settings_NoWebView2}"
-                                Style="{StaticResource MutedText}"
-                                TextWrapping="Wrap"
-                                Foreground="{ThemeResource SystemFillColorCautionBrush}"
-                                Visibility="{x:Bind ViewModel.NoWebViewVisibility}" />
-                        </StackPanel>
+                        <NumberBox
+                            Header="{loc:Str Key=Settings_TerminalFontSize}"
+                            Width="200"
+                            HorizontalAlignment="Left"
+                            Minimum="8"
+                            Maximum="28"
+                            SpinButtonPlacementMode="Compact"
+                            AutomationProperties.AutomationId="TerminalFontSizeBox"
+                            Value="{x:Bind ViewModel.TerminalFontSize, Mode=TwoWay}" />
+
+                        <TextBlock
+                            Text="{loc:Str Key=Settings_NoWebView2}"
+                            Style="{StaticResource MutedText}"
+                            TextWrapping="Wrap"
+                            Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                            Visibility="{x:Bind ViewModel.NoWebViewVisibility}" />
 
                         <Button
                             HorizontalAlignment="Left"
@@ -309,11 +310,6 @@
                             </StackPanel>
                         </Button>
 
-                        <TextBlock
-                            Style="{StaticResource MutedText}"
-                            FontFamily="Consolas"
-                            Text="{x:Bind ViewModel.SettingsFilePath}"
-                            ToolTipService.ToolTip="{x:Bind ViewModel.SettingsFilePath}" />
                     </StackPanel>
                 </Border>
 
