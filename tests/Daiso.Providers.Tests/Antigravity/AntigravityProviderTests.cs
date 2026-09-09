@@ -64,15 +64,53 @@ public sealed class AntigravityProviderTests : IDisposable
         (await Enumerate(provider)).Should().BeEmpty();
     }
 
+    /// <summary>
+    /// 로그인 판정은 자격 증명 관리자 항목 하나로만 한다. fixture 홈에는 은퇴한 Gemini CLI 의 로그인 파일이 들어 있는데,
+    /// 그것이 있어도 자격 증명이 없으면 로그인이 아니다 — 전에는 그 파일 때문에 로그인으로 보였다.
+    /// </summary>
     [Fact]
-    public async Task Auth_reads_both_home_files()
+    public async Task A_leftover_gemini_login_file_does_not_make_antigravity_logged_in()
     {
-        var provider = new AntigravityProvider(Fixtures.CreateGeminiHome(_home));
+        var provider = new AntigravityProvider(Fixtures.CreateGeminiHome(_home), new FakeCredentialProbe(exists: false));
+
+        var status = await provider.GetAuthStatusAsync(default);
+
+        status.State.Should().Be(AuthState.Missing);
+    }
+
+    [Fact]
+    public async Task The_credential_manager_entry_decides_that_it_is_logged_in()
+    {
+        var probe = new FakeCredentialProbe(exists: true);
+        var provider = new AntigravityProvider(Fixtures.CreateGeminiHome(_home), probe);
 
         var status = await provider.GetAuthStatusAsync(default);
 
         status.State.Should().Be(AuthState.LoggedIn);
-        status.Email.Should().Be("fixture@example.com");
+        status.Email.Should().BeNull(because: "은퇴한 도구의 계정 파일을 빌려 쓰지 않는다");
+        probe.AskedFor.Should().Be(AntigravityAuthReader.CredentialTarget);
+    }
+
+    /// <summary>자격 증명은 파일이 아니라 로그인 프로필(§5.7)로 옮길 수 없다. 필수 파일이 없어야 프로필이 "옮겼다"고 착각하지 않는다.</summary>
+    [Fact]
+    public void No_auth_file_is_required()
+    {
+        new AntigravityProvider(new ProviderHome(_home)).AuthFiles.Should().NotContain(file => file.Required);
+    }
+
+    private sealed class FakeCredentialProbe : ICredentialProbe
+    {
+        private readonly bool _exists;
+
+        public FakeCredentialProbe(bool exists) => _exists = exists;
+
+        public string? AskedFor { get; private set; }
+
+        public bool Exists(string target)
+        {
+            AskedFor = target;
+            return _exists;
+        }
     }
 
     [Fact]

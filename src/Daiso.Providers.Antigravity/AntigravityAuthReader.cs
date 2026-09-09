@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Text.Json;
 using Daiso.Core;
 using Daiso.Providers.Common;
@@ -7,120 +6,75 @@ namespace Daiso.Providers.Antigravity;
 
 /// <summary>
 /// Antigravity CLI 의 로그인 상태를 만든다. (ARCHITECTURE §4.5 인증)
-/// 토큰 값은 어떤 필드에도 넣지 않는다. 만료 시각과 계정 이메일만 뽑는다.
 /// <para>
-/// <b>Antigravity CLI 는 토큰을 파일이 아니라 Windows 자격 증명 관리자에 넣는다.</b> 앱은 그것을 읽지 않는다.
-/// 그래서 읽을 수 있는 것은 둘뿐이다 — 은퇴한 Gemini CLI 가 남긴 `~/.gemini/oauth_creds.json`(있으면 계정·만료를 알 수 있다)와
-/// `~/.gemini/antigravity-cli/settings.json`(있으면 `agy` 를 설정한 적이 있다는 뜻). 만료를 모르는 경우는 모른다고 적는다.
+/// <b>판정의 근거는 Windows 자격 증명 관리자의 항목 하나(`gemini:antigravity`)뿐이다.</b> `agy` 는 토큰을 파일에 남기지 않는다 —
+/// 로그인하고 대화까지 해도 `~/.gemini/antigravity-cli` 에는 토큰이 없다(2026-09-09 실측). 그 항목이 있으면 로그인, 없으면 없음이다.
+/// 값은 읽지 않는다(<see cref="Daiso.Providers.Common.ICredentialProbe"/>).
+/// </para>
+/// <para>
+/// <b>은퇴한 Gemini CLI 의 `oauth_creds.json` 은 이 도구의 상태가 아니다.</b> 전에는 그 파일의 `refresh_token`·`expiry_date`·`scope` 를
+/// Antigravity 카드에 그대로 얹었는데, 죽은 도구의 액세스 토큰 만료 시각을 이 도구의 것처럼 보여 주는 셈이었다.
+/// 이제는 "그 파일이 남아 있다"는 사실만, 무관하다고 밝혀 적는다. 계정 이메일도 그 파일에서 끌어오지 않는다 —
+/// 다른 계정으로 `agy` 에 로그인했으면 틀린 이메일을 보여 준다.
+/// </para>
+/// <para>
+/// 만료는 알 수 없다. `agy` 가 알아서 갱신하고 앱은 그 시각을 볼 수 없으므로 <c>SessionExpiresAt = null</c> 이다.
+/// 화면이 이유를 말하도록 부가 정보에 적는다.
 /// </para>
 /// </summary>
 public static class AntigravityAuthReader
 {
-    /// <param name="oauthJson">은퇴한 Gemini CLI 의 `oauth_creds.json` 내용. 없으면 null.</param>
-    /// <param name="accountsJson">`google_accounts.json` 내용. 계정 이메일 표시용. 없으면 null.</param>
-    /// <param name="settingsJson">`antigravity-cli/settings.json` 내용. 있으면 `agy` 를 설정한 적이 있다는 뜻. 없으면 null.</param>
-    /// <param name="now">상태 판정 기준 시각.</param>
-    public static AuthStatus Read(string? oauthJson, string? accountsJson, string? settingsJson, DateTimeOffset now)
+    /// <summary>자격 증명 관리자에서 찾는 대상 이름. `cmdkey /list` 에 `LegacyGeneric:target=gemini:antigravity` 로 보인다.</summary>
+    public const string CredentialTarget = "gemini:antigravity";
+
+    /// <param name="hasCredential">자격 증명 관리자에 <see cref="CredentialTarget"/> 항목이 있는가. 로그인 판정의 근거다.</param>
+    /// <param name="settingsJson">`antigravity-cli/settings.json` 내용. 없으면 null. `apiKey` 가 있으면 API 키 방식이다.</param>
+    /// <param name="hasLegacyGeminiLogin">은퇴한 Gemini CLI 의 `oauth_creds.json` 이 남아 있는가. 표시용일 뿐 판정에 쓰지 않는다.</param>
+    public static AuthStatus Read(bool hasCredential, string? settingsJson, bool hasLegacyGeminiLogin)
     {
-        var configured = settingsJson is not null;
+        var extras = Extras(settingsJson, hasLegacyGeminiLogin);
 
-        if (oauthJson is null)
+        if (!hasCredential)
         {
-            // 읽을 파일이 하나도 없으면 로그인 정보 없음. 설정 파일만 있으면 "설정은 했고 만료는 모른다"로 둔다
-            return configured
-                ? new AuthStatus(
-                    ToolKind.Antigravity,
-                    AuthState.LoggedIn,
-                    "Google",
-                    null,
-                    null,
-                    KeyringExtras(settingsJson))
-                : AuthStatus.Missing(ToolKind.Antigravity);
+            return new AuthStatus(ToolKind.Antigravity, AuthState.Missing, null, null, null, extras);
         }
 
-        using var document = JsonHelpers.TryParseLine(oauthJson);
-        if (document?.RootElement is not { ValueKind: JsonValueKind.Object } root)
-        {
-            return AuthStatus.Missing(ToolKind.Antigravity);
-        }
-
-        // refresh_token이 있으면 액세스 토큰이 만료돼도 CLI가 알아서 갱신한다. 그때는 만료 개념이 없다.
-        var hasRefresh = root.Prop("refresh_token") is { ValueKind: JsonValueKind.String };
-        var accessExpiry = root.Prop("expiry_date").Number() is { } ms
-            ? DateTimeOffset.FromUnixTimeMilliseconds(ms)
-            : (DateTimeOffset?)null;
-        var expiresAt = hasRefresh ? null : accessExpiry;
-
-        var email = ActiveEmail(accountsJson);
-
-        // 라벨은 계정 제공자, 이메일은 이메일. 같은 값을 두 줄에 쓰지 않는다
-        return new AuthStatus(
-            ToolKind.Antigravity,
-            AuthStatus.StateFor(expiresAt, now),
-            "Google",
-            email,
-            expiresAt,
-            [.. Extras(root, accessExpiry, hasRefresh), .. KeyringExtras(settingsJson)]);
+        // 이메일을 읽을 곳이 없다. 라벨만 제작사로 두고, 이메일 자리는 비운다(틀린 값을 채우지 않는다)
+        return new AuthStatus(ToolKind.Antigravity, AuthState.LoggedIn, "Google", null, null, extras);
     }
 
-    /// <summary>
-    /// Antigravity 쪽에서만 알 수 있는 것들. 만료를 화면에 못 적는 이유를 여기서 밝힌다 —
-    /// 카드에 아무 말이 없으면 사용자는 앱이 못 읽는 것인지 로그인이 안 된 것인지 구분할 수 없다.
-    /// </summary>
-    private static IReadOnlyList<string> KeyringExtras(string? settingsJson)
+    private static IReadOnlyList<string> Extras(string? settingsJson, bool hasLegacyGeminiLogin)
     {
         var extras = new List<string>
         {
-            "Antigravity 로그인: Windows 자격 증명 관리자에 보관 (앱이 읽지 않음)",
+            "로그인 보관: Windows 자격 증명 관리자 (" + CredentialTarget + ") — 앱은 값을 읽지 않습니다",
+            "만료: 알 수 없음 (CLI가 알아서 갱신합니다)",
+            "계정 이메일: CLI가 파일에 남기지 않습니다",
         };
 
         if (settingsJson is null)
         {
-            extras.Add("antigravity-cli/settings.json: 없음");
-            return extras;
+            extras.Add("설정 파일: 없음 (CLI를 한 번 실행하면 만들어집니다)");
+        }
+        else
+        {
+            using var document = JsonHelpers.TryParseLine(settingsJson);
+            var root = document?.RootElement;
+
+            var hasApiKey = root is { ValueKind: JsonValueKind.Object } obj
+                && obj.Prop("apiKey") is { ValueKind: JsonValueKind.String };
+
+            extras.Add(hasApiKey ? "인증 방식: API 키" : "인증 방식: 브라우저 로그인");
+
+            if (root is { ValueKind: JsonValueKind.Object } settings && settings.Prop("model").Text() is { } model)
+            {
+                extras.Add($"고른 모델: {model}");
+            }
         }
 
-        using var document = JsonHelpers.TryParseLine(settingsJson);
-        var hasApiKey = document?.RootElement is { ValueKind: JsonValueKind.Object } root
-            && root.Prop("apiKey") is { ValueKind: JsonValueKind.String };
-
-        extras.Add(hasApiKey ? "인증 방식: API 키" : "인증 방식: 브라우저 로그인");
-
-        return extras;
-    }
-
-    private static string? ActiveEmail(string? accountsJson)
-    {
-        if (accountsJson is null)
+        if (hasLegacyGeminiLogin)
         {
-            return null;
-        }
-
-        using var document = JsonHelpers.TryParseLine(accountsJson);
-        return document?.RootElement.Prop("active").Text();
-    }
-
-    private static IReadOnlyList<string> Extras(JsonElement root, DateTimeOffset? accessExpiry, bool hasRefresh)
-    {
-        var extras = new List<string>();
-
-        if (root.Prop("token_type").Text() is { } tokenType)
-        {
-            extras.Add($"token_type: {tokenType}");
-        }
-
-        extras.Add(hasRefresh ? "refresh_token: 있음" : "refresh_token: 없음");
-
-        if (accessExpiry is { } expiry)
-        {
-            extras.Add($"access_token 만료: {expiry.ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture)}");
-        }
-
-        // scope 값은 URL 목록이라 길다. 개수만 알린다.
-        if (root.Prop("scope").Text() is { } scope)
-        {
-            var count = scope.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
-            extras.Add($"scope: {count}개");
+            extras.Add("참고: 은퇴한 Gemini CLI의 로그인 파일이 남아 있습니다 (이 도구와 무관)");
         }
 
         return extras;

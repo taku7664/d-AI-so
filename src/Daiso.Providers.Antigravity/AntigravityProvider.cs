@@ -25,15 +25,25 @@ public sealed class AntigravityProvider : IProvider, IUsageReader
 
     private readonly ProviderHome _home;
 
+    private readonly ICredentialProbe _credentials;
+
     public AntigravityProvider()
-        : this(ProviderHome.FromUserProfile())
+        : this(ProviderHome.FromUserProfile(), new WindowsCredentialProbe())
     {
     }
 
     public AntigravityProvider(ProviderHome home)
+        : this(home, new WindowsCredentialProbe())
+    {
+    }
+
+    public AntigravityProvider(ProviderHome home, ICredentialProbe credentials)
     {
         ArgumentNullException.ThrowIfNull(home);
+        ArgumentNullException.ThrowIfNull(credentials);
+
         _home = home;
+        _credentials = credentials;
     }
 
     /// <inheritdoc />
@@ -153,23 +163,23 @@ public sealed class AntigravityProvider : IProvider, IUsageReader
 
     /// <inheritdoc />
     /// <remarks>
-    /// Antigravity CLI 는 로그인 토큰을 파일이 아니라 <b>Windows 자격 증명 관리자</b>에 넣는다. 앱이 읽을 수 없고, 읽으려 들지도 않는다.
-    /// 그래서 필수 파일이 없다 — 여기 있는 둘은 은퇴한 Gemini CLI 가 남긴 것과 Antigravity 의 설정 파일이고, 있으면 참고만 한다.
+    /// Antigravity CLI 는 로그인 토큰을 파일이 아니라 <b>Windows 자격 증명 관리자</b>에 넣는다. 앱은 값을 읽지 않는다.
+    /// 그래서 <b>필수 파일이 없고, 로그인 프로필(§5.7)로 옮길 수 있는 것도 없다</b> — 자격 증명은 파일이 아니라 복사 대상이 아니다.
+    /// 여기 있는 것은 설정 파일 하나이고, 프로필에 담아도 로그인이 따라가지는 않는다.
     /// </remarks>
     public IReadOnlyList<AuthFile> AuthFiles =>
     [
-        new AuthFile(Path.Combine(HomeDirectory, "oauth_creds.json"), Required: false),
         new AuthFile(Path.Combine(ConfigDirectory, "settings.json"), Required: false),
     ];
 
     /// <inheritdoc />
     public async Task<AuthStatus> GetAuthStatusAsync(CancellationToken ct)
     {
-        var oauth = await ReadTextOrNullAsync(Path.Combine(HomeDirectory, "oauth_creds.json"), ct).ConfigureAwait(false);
-        var accounts = await ReadTextOrNullAsync(Path.Combine(HomeDirectory, "google_accounts.json"), ct).ConfigureAwait(false);
         var settings = await ReadTextOrNullAsync(Path.Combine(ConfigDirectory, "settings.json"), ct).ConfigureAwait(false);
+        var hasCredential = _credentials.Exists(AntigravityAuthReader.CredentialTarget);
+        var hasLegacyLogin = File.Exists(Path.Combine(HomeDirectory, "oauth_creds.json"));
 
-        return AntigravityAuthReader.Read(oauth, accounts, settings, DateTimeOffset.UtcNow);
+        return AntigravityAuthReader.Read(hasCredential, settings, hasLegacyLogin);
     }
 
     /// <inheritdoc />

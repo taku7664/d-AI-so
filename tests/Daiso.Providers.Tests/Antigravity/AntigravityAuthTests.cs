@@ -3,82 +3,91 @@ using Daiso.Providers.Antigravity;
 
 namespace Daiso.Providers.Tests.Antigravity;
 
-/// <summary>ARCHITECTURE §4.5 인증. refresh_token이 있으면 만료 개념이 없고, 없으면 access_token의 expiry_date로 판정한다.</summary>
+/// <summary>
+/// ARCHITECTURE §4.5 인증. `agy` 는 토큰을 파일에 남기지 않는다 —
+/// 로그인 판정의 근거는 Windows 자격 증명 관리자의 항목 하나뿐이고, 만료는 알 수 없다.
+/// </summary>
 public sealed class AntigravityAuthTests
 {
-    private static string OauthJson => Fixtures.ReadGemini("oauth_creds.json");
-
-    private static string NoRefreshJson => Fixtures.ReadGemini("oauth_creds-norefresh.json");
-
-    private static string AccountsJson => Fixtures.ReadGemini("google_accounts.json");
-
-    /// <summary>fixture의 expiry_date 1764547200000 = 2025-12-01T00:00:00Z.</summary>
-    private static readonly DateTimeOffset AccessExpiry = new(2025, 12, 1, 0, 0, 0, TimeSpan.Zero);
+    private const string Settings = """{"colorScheme":"dark","model":"Gemini 3.8 Flash"}""";
 
     [Fact]
-    public void A_missing_file_is_Missing()
+    public void No_credential_means_Missing()
     {
-        AntigravityAuthReader.Read(null, AccountsJson, null, Fixtures.Now).State.Should().Be(AuthState.Missing);
+        var status = AntigravityAuthReader.Read(hasCredential: false, Settings, hasLegacyGeminiLogin: false);
+
+        status.State.Should().Be(AuthState.Missing);
+        status.AccountLabel.Should().BeNull();
+    }
+
+    /// <summary>설정 파일이 있어도 자격 증명이 없으면 로그인이 아니다. 설정은 "한 번 실행했다"는 뜻일 뿐이다.</summary>
+    [Fact]
+    public void A_settings_file_alone_is_not_a_login()
+    {
+        AntigravityAuthReader.Read(hasCredential: false, Settings, hasLegacyGeminiLogin: true)
+            .State.Should().Be(AuthState.Missing);
     }
 
     [Fact]
-    public void A_refresh_token_means_logged_in_without_expiry()
+    public void A_credential_means_logged_in_without_an_expiry()
     {
-        var status = AntigravityAuthReader.Read(OauthJson, AccountsJson, null, Fixtures.Now);
+        var status = AntigravityAuthReader.Read(hasCredential: true, Settings, hasLegacyGeminiLogin: false);
 
         status.State.Should().Be(AuthState.LoggedIn);
-        status.SessionExpiresAt.Should().BeNull();
-        status.Email.Should().Be("fixture@example.com");
         status.AccountLabel.Should().Be("Google");
-    }
-
-    [Fact]
-    public void Without_a_refresh_token_the_access_token_expiry_decides()
-    {
-        AntigravityAuthReader.Read(NoRefreshJson, null, null, AccessExpiry.AddDays(-30)).State.Should().Be(AuthState.LoggedIn);
-        AntigravityAuthReader.Read(NoRefreshJson, null, null, AccessExpiry.AddDays(-2)).State.Should().Be(AuthState.ExpiringSoon);
-        AntigravityAuthReader.Read(NoRefreshJson, null, null, AccessExpiry.AddSeconds(1)).State.Should().Be(AuthState.Expired);
-    }
-
-    [Fact]
-    public void Extras_never_contain_token_values()
-    {
-        var status = AntigravityAuthReader.Read(OauthJson, AccountsJson, null, Fixtures.Now);
-
-        var joined = string.Join("\n", status.Extras);
-        joined.Should().NotContain("FAKE-ACCESS").And.NotContain("FAKE-REFRESH").And.NotContain("FAKE-ID");
-        joined.Should().Contain("refresh_token: 있음").And.Contain("scope: 3개");
-    }
-
-    [Fact]
-    public void A_missing_accounts_file_leaves_the_email_empty()
-    {
-        var status = AntigravityAuthReader.Read(OauthJson, null, null, Fixtures.Now);
-
-        status.State.Should().Be(AuthState.LoggedIn);
-        status.Email.Should().BeNull();
+        status.SessionExpiresAt.Should().BeNull(because: "만료 시각을 앱이 볼 수 없다");
     }
 
     /// <summary>
-    /// 옛 로그인 파일이 없어도 `antigravity-cli/settings.json` 이 있으면 설정한 적이 있다는 뜻이라 없음으로 보지 않는다.
-    /// 만료는 자격 증명 관리자에 있어 알 수 없으므로 비운다.
+    /// 이메일 자리는 비운다. 읽을 수 있는 것은 은퇴한 Gemini CLI 의 계정 파일뿐이고,
+    /// 다른 계정으로 `agy` 에 로그인했으면 그 값은 틀린 값이다.
     /// </summary>
     [Fact]
-    public void Only_the_antigravity_settings_file_still_counts_as_configured()
+    public void The_email_is_left_empty_instead_of_borrowing_the_retired_tools_account()
     {
-        var status = AntigravityAuthReader.Read(null, null, "{}", Fixtures.Now);
-
-        status.State.Should().Be(AuthState.LoggedIn);
-        status.SessionExpiresAt.Should().BeNull();
-        status.AccountLabel.Should().Be("Google");
+        AntigravityAuthReader.Read(hasCredential: true, Settings, hasLegacyGeminiLogin: true)
+            .Email.Should().BeNull();
     }
 
-    /// <summary>만료를 못 보여 주는 이유가 화면에 남아야 한다 — 아무 말이 없으면 앱이 못 읽는 것인지 로그인이 안 된 것인지 모른다.</summary>
+    /// <summary>
+    /// 화면이 "왜 만료를 못 보여 주는지"와 "어디에 보관되는지"를 말해야 한다.
+    /// 아무 말이 없으면 앱이 못 읽는 것인지 로그인이 안 된 것인지 구분할 수 없다.
+    /// </summary>
     [Fact]
-    public void Extras_say_where_the_login_is_kept()
+    public void Extras_explain_where_the_login_lives_and_why_there_is_no_expiry()
     {
-        var status = AntigravityAuthReader.Read(OauthJson, AccountsJson, null, Fixtures.Now);
+        var joined = string.Join("\n", AntigravityAuthReader.Read(hasCredential: true, Settings, hasLegacyGeminiLogin: false).Extras);
 
-        string.Join("\n", status.Extras).Should().Contain("자격 증명 관리자");
+        joined.Should().Contain("자격 증명 관리자");
+        joined.Should().Contain(AntigravityAuthReader.CredentialTarget);
+        joined.Should().Contain("만료: 알 수 없음");
+    }
+
+    /// <summary>은퇴한 도구의 파일이 남아 있으면 그렇다고만 적는다. 그 파일의 토큰 정보를 이 도구 것처럼 얹지 않는다.</summary>
+    [Fact]
+    public void A_leftover_gemini_login_is_labelled_as_unrelated_and_never_supplies_token_facts()
+    {
+        var joined = string.Join("\n", AntigravityAuthReader.Read(hasCredential: true, Settings, hasLegacyGeminiLogin: true).Extras);
+
+        joined.Should().Contain("이 도구와 무관");
+        joined.Should().NotContain("refresh_token").And.NotContain("access_token").And.NotContain("scope");
+    }
+
+    [Fact]
+    public void An_api_key_in_settings_is_reported_as_the_auth_method()
+    {
+        var joined = string.Join(
+            "\n",
+            AntigravityAuthReader.Read(hasCredential: true, """{"apiKey":"DUMMY"}""", hasLegacyGeminiLogin: false).Extras);
+
+        joined.Should().Contain("인증 방식: API 키");
+        joined.Should().NotContain("DUMMY", because: "값은 어떤 필드에도 담지 않는다");
+    }
+
+    [Fact]
+    public void Without_a_settings_file_the_extras_say_so()
+    {
+        string.Join("\n", AntigravityAuthReader.Read(hasCredential: true, null, hasLegacyGeminiLogin: false).Extras)
+            .Should().Contain("설정 파일: 없음");
     }
 }
