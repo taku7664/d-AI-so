@@ -103,7 +103,9 @@ public static class PromptPresetSerializer
             throw new FormatException("앞머리에 name 이 없다");
         }
 
-        if (!Enum.TryParse<PromptCategory>(category, ignoreCase: true, out var parsedCategory))
+        // TryParse 는 "3" 같은 숫자 문자열도 받아 정의에 없는 값(PromptCategory)99 를 만든다. IsDefined 로 막는다
+        if (!Enum.TryParse<PromptCategory>(category, ignoreCase: true, out var parsedCategory)
+            || !Enum.IsDefined(parsedCategory))
         {
             throw new FormatException($"category 가 planning, understanding, fixing, release 중 하나가 아니다: {category}");
         }
@@ -178,9 +180,14 @@ public static class BuiltInPrompts
     [
         "planning-interview",
         "feature-plan",
+        "feature-proposal",
+        "api-spec",
         "codebase-tour",
+        "code-review",
         "bug-repro",
         "refactor-plan",
+        "test-suite",
+        "performance-tune",
         "release-check",
         "retro",
     ];

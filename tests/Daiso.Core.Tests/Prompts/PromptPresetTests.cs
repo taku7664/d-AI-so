@@ -47,6 +47,9 @@ public sealed class PromptPresetTests
     [InlineData("---\ncategory: planning\n---\n본문")]
     [InlineData("---\nname: x\ncategory: nope\n---\n본문")]
     [InlineData("---\nname: x\ncategory: planning\n---\n")]
+    // Enum.TryParse 는 숫자 문자열도 받는다. 정의에 없는 값으로 새면 갤러리 묶음이 빈칸이 된다
+    [InlineData("---\nname: x\ncategory: 99\n---\n본문")]
+    [InlineData("---\nname: x\ncategory: -1\n---\n본문")]
     public void Broken_files_are_rejected_with_a_reason(string text)
     {
         var act = () => PromptPresetSerializer.Parse("x", text);
