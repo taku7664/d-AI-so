@@ -166,6 +166,17 @@
                         <MenuFlyout x:Name="RoomPromptFlyout" Opening="OnRoomPromptFlyoutOpening" Placement="BottomEdgeAlignedLeft" />
                     </Button.Flyout>
                 </Button>
+                <!-- 파일 첨부: 골라서 경로를 입력 줄에 붙인다. 끌어놓기와 같은 길 -->
+                <Button Style="{StaticResource ToolbarIconButton}" Click="OnRoomAttachClick" AutomationProperties.AutomationId="RoomAttachButton" AutomationProperties.Name="{loc:Str Key=Room_AttachFile}" ToolTipService.ToolTip="{loc:Str Key=Room_AttachFileTip}">
+                    <FontIcon Glyph="&#xE723;" FontSize="14" />
+                </Button>
+                <!-- 입력 비우기: CLI 입력 줄은 우리 것이 아니라 Ctrl+E·Ctrl+U 키를 보낸다 -->
+                <Button Style="{StaticResource ToolbarIconButton}" Click="OnRoomClearInputClick" AutomationProperties.AutomationId="RoomClearInputButton" AutomationProperties.Name="{loc:Str Key=Room_ClearInput}" ToolTipService.ToolTip="{loc:Str Key=Room_ClearInputTip}">
+                    <FontIcon Glyph="&#xE894;" FontSize="14" />
+                </Button>
+
+                <Rectangle Style="{StaticResource ToolbarSeparator}" />
+
                 <!-- 규칙 편집 -->
                 <Button Style="{StaticResource ToolbarIconButton}" Click="OnRoomRulesClick" AutomationProperties.AutomationId="RoomRulesButton" AutomationProperties.Name="{loc:Str Key=Terminal_EditRules}" ToolTipService.ToolTip="{loc:Str Key=Room_EditRulesHint}">
                     <FontIcon Glyph="&#xE8A1;" FontSize="14" />

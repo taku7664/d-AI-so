@@ -603,6 +603,35 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource
         }
     }
 
+    /// <summary>파일을 골라 경로를 입력 줄에 붙인다. 여러 개 고를 수 있다. 그림도 경로로 준다 — CLI 가 파일을 읽는다.</summary>
+    private async void OnRoomAttachClick(object sender, RoutedEventArgs e)
+    {
+        var picker = new FileOpenPicker { SuggestedStartLocation = PickerLocationId.PicturesLibrary };
+        picker.FileTypeFilter.Add("*");
+
+        // unpackaged 앱은 피커에 창 핸들을 직접 붙여야 한다.
+        if (App.MainWindow is { } window)
+        {
+            var handle = WinRT.Interop.WindowNative.GetWindowHandle(window);
+            WinRT.Interop.InitializeWithWindow.Initialize(picker, handle);
+        }
+
+        var files = await picker.PickMultipleFilesAsync();
+        if (files.Count > 0)
+        {
+            Embedded.PastePaths(files.Select(file => file.Path));
+        }
+
+        Embedded.FocusTerminal();
+    }
+
+    /// <summary>CLI 입력 줄을 비운다 (키 전송).</summary>
+    private void OnRoomClearInputClick(object sender, RoutedEventArgs e)
+    {
+        Embedded.ClearInput();
+        Embedded.FocusTerminal();
+    }
+
     private void ApplyPromptToRoom(TerminalRoomViewModel room, Daiso.Core.PromptPreset prompt)
     {
         try

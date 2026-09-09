@@ -1330,6 +1330,18 @@
   <data name="Room_ApplyPromptHint" xml:space="preserve">
     <value>내 프롬프트를 이 폴더에 넣고 시작 메시지를 터미널에 타이핑합니다</value>
   </data>
+  <data name="Room_AttachFile" xml:space="preserve">
+    <value>파일 첨부</value>
+  </data>
+  <data name="Room_AttachFileTip" xml:space="preserve">
+    <value>파일을 골라 경로를 입력 줄에 붙입니다. 터미널에 끌어다 놓거나 복사한 파일·그림을 Ctrl+V 해도 됩니다</value>
+  </data>
+  <data name="Room_ClearInput" xml:space="preserve">
+    <value>입력 비우기</value>
+  </data>
+  <data name="Room_ClearInputTip" xml:space="preserve">
+    <value>입력 줄을 비웁니다 (Ctrl+E, Ctrl+U 를 보냅니다)</value>
+  </data>
   <data name="Room_EditRulesHint" xml:space="preserve">
     <value>이 폴더의 규칙을 내 규칙 화면에서 편집합니다</value>
   </data>

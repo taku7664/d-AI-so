@@ -6,6 +6,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
 using Windows.ApplicationModel.DataTransfer;
+using Windows.Graphics.Imaging;
 
 namespace Daiso.App.Terminal;
 
@@ -38,6 +39,13 @@ public sealed class TerminalHost : UserControl
         VerticalContentAlignment = VerticalAlignment.Stretch;
         ActualThemeChanged += (_, _) => PostTheme();
 
+        // 파일 끌어놓기. WinUI 3 의 WebView2 는 OLE 드롭을 페이지(Chromium)까지 넘기지 않아 index.html 의 drop 은 오지 않는다.
+        // 드롭은 XAML 쪽에 떨어지므로 여기서 받아 경로를 붙인다 (그림 파일도 경로로 — CLI 가 파일을 읽는다)
+        AllowDrop = true;
+        _web.AllowDrop = true;
+        DragOver += OnDragOver;
+        Drop += OnDrop;
+
         // 설정(글자 크기)이 저장되면 열린 방에도 바로 반영한다. 화면을 떠나면 끊고 돌아오면 다시 건다
         Loaded += (_, _) =>
         {
@@ -53,6 +61,25 @@ public sealed class TerminalHost : UserControl
             }
         };
     }
+
+    /// <summary>경로들을 입력 줄에 붙인다. 빈칸이 있으면 따옴표로 감싼다. 파일 첨부 버튼·끌어놓기·복사한 파일 붙이기가 다 이 길이다.</summary>
+    public void PastePaths(IEnumerable<string> paths)
+    {
+        ArgumentNullException.ThrowIfNull(paths);
+
+        var list = paths.Where(path => !string.IsNullOrWhiteSpace(path)).ToList();
+        if (list.Count > 0)
+        {
+            Post(new { type = "paste", text = QuotePaths(list) });
+        }
+    }
+
+    /// <summary>
+    /// CLI 의 입력 줄을 비운다. 입력 줄은 CLI 것이라 우리가 지울 수 없고 키만 보낼 수 있다:
+    /// Ctrl+E(줄 끝으로) 뒤 Ctrl+U(줄 앞까지 지우기). Claude Code·Codex·Gemini 의 줄 편집기가 다 readline 꼴이라 통한다.
+    /// 여러 줄로 이어 쓴 입력은 마지막 줄만 지워질 수 있다.
+    /// </summary>
+    public void ClearInput() => _room?.SendRaw("\x05\x15");
 
     /// <summary>xterm이 뜨고 첫 크기를 보고했다. 그 뒤부터 출력이 바로 그려진다.</summary>
     public event EventHandler? Ready;
@@ -363,7 +390,65 @@ public sealed class TerminalHost : UserControl
 
         if (content.Contains(StandardDataFormats.Bitmap))
         {
-            _room?.SendRaw("\x16");
+            var saved = await SaveClipboardImageAsync(content);
+            if (saved is not null)
+            {
+                Post(new { type = "paste", text = QuotePaths([saved]) });
+            }
+        }
+    }
+
+    /// <summary>
+    /// 클립보드 그림을 PNG 파일로 저장하고 경로를 돌려준다. CLI 는 키 입력밖에 못 받으므로 그림은 파일 경로로 준다.
+    /// (Claude Code 는 Windows 에서 Ctrl+V 로 그림을 읽지 않고 Alt+V 를 쓰는데, 도구마다 달라 경로 붙이기가 세 도구에 다 통하는 길이다.)
+    /// 저장 위치: %LOCALAPPDATA%\d-AI-so\clips. 오래된 것은 사람이 지운다.
+    /// </summary>
+    private static async Task<string?> SaveClipboardImageAsync(DataPackageView content)
+    {
+        var reference = await content.GetBitmapAsync();
+        using var source = await reference.OpenReadAsync();
+        var decoder = await BitmapDecoder.CreateAsync(source);
+        using var bitmap = await decoder.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
+
+        var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "d-AI-so", "clips");
+        Directory.CreateDirectory(folder);
+        var path = Path.Combine(folder, $"clip-{DateTime.Now:yyyyMMdd-HHmmss-fff}.png");
+
+        using (var file = new FileStream(path, FileMode.Create, FileAccess.ReadWrite, FileShare.None))
+        {
+            var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, file.AsRandomAccessStream());
+            encoder.SetSoftwareBitmap(bitmap);
+            await encoder.FlushAsync();
+        }
+
+        return path;
+    }
+
+    private void OnDragOver(object sender, DragEventArgs e)
+    {
+        if (e.DataView.Contains(StandardDataFormats.StorageItems))
+        {
+            e.AcceptedOperation = DataPackageOperation.Copy;
+            e.DragUIOverride.IsCaptionVisible = false;
+        }
+    }
+
+    private async void OnDrop(object sender, DragEventArgs e)
+    {
+        if (!e.DataView.Contains(StandardDataFormats.StorageItems))
+        {
+            return;
+        }
+
+        try
+        {
+            var items = await e.DataView.GetStorageItemsAsync();
+            PastePaths(items.Select(item => item.Path));
+            FocusTerminal();
+        }
+        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or UnauthorizedAccessException)
+        {
+            // 드롭 데이터를 못 읽었다. 한 번의 끌어놓기가 안 된 것뿐이다
         }
     }
 
