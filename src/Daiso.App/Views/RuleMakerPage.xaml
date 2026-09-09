@@ -213,7 +213,7 @@
                                         <Button
                                             Grid.Column="1"
                                             AutomationProperties.AutomationId="AddGlobalButton"
-                                            Command="{x:Bind ViewModel.AddGlobalActionCommand}">
+                                            Click="OnAddGlobalClick">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <FontIcon Glyph="&#xE710;" FontSize="13" />
                                                 <TextBlock Text="{loc:Str Key=RuleMaker_AddAction}" />
@@ -237,7 +237,8 @@
                                                         Grid.Column="0"
                                                         MinWidth="80"
                                                         PlaceholderText="{loc:Str Key=RuleMaker_ActionPlaceholder}"
-                                                        Text="{x:Bind Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                        Text="{x:Bind Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                        Loaded="OnActionBoxLoaded" />
 
                                                     <ComboBox
                                                         Grid.Column="1"
@@ -293,7 +294,7 @@
                                         <Button
                                             Grid.Column="1"
                                             AutomationProperties.AutomationId="AddRuleButton"
-                                            Command="{x:Bind ViewModel.AddRuleCommand}">
+                                            Click="OnAddRuleClick">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <FontIcon Glyph="&#xE710;" FontSize="13" />
                                                 <TextBlock Text="{loc:Str Key=RuleMaker_AddRule}" />
@@ -411,7 +412,8 @@
                                                             MinWidth="220"
                                                             Visibility="{x:Bind LeafVisibility, Mode=OneWay}"
                                                             PlaceholderText="{loc:Str Key=RuleMaker_ConditionPlaceholder}"
-                                                            Text="{x:Bind Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                            Text="{x:Bind Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                            Loaded="OnConditionBoxLoaded" />
                                                     </Grid>
                                                 </muxc:TreeViewItem>
                                             </DataTemplate>
@@ -464,7 +466,8 @@
                                                         Grid.Column="0"
                                                         MinWidth="80"
                                                         PlaceholderText="{loc:Str Key=RuleMaker_ActionPlaceholder}"
-                                                        Text="{x:Bind Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                        Text="{x:Bind Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                        Loaded="OnActionBoxLoaded" />
 
                                                     <ComboBox
                                                         Grid.Column="1"

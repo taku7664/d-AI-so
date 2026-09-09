@@ -525,12 +525,54 @@ public sealed partial class RuleMakerPage : Page, IPageHeaderSource
     private void OnGlobalRemoveClick(object sender, RoutedEventArgs e) =>
         ViewModel.RemoveGlobalActionCommand.Execute(Context<ActionEditViewModel>(sender));
 
+    // ── 추가 뒤 포커스 ───────────────────────────────────────────────────
+    //
+    // "행동 추가"를 누르면 새 줄이 생기는데 포커스는 버튼에 남아 있었다. 그 자리에서 바로 타이핑하면
+    // 글자는 버려지고, 문장 속 띄어쓰기가 버튼을 다시 눌러 빈 줄이 하나씩 더 생겼다.
+    // 추가한 직후 처음 뜨는 입력칸으로 커서를 옮긴다. 플래그는 그 한 번만 산다.
+
+    private bool _focusNextActionBox;
+
+    private bool _focusNextConditionBox;
+
+    private void OnActionBoxLoaded(object sender, RoutedEventArgs e)
+    {
+        if (_focusNextActionBox && sender is TextBox box)
+        {
+            _focusNextActionBox = false;
+            box.Focus(FocusState.Programmatic);
+        }
+    }
+
+    private void OnConditionBoxLoaded(object sender, RoutedEventArgs e)
+    {
+        if (_focusNextConditionBox && sender is TextBox box)
+        {
+            _focusNextConditionBox = false;
+            box.Focus(FocusState.Programmatic);
+        }
+    }
+
+    private void OnAddGlobalClick(object sender, RoutedEventArgs e)
+    {
+        _focusNextActionBox = true;
+        ViewModel.AddGlobalAction();
+    }
+
+    /// <summary>새 규칙은 조건부터 적는다. 조건 칸이 뜨면 거기로 커서가 간다.</summary>
+    private void OnAddRuleClick(object sender, RoutedEventArgs e)
+    {
+        _focusNextConditionBox = true;
+        ViewModel.AddRule();
+    }
+
     // ── 규칙 행동 ────────────────────────────────────────────────────────
 
     private void OnAddRuleActionClick(object sender, RoutedEventArgs e)
     {
         if (ViewModel.SelectedRule is { } rule)
         {
+            _focusNextActionBox = true;
             rule.Actions.Add(new ActionEditViewModel());
             rule.NotifyChanged();
         }
@@ -573,7 +615,11 @@ public sealed partial class RuleMakerPage : Page, IPageHeaderSource
 
     // ── 조건 트리 ────────────────────────────────────────────────────────
 
-    private void OnAddLeafClick(object sender, RoutedEventArgs e) => AddNode(ConditionNodeKind.Leaf);
+    private void OnAddLeafClick(object sender, RoutedEventArgs e)
+    {
+        _focusNextConditionBox = true;
+        AddNode(ConditionNodeKind.Leaf);
+    }
 
     /// <summary>연산자 노드에는 자식으로, 리프 옆에는 형제로 넣는다.</summary>
     private void AddNode(ConditionNodeKind kind)
