@@ -65,8 +65,13 @@ public static class SessionTitle
                 continue;
             }
 
-            // 화면에 네모(□)로 나오던 것들
             if (char.IsControl(ch))
+            {
+                continue;
+            }
+
+            // CLI 시작 배너의 그림(`▐▛███▛█  Claude Code v2.1.245`)이 제목을 차지한다
+            if (IsBoxDrawing(ch))
             {
                 continue;
             }
@@ -77,6 +82,13 @@ public static class SessionTitle
 
         return builder.ToString().Trim();
     }
+
+    /// <summary>
+    /// 罫線·블록 글자인가. CLI가 시작할 때 그리는 상자·로고가 여기에 든다.
+    /// 글이 아니라 그림이라 제목에서는 뜻이 없다 — 검은 막대로만 보인다.
+    /// </summary>
+    private static bool IsBoxDrawing(char ch) =>
+        ch is >= '─' and <= '▟';   // Box Drawing + Block Elements
 
     /// <summary>
     /// <paramref name="start"/>의 여는 꺾쇠가 태그의 시작인가. 맞으면 닫는 꺾쇠 자리를 돌려준다.

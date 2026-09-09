@@ -108,4 +108,17 @@ public sealed class SessionTitleTests
     {
         SessionTitle.Clean("하트 <3 이다").Should().Be("하트 <3 이다");
     }
+
+    [Fact]
+    public void CLI_시작_배너의_그림_글자를_걷어낸다()
+    {
+        // 실제 세션에서 나온 값이다. 제어문자가 아니라 Block Elements 라 제어문자 제거로는 안 잡혔다
+        SessionTitle.Clean("▐▛███▛█   Claude Code v2.1.245").Should().Be("Claude Code v2.1.245");
+    }
+
+    [Fact]
+    public void 罫線으로_그린_상자도_걷어낸다()
+    {
+        SessionTitle.Clean("╭─────╮ 안내 ╰─────╯").Should().Be("안내");
+    }
 }
