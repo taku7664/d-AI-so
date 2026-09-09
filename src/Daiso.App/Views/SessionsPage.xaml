@@ -63,8 +63,16 @@
         </StackPanel>
         </controls:PageBody.Commands>
 
-        <!-- 필터 줄 (바꾸면 바로 적용) -->
+        <!-- 필터 줄 (바꾸면 바로 적용). 도구별 거르기는 탭, 나머지 축은 콤보 (UI_REFACTOR_PLAN §8.4) -->
         <controls:PageBody.Filters>
+        <StackPanel Spacing="12">
+        <muxc:SelectorBar x:Name="ToolTabs" SelectionChanged="OnToolTabChanged" AutomationProperties.AutomationId="ToolTabs">
+            <muxc:SelectorBarItem Text="{loc:Str Key=Common_All}" IsSelected="True" AutomationProperties.AutomationId="ToolTabAll" />
+            <muxc:SelectorBarItem Text="Codex" AutomationProperties.AutomationId="ToolTabCodex" />
+            <muxc:SelectorBarItem Text="Claude" AutomationProperties.AutomationId="ToolTabClaude" />
+            <muxc:SelectorBarItem Text="Gemini" AutomationProperties.AutomationId="ToolTabGemini" />
+        </muxc:SelectorBar>
+
         <StackPanel Orientation="Horizontal" Spacing="12">
             <!-- 잠긴 컨트롤은 마우스를 받지 않아 툴팁이 안 뜬다. 검색 중 잠기는 이유는 투명 테두리가 대신 말한다 -->
             <Border Background="Transparent" ToolTipService.ToolTip="{loc:Str Key=Sessions_SearchScopeHint}">
@@ -83,13 +91,6 @@
                     </ComboBox.ItemTemplate>
                 </ComboBox>
             </Border>
-
-            <ComboBox
-                Header="{loc:Str Key=Common_Tool}"
-                Width="120"
-                AutomationProperties.AutomationId="ToolFilterCombo"
-                ItemsSource="{x:Bind ViewModel.ToolFilters}"
-                SelectedIndex="{x:Bind ViewModel.ToolFilterIndex, Mode=TwoWay}" />
 
             <ComboBox
                 Header="{loc:Str Key=Common_Period}"
@@ -144,6 +145,7 @@
                 VerticalAlignment="Bottom"
                 Margin="0,0,0,6"
                 IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}" />
+        </StackPanel>
         </StackPanel>
         </controls:PageBody.Filters>
 

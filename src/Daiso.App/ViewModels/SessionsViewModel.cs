@@ -124,9 +124,6 @@ public sealed partial class SessionsViewModel : ObservableObject
     [ObservableProperty]
     private IReadOnlyList<MessageViewModel> timeline = [];
 
-    /// <summary>도구 필터 항목.</summary>
-    public IReadOnlyList<string> ToolFilters { get; } = [UiStrings.All, .. ToolLook.DisplayOrder.Select(ToolLook.Short)];
-
     /// <summary>기간 필터 항목.</summary>
     public IReadOnlyList<string> PeriodFilters { get; } =
     [

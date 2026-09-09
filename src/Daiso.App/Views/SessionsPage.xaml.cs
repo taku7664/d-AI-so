@@ -21,8 +21,24 @@ public sealed partial class SessionsPage : Page, IPageHeaderSource
         Shell.PropertyChanged += OnShellPropertyChanged;
         Doctor = App.Services.GetRequiredService<ContextDoctorViewModel>();
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+        SelectorBarVisuals.ResetPressedOnLeave(ToolTabs);
 
-        Loaded += async (_, _) => await ViewModel.LoadCommand.ExecuteAsync(null);
+        Loaded += async (_, _) =>
+        {
+            SelectorBarVisuals.Select(ToolTabs, ViewModel.ToolFilterIndex);
+            await ViewModel.LoadCommand.ExecuteAsync(null);
+        };
+    }
+
+    /// <summary>도구 탭을 누르면 목록을 그 도구로 거른다. 탭 순서 = ToolFilters 순서(전체 → ToolLook.DisplayOrder).</summary>
+    private void OnToolTabChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
+    {
+        var index = sender.Items.IndexOf(sender.SelectedItem);
+
+        if (index >= 0 && index != ViewModel.ToolFilterIndex)
+        {
+            ViewModel.ToolFilterIndex = index;
+        }
     }
 
     public SessionsViewModel ViewModel { get; }
@@ -54,6 +70,11 @@ public sealed partial class SessionsPage : Page, IPageHeaderSource
         {
             case nameof(SessionsViewModel.HasSearchResults):
                 RebuildSearchTree();
+                break;
+
+            // 필터 초기화처럼 뷰모델 쪽에서 바뀌면 탭 띠도 따라간다 (양방향, ARCHITECTURE §6.2)
+            case nameof(SessionsViewModel.ToolFilterIndex):
+                SelectorBarVisuals.Select(ToolTabs, ViewModel.ToolFilterIndex);
                 break;
 
             // 프로젝트를 바꾸면 컨텍스트 리포트도 그 폴더로 맞춘다.
