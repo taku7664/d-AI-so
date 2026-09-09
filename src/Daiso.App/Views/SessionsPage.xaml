@@ -517,7 +517,7 @@
                             <StackPanel Spacing="{StaticResource GapLarge}">
                                 <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
                                     <ComboBox
-                                        Width="120"
+                                        Width="{StaticResource FilterComboWidth}"
                                         AutomationProperties.AutomationId="ContextToolCombo"
                                         AutomationProperties.Name="{loc:Str Key=Common_Tool}"
                                         ItemsSource="{x:Bind Doctor.Tools}"

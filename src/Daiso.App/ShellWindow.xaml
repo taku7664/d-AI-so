@@ -54,8 +54,8 @@
                     </StackPanel.Resources>
                     <Button
                         x:Name="BackButton"
-                        Width="36"
-                        Height="32"
+                        Width="{StaticResource TitleBarButtonWidth}"
+                        Height="{StaticResource TitleBarButtonHeight}"
                         Padding="0"
                         Background="Transparent"
                         BorderThickness="0"
@@ -67,8 +67,8 @@
                     </Button>
                     <Button
                         x:Name="ForwardButton"
-                        Width="36"
-                        Height="32"
+                        Width="{StaticResource TitleBarButtonWidth}"
+                        Height="{StaticResource TitleBarButtonHeight}"
                         Padding="0"
                         Background="Transparent"
                         BorderThickness="0"
@@ -79,8 +79,8 @@
                         <FontIcon Glyph="&#xE72A;" FontSize="{StaticResource SubtitleFontSize}" />
                     </Button>
                     <Button
-                        Width="36"
-                        Height="32"
+                        Width="{StaticResource TitleBarButtonWidth}"
+                        Height="{StaticResource TitleBarButtonHeight}"
                         Padding="0"
                         Background="Transparent"
                         BorderThickness="0"

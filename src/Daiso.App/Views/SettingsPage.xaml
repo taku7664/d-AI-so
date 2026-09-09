@@ -95,7 +95,7 @@
                         <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapLarge}">
                             <NumberBox
                                 Header="{loc:Str Key=Settings_OlderThanDays}"
-                                Width="200"
+                                Width="{StaticResource SettingInputWidth}"
                                 Minimum="1"
                                 SpinButtonPlacementMode="Compact"
                                 AutomationProperties.AutomationId="CleanupDaysBox"
@@ -103,7 +103,7 @@
 
                             <NumberBox
                                 Header="{loc:Str Key=Settings_LargerThanMb}"
-                                Width="200"
+                                Width="{StaticResource SettingInputWidth}"
                                 Minimum="1"
                                 SpinButtonPlacementMode="Compact"
                                 AutomationProperties.AutomationId="CleanupSizeBox"
@@ -264,7 +264,7 @@
 
                         <ComboBox
                             Header="{loc:Str Key=Settings_Theme}"
-                            Width="200"
+                            Width="{StaticResource SettingInputWidth}"
                             HorizontalAlignment="Left"
                             AutomationProperties.AutomationId="ThemeCombo"
                             ItemsSource="{x:Bind ViewModel.Themes}"
@@ -272,7 +272,7 @@
 
                         <NumberBox
                             Header="{loc:Str Key=Settings_TerminalFontSize}"
-                            Width="200"
+                            Width="{StaticResource SettingInputWidth}"
                             HorizontalAlignment="Left"
                             Minimum="8"
                             Maximum="28"

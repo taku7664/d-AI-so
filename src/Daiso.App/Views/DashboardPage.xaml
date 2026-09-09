@@ -73,8 +73,8 @@
                                         <Grid Grid.Column="0" VerticalAlignment="Center">
                                             <controls:ToolIcon Kind="{x:Bind Kind}" Size="28" />
                                             <Ellipse
-                                                Width="10"
-                                                Height="10"
+                                                Width="{StaticResource StatusDotSize}"
+                                                Height="{StaticResource StatusDotSize}"
                                                 HorizontalAlignment="Right"
                                                 VerticalAlignment="Bottom"
                                                 Margin="0,0,-2,-2"

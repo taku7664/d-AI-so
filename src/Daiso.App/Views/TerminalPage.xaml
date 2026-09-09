@@ -263,8 +263,8 @@
                                     </Grid.ColumnDefinitions>
                                     <Grid Grid.Column="0" VerticalAlignment="Center" Height="20">
                                         <FontIcon Glyph="&#xE73E;" FontSize="{StaticResource BodyFontSize}" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Visibility="{x:Bind ViewModel.ToolMarkDone, Mode=OneWay}" />
-                                        <Ellipse Width="10" Height="10" Fill="{ThemeResource AccentFillColorDefaultBrush}" Visibility="{x:Bind ViewModel.ToolExpanded, Mode=OneWay}" />
-                                        <Ellipse Width="10" Height="10" StrokeThickness="1" Stroke="{ThemeResource TextFillColorTertiaryBrush}" Visibility="{x:Bind ViewModel.ToolMarkPending, Mode=OneWay}" />
+                                        <Ellipse Width="{StaticResource StatusDotSize}" Height="{StaticResource StatusDotSize}" Fill="{ThemeResource AccentFillColorDefaultBrush}" Visibility="{x:Bind ViewModel.ToolExpanded, Mode=OneWay}" />
+                                        <Ellipse Width="{StaticResource StatusDotSize}" Height="{StaticResource StatusDotSize}" StrokeThickness="1" Stroke="{ThemeResource TextFillColorTertiaryBrush}" Visibility="{x:Bind ViewModel.ToolMarkPending, Mode=OneWay}" />
                                     </Grid>
                                     <TextBlock Grid.Column="1" Text="{loc:Str Key=Terminal_StepTool}" Style="{StaticResource SectionTitleText}" VerticalAlignment="Center" />
                                     <TextBlock Grid.Column="2" Text="{x:Bind ViewModel.ToolSummary, Mode=OneWay}" Style="{StaticResource MutedText}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Visibility="{x:Bind ViewModel.ToolMarkDone, Mode=OneWay}" />
@@ -351,8 +351,8 @@
                                     </Grid.ColumnDefinitions>
                                     <Grid Grid.Column="0" VerticalAlignment="Center" Height="20">
                                         <FontIcon Glyph="&#xE73E;" FontSize="{StaticResource BodyFontSize}" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Visibility="{x:Bind ViewModel.FolderMarkDone, Mode=OneWay}" />
-                                        <Ellipse Width="10" Height="10" Fill="{ThemeResource AccentFillColorDefaultBrush}" Visibility="{x:Bind ViewModel.FolderExpanded, Mode=OneWay}" />
-                                        <Ellipse Width="10" Height="10" StrokeThickness="1" Stroke="{ThemeResource TextFillColorTertiaryBrush}" Visibility="{x:Bind ViewModel.FolderMarkPending, Mode=OneWay}" />
+                                        <Ellipse Width="{StaticResource StatusDotSize}" Height="{StaticResource StatusDotSize}" Fill="{ThemeResource AccentFillColorDefaultBrush}" Visibility="{x:Bind ViewModel.FolderExpanded, Mode=OneWay}" />
+                                        <Ellipse Width="{StaticResource StatusDotSize}" Height="{StaticResource StatusDotSize}" StrokeThickness="1" Stroke="{ThemeResource TextFillColorTertiaryBrush}" Visibility="{x:Bind ViewModel.FolderMarkPending, Mode=OneWay}" />
                                     </Grid>
                                     <TextBlock Grid.Column="1" Text="{loc:Str Key=Terminal_WorkFolder}" Style="{StaticResource SectionTitleText}" VerticalAlignment="Center" />
                                     <TextBlock Grid.Column="2" Text="{x:Bind ViewModel.FolderSummary, Mode=OneWay}" Style="{StaticResource MutedText}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Visibility="{x:Bind ViewModel.FolderMarkDone, Mode=OneWay}" />
@@ -428,8 +428,8 @@
                                     </Grid.ColumnDefinitions>
                                     <Grid Grid.Column="0" VerticalAlignment="Center" Height="20">
                                         <FontIcon Glyph="&#xE73E;" FontSize="{StaticResource BodyFontSize}" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Visibility="{x:Bind ViewModel.SessionMarkDone, Mode=OneWay}" />
-                                        <Ellipse Width="10" Height="10" Fill="{ThemeResource AccentFillColorDefaultBrush}" Visibility="{x:Bind ViewModel.SessionExpanded, Mode=OneWay}" />
-                                        <Ellipse Width="10" Height="10" StrokeThickness="1" Stroke="{ThemeResource TextFillColorTertiaryBrush}" Visibility="{x:Bind ViewModel.SessionMarkPending, Mode=OneWay}" />
+                                        <Ellipse Width="{StaticResource StatusDotSize}" Height="{StaticResource StatusDotSize}" Fill="{ThemeResource AccentFillColorDefaultBrush}" Visibility="{x:Bind ViewModel.SessionExpanded, Mode=OneWay}" />
+                                        <Ellipse Width="{StaticResource StatusDotSize}" Height="{StaticResource StatusDotSize}" StrokeThickness="1" Stroke="{ThemeResource TextFillColorTertiaryBrush}" Visibility="{x:Bind ViewModel.SessionMarkPending, Mode=OneWay}" />
                                     </Grid>
                                     <TextBlock Grid.Column="1" Text="{loc:Str Key=Terminal_Session}" Style="{StaticResource SectionTitleText}" VerticalAlignment="Center" />
                                     <TextBlock Grid.Column="2" Text="{x:Bind ViewModel.SessionSummary, Mode=OneWay}" Style="{StaticResource MutedText}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Visibility="{x:Bind ViewModel.SessionMarkDone, Mode=OneWay}" />

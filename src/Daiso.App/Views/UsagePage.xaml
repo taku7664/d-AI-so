@@ -13,7 +13,7 @@
             <StackPanel Spacing="{StaticResource GapLarge}">
                 <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
                     <ComboBox
-                        Width="120"
+                        Width="{StaticResource FilterComboWidth}"
                         AutomationProperties.AutomationId="UsagePeriodCombo"
                         AutomationProperties.Name="{loc:Str Key=Common_Period}"
                         ItemsSource="{x:Bind Usage.Periods}"

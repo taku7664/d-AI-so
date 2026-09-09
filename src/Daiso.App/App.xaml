@@ -40,6 +40,18 @@
             <x:Double x:Key="TitleFontSize">20</x:Double>
             <x:Double x:Key="DisplayFontSize">28</x:Double>
 
+            <!--
+                치수 — 뜻이 같아서 함께 움직여야 하는 것만 올린다.
+                같은 숫자라고 다 같은 결정은 아니다: 예를 들어 160 은 진행 막대 폭이자 표의 열 폭이자
+                타일 최소 폭이었다. 그런 우연을 하나로 묶으면 한쪽을 고칠 때 다른 쪽이 딸려 온다.
+                (재 본 결과와 남긴 이유: docs/REVIEW_BACKLOG.md A2)
+            -->
+            <x:Double x:Key="StatusDotSize">10</x:Double>
+            <x:Double x:Key="FilterComboWidth">120</x:Double>
+            <x:Double x:Key="SettingInputWidth">200</x:Double>
+            <x:Double x:Key="TitleBarButtonWidth">36</x:Double>
+            <x:Double x:Key="TitleBarButtonHeight">32</x:Double>
+
             <!-- 모서리 -->
             <CornerRadius x:Key="RadiusSmall">4</CornerRadius>
             <CornerRadius x:Key="RadiusMedium">6</CornerRadius>
