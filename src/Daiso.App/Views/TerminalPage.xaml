@@ -230,17 +230,30 @@
                         <RowDefinition Height="*" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
-                    <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
                         <!--
                             아코디언 세 단계 + 실행 줄. 한 번에 한 단계만 펼친다.
                             접힌 머리는 높이가 고정이라, 새 세션 ↔ 이어서를 오가도 카드가 흔들리지 않는다.
                             필수 답이 채워지면 다음 단계가 저절로 열린다 — "다음" 버튼을 두지 않는다.
                             (docs/TERMINAL_CARD_PLAN.md §4 · §7.1)
+
+                            단계들은 Grid 이고 3단계 몸이 * 줄이다. 스크롤 안에 그냥 두면 지난 대화 목록이 무한 높이로 재어져
+                            카드 바닥에서 반 줄이 잘렸고(§2-C4), 목록의 MaxHeight 를 어떻게 잡아도 창 높이와 어긋났다.
+                            Grid 높이는 코드가 "보이는 높이와 최소 높이 중 큰 쪽"으로 맞춘다(OnStepsScrollSizeChanged) —
+                            창이 넉넉하면 목록이 남은 높이를 다 쓰고 제 안에서 스크롤하고, 창이 낮으면(최소 700) 바깥이 스크롤되어 목록에 닿는다
                         -->
-                        <StackPanel Padding="20,4,20,8">
+                        <ScrollViewer x:Name="StepsScroll" Grid.Row="0" VerticalScrollBarVisibility="Auto" SizeChanged="OnStepsScrollSizeChanged">
+                        <Grid x:Name="StepsGrid" Padding="20,4,20,8">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
 
                             <!-- ───── 1. 어떤 AI로 시작할까요? ───── -->
-                            <Button Style="{StaticResource StepHeader}" Click="OnStepToolClick" AutomationProperties.AutomationId="StepToolHeader">
+                            <Button Grid.Row="0" Style="{StaticResource StepHeader}" Click="OnStepToolClick" AutomationProperties.AutomationId="StepToolHeader">
                                 <Grid ColumnSpacing="10">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="20" />
@@ -264,7 +277,7 @@
                                 도구가 늘어도 이 markup 은 그대로다. 목록(ListView)을 쓰는 이유는 고른 카드의 강조·키보드 이동을
                                 WinUI 가 테마에 맞게 알아서 해 주기 때문이다 (직접 칠하면 라이트/다크에서 어긋난다)
                             -->
-                            <StackPanel Style="{StaticResource StepBody}" Visibility="{x:Bind ViewModel.ToolExpanded, Mode=OneWay}">
+                            <StackPanel Grid.Row="1" Style="{StaticResource StepBody}" Visibility="{x:Bind ViewModel.ToolExpanded, Mode=OneWay}">
                                 <ListView
                                     x:Name="ToolCards"
                                     ItemsSource="{x:Bind ViewModel.Tools}"
@@ -286,21 +299,37 @@
                                             <Setter Property="CornerRadius" Value="6" />
                                         </Style>
                                     </ListView.ItemContainerStyle>
+                                    <ListView.Resources>
+                                        <!-- 기본 호버(흰색 6%)는 카드 위에서 거의 안 보였다. 고를 수 있는 것은 손을 올리면 켜져야 한다 -->
+                                        <ResourceDictionary>
+                                            <ResourceDictionary.ThemeDictionaries>
+                                                <ResourceDictionary x:Key="Default">
+                                                    <SolidColorBrush x:Key="ListViewItemBackgroundPointerOver" Color="#26FFFFFF" />
+                                                </ResourceDictionary>
+                                                <ResourceDictionary x:Key="Light">
+                                                    <SolidColorBrush x:Key="ListViewItemBackgroundPointerOver" Color="#14000000" />
+                                                </ResourceDictionary>
+                                            </ResourceDictionary.ThemeDictionaries>
+                                        </ResourceDictionary>
+                                    </ListView.Resources>
                                     <ListView.ItemTemplate>
                                         <DataTemplate x:DataType="vm:ToolLaunchViewModel">
-                                            <StackPanel Width="132" Padding="10,12" Spacing="4" AutomationProperties.AutomationId="{x:Bind AutomationId}">
-                                                <controls:ToolIcon Kind="{x:Bind Kind}" Size="30" HorizontalAlignment="Center" />
-                                                <TextBlock Text="{x:Bind Title}" HorizontalAlignment="Center" TextAlignment="Center" FontWeight="SemiBold" TextWrapping="Wrap" />
-                                                <TextBlock Text="{x:Bind Vendor}" HorizontalAlignment="Center" Style="{StaticResource MutedText}" />
-                                                <TextBlock Text="{x:Bind InstallStateText, Mode=OneWay}" HorizontalAlignment="Center" Style="{StaticResource MutedText}" />
-                                            </StackPanel>
+                                            <!-- 테두리를 둬서 "고르는 카드"로 보이게 한다. 글자만 있으면 눌러도 되는지 알 수 없다. 배경은 반투명이라 고름·호버 색이 비친다 -->
+                                            <Border Width="132" Padding="10,12" CornerRadius="6" BorderThickness="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" Background="{ThemeResource ControlFillColorDefaultBrush}" AutomationProperties.AutomationId="{x:Bind AutomationId}">
+                                                <StackPanel Spacing="4">
+                                                    <controls:ToolIcon Kind="{x:Bind Kind}" Size="30" HorizontalAlignment="Center" />
+                                                    <TextBlock Text="{x:Bind Title}" HorizontalAlignment="Center" TextAlignment="Center" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                                    <TextBlock Text="{x:Bind Vendor}" HorizontalAlignment="Center" Style="{StaticResource MutedText}" />
+                                                    <TextBlock Text="{x:Bind InstallStateText, Mode=OneWay}" HorizontalAlignment="Center" Style="{StaticResource MutedText}" />
+                                                </StackPanel>
+                                            </Border>
                                         </DataTemplate>
                                     </ListView.ItemTemplate>
                                 </ListView>
                             </StackPanel>
 
                             <!-- ───── 2. 어느 폴더에서 일할까요? ───── -->
-                            <Button Style="{StaticResource StepHeader}" Click="OnStepFolderClick" Opacity="{x:Bind ViewModel.FolderHeaderOpacity, Mode=OneWay}" IsHitTestVisible="{x:Bind ViewModel.FolderReachable, Mode=OneWay}" AutomationProperties.AutomationId="StepFolderHeader">
+                            <Button Grid.Row="2" Style="{StaticResource StepHeader}" Click="OnStepFolderClick" Opacity="{x:Bind ViewModel.FolderHeaderOpacity, Mode=OneWay}" IsHitTestVisible="{x:Bind ViewModel.FolderReachable, Mode=OneWay}" AutomationProperties.AutomationId="StepFolderHeader">
                                 <Grid ColumnSpacing="10">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="20" />
@@ -319,7 +348,7 @@
                                 </Grid>
                             </Button>
 
-                            <StackPanel Style="{StaticResource StepBody}" Visibility="{x:Bind ViewModel.FolderExpanded, Mode=OneWay}">
+                            <StackPanel Grid.Row="3" Style="{StaticResource StepBody}" Visibility="{x:Bind ViewModel.FolderExpanded, Mode=OneWay}">
                                 <Grid ColumnSpacing="8">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
@@ -377,7 +406,7 @@
                             </StackPanel>
 
                             <!-- ───── 3. 무엇부터 할까요? ───── -->
-                            <Button Style="{StaticResource StepHeader}" Click="OnStepSessionClick" Opacity="{x:Bind ViewModel.SessionHeaderOpacity, Mode=OneWay}" IsHitTestVisible="{x:Bind ViewModel.SessionReachable, Mode=OneWay}" AutomationProperties.AutomationId="StepSessionHeader">
+                            <Button Grid.Row="4" Style="{StaticResource StepHeader}" Click="OnStepSessionClick" Opacity="{x:Bind ViewModel.SessionHeaderOpacity, Mode=OneWay}" IsHitTestVisible="{x:Bind ViewModel.SessionReachable, Mode=OneWay}" AutomationProperties.AutomationId="StepSessionHeader">
                                 <Grid ColumnSpacing="10">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="20" />
@@ -396,14 +425,23 @@
                                 </Grid>
                             </Button>
 
-                            <StackPanel Style="{StaticResource StepBody}" Visibility="{x:Bind ViewModel.SessionExpanded, Mode=OneWay}">
+                            <!-- 3단계 몸은 * 줄이라 Grid 다. StepBody(StackPanel) 와 같은 여백·간격을 손으로 적는다 -->
+                            <Grid Grid.Row="5" RowSpacing="8" Margin="30,2,0,14" Visibility="{x:Bind ViewModel.SessionExpanded, Mode=OneWay}">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
                                 <!-- 앞 단계를 바꿔 이 답이 무효가 됐다. 조용히 지우면 "왜 없어졌지"가 된다 (§4.9) -->
-                                <Border Style="{StaticResource NoticeBorder}" Visibility="{x:Bind ViewModel.HasInvalidationNotice, Mode=OneWay}">
+                                <Border Grid.Row="0" Style="{StaticResource NoticeBorder}" Visibility="{x:Bind ViewModel.HasInvalidationNotice, Mode=OneWay}">
                                     <TextBlock Text="{x:Bind ViewModel.InvalidationNotice, Mode=OneWay}" TextWrapping="Wrap" />
                                 </Border>
 
                                 <!-- 카드 2장. 각 카드에 부연 한 줄을 붙여 고르기 전에 무엇이 기다리는지 알려 준다 (§4.5) -->
                                 <ListView
+                                    Grid.Row="1"
                                     x:Name="SessionModeRadios"
                                     AutomationProperties.AutomationId="SessionModeRadios"
                                     SelectedIndex="{x:Bind ViewModel.SessionModeSelection, Mode=OneWay}"
@@ -423,22 +461,39 @@
                                             <Setter Property="CornerRadius" Value="6" />
                                         </Style>
                                     </ListView.ItemContainerStyle>
+                                    <ListView.Resources>
+                                        <ResourceDictionary>
+                                            <ResourceDictionary.ThemeDictionaries>
+                                                <ResourceDictionary x:Key="Default">
+                                                    <SolidColorBrush x:Key="ListViewItemBackgroundPointerOver" Color="#26FFFFFF" />
+                                                </ResourceDictionary>
+                                                <ResourceDictionary x:Key="Light">
+                                                    <SolidColorBrush x:Key="ListViewItemBackgroundPointerOver" Color="#14000000" />
+                                                </ResourceDictionary>
+                                            </ResourceDictionary.ThemeDictionaries>
+                                        </ResourceDictionary>
+                                    </ListView.Resources>
+                                    <!-- AI 카드와 같은 테두리 카드. 두 화면이 같은 "고르는 카드" 문법을 쓴다 -->
                                     <ListViewItem AutomationProperties.AutomationId="NewSessionRadio" ToolTipService.ToolTip="{loc:Str Key=Terminal_NewSessionTip}">
-                                        <StackPanel Width="200" Padding="12,10" Spacing="2">
-                                            <TextBlock Text="{loc:Str Key=Terminal_NewSession}" FontWeight="SemiBold" />
-                                            <TextBlock Text="{loc:Str Key=Terminal_NewSessionSub}" Style="{StaticResource MutedText}" TextWrapping="Wrap" />
-                                        </StackPanel>
+                                        <Border Width="200" Padding="12,10" CornerRadius="6" BorderThickness="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" Background="{ThemeResource ControlFillColorDefaultBrush}">
+                                            <StackPanel Spacing="2">
+                                                <TextBlock Text="{loc:Str Key=Terminal_NewSession}" FontWeight="SemiBold" />
+                                                <TextBlock Text="{loc:Str Key=Terminal_NewSessionSub}" Style="{StaticResource MutedText}" TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </Border>
                                     </ListViewItem>
                                     <ListViewItem AutomationProperties.AutomationId="ResumeSessionRadio" ToolTipService.ToolTip="{loc:Str Key=Terminal_ResumeSessionTip}" IsEnabled="{x:Bind ViewModel.HasAnyResume, Mode=OneWay}">
-                                        <StackPanel Width="200" Padding="12,10" Spacing="2">
-                                            <TextBlock Text="{loc:Str Key=Terminal_ResumeSession}" FontWeight="SemiBold" />
-                                            <TextBlock Text="{x:Bind ViewModel.ResumeCountText, Mode=OneWay}" Style="{StaticResource MutedText}" TextWrapping="Wrap" />
-                                        </StackPanel>
+                                        <Border Width="200" Padding="12,10" CornerRadius="6" BorderThickness="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" Background="{ThemeResource ControlFillColorDefaultBrush}">
+                                            <StackPanel Spacing="2">
+                                                <TextBlock Text="{loc:Str Key=Terminal_ResumeSession}" FontWeight="SemiBold" />
+                                                <TextBlock Text="{x:Bind ViewModel.ResumeCountText, Mode=OneWay}" Style="{StaticResource MutedText}" TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </Border>
                                     </ListViewItem>
                                 </ListView>
 
                                 <!-- 새로 시작: 시작 프롬프트는 선택 사항이라 이 단계를 접지 않는다 (§4.6) -->
-                                <Grid ColumnSpacing="12" Visibility="{x:Bind ViewModel.ShowNewSessionOptions, Mode=OneWay}">
+                                <Grid Grid.Row="2" ColumnSpacing="12" Visibility="{x:Bind ViewModel.ShowNewSessionOptions, Mode=OneWay}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="*" />
@@ -453,26 +508,37 @@
                                         SelectedItem="{x:Bind ViewModel.SelectedPrompt, Mode=TwoWay}"
                                         DisplayMemberPath="Name" />
                                 </Grid>
-                                <TextBlock Text="{loc:Str Key=Terminal_PromptHint}" Style="{StaticResource MutedText}" TextWrapping="Wrap" Visibility="{x:Bind ViewModel.ShowNewSessionOptions, Mode=OneWay}" />
+                                <TextBlock Grid.Row="3" Text="{loc:Str Key=Terminal_PromptHint}" Style="{StaticResource MutedText}" TextWrapping="Wrap" Visibility="{x:Bind ViewModel.ShowNewSessionOptions, Mode=OneWay}" />
 
-                                <!-- 이어서: 이 폴더·도구의 지난 대화 -->
-                                <StackPanel Spacing="6" Visibility="{x:Bind ViewModel.ShowResumeList, Mode=OneWay}">
+                                <!-- 이어서: 이 폴더·도구의 지난 대화. 목록이 남은 높이를 다 쓴다 -->
+                                <Grid x:Name="ResumeArea" Grid.Row="4" RowSpacing="6" Visibility="{x:Bind ViewModel.ShowResumeList, Mode=OneWay}" SizeChanged="OnResumeAreaSizeChanged">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
                                     <!-- 검색칸. 세션이 늘면 눈으로 찾는 것이 불가능해진다 (§2-E6) -->
                                     <TextBox
+                                        x:Name="ResumeSearch"
+                                        Grid.Row="0"
                                         AutomationProperties.AutomationId="ResumeSearchBox"
                                         AutomationProperties.Name="{loc:Str Key=Terminal_ResumeSearch}"
                                         PlaceholderText="{loc:Str Key=Terminal_ResumeSearch}"
                                         Text="{x:Bind ViewModel.ResumeSearch, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                     <!--
-                                        행 높이를 40 으로 고정하고 목록 높이를 그 정수배(5행)로 둔다.
-                                        전에는 MaxHeight 220 이라 마지막 행이 높이 중간에서 잘려 "더 있는지 끝인지" 알 수 없었다 (§2-C4)
+                                        행과 날짜 머리를 모두 40 으로 고정한다. 높이는 * 줄이 준 만큼 — 대화가 적으면 내용만큼(Top),
+                                        많으면 남은 높이를 쓰고 제 안에서 스크롤한다. 단, 남은 높이를 40 의 배수로 잘라(OnResumeAreaSizeChanged)
+                                        마지막 줄이 반만 보이는 일이 없게 한다. 고정 MaxHeight 는 창 높이와 늘 어긋났다 (§2-C4)
                                     -->
                                     <ListView
+                                        x:Name="ResumeList"
+                                        Grid.Row="1"
+                                        VerticalAlignment="Top"
+                                        MinHeight="82"
                                         AutomationProperties.AutomationId="ResumeSessionList"
                                         ItemsSource="{Binding Source={StaticResource ResumeGroupsSource}}"
                                         SelectedItem="{x:Bind ViewModel.SelectedResume, Mode=TwoWay}"
                                         SelectionMode="Single"
-                                        MaxHeight="200"
                                         BorderThickness="1"
                                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                                         CornerRadius="4">
@@ -503,33 +569,44 @@
                                         </ListView.ItemTemplate>
                                         <ListView.GroupStyle>
                                             <GroupStyle>
+                                                <GroupStyle.HeaderContainerStyle>
+                                                    <Style TargetType="ListViewHeaderItem">
+                                                        <Setter Property="Height" Value="40" />
+                                                        <Setter Property="MinHeight" Value="40" />
+                                                        <Setter Property="Margin" Value="0" />
+                                                        <Setter Property="Padding" Value="12,0" />
+                                                    </Style>
+                                                </GroupStyle.HeaderContainerStyle>
                                                 <GroupStyle.HeaderTemplate>
                                                     <DataTemplate x:DataType="vm:ResumeGroupViewModel">
-                                                        <TextBlock Text="{x:Bind Title}" Style="{StaticResource MutedText}" Margin="0,4" />
+                                                        <TextBlock Text="{x:Bind Title}" Style="{StaticResource MutedText}" VerticalAlignment="Center" />
                                                     </DataTemplate>
                                                 </GroupStyle.HeaderTemplate>
                                             </GroupStyle>
                                         </ListView.GroupStyle>
                                     </ListView>
                                     <TextBlock
+                                        Grid.Row="2"
                                         Text="{x:Bind ViewModel.NoResumeCandidatesText, Mode=OneWay}"
                                         Style="{StaticResource MutedText}"
                                         Visibility="{x:Bind ViewModel.HasNoResumeCandidates, Mode=OneWay}" />
-                                </StackPanel>
-                            </StackPanel>
-
-
-                    </StackPanel>
-                    </ScrollViewer>
+                                </Grid>
+                            </Grid>
+                        </Grid>
+                        </ScrollViewer>
 
                             <!-- ───── 실행 줄: 남은 것 한 문장 + 사람 말 + 명령 + 버튼. 카드 바닥에 붙는다 ───── -->
-                            <Border Grid.Row="1" BorderThickness="0,1,0,0" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" Padding="20,16,20,16">
-                                <StackPanel Spacing="10">
+                            <!-- 바닥 띠는 세로로 아낀다(여백 12, 줄 사이 8, 접힘 머리 36). 여기서 아낀 픽셀이 위 지난 대화 목록의 줄 수가 된다 -->
+                            <Border Grid.Row="1" BorderThickness="0,1,0,0" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" Padding="20,12,20,12">
+                                <StackPanel Spacing="8">
                                     <!-- 자세한 설정: 접힌 채로 바닥 띠에 붙는다. 단계가 길어져도 손이 닿는다 (§4.6) -->
                                     <muxc:Expander
                                         HorizontalAlignment="Stretch"
                                         AutomationProperties.AutomationId="AdvancedExpander"
                                         Header="{loc:Str Key=Terminal_Advanced}">
+                                        <muxc:Expander.Resources>
+                                            <x:Double x:Key="ExpanderMinHeight">36</x:Double>
+                                        </muxc:Expander.Resources>
                                         <StackPanel Spacing="8">
                                             <TextBox
                                                 AutomationProperties.AutomationId="ArgumentsBox"

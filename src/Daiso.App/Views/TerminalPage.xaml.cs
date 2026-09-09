@@ -245,6 +245,32 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
     }
 
     /// <summary>새 터미널 탭을 누르면 새 세션 카드. 열린 방은 그대로 살아 있다.</summary>
+    /// <summary>
+    /// 단계 영역은 보이는 높이만큼만 — 단, 머리 셋 + 방식 카드 + 검색칸 + 대화 3줄이 들어갈 만큼은 늘 확보한다.
+    /// 그보다 창이 낮으면 바깥 ScrollViewer 가 스크롤되어 목록에 닿는다. 넉넉하면 목록이 남은 높이를 다 쓴다.
+    /// </summary>
+    private const double StepsMinHeight = 420;
+
+    private void OnStepsScrollSizeChanged(object sender, SizeChangedEventArgs e) =>
+        StepsGrid.Height = Math.Max(e.NewSize.Height, StepsMinHeight);
+
+    /// <summary>지난 대화 목록의 줄·날짜 머리 높이. XAML 의 ItemContainerStyle · HeaderContainerStyle 과 같은 값이다.</summary>
+    private const double ResumeRowHeight = 40;
+
+    /// <summary>
+    /// 목록 높이를 "머리 하나 + 줄 n개 + 테두리 2" 로 자른다. 남은 높이를 그대로 주면 마지막 줄이 반만 보여
+    /// 더 있는지 끝인지 알 수 없었다 (TERMINAL_CARD_PLAN §2-C4). 창이 커지면 다시 계산되므로 늘어난다.
+    /// </summary>
+    private void OnResumeAreaSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        var available = e.NewSize.Height - ResumeSearch.ActualHeight - ResumeArea.RowSpacing;
+        var rows = Math.Floor((available - ResumeRowHeight - 2) / ResumeRowHeight);
+
+        ResumeList.MaxHeight = rows >= 1
+            ? ResumeRowHeight * (rows + 1) + 2
+            : Math.Max(available, ResumeList.MinHeight);
+    }
+
     private void OnNewTabClick(object sender, RoutedEventArgs e) => ShowNewSession();
 
     private void ShowNewSession()
