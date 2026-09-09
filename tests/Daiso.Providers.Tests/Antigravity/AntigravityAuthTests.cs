@@ -56,38 +56,38 @@ public sealed class AntigravityAuthTests
     [Fact]
     public void Extras_explain_where_the_login_lives_and_why_there_is_no_expiry()
     {
-        var joined = string.Join("\n", AntigravityAuthReader.Read(hasCredential: true, Settings, hasLegacyGeminiLogin: false).Extras);
+        var extras = AntigravityAuthReader.Read(hasCredential: true, Settings, hasLegacyGeminiLogin: false).Extras;
 
-        joined.Should().Contain("자격 증명 관리자");
-        joined.Should().Contain(AntigravityAuthReader.CredentialTarget);
-        joined.Should().Contain("만료: 알 수 없음");
+        extras.Should().Contain(new AuthNote("AuthNote_CredentialStore", AntigravityAuthReader.CredentialTarget));
+        extras.Should().Contain(note => note.Key == "AuthNote_ExpiryUnknown");
     }
 
     /// <summary>은퇴한 도구의 파일이 남아 있으면 그렇다고만 적는다. 그 파일의 토큰 정보를 이 도구 것처럼 얹지 않는다.</summary>
     [Fact]
     public void A_leftover_gemini_login_is_labelled_as_unrelated_and_never_supplies_token_facts()
     {
-        var joined = string.Join("\n", AntigravityAuthReader.Read(hasCredential: true, Settings, hasLegacyGeminiLogin: true).Extras);
+        var extras = AntigravityAuthReader.Read(hasCredential: true, Settings, hasLegacyGeminiLogin: true).Extras;
+        var joined = string.Join("\n", extras.Select(note => $"{note.Key}={note.Argument}"));
 
-        joined.Should().Contain("이 도구와 무관");
+        extras.Should().Contain(note => note.Key == "AuthNote_LegacyGeminiLogin");
         joined.Should().NotContain("refresh_token").And.NotContain("access_token").And.NotContain("scope");
     }
 
     [Fact]
     public void An_api_key_in_settings_is_reported_as_the_auth_method()
     {
-        var joined = string.Join(
-            "\n",
-            AntigravityAuthReader.Read(hasCredential: true, """{"apiKey":"DUMMY"}""", hasLegacyGeminiLogin: false).Extras);
+        var extras = AntigravityAuthReader.Read(
+            hasCredential: true, """{"apiKey":"DUMMY"}""", hasLegacyGeminiLogin: false).Extras;
+        var joined = string.Join("\n", extras.Select(note => $"{note.Key}={note.Argument}"));
 
-        joined.Should().Contain("인증 방식: API 키");
+        extras.Should().Contain(note => note.Key == "AuthNote_AuthApiKey");
         joined.Should().NotContain("DUMMY", because: "값은 어떤 필드에도 담지 않는다");
     }
 
     [Fact]
     public void Without_a_settings_file_the_extras_say_so()
     {
-        string.Join("\n", AntigravityAuthReader.Read(hasCredential: true, null, hasLegacyGeminiLogin: false).Extras)
-            .Should().Contain("설정 파일: 없음");
+        AntigravityAuthReader.Read(hasCredential: true, null, hasLegacyGeminiLogin: false).Extras
+            .Should().Contain(note => note.Key == "AuthNote_NoSettingsFile");
     }
 }

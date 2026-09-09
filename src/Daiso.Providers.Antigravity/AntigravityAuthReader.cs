@@ -43,18 +43,18 @@ public static class AntigravityAuthReader
         return new AuthStatus(ToolKind.Antigravity, AuthState.LoggedIn, "Google", null, null, extras);
     }
 
-    private static IReadOnlyList<string> Extras(string? settingsJson, bool hasLegacyGeminiLogin)
+    private static IReadOnlyList<AuthNote> Extras(string? settingsJson, bool hasLegacyGeminiLogin)
     {
-        var extras = new List<string>
+        var extras = new List<AuthNote>
         {
-            "로그인 보관: Windows 자격 증명 관리자 (" + CredentialTarget + ") — 앱은 값을 읽지 않습니다",
-            "만료: 알 수 없음 (CLI가 알아서 갱신합니다)",
-            "계정 이메일: CLI가 파일에 남기지 않습니다",
+            new("AuthNote_CredentialStore", CredentialTarget),
+            new("AuthNote_ExpiryUnknown"),
+            new("AuthNote_NoEmailInFiles"),
         };
 
         if (settingsJson is null)
         {
-            extras.Add("설정 파일: 없음 (CLI를 한 번 실행하면 만들어집니다)");
+            extras.Add(new AuthNote("AuthNote_NoSettingsFile"));
         }
         else
         {
@@ -64,17 +64,17 @@ public static class AntigravityAuthReader
             var hasApiKey = root is { ValueKind: JsonValueKind.Object } obj
                 && obj.Prop("apiKey") is { ValueKind: JsonValueKind.String };
 
-            extras.Add(hasApiKey ? "인증 방식: API 키" : "인증 방식: 브라우저 로그인");
+            extras.Add(new AuthNote(hasApiKey ? "AuthNote_AuthApiKey" : "AuthNote_AuthBrowser"));
 
             if (root is { ValueKind: JsonValueKind.Object } settings && settings.Prop("model").Text() is { } model)
             {
-                extras.Add($"고른 모델: {model}");
+                extras.Add(new AuthNote("AuthNote_Model", model));
             }
         }
 
         if (hasLegacyGeminiLogin)
         {
-            extras.Add("참고: 은퇴한 Gemini CLI의 로그인 파일이 남아 있습니다 (이 도구와 무관)");
+            extras.Add(new AuthNote("AuthNote_LegacyGeminiLogin"));
         }
 
         return extras;

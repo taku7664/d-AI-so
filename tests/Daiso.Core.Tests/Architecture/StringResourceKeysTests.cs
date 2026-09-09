@@ -13,7 +13,14 @@ public sealed partial class StringResourceKeysTests
 
     private static readonly string ResourcePath = Path.Combine(Root, "src", "Daiso.App", "Strings", "ko-KR", "Resources.resw");
 
-    private static readonly string AppSource = Path.Combine(Root, "src", "Daiso.App");
+    /// <summary>
+    /// 문구 키를 부르는 코드가 있는 곳.
+    /// <para>
+    /// <c>Daiso.App</c> 뿐이 아니다 — Provider 가 <c>AuthNote</c> 로 문구 키를 내놓기 때문이다
+    /// (docs/REVIEW_BACKLOG.md A6). App 만 훑으면 그 키들이 전부 "죽은 키"로 잡힌다.
+    /// </para>
+    /// </summary>
+    private static readonly string SourceRoot = Path.Combine(Root, "src");
 
     [Fact]
     public void Every_key_the_app_refers_to_exists_in_the_resw()
@@ -89,7 +96,7 @@ public sealed partial class StringResourceKeysTests
         KeyShapePattern().IsMatch(literal) && literal.Any(char.IsLower);
 
     private static IEnumerable<string> SourceFiles() =>
-        Directory.EnumerateFiles(AppSource, "*.*", SearchOption.AllDirectories)
+        Directory.EnumerateFiles(SourceRoot, "*.*", SearchOption.AllDirectories)
             .Where(path => path.EndsWith(".cs", StringComparison.Ordinal) || path.EndsWith(".xaml", StringComparison.Ordinal))
             .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
             .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal));

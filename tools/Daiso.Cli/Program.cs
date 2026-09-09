@@ -110,9 +110,10 @@ internal static class Commands
             Console.WriteLine($"  이메일: {status.Email ?? "-"}");
             Console.WriteLine($"  재로그인 필요 시각: {status.SessionExpiresAt?.ToString("u") ?? "-"}");
 
-            foreach (var extra in status.Extras)
+            // 이 도구는 화면 문구(resw)를 읽지 않는다. 키와 값을 그대로 찍는다 — 진단에는 그편이 낫다
+            foreach (var note in status.Extras)
             {
-                Console.WriteLine($"  - {extra}");
+                Console.WriteLine($"  - {note.Key}{(note.Argument is { } argument ? $" = {argument}" : string.Empty)}");
             }
 
             Console.WriteLine();

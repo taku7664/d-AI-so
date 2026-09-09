@@ -54,7 +54,7 @@
 | A3 | `DataTemplate` 컴포넌트화 | 구조 | ⬜ |
 | A4 | 화면 골격(`Pivot`·`ScrollViewer`) 재설계 | 구조 | ⬜ |
 | A5 | 마이그레이션을 도구 3개로 확장 | 기능 | ⬜ |
-| A6 | Provider 계층 한글 문구 → resw | 계약 | ⬜ |
+| A6 | Provider 계층 한글 문구 → resw | 계약 | ✅ |
 
 ### 원인 (고치기 전에 찾은 것)
 
@@ -135,3 +135,20 @@
   - 간격: `10→8`(27곳) `14→12`(6곳). 규칙은 *가장 가까운 4의 배수, 동점이면 내림*.
     올림이 아니라 내림인 이유 — 33곳이 한꺼번에 벌어지면 창 하한(1024x700)에서 내용이 아래로 밀린다.
   - `1 · 2 · 3 · 6` 은 그대로 뒀다. 아이콘·배지 안쪽 간격이라 화면 눈금과 성격이 다르다.
+- **A6** — `AuthStatus.Extras` 의 타입을 `IReadOnlyList<string>` → `IReadOnlyList<AuthNote>` 로 바꿨다.
+
+  ```csharp
+  public sealed record AuthNote(string Key, string? Argument = null);
+  ```
+
+  Provider 는 이제 **어느 나라 말도 모른다.** 문구 키와 값만 내놓고, 그리는 쪽(앱)이 resw 에서 찾는다.
+  `Daiso.Providers.*` 의 한글 문자열은 **0개**가 됐다(남은 것은 `·` `…` 같은 구분 기호뿐).
+  문구 17개를 resw 로 옮겼다.
+  - 화면에 보이는 글자는 그대로다 — `subscription: max` 같은 줄도 `subscription: {0}` 문구로 옮겨,
+    이제는 그 라벨까지 번역·수정할 수 있다.
+  - **테스트에서도 한글 문장이 사라졌다.** 예전에는 `joined.Should().Contain("만료: 알 수 없음")` 처럼
+    Provider 테스트가 한국어 문장을 검사하고 있었다. 지금은 키를 검사한다.
+  - *도중에 잡은 것:* `StringResourceKeysTests` 가 `src/Daiso.App` 만 훑고 있어서 새 키 17개를
+    전부 "죽은 키"로 잡았다. **테스트가 정확히 일한 것이다** — resw 를 부르는 곳이 App 밖으로 늘어난 사실을
+    알려 준 것이라, 스캔 범위를 `src/` 전체로 넓혔다.
+  - CLI(`Daiso.Cli`)는 resw 를 읽지 않으므로 `키 = 값` 을 그대로 찍는다. 진단용 도구라 그편이 낫다.

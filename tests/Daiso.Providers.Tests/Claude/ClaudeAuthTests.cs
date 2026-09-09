@@ -77,10 +77,10 @@ public sealed class ClaudeAuthTests
     {
         var status = ClaudeAuthReader.Read(Credentials, ClaudeJson, Fixtures.Now);
 
-        status.Extras.Should().Contain("subscription: max");
-        status.Extras.Should().Contain("rateLimitTier: tier4");
-        status.Extras.Should().Contain("scope: user:inference");
-        status.Extras.Should().Contain("mcp: fixture-connector");
+        status.Extras.Should().Contain(new AuthNote("AuthNote_Subscription", "max"));
+        status.Extras.Should().Contain(new AuthNote("AuthNote_RateLimitTier", "tier4"));
+        status.Extras.Should().Contain(new AuthNote("AuthNote_Scope", "user:inference"));
+        status.Extras.Should().Contain(new AuthNote("AuthNote_Mcp", "fixture-connector"));
     }
 
     [Fact]
@@ -88,7 +88,8 @@ public sealed class ClaudeAuthTests
     {
         var status = ClaudeAuthReader.Read(Credentials, ClaudeJson, Fixtures.Now);
 
-        status.Extras.Should().NotContain(extra => extra.Contains("https://", StringComparison.Ordinal));
+        status.Extras.Should().NotContain(note =>
+            note.Argument != null && note.Argument.Contains("https://", StringComparison.Ordinal));
     }
 
     [Fact]

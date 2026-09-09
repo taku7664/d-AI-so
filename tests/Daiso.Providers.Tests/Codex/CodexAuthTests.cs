@@ -48,7 +48,7 @@ public sealed class CodexAuthTests
 
         status.SessionExpiresAt.Should().BeNull();
         status.State.Should().Be(AuthState.LoggedIn);
-        status.Extras.Should().Contain("OPENAI_API_KEY: 설정됨");
+        status.Extras.Should().Contain(note => note.Key == "AuthNote_ApiKeySet");
     }
 
     [Fact]
@@ -69,8 +69,8 @@ public sealed class CodexAuthTests
     {
         var status = CodexAuthReader.Read(AuthJson, Fixtures.Now);
 
-        status.Extras.Should().Contain("auth_mode: chatgpt");
-        status.Extras.Should().Contain("OPENAI_API_KEY: 없음");
+        status.Extras.Should().Contain(new AuthNote("AuthNote_AuthMode", "chatgpt"));
+        status.Extras.Should().Contain(note => note.Key == "AuthNote_ApiKeyMissing");
     }
 
     [Theory]

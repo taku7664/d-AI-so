@@ -386,9 +386,12 @@ public sealed partial class ToolCardViewModel : ObservableObject
 
         Extras.Clear();
 
-        foreach (var extra in status.Extras)
+        // Provider 는 문구 키만 준다. 사람이 읽는 말로 바꾸는 것은 여기 몫이다 (ARCHITECTURE §6.1)
+        foreach (var note in status.Extras)
         {
-            Extras.Add(extra);
+            Extras.Add(note.Argument is { } argument
+                ? UiStrings.Format(note.Key, argument)
+                : UiStrings.Get(note.Key));
         }
 
         OnPropertyChanged(nameof(StateBrush));

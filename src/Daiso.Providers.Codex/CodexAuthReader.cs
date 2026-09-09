@@ -44,28 +44,28 @@ public static class CodexAuthReader
             Extras(root, tokens, mode));
     }
 
-    private static IReadOnlyList<string> Extras(JsonElement root, JsonElement? tokens, string? mode)
+    private static IReadOnlyList<AuthNote> Extras(JsonElement root, JsonElement? tokens, string? mode)
     {
-        var extras = new List<string>();
+        var extras = new List<AuthNote>();
 
         if (mode is not null)
         {
-            extras.Add($"auth_mode: {mode}");
+            extras.Add(new AuthNote("AuthNote_AuthMode", mode));
         }
 
         if (root.Prop("last_refresh").Text() is { } lastRefresh)
         {
-            extras.Add($"last_refresh: {lastRefresh}");
+            extras.Add(new AuthNote("AuthNote_LastRefresh", lastRefresh));
         }
 
         // 키 값은 절대 담지 않는다. 설정 여부만 알린다.
-        extras.Add(root.Prop("OPENAI_API_KEY") is { ValueKind: JsonValueKind.String }
-            ? "OPENAI_API_KEY: 설정됨"
-            : "OPENAI_API_KEY: 없음");
+        extras.Add(new AuthNote(root.Prop("OPENAI_API_KEY") is { ValueKind: JsonValueKind.String }
+            ? "AuthNote_ApiKeySet"
+            : "AuthNote_ApiKeyMissing"));
 
         if (tokens.Prop("account_id").Text() is { } accountId)
         {
-            extras.Add($"account_id: {accountId}");
+            extras.Add(new AuthNote("AuthNote_AccountId", accountId));
         }
 
         return extras;

@@ -48,25 +48,25 @@ public static class ClaudeAuthReader
             extras);
     }
 
-    private static IReadOnlyList<string> Extras(JsonElement oauth)
+    private static IReadOnlyList<AuthNote> Extras(JsonElement oauth)
     {
-        var extras = new List<string>();
+        var extras = new List<AuthNote>();
 
         if (oauth.Prop("subscriptionType").Text() is { } subscription)
         {
-            extras.Add($"subscription: {subscription}");
+            extras.Add(new AuthNote("AuthNote_Subscription", subscription));
         }
 
         if (oauth.Prop("rateLimitTier").Text() is { } tier)
         {
-            extras.Add($"rateLimitTier: {tier}");
+            extras.Add(new AuthNote("AuthNote_RateLimitTier", tier));
         }
 
         foreach (var scope in oauth.Prop("scopes").Items())
         {
             if (scope.ValueKind == JsonValueKind.String && scope.GetString() is { Length: > 0 } text)
             {
-                extras.Add($"scope: {text}");
+                extras.Add(new AuthNote("AuthNote_Scope", text));
             }
         }
 
@@ -78,7 +78,7 @@ public static class ClaudeAuthReader
                 var name = connector.Name.Split('|')[0];
                 if (name.Length > 0)
                 {
-                    extras.Add($"mcp: {name}");
+                    extras.Add(new AuthNote("AuthNote_Mcp", name));
                 }
             }
         }
