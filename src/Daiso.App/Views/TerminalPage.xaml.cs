@@ -22,7 +22,6 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
     {
         InitializeComponent();
         FocusRelease.Attach(this);
-        SelectorBarVisuals.ResetPressedOnLeave(ToolTabs);
         ViewModel = App.Services.GetRequiredService<TerminalViewModel>();
         Header = new PageHeader("Terminal_Title", UiStrings.Get("Terminal_Subtitle"));
 
@@ -53,12 +52,6 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
                 RoomTitleText.Text = terminal.Title;
             }
         };
-
-        // 도구 탭에 제작사 로고. 탭 순서 = ViewModel.Tools 순서(ToolLook.DisplayOrder)
-        for (var i = 0; i < ToolTabs.Items.Count && i < ViewModel.Tools.Count; i++)
-        {
-            ToolTabs.Items[i].Icon = ToolLook.LogoIcon(ViewModel.Tools[i].Kind);
-        }
 
         Loaded += async (_, _) =>
         {
@@ -173,14 +166,12 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
         }
     }
 
-    /// <summary>탭을 누르면 뷰모델의 도구가 바뀌고, 1단계가 끝나 다음 단계가 열린다.</summary>
-    private void OnToolTabChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
+    /// <summary>카드를 누르면 뷰모델의 도구가 바뀌고, 1단계가 끝나 다음 단계가 열린다.</summary>
+    private void OnToolCardChanged(object sender, SelectionChangedEventArgs e)
     {
-        var index = sender.Items.IndexOf(sender.SelectedItem);
-
-        if (index >= 0)
+        if (sender is ListView { SelectedIndex: >= 0 } cards)
         {
-            ViewModel.ChooseTool(index);
+            ViewModel.ChooseTool(cards.SelectedIndex);
         }
     }
 
@@ -202,21 +193,11 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
         }
     }
 
-    /// <summary>이어서 열기처럼 뷰모델이 탭을 바꾸면 탭 띠도 따라간다.</summary>
+    /// <summary>이어서 열기처럼 뷰모델이 도구를 바꾸면 카드 선택도 따라간다.</summary>
     private void SyncTabFromViewModel()
     {
-        // 아직 아무 AI도 안 고른 화면이면 탭을 켜지 않는다. 여기서 켜면 1단계가 저절로 끝나 버린다
-        if (!ViewModel.ToolChosen)
-        {
-            ToolTabs.SelectedItem = null;
-            return;
-        }
-
-        if (ViewModel.SelectedToolIndex >= 0 && ViewModel.SelectedToolIndex < ToolTabs.Items.Count
-            && !ReferenceEquals(ToolTabs.SelectedItem, ToolTabs.Items[ViewModel.SelectedToolIndex]))
-        {
-            ToolTabs.SelectedItem = ToolTabs.Items[ViewModel.SelectedToolIndex];
-        }
+        // 아직 아무 AI도 안 고른 화면이면 카드를 켜지 않는다. 여기서 켜면 1단계가 저절로 끝나 버린다
+        ToolCards.SelectedIndex = ViewModel.ToolSelection;
     }
 
     private void OnPresetClick(object sender, RoutedEventArgs e)

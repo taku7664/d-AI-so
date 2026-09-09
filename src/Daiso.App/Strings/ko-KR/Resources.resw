@@ -1306,6 +1306,12 @@
   <data name="Terminal_StepTool" xml:space="preserve">
     <value>어떤 AI로 시작할까요?</value>
   </data>
+  <data name="Terminal_ToolReady" xml:space="preserve">
+    <value>준비됨</value>
+  </data>
+  <data name="Terminal_ToolMissing" xml:space="preserve">
+    <value>설치 안 됨</value>
+  </data>
   <data name="Terminal_StepChange" xml:space="preserve">
     <value>변경</value>
   </data>

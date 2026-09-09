@@ -250,13 +250,44 @@
                                 </Grid>
                             </Button>
 
-                            <!-- 도구 탭. 순서는 ToolLook.DisplayOrder. 아이콘은 코드에서 ToolLook.LogoIcon으로 채운다 (Stage 2에서 카드 3장으로) -->
+                            <!--
+                                AI 카드 3장. 순서·이름·제작사·로고는 전부 ToolLook 이 정한다 — XAML 에 도구 이름을 적지 않는다.
+                                도구가 늘어도 이 markup 은 그대로다. 목록(ListView)을 쓰는 이유는 고른 카드의 강조·키보드 이동을
+                                WinUI 가 테마에 맞게 알아서 해 주기 때문이다 (직접 칠하면 라이트/다크에서 어긋난다)
+                            -->
                             <StackPanel Style="{StaticResource StepBody}" Visibility="{x:Bind ViewModel.ToolExpanded, Mode=OneWay}">
-                                <muxc:SelectorBar x:Name="ToolTabs" SelectionChanged="OnToolTabChanged" AutomationProperties.AutomationId="ToolTabs">
-                                    <muxc:SelectorBarItem Text="Codex" AutomationProperties.AutomationId="ToolTabCodex" ToolTipService.ToolTip="Codex CLI" />
-                                    <muxc:SelectorBarItem Text="Claude" AutomationProperties.AutomationId="ToolTabClaude" ToolTipService.ToolTip="Claude Code" />
-                                    <muxc:SelectorBarItem Text="Gemini" AutomationProperties.AutomationId="ToolTabGemini" ToolTipService.ToolTip="Gemini CLI" />
-                                </muxc:SelectorBar>
+                                <ListView
+                                    x:Name="ToolCards"
+                                    ItemsSource="{x:Bind ViewModel.Tools}"
+                                    SelectedIndex="{x:Bind ViewModel.ToolSelection, Mode=OneWay}"
+                                    SelectionChanged="OnToolCardChanged"
+                                    SelectionMode="Single"
+                                    AutomationProperties.AutomationId="ToolCards"
+                                    ScrollViewer.VerticalScrollMode="Disabled"
+                                    ScrollViewer.HorizontalScrollMode="Disabled">
+                                    <ListView.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal" Spacing="8" />
+                                        </ItemsPanelTemplate>
+                                    </ListView.ItemsPanel>
+                                    <ListView.ItemContainerStyle>
+                                        <Style TargetType="ListViewItem">
+                                            <Setter Property="Padding" Value="0" />
+                                            <Setter Property="MinWidth" Value="0" />
+                                            <Setter Property="CornerRadius" Value="6" />
+                                        </Style>
+                                    </ListView.ItemContainerStyle>
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:ToolLaunchViewModel">
+                                            <StackPanel Width="132" Padding="10,12" Spacing="4" AutomationProperties.AutomationId="{x:Bind AutomationId}">
+                                                <controls:ToolIcon Kind="{x:Bind Kind}" Size="30" HorizontalAlignment="Center" />
+                                                <TextBlock Text="{x:Bind Title}" HorizontalAlignment="Center" TextAlignment="Center" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                                <TextBlock Text="{x:Bind Vendor}" HorizontalAlignment="Center" Style="{StaticResource MutedText}" />
+                                                <TextBlock Text="{x:Bind InstallStateText, Mode=OneWay}" HorizontalAlignment="Center" Style="{StaticResource MutedText}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
                             </StackPanel>
 
                             <!-- ───── 2. 어느 폴더에서 일할까요? ───── -->

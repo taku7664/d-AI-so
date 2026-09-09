@@ -31,6 +31,15 @@ public sealed partial class ToolLaunchViewModel : ObservableObject
     /// <summary>버튼·미리보기에 쓰는 짧은 이름.</summary>
     public string Label => ToolLook.Short(Kind);
 
+    /// <summary>카드에 쓰는 정식 이름.</summary>
+    public string Title => ToolLook.Title(Kind);
+
+    /// <summary>카드에 쓰는 제작사 이름.</summary>
+    public string Vendor => ToolLook.Vendor(Kind);
+
+    /// <summary>카드에 붙는 설치 상태 한 줄. 고르기 전에 알아야 헛걸음을 안 한다.</summary>
+    public string InstallStateText => UiStrings.Get(IsInstalled ? "Terminal_ToolReady" : "Terminal_ToolMissing");
+
     /// <summary>인자 프리셋.</summary>
     public IReadOnlyList<string> Presets { get; }
 
@@ -49,6 +58,7 @@ public sealed partial class ToolLaunchViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(Hint))]
     [NotifyPropertyChangedFor(nameof(HasHint))]
     [NotifyPropertyChangedFor(nameof(Preview))]
+    [NotifyPropertyChangedFor(nameof(InstallStateText))]
     private bool isInstalled;
 
     /// <summary>설치를 눌러 새 터미널이 돌고 있는가. 확인될 때까지 버튼을 잠근다.</summary>

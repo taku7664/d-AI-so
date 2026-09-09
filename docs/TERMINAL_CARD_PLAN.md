@@ -141,6 +141,16 @@ Stage 2에서 도구 카드를 넣을 때 사람이 눌러 가며 함께 본다.
 `DashboardViewModel`이 세션 인덱스를 읽는 도중 화면을 옮기면 `OperationCanceledException`이 안 삼켜진다
 (`SqliteSessionIndex.cs:161` → `DashboardViewModel.cs:215`). 이 계획과 무관하고 2026-09-08자 크래시 로그에도 있다.
 
+**Stage 2 완료** (2026-09-09). 1단계를 `SelectorBar` 탭에서 **AI 카드 3장**으로 바꿨다.
+
+- 카드마다 제작사 로고(`ToolIcon`) · 정식 이름 · **제작사**(`ToolLook.Vendor` 신설) · 설치 상태(`준비됨` / `설치 안 됨`)
+- **XAML 에서 도구 이름 하드코딩을 걷어냈다.** 목록이 `ViewModel.Tools`를 그리므로 도구가 늘어도 markup 은 그대로다
+  (이전에는 `SelectorBarItem Text="Codex"` 셋이 박혀 있었고, 로고도 코드에서 탭에 하나씩 꽂아 넣었다)
+- 고른 카드의 강조·키보드 이동은 `ListView`에 맡겼다. 직접 칠하면 라이트/다크에서 어긋난다
+- 아직 안 골랐으면 `ToolSelection = -1`이라 아무 카드도 안 켜진다
+
+App 경고 0·오류 0, 테스트 380건 초록. 1024 캡처로 카드 3장이 로고·제작사·상태와 함께 뜨는 것을 확인했다.
+
 ⚠️ **터미널 카드의 세션 목록은 캡처로 못 봤다.** "기존 세션 이어서"를 눌러야 나오는데
 `shoot-screens.ps1`은 Ctrl+1~7만 누른다. 정제기는 세션 화면과 같은 함수라 위 전수 검사가 근거이고,
 `When`·`Counts`·uuid 폴백 제거는 Core 테스트가 근거다. Stage 4에서 눈으로 함께 본다.

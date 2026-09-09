@@ -418,6 +418,9 @@ public sealed partial class TerminalViewModel : ObservableObject
     /// <summary>라디오에 물리는 값. 아직 안 골랐으면 −1이라 아무것도 켜지지 않는다.</summary>
     public int SessionModeSelection => SessionModeChosen ? SessionModeIndex : -1;
 
+    /// <summary>AI 카드 목록에 물리는 값. 아직 안 골랐으면 −1이라 아무 카드도 켜지지 않는다.</summary>
+    public int ToolSelection => ToolChosen ? SelectedToolIndex : -1;
+
     // 아직 못 가는 단계는 흐리게 + 누를 수 없게 한다. IsEnabled 를 쓰면 WinUI 가 비활성 배경을 칠해
     // "흐린 줄"이 아니라 "회색 덩어리"가 되어 오히려 눈에 띈다
     public double FolderHeaderOpacity => FolderReachable ? 1.0 : 0.4;
@@ -555,7 +558,8 @@ public sealed partial class TerminalViewModel : ObservableObject
         nameof(ToolMarkDone), nameof(ToolMarkPending),
         nameof(FolderMarkDone), nameof(FolderMarkPending),
         nameof(SessionMarkDone), nameof(SessionMarkPending),
-        nameof(SessionModeSelection), nameof(FolderHeaderOpacity), nameof(SessionHeaderOpacity),
+        nameof(SessionModeSelection), nameof(ToolSelection),
+        nameof(FolderHeaderOpacity), nameof(SessionHeaderOpacity),
         nameof(ShowPreview),
         nameof(ToolSummary), nameof(FolderSummary), nameof(SessionSummary),
         nameof(RemainingHint), nameof(HasRemainingHint), nameof(CanStart),

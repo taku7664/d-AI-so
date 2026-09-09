@@ -39,6 +39,18 @@ public static class ToolLook
         _ => kind.ToString(),
     };
 
+    /// <summary>
+    /// 만든 곳. AI CLI를 처음 보는 사람에게 "Codex·Claude·Gemini"는 이름일 뿐이라,
+    /// 아는 회사 이름이 붙어야 무엇을 고르는지 감이 온다. (docs/TERMINAL_CARD_PLAN.md §4.3)
+    /// </summary>
+    public static string Vendor(ToolKind kind) => kind switch
+    {
+        ToolKind.Claude => "Anthropic",
+        ToolKind.Codex => "OpenAI",
+        ToolKind.Gemini => "Google",
+        _ => string.Empty,
+    };
+
     /// <summary>버튼·미리보기에 쓰는 짧은 이름.</summary>
     public static string Short(ToolKind kind) => kind switch
     {
