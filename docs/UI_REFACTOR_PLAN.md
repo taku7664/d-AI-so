@@ -41,6 +41,8 @@
 
 ### 지금 어디까지 됐나
 
+**전부 완료** (2026-09-09, Stage 0 → 7). 단계별 기록은 아래.
+
 **Stage 0 완료** (2026-09-09). 요약의 `다시 읽기`와 내 규칙의 명령바를 제목 아래 줄로 내렸고, 내 규칙은 편집기 칸이 본문 380 + 미리보기 190 + 간격보다 좁으면 미리보기 칸을 접는다(하한 1024에서 목록을 펴 두면 접힌 상태). 1024·1600 캡처로 확인했다.
 
 **Stage 1 완료** (2026-09-09). 직접 그린 `TitleBarArea`를 `TitleBar` 컨트롤로 바꿨다. 뒤로 = 내장 버튼, 앞으로·메뉴 접기(☰) = `LeftHeader`(순서 [뒤로][앞으로][☰] 아이콘 DAIso — §6 그림과 같게 하려고 내장 햄버거 대신 LeftHeader 에 넣었다). 본문 위 오버레이는 지웠다. 끌기·더블클릭 최대화(실제 마우스 입력)·Light 테마·1024/1600 일곱 화면을 캡처로 확인했다.
@@ -53,7 +55,11 @@
 
 **Stage 5 완료** (2026-09-09). 터미널을 `PageBody Layout="Wide"`로 옮겼다(탭 띠·방 도구 줄은 `Filters`, 본문은 `Body`). 새 세션 카드의 `MaxWidth`·`HorizontalAlignment="Left"`를 지웠다. 1600 캡처에서 본문 오른쪽 끝이 Reading 셋 = 1511, Wide 넷 = 1567 로 두 값뿐이다(픽셀 측정).
 
-**Stage 6 완료** (2026-09-09). ① 세션의 도구 콤보를 `SelectorBar` 탭으로(별도 커밋 — 어색하면 그 커밋만 되돌린다). ② 비어 있음 안내는 전부 `NoticeBorder` + `PageSubtitleText` 한 문장(+ 다음에 할 일 버튼) — 사용량의 단가표 `InfoBar`도 이 모양으로. ③ 덩어리는 전부 `CardBorder` — 터미널 패널의 손으로 그린 테두리도. ④ 부제는 **고정 설명** 하나로 통일. 사용량의 기간(`Usage.StatusText`)은 명령 줄 오른쪽, 세션의 건수·검색 결과(`StatusText`)는 푸터로 내렸다. `PageHeader.Follow`는 지웠다. **다음은 Stage 7이다.**
+**Stage 6 완료** (2026-09-09). ① 세션의 도구 콤보를 `SelectorBar` 탭으로(별도 커밋 — 어색하면 그 커밋만 되돌린다). ② 비어 있음 안내는 전부 `NoticeBorder` + `PageSubtitleText` 한 문장(+ 다음에 할 일 버튼) — 사용량의 단가표 `InfoBar`도 이 모양으로. ③ 덩어리는 전부 `CardBorder` — 터미널 패널의 손으로 그린 테두리도. ④ 부제는 **고정 설명** 하나로 통일. 사용량의 기간(`Usage.StatusText`)은 명령 줄 오른쪽, 세션의 건수·검색 결과(`StatusText`)는 푸터로 내렸다. `PageHeader.Follow`는 지웠다.
+
+**Stage 7 완료** (2026-09-09). `tests/Daiso.Core.Tests/Architecture/PageSkeletonTests.cs`가 일곱 페이지 XAML을 XML로 읽어 MUST 넷을 검사한다 — ① `PageTitleText` 금지, ② 루트가 `controls:PageBody`, ③ `Layout`이 Reading/Wide, ④ `ColumnDefinition MinWidth` 합(중첩 포함, `DataTemplate` 안 제외, `{StaticResource}`는 App.xaml에서 풂) + 210 + `PagePadding` 좌우 ≤ 1024. 어긴 예 넷을 문서 문자열로 만들어 빨개지는지도 테스트 안에서 확인한다. 이 검사가 바로 터미널의 두 칸 최소 폭 360이 1024에서 넘치는 것을 잡아 320으로 내렸다. `ARCHITECTURE.md` §6.2 첫머리를 골격 표 + 창 하한 근거로 다시 썼다.
+
+**일곱 단계가 모두 끝났다.** 남은 것은 없다. 이 문서는 기록으로 남긴다.
 
 직전 작업으로 들어간 것(이 계획 이전에 커밋됨):
 - 마우스 엄지 버튼 뒤로/앞으로 + `Daiso.App/Services/NavigationHistory.cs`

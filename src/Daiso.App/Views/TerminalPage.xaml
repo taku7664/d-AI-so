@@ -207,10 +207,11 @@
                             </muxc:SelectorBar>
                         </Border>
 
+                        <!-- 두 칸 최소 폭 + 간격 28 + 카드 안쪽 여백 40 이 창 하한 1024 의 카드 폭(≈717)에 들어가야 한다. 360 이면 넘쳐 오른쪽이 잘렸다 -->
                         <Grid Padding="20,16,20,20" ColumnSpacing="28" RowSpacing="18">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" MinWidth="360" />
-                                <ColumnDefinition Width="*" MinWidth="360" />
+                                <ColumnDefinition Width="*" MinWidth="320" />
+                                <ColumnDefinition Width="*" MinWidth="320" />
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
