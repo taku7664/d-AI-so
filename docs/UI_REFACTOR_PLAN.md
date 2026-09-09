@@ -45,7 +45,9 @@
 
 **Stage 1 완료** (2026-09-09). 직접 그린 `TitleBarArea`를 `TitleBar` 컨트롤로 바꿨다. 뒤로 = 내장 버튼, 앞으로·메뉴 접기(☰) = `LeftHeader`(순서 [뒤로][앞으로][☰] 아이콘 DAIso — §6 그림과 같게 하려고 내장 햄버거 대신 LeftHeader 에 넣었다). 본문 위 오버레이는 지웠다. 끌기·더블클릭 최대화(실제 마우스 입력)·Light 테마·1024/1600 일곱 화면을 캡처로 확인했다.
 
-**Stage 2 완료** (2026-09-09). `Controls/PageHeader`(제목·부제, `Follow`로 뷰모델 값을 따라감) + `IPageHeaderSource`. 셸이 `Frame.Navigated`에서 `NavigationView.Header`에 싣고 `HeaderTemplate` 하나로 그린다. 일곱 페이지에서 대제목 `StackPanel`을 걷어냈다. Header 기본 여백(56,44)은 `NavigationViewHeaderMargin` 리소스를 24,24 로 덮어썼다. 1024 캡처에서 일곱 화면 제목 위 y=79 로 모두 같다(픽셀 측정). **다음은 Stage 3이다.**
+**Stage 2 완료** (2026-09-09). `Controls/PageHeader`(제목·부제, `Follow`로 뷰모델 값을 따라감) + `IPageHeaderSource`. 셸이 `Frame.Navigated`에서 `NavigationView.Header`에 싣고 `HeaderTemplate` 하나로 그린다. 일곱 페이지에서 대제목 `StackPanel`을 걷어냈다. Header 기본 여백(56,44)은 `NavigationViewHeaderMargin` 리소스를 24,24 로 덮어썼다. 1024 캡처에서 일곱 화면 제목 위 y=79 로 모두 같다(픽셀 측정).
+
+**Stage 3 완료** (2026-09-09). `Controls/PageBody`(Grid 상속 — `FocusRelease`가 루트 패널을 요구한다). 슬롯 `Commands`·`Filters`·`Body`·`Footer`, `Layout=Reading|Wide`. Reading 은 본문을 스크롤에 담고(스크롤바는 창 오른쪽 끝) 폭을 `PageMaxWidth`(1280)로 막는다. `PagePadding`을 24 로, `ContentMaxWidth`를 `PageMaxWidth`로 바꿨다. 요약·사용량·설정을 이관했고 설정의 저장 바는 `Footer`다. 1600 캡처에서 세 화면 카드 좌·우 끝이 x=234·1511 로 같다(픽셀 측정). **다음은 Stage 4다.**
 
 직전 작업으로 들어간 것(이 계획 이전에 커밋됨):
 - 마우스 엄지 버튼 뒤로/앞으로 + `Daiso.App/Services/NavigationHistory.cs`

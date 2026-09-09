@@ -199,7 +199,7 @@
 
             <!-- 새 세션 카드: 번호 붙은 네 단계. 1·2가 왼쪽, 3·4가 오른쪽, 실행 줄이 아래 -->
             <ScrollViewer x:Name="NewSessionPanel" VerticalScrollBarVisibility="Auto">
-                <Border Style="{StaticResource CardBorder}" Padding="0" MaxWidth="{StaticResource ContentMaxWidth}" HorizontalAlignment="Left" VerticalAlignment="Top">
+                <Border Style="{StaticResource CardBorder}" Padding="0" MaxWidth="{StaticResource PageMaxWidth}" HorizontalAlignment="Left" VerticalAlignment="Top">
                     <StackPanel>
                         <!-- 도구 탭(로고). 순서는 ToolLook.DisplayOrder. 아이콘은 코드에서 ToolLook.LogoIcon으로 채운다 -->
                         <Border Padding="12,8,12,0" BorderThickness="0,0,0,1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">

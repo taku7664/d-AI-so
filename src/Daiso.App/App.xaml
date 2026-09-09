@@ -10,10 +10,10 @@
 
             <!--
                 화면 공통 규칙. (ARCHITECTURE §6.2)
-                간격은 4의 배수, 본문 폭은 1280까지, 카드는 모서리 8.
+                간격은 4의 배수, 본문 여백 24(WinUI 권장값), 본문 폭은 Reading 1280 / Wide 창 전체, 카드는 모서리 8. 골격은 Controls/PageBody 가 강제한다.
             -->
-            <x:Double x:Key="ContentMaxWidth">1280</x:Double>
-            <Thickness x:Key="PagePadding">24,20,24,20</Thickness>
+            <x:Double x:Key="PageMaxWidth">1280</x:Double>
+            <Thickness x:Key="PagePadding">24</Thickness>
 
             <!-- 카드: 페이지 안의 한 덩어리 -->
             <Style x:Key="CardBorder" TargetType="Border">

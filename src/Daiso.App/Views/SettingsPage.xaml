@@ -4,22 +4,13 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:loc="using:Daiso.App.Strings"
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
+    xmlns:controls="using:Daiso.App.Controls"
     xmlns:vm="using:Daiso.App.ViewModels">
 
-    <Grid Padding="{StaticResource PagePadding}" RowSpacing="12">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
-
-        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" MaxWidth="{StaticResource ContentMaxWidth}" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0" Spacing="16" Margin="0,0,0,8">
-
+    <!-- 골격은 PageBody 가 정한다: 본문 → 푸터(저장 바). 폭은 Reading(1280 상한) (UI_REFACTOR_PLAN §6) -->
+    <controls:PageBody Layout="Reading">
+        <controls:PageBody.Body>
+            <StackPanel Spacing="16">
 
                 <!-- 경로 -->
                 <Border Style="{StaticResource CardBorder}">
@@ -332,13 +323,12 @@
                     </StackPanel>
                 </Border>
 
-                </StackPanel>
-            </Grid>
-        </ScrollViewer>
+            </StackPanel>
+        </controls:PageBody.Body>
 
-        <!-- 저장 바 (항상 보인다) -->
+        <!-- 저장 바. 저장은 언제나 푸터 (UI_REFACTOR_PLAN §8.3). 스크롤하지 않는다 -->
+        <controls:PageBody.Footer>
         <Border
-            Grid.Row="1"
             Padding="0,12,0,0"
             BorderThickness="0,1,0,0"
             BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}">
@@ -370,5 +360,6 @@
                     Style="{StaticResource MutedText}" />
             </Grid>
         </Border>
-    </Grid>
+        </controls:PageBody.Footer>
+    </controls:PageBody>
 </Page>

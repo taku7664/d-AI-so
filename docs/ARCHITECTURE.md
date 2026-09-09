@@ -625,15 +625,15 @@ Apply(projectDir, direction, dryRun)
 - 내 규칙의 **마크다운 미리보기 칸은 좁으면 저절로 접힌다**. 본문 최소 폭(380) + 미리보기 최소 폭(190) + 간격보다 편집기 칸이 좁으면 접고, 넓어지면 다시 편다(`RuleMakerPage.OnEditorSizeChanged`). 창 하한 1024에서 목록을 펴 두면 이 경우라, `목록`을 접으면 미리보기가 돌아온다. 미리보기 열에는 XAML `MinWidth`를 두지 않는다 — 열이 최소 폭을 요구하면 격자가 제 칸보다 커져 `ActualWidth`가 실제 칸 폭을 말해 주지 않는다
 - **긴 목록은 보이는 것만 그린다**: 세션 타임라인처럼 수천 건이 될 수 있는 목록은 `ItemsRepeater`(가상화)로 그리고, 파일 읽기·파싱은 `Task.Run`으로 UI 스레드 밖에서 끝낸 뒤 완성된 목록을 **한 번에** 바인딩한다. 한 건씩 `Add`하지 않는다. 메시지 본문은 1,500자에서 접고 `더 보기`로 편다. 필터 토글은 메모리에서 다시 걸고 파일을 다시 읽지 않는다. 다른 항목을 고르면 앞의 읽기는 `CancellationTokenSource`로 취소한다
 - **도구 탭 두 꼴**: 화면 전체를 거르는 탭(요약·사용량)은 제목 아래 독립 띠 `전체 · Codex · Claude · Gemini`. 카드 하나만 거르는 탭(터미널)은 **그 카드 머리에 붙여** 아래에 구분선을 두고 아이콘을 넣는다. 떠 있는 띠는 어디 것인지 읽히지 않는다
-- 화면 루트는 터미널처럼 `폭 * · MinWidth 720 · MaxWidth 1280` 열 하나 + 빈 열의 격자에 담는다. 탭을 좁혀 내용이 줄어도 카드 폭과 제목 줄 자리가 움직이지 않는다
+- **화면 루트는 `Controls/PageBody` 하나다.** 슬롯은 `Commands`(명령 줄) → `Filters`(필터·탭 줄) → `Body` → `Footer` 순서고 비운 슬롯은 줄이 사라진다. 여백 `PagePadding`(24), 줄 사이 12. 폭은 `Layout="Reading"`(`PageMaxWidth` 1280 상한, 왼쫁 정렬 — 요약·사용량·설정) / `Layout="Wide"`(창 전체 — 터미널·세션·내 규칙·내 프롬프트) 둘뿐이다. Reading 은 PageBody 가 본문을 스크롤에 담고 머리·푸터는 스크롤하지 않는다. 페이지가 `ScrollViewer`·`MaxWidth`·`Padding`으로 폭과 여백을 직접 정하면 틀린 것이다
 - **도구 순서는 `ToolLook.DisplayOrder` = Codex → Claude → Gemini**. 요약 탭·카드, 터미널 탭, 세션 필터, 컨텍스트 토글이 전부 이 순서다
 - **도구 표시는 `ToolLook` 한 곳**: 이름(`Claude Code`·`Codex CLI`·`Gemini CLI`), 짧은 이름, 배지 한 글자(C·X·G), 색(보라·회색·파랑). 뷰모델은 `ToolKind`로 분기하지 않고 여기를 부른다. 도구가 늘면 `ToolKind`·`ToolLook`·DI·터미널 프리셋·세션 필터·컨텍스트 토글을 늘린다
 - **가속기 풍선 숨김**: 셸 루트 격자는 `KeyboardAcceleratorPlacementMode="Hidden"`. 안 그러면 `Ctrl+1` 같은 풍선이 본문 어디에나 뜬다. 단축키는 설정 화면에 적혀 있다
 - **저장하지 않은 편집 보호**: 편집기가 더티(`IsDirty` — 마지막 열기·저장·새로 만들기 시점과 직렬화 결과가 다름)이면 다른 목록 항목을 고르거나 새로 만들기·열기·최근 파일을 누를 때 `DiscardDialog`로 묻는다. 취소하면 선택을 이전 항목으로 되돌리고 편집기는 그대로다. 목록을 다시 채우며 같은 항목을 되찾는 것과 방금 저장한 사본을 되찾는 것은 묻지 않는다
 
 - 페이지 구성은 `제목 → (부제) → 행동 버튼 → 카드들` 순서로 같다
-- 본문은 **왼쪽 정렬**, 최대 폭 `ContentMaxWidth`(1280). 넓은 창에서 가운데로 뜨지 않는다
-- 간격은 4의 배수. 페이지 여백은 `PagePadding`, 카드 사이는 16
+- 본문은 **왼쪽 정렬**, Reading 의 최대 폭은 `PageMaxWidth`(1280). 넓은 창에서 가운데로 뜨지 않는다
+- 간격은 4의 배수. 페이지 여백은 `PagePadding`(24, WinUI 권장값), 골격 줄 사이 12, 카드 사이는 16
 - 카드는 `CardBorder` 스타일 하나만 쓴다 (모서리 8, 1px 선)
 - 글자 스타일은 `PageTitleText` · `PageSubtitleText` · `SectionTitleText` · `MutedText` · `MonoText` · `NumberText` 여섯 개로 제한한다
 - 표의 숫자는 `NumberText`(고정 폭·오른쪽 정렬). 큰 수는 `Formats.Tokens`로 줄여 쓰고 원래 값은 ToolTip에 둔다
