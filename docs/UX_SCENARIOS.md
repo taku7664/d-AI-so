@@ -604,3 +604,35 @@ Windows 앱 UX 점검표(MS Learn UX checklist, Tooltips, Keyboard accessibility
 - 방 도구 줄은 아이콘 7개만이다. 툴팁이 다 뜨는 것을 확인했지만 `입력 비우기`의 ✕ 는 "닫기"로 읽힐 수 있다
 - 툴팁이 요소 바로 위가 아니라 화면 왼쪽 위쪽에 뜨는 경우가 있다(방 도구 줄, 규칙 갤러리). WinUI 배치라 그대로 둔다
 - 내장 터미널에 뜬 `SessionStart:startup hook error` 는 이 PC 의 사용자 플러그인 훅 경로(한글 사용자 이름) 문제로 앱 밖의 일이다
+
+## 28차 — 도구 하나가 사라졌다 (2026-09-09)
+
+사용자가 "Gemini CLI 지원이 끊기고 Antigravity 로 바뀌었다"고 알려 왔다. 처음에 나는 이 PC 에 `gemini` 명령과 `~/.gemini` 가 그대로 있는 것만 보고
+**"사라지지 않았다"고 답했다.** 잘못이었다 — 디스크에 남은 흔적은 도구가 살아 있다는 증거가 아니다. 찾아보니 Google 이 2026-05-19 I/O 에서 통합을 알리고
+2026-06-18 부터 개인 계정에서 요청을 멈췄다. 남아 있던 것은 은퇴 전에 깔린 바이너리와 그때까지의 기록이었다.
+
+**교훈**: 외부 제품의 생사는 로컬 파일로 판정할 수 없다. 사용자가 바깥 소식을 전할 때는 먼저 바깥을 확인한다.
+
+### 무엇을 바꿨나
+
+| 갈래 | 전 | 후 |
+|---|---|---|
+| 실행 | `gemini` (npm 셸 `.cmd`) | `agy` (`%LOCALAPPDATA%\agy\bin`, Go 단일 실행 파일) |
+| 설치 | `npm install -g @google/gemini-cli` | `irm https://antigravity.google/cli/install.ps1 \| iex` |
+| 설정 | `~/.gemini` | `~/.gemini/antigravity-cli/settings.json`·`keybindings.json` |
+| 로그인 | `oauth_creds.json` 을 읽어 만료 표시 | 자격 증명 관리자에 있어 못 읽는다 → **못 읽는다는 사실을 부가 정보에 적는다** |
+| 이름·툴팁·탭 | `Gemini CLI` · `Gemini` · 배지 `G` | `Antigravity CLI` · `Antigravity` · 배지 `A` |
+| 로고 | Gemini 스파크 | **대체 마크(위로 향하는 ＾)** — 자체 로고를 쓸 수 있는 라이선스로 못 구했고, 남의 상표를 붙여 둘 수는 없다 |
+| 내장 슬래시 명령 | `/chat` `/compress` `/memory` … | `/agents` `/boost` `/fork` `/resume` `/rewind` … (공식 CLI 참고 문서) |
+| 인자 프리셋 | `--model` · `--sandbox` | **비웠다** — 확인 안 된 플래그를 버튼으로 내주면 누르는 대로 실패하는 명령이 만들어진다 |
+| 프로젝트·enum | `Daiso.Providers.Gemini` · `ToolKind.Gemini` | `Daiso.Providers.Antigravity` · `ToolKind.Antigravity` (인덱스 버전 4로 올려 재구축) |
+
+세션 기록·사용량·검색은 **옛 `~/.gemini` 기록을 계속 읽는다.** 지난 대화를 지울 이유가 없다.
+
+### 지어내지 않고 남긴 것
+
+공식 문서가 플래그 표와 세션 경로를 싣지 않는다. 확인 못 한 5건은 ARCHITECTURE §4.5 표에 이유와 함께 적고, 값은 옛 것을 두었다 —
+조용한 실패보다 눈에 보이는 실패가 낫다는 판단이다. `agy` 를 깔면 `agy --help` 로 확정한다.
+
+특히 **세션 기록은 못 읽을 가능성이 크다.** 같은 계열 Antigravity IDE 는 대화를 `~/.gemini/antigravity/conversations/*.pb` 에 두는데,
+12만 바이트를 열어 보니 8자 이상 읽을 수 있는 문자열이 하나도 없다 — 암호화다. CLI 도 그렇다면 목록·검색·내보내기·사용량을 그 도구에서는 할 수 없다.

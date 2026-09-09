@@ -1,6 +1,6 @@
 # d-AI-so 요구사항 정리 (v0.3)
 
-> 로컬 전용 AI CLI 유틸리티. Claude Code / Codex CLI / Gemini CLI를 대상으로 인증 상태 확인, 터미널 실행, 세션 관리, 규칙(Rule) 프리셋 편집을 제공한다.
+> 로컬 전용 AI CLI 유틸리티. Claude Code / Codex CLI / Antigravity CLI를 대상으로 인증 상태 확인, 터미널 실행, 세션 관리, 규칙(Rule) 프리셋 편집을 제공한다.
 > 작성일: 2026-09-07
 
 ---
@@ -10,7 +10,7 @@
 | 항목 | 결정 |
 |---|---|
 | 플랫폼 | Windows 10/11, WinUI 3 (Windows App SDK), C# / .NET 8 |
-| 지원 도구 | Claude Code, Codex CLI, Gemini CLI (확장 가능한 Provider 구조) |
+| 지원 도구 | Claude Code, Codex CLI, Antigravity CLI (확장 가능한 Provider 구조). Gemini CLI 는 2026-06-18 개인 계정 지원 종료로 Antigravity CLI 가 대체했다 — 옛 세션 기록은 계속 읽는다 (ARCHITECTURE §4.5) |
 | 네트워크 | 없음. 로컬 파일 읽기/쓰기 + 프로세스 실행만 |
 | 계정/로그인 | 앱 자체 로그인 없음. CLI가 남긴 인증 파일을 읽기만 함 |
 | 배포 | 미정 (MSIX 또는 unpackaged exe) |
@@ -22,7 +22,7 @@
 - NavigationView 기반 좌측 메뉴: **Dashboard / Terminal / Sessions / Rule-Maker / Settings**
 - Mica/Fluent 테마, 라이트·다크 자동 추종
 - MVVM (CommunityToolkit.Mvvm), DI (Microsoft.Extensions.DependencyInjection)
-- 모든 파일 시스템 접근은 `IProvider` 추상화 뒤에 둠 → Claude/Codex 외 도구(Gemini CLI 등) 추가 용이
+- 모든 파일 시스템 접근은 `IProvider` 추상화 뒤에 둠 → Claude/Codex 외 도구(Antigravity CLI 등) 추가 용이
 
 ---
 

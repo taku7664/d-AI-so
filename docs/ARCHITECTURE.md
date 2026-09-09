@@ -368,9 +368,28 @@ public sealed record ExportOptions(bool IncludeToolCalls = true, bool IncludeSys
   - 모델: `event_msg.thread_settings_applied.thread_settings.model` 또는 `turn_context.payload.model`
 - resume: `codex resume <id>`
 
-### 4.5 Gemini (`Daiso.Providers.Gemini`)
+### 4.5 Antigravity (`Daiso.Providers.Antigravity`)
 
-> 근거: 이 PC의 `~/.gemini` 실제 파일(`oauth_creds.json`·`google_accounts.json`·`projects.json`·`tmp/{이름|해시}/chats/session-*.jsonl` 헤더 줄)과,
+> **도구가 바뀌었다 (2026-06-18).** Google 이 2026-05-19 I/O 에서 Gemini CLI 와 Gemini Code Assist IDE 확장을 Antigravity 로 합친다고 알리고,
+> 2026-06-18 부터 개인 계정(무료·AI Pro·Ultra)에서 Gemini CLI 가 요청을 멈췄다(기업 라이선스는 예외).
+> 대체는 **Antigravity CLI** — 명령 `agy`, Go 로 만든 비공개 단일 실행 파일, npm 이 아닌 공식 설치 스크립트.
+> 그래서 이 제공자는 **두 시대를 함께 다룬다**: 실행·설치·설정은 Antigravity 것이고, 디스크에 남은 기록·로그인 파일은 은퇴한 Gemini CLI 것이다.
+> 옛 기록을 버릴 이유가 없으므로 계속 읽어 목록·검색·사용량에 보여 준다. 그래서 형식 파서의 이름은 `GeminiTranscriptReader`·`GeminiProjectMap` 으로 남겼다 —
+> 파싱 대상이 그 형식이기 때문이다.
+>
+> **아직 확인하지 못한 것 (`agy` 를 깔고 실제 파일·`agy --help` 로 정한다)**
+> | 무엇 | 지금 코드 | 왜 모르는가 |
+> |---|---|---|
+> | 세션 기록 위치·형식 | 옛 `~/.gemini/tmp/**/chats/*.jsonl` 만 읽는다 | 공식 문서에 경로가 없다. 같은 계열 Antigravity IDE 는 `~/.gemini/antigravity/conversations/*.pb` 에 **암호화**해 둔다(12만 바이트에 읽을 수 있는 문자열 0개) — CLI 도 그렇다면 앱이 읽을 길이 없다 |
+> | 시작 프롬프트 플래그 | `-p "메시지"` | 공식 문서에 플래그 표가 없다. 여러 이관 안내서가 `-p` 라고 적는다 |
+> | 이어서 열기 플래그 | `--resume <id>` (옛 값) | 공식 문서는 TUI 안의 `/resume` 슬래시 명령만 싣는다 |
+> | 컨텍스트 파일 이름 | `GEMINI.md` (옛 값) | `agy` 가 이 이름을 그대로 읽는지 확인 못 했다 |
+> | 사용자 슬래시 명령 위치 | 옛 `~/.gemini/commands/*.toml` | `agy` 는 확장 대신 플러그인(`agy plugin install`)을 쓴다 |
+>
+> 확인 못 한 값은 **비우지 않고 옛 값을 두었다**. 프롬프트를 골랐는데 아무것도 넘기지 않으면 조용히 실패하고, 플래그가 틀리면 CLI 가 눈에 보이게 거절한다 —
+> 조용한 실패보다 보이는 실패가 낫다. 다만 **인자 프리셋 버튼은 비웠다**: 확인 안 된 플래그를 버튼으로 내주면 누르는 대로 실패하는 명령이 만들어진다.
+
+> 근거(옛 Gemini CLI 기록 형식): 이 PC의 `~/.gemini` 실제 파일(`oauth_creds.json`·`google_accounts.json`·`projects.json`·`tmp/{이름|해시}/chats/session-*.jsonl` 헤더 줄)과,
 > 설치한 Gemini CLI 0.58.0 번들의 `chatRecordingTypes.ts`/`chatRecordingService.ts`/`sessionOperations.ts` 소스를 대조했다: 첫 줄은 `sessionId`가 있는 헤더 레코드, 메시지는 `type: user|gemini|…`, `content`(문자열 또는 Part 배열), `thoughts`, `toolCalls`, `tokens {input, output, cached, thoughts, tool}` (usageMetadata에서 그대로 옮긴 값). 파일 이름은 `session-…-<짧은 id>.json|.jsonl`.
 > 아직 안 다루는 것: 옛 단일 `.json` 파일(통째로 다시 쓰이는 형식이라 증분 인덱스와 맞지 않음), `content` 안에 `functionCall` 조각으로 들어간 도구 호출.
 
@@ -378,7 +397,12 @@ public sealed record ExportOptions(bool IncludeToolCalls = true, bool IncludeSys
 - `%USERPROFILE%\.gemini\oauth_creds.json` → `access_token`, `refresh_token`, `expiry_date`(ms), `token_type`, `scope`. **값은 읽지 않는다**
 - `refresh_token`이 있으면 CLI가 알아서 갱신하므로 만료 개념 없음 → `SessionExpiresAt = null` → LoggedIn. 없으면 `expiry_date`로 판정
 - 계정: `google_accounts.json`의 `active` 이메일. `AccountLabel`과 `Email` 둘 다 이 값
-- 프로필(§5.7) 파일: `oauth_creds.json`(필수), `google_accounts.json`(선택)
+- **Antigravity CLI 는 로그인 토큰을 파일이 아니라 Windows 자격 증명 관리자에 넣는다.** 앱은 읽지 않는다. 그래서 만료를 못 보여 주며,
+  그 사실을 부가 정보 줄(`Antigravity 로그인: Windows 자격 증명 관리자에 보관 (앱이 읽지 않음)`)로 밝힌다 — 아무 말이 없으면
+  앱이 못 읽는 것인지 로그인이 안 된 것인지 구분할 수 없다
+- `~/.gemini/antigravity-cli/settings.json` 이 있으면 `agy` 를 설정한 적이 있다는 뜻이라, 옛 로그인 파일이 없어도 `Missing` 으로 보지 않는다.
+  그 안에 `apiKey` 가 있으면 인증 방식을 `API 키`로, 없으면 `브라우저 로그인`으로 적는다
+- 프로필(§5.7) 파일: `oauth_creds.json`(선택), `antigravity-cli/settings.json`(선택). **필수 파일이 없다** — 토큰이 파일에 없기 때문이다
 
 **세션**
 - 루트: `%USERPROFILE%\.gemini	mp\{프로젝트 이름 | SHA-256}\chats\session-*.jsonl`. 아카이브 개념 없음
@@ -393,11 +417,14 @@ public sealed record ExportOptions(bool IncludeToolCalls = true, bool IncludeSys
 - 메시지 → `type == "user"` → User, `"gemini"` → Assistant(`content`는 문자열 또는 `[{text}]` 조각), `"info"|"warning"|"error"` → System, `toolCalls[]` → 각각 Tool 한 건(이름 + 인자 앞 300자 + 상태. 결과 본문은 넣지 않는다)
 - 프로젝트 경로: `projects.json`의 `{"projects": {"소문자 경로": "이름"}}`으로 폴더 이름 → 경로, 또는 SHA-256(경로) → 경로를 되짚는다. 모르면 null. 키가 소문자 경로라 `ProjectPathNormalizer.RestoreCasing`으로 디스크의 실제 대소문자를 되돌려 저장한다. 그래야 Claude·Codex의 같은 프로젝트와 한 묶음이 된다(§4.3)
 - 토큰: 메시지의 `tokens {input, output, cached, thoughts, tool}` — **응답마다 붙는 값이라 날짜별로 더한다**. Input = input + tool, Output = output + thoughts, CacheRead = cached, CacheCreate 0. 모델은 `model`
-- resume: `gemini --resume <id>`
-- 실행 파일: `gemini` (npm 셸 `.cmd`)
+- resume: `agy --resume <id>` — **미확인**(위 표). 옛 Gemini CLI 의 플래그를 그대로 두었다
+- 실행 파일: `agy` (`%LOCALAPPDATA%\agy\bin\agy.exe`, 설치 스크립트가 PATH 에 넣는다). `ExecutableLocator` 가 `.exe` 도 찾으므로 설치 감지는 그대로다
+- 설치: `irm https://antigravity.google/cli/install.ps1 | iex` — **npm 이 아니다.** `InstallCommandTests` 가 이 사실을 잠근다
+- 설정: `~/.gemini/antigravity-cli/settings.json`·`keybindings.json`
+- 내장 슬래시 명령: `/agents` `/boost` `/clear` `/config` `/fork` `/keybindings` `/permissions` `/resume` `/rewind` (공식 CLI 참고 문서)
 
 **지시문**
-- 파일 `GEMINI.md`. `@import`는 `.md`만 받으므로 `PROJECT_RULES.daiso`는 Codex처럼 읽기 지시문으로 넣는다(`InstructionTemplate`)
+- 파일 `GEMINI.md` — **미확인**(위 표). `PROJECT_RULES.daiso`는 Codex처럼 읽기 지시문으로 넣는다(`InstructionTemplate`). 읽기 지시문은 어느 쪽이든 통한다
 - 마이그레이션(§5.6)은 CLAUDE.md ↔ AGENTS.md 두 방향만이다. GEMINI.md는 연동(마커 블록)만 받는다
 
 ### 4.3 경로 정규화 (`ProjectPathNormalizer`, `Daiso.Providers.Common`)
@@ -406,7 +433,7 @@ public sealed record ExportOptions(bool IncludeToolCalls = true, bool IncludeSys
 
 ### 4.4 Context 파일 목록 (`ContextFilePatterns`, 로드 순서대로)
 
-| Claude | Codex | Gemini |
+| Claude | Codex | Antigravity |
 |---|---|---|
 | `~/.claude/CLAUDE.md` | `~/.codex/AGENTS.md` | `~/.gemini/GEMINI.md` |
 | 루트→상위 방향: `{ancestor}/CLAUDE.md`, `{ancestor}/.claude/CLAUDE.md` (드라이브 루트까지) | git 루트→cwd 방향: `{dir}/AGENTS.md` | git 루트→cwd 방향: `{dir}/GEMINI.md` |
@@ -424,7 +451,7 @@ RefreshAsync
   → 각 IProvider.EnumerateSessionsAsync  (파일 경로, size, mtime만)
   → sessions 테이블의 (size, mtime, last_offset) 와 비교
      · 신규          → offset 0부터 ReadMessagesAsync
-     · size 증가     → last_offset부터 이어 읽기 (IProvider.AppendOnlySessions 인 도구만. Gemini는 처음부터)
+     · size 증가     → last_offset부터 이어 읽기 (IProvider.AppendOnlySessions 인 도구만. Antigravity는 처음부터)
      · 파서 형식 버전(PRAGMA user_version) 이 코드의 상수와 다르면 → 표를 비우고 전부 처음부터. 파서를 고치면 상수를 올린다
      · size 감소/변경 → offset 0부터 재파싱 (재작성된 경우)
      · 동일          → 건너뜀
@@ -485,9 +512,9 @@ RefreshAsync
 화면 열림 → 도구마다 IProvider.IsInstalledAsync
 인자 합치기  TerminalViewModel.ComposeArguments = [resume 인자] [사용자 인자] [프롬프트 시작 메시지]
              프롬프트를 골랐으면 IPromptLibrary.WriteIntoProject(docs/prompts/{id}.md) 후 PromptPresetSerializer.StarterMessage를
-             첫 메시지 인자로 붙인다: Claude·Codex는 `"메시지"`(위치 인자), Gemini는 `-i "메시지"`. 메시지 안 큰따옴표는 홑따옴표로
+             첫 메시지 인자로 붙인다: Claude·Codex는 `"메시지"`(위치 인자), Antigravity는 `-p "메시지"`(미확인, §4.5). 메시지 안 큰따옴표는 홑따옴표로
 터미널로 열기  설치됨 + WebView2 있음 → 내장 방(아래 "내장 터미널"). 아니면 외부 열기 또는 설치로 폴백
-새 창에서 열기 → ITerminalLauncher.LaunchAsync(dir, "claude"|"codex"|"gemini", 합친 인자)
+새 창에서 열기 → ITerminalLauncher.LaunchAsync(dir, "claude"|"codex"|"agy", 합친 인자)
 설치   폴더 없어도 됨 → ITerminalLauncher.LaunchAsync(dir|home, "npm", "install -g <패키지>")   (IProvider.InstallCommand)
        → 버튼은 "설치 중…"으로 잠기고 3초마다 IsInstalledAsync. 실행 파일이 보이면 "열기"로 돌아온다. 5분이 지나면 지켜보기를 멈추고 안내
 ```
@@ -499,7 +526,7 @@ RefreshAsync
 
 **내장 터미널** — 앱을 떠나지 않고 CLI를 xterm 터미널로 띄운다. 방 화면에는 터미널만 보이고, 입력은 xterm이 직접 받는다(별도 입력칸 없음).
 - 엔진: `Daiso.Infrastructure.Pty` — `PseudoConsole`(ConPTY: CreatePseudoConsole + 파이프 + STARTUPINFOEX, 자식 생성 동안만 부모 표준 핸들을 비워 콘솔 핸들을 새로 받게 한다. **ConPTY 는 동봉한 `conpty.dll`(NuGet `Microsoft.Windows.Console.ConPTY`, Windows Terminal 의 OpenConsole) 을 먼저 쓰고 없으면 OS 의 kernel32 로 물러난다.** Windows 10 내장 ConPTY 는 대체 화면(`?1049`)·마우스 모드를 터미널에 넘기지 않고 삼킨 뒤 주 화면 N줄을 다시 그려서, Claude Code 처럼 대체 화면에서 그리는 TUI 는 xterm 에 스크롤백이 한 줄도 쌓이지 않았다 — 2026-09-09 측정: 옛 ConPTY 에서는 `buffer=normal, length == rows, mouse=none`, 동봉 ConPTY 로 바꾼 뒤 `buffer=alternate, mouse=any`. 즉 Claude Code 는 대체 화면 + 마우스 추적으로 휠을 직접 받아 자기 기록을 스크롤한다 — Windows Terminal 과 같은 동작이고, 그 위의 옛 출력이 xterm 스크롤백에 남지 않는 것은 Claude Code 의 방식이다. 앱 프로젝트가 `ConptyRequiresx64Host=true`로 `x64\OpenConsole.exe` 복사를 켠다; 패키지 props 는 SDK 가 PlatformTarget 을 정하기 전에 읽혀 스스로 못 켠다), `PtySession`(FileStream IO, 트리 kill 종료, 초기 출력 버퍼링, conhost 마지막 프레임 정착 대기), `PtyEnvironment`(중첩 Claude Code 표식 제거 — 챗봇 엔진도 이걸 쓴다).
-- 화면: `Daiso.App.Terminal.TerminalHost` — WebView2 + 동봉 xterm.js(`Assets/xterm`, xterm·fit·search, MIT). `SetVirtualHostNameToFolderMapping`으로 로컬만 로드, 네트워크 없음. 앱↔페이지 메시지: out(base64)·paste·theme·focus·fit·reset·find·find-clear / in·resize·copy·paste·ready(cols,rows)·title. 방을 바꿀 때는 `reset`(clear가 아니라)으로 모드·스크롤백까지 초기화한 뒤 재생하고, 지금 xterm 크기를 그 방 콘솔에 다시 알린다(비활성 중 창 크기가 바뀌어도 따라잡는다). 페이지 메시지 처리는 클립보드 잠김 등 예외를 감싼다(async void). 초기화가 도중에 실패하면 플래그를 되돌려 다음 호출이 다시 시도한다. 설정 `Changed`를 구독해 글자 크기가 열린 방에 즉시 반영된다. 선택 있으면 Ctrl+C 복사·없으면 중단, Ctrl+V·오른클릭 붙여넣기(글자 → 붙임, 복사한 파일 → 경로를 앞뒤 빈칸과 함께 따옴표로 감싸 붙임 — 뒤 빈칸만 두면 CLI가 지워 다음 경로가 들러붙었다, **그림만 있으면 그 방의 도구가 그림을 읽는 키를 넘긴다**: Claude Code는 Windows에서 `Alt+V`(ESC v), Codex·Gemini는 `Ctrl+V`. 방이 `ToolKind`를 알아 도구별로 나눈다), 파일 끌어놓기 → **셸이 직접 OLE 드롭 대상(`Services/FileDropTarget`, `IDropTarget`+`RegisterDragDrop`)을 창과 자식 창 전부에 등록**해 CF_HDROP 을 받고, 지금 페이지가 `IFileDropSink`면 넘긴다. XAML `AllowDrop`은 이 환경(Windows 10 · unpackaged · WinAppSDK 1.8)에서 어떤 HWND 에도 드롭 대상을 등록하지 않아(측정: `OleDropTargetInterface` 속성 없음 → 금지 커서) 쓰지 않는다. `App` 생성자에서 `OleInitialize`를 부른다. 터미널 페이지는 끄는 동안 `DropOverlay`(히트 테스트 없음, 안내용)를 터미널 위에 덮고, 놓이면 방이 있을 때 `AttachFilesAsync`(그림 파일 → 클립보드 CF_DIB + 도구의 그림 키 → `[Image #n]` 첨부, 나머지 → 경로). 방이 없으면 받지 않는다(폴더를 놓아 프로젝트 폴더를 바꾸는 동작은 넣었다가 뺐다 — 2026-09-09). index.html은 파일 시각을 쿼리로 붙여 캐시된 옛 페이지가 뜨지 않게 한다. 방 도구 줄의 **파일 첨부**(피커, 여러 개) · **입력 비우기**(입력 줄은 CLI 것이라 Ctrl+E·Ctrl+U 키를 보낸다. 여러 줄 입력은 마지막 줄만 지워질 수 있다), F5·Ctrl+1~7은 페이지에서 먹어 앱 단축키와 안 겹치게. 찾기는 방 머리의 찾기 칸(xterm search 애드온): 글이 바뀌면 다음, Enter 다음·Shift+Enter 이전, Esc는 비우고 터미널로 포커스. 터미널 방에서만 보인다.
+- 화면: `Daiso.App.Terminal.TerminalHost` — WebView2 + 동봉 xterm.js(`Assets/xterm`, xterm·fit·search, MIT). `SetVirtualHostNameToFolderMapping`으로 로컬만 로드, 네트워크 없음. 앱↔페이지 메시지: out(base64)·paste·theme·focus·fit·reset·find·find-clear / in·resize·copy·paste·ready(cols,rows)·title. 방을 바꿀 때는 `reset`(clear가 아니라)으로 모드·스크롤백까지 초기화한 뒤 재생하고, 지금 xterm 크기를 그 방 콘솔에 다시 알린다(비활성 중 창 크기가 바뀌어도 따라잡는다). 페이지 메시지 처리는 클립보드 잠김 등 예외를 감싼다(async void). 초기화가 도중에 실패하면 플래그를 되돌려 다음 호출이 다시 시도한다. 설정 `Changed`를 구독해 글자 크기가 열린 방에 즉시 반영된다. 선택 있으면 Ctrl+C 복사·없으면 중단, Ctrl+V·오른클릭 붙여넣기(글자 → 붙임, 복사한 파일 → 경로를 앞뒤 빈칸과 함께 따옴표로 감싸 붙임 — 뒤 빈칸만 두면 CLI가 지워 다음 경로가 들러붙었다, **그림만 있으면 그 방의 도구가 그림을 읽는 키를 넘긴다**: Claude Code는 Windows에서 `Alt+V`(ESC v), Codex·Antigravity는 `Ctrl+V`. 방이 `ToolKind`를 알아 도구별로 나눈다), 파일 끌어놓기 → **셸이 직접 OLE 드롭 대상(`Services/FileDropTarget`, `IDropTarget`+`RegisterDragDrop`)을 창과 자식 창 전부에 등록**해 CF_HDROP 을 받고, 지금 페이지가 `IFileDropSink`면 넘긴다. XAML `AllowDrop`은 이 환경(Windows 10 · unpackaged · WinAppSDK 1.8)에서 어떤 HWND 에도 드롭 대상을 등록하지 않아(측정: `OleDropTargetInterface` 속성 없음 → 금지 커서) 쓰지 않는다. `App` 생성자에서 `OleInitialize`를 부른다. 터미널 페이지는 끄는 동안 `DropOverlay`(히트 테스트 없음, 안내용)를 터미널 위에 덮고, 놓이면 방이 있을 때 `AttachFilesAsync`(그림 파일 → 클립보드 CF_DIB + 도구의 그림 키 → `[Image #n]` 첨부, 나머지 → 경로). 방이 없으면 받지 않는다(폴더를 놓아 프로젝트 폴더를 바꾸는 동작은 넣었다가 뺐다 — 2026-09-09). index.html은 파일 시각을 쿼리로 붙여 캐시된 옛 페이지가 뜨지 않게 한다. 방 도구 줄의 **파일 첨부**(피커, 여러 개) · **입력 비우기**(입력 줄은 CLI 것이라 Ctrl+E·Ctrl+U 키를 보낸다. 여러 줄 입력은 마지막 줄만 지워질 수 있다), F5·Ctrl+1~7은 페이지에서 먹어 앱 단축키와 안 겹치게. 찾기는 방 머리의 찾기 칸(xterm search 애드온): 글이 바뀌면 다음, Enter 다음·Shift+Enter 이전, Esc는 비우고 터미널로 포커스. 터미널 방에서만 보인다.
 - 종료는 반드시 프로세스 **트리 전체**를 kill 한다. 루트 셸만 죽이면 자식이 콘솔 출력을 잡아 읽기가 안 풀리고, 파이프 핸들 해제와 네이티브 읽기가 겹쳐 힙이 깨진다. 방 닫기(`TerminalRoomViewModel.Dispose`)는 트리 kill만 UI 스레드에서 바로 하고(앱 종료 때도 고아가 안 남게), 읽기 루프 종료를 기다리는 핸들 정리(`PtySession.Dispose`)는 백그라운드로 보내 UI가 굳지 않게 한다.
 - 방 = `TerminalRoomViewModel`(공통 `IRoom` 구현. `IRoom`은 `INotifyPropertyChanged`라 탭이 제목·안 본 점을 따라간다). `RoomManager`(싱글턴)가 방을 들고 있어 화면을 옮겨도 산다. 탭 띠가 `RoomManager.Rooms`(IRoom)를 그리고, 탭을 고르면 하나뿐인 `TerminalHost`를 `BindRoom`으로 그 방에 다시 가리킨다. 출력 버퍼는 `Daiso.Infrastructure.Pty.OutputReplayBuffer`(순수, 테스트 있음): 8MB까지 쌓고, `Attach`가 스냅샷·싱크 교체를 한 잠금 안에서 원자적으로 해 지난 화면을 되돌린다(중복·누락 없음). 세대 번호로 옛 방의 늦은 출력이 새 방에 안 섞이게 한다. 프로세스가 OSC 0 제목을 보내면 방 `Title`(탭 툴팁) 뒤에 붙는다. `TerminalPage`는 `NavigationCacheMode=Required`라 화면을 떠났다 돌아와도 WebView2를 다시 만들거나 버퍼를 재생하지 않는다.
 - 열기: 새 터미널 카드의 **"터미널로 열기"** → `PtySession.Start`(셸 명령) + `TerminalRoomViewModel` + 탭 추가 → 그 방 탭으로 전환 → `TerminalHost.BindRoom`. 미설치면 설치 흐름, WebView2가 없으면 외부 터미널(`ITerminalLauncher`)로 폴백. (2026-09-09: "터미널을 앱 안에서 연다" 설정은 뺐다. 새 창 열기 버튼이 따로 있어 스위치가 겹쳤다.) 탭 띠의 "새 터미널"은 카드로 돌아갈 뿐 방을 닫지 않는다.
@@ -612,7 +639,7 @@ Apply(projectDir, direction, dryRun)
 
 ### 6.1 요약 화면의 순서
 
-제목 아래 **탭 띠(`SelectorBar`)**: `전체 · Codex · Claude · Gemini`. 도구 탭을 고르면 카드·최근 세션·세션 수·용량·최근 7일 토큰이 그 도구로 좁혀진다(토큰은 `ISessionIndex.GetUsageAsync(from, to, tool, ct)`). 파일은 다시 읽지 않고 메모리의 세션 목록과 인덱스만 쓴다.
+제목 아래 **탭 띠(`SelectorBar`)**: `전체 · Codex · Claude · Antigravity`. 도구 탭을 고르면 카드·최근 세션·세션 수·용량·최근 7일 토큰이 그 도구로 좁혀진다(토큰은 `ISessionIndex.GetUsageAsync(from, to, tool, ct)`). 파일은 다시 읽지 않고 메모리의 세션 목록과 인덱스만 쓴다.
 
 카드는 **쓰는 빈도** 순으로 놓는다. 요약을 여는 가장 흔한 이유가 "하던 것 이어서 열기"다.
 
@@ -663,7 +690,9 @@ MUST 넷을 어긴 페이지를 만들면 테스트가 빨개진다. 규칙을 �
 **앱 이름과 도구 아이콘 (2026-09-09)**
 - 화면·툴팁·설명·창 제목에 보이는 앱 이름은 **DAIso** 하나다. 저장소·실행 파일·설정 폴더 이름(`d-AI-so`)은 그대로 둔다(경로 호환).
 - 도구는 글자 배지 대신 **제작사 로고를 원 안에** 그린다: `Controls/ToolIcon`(원 + 로고), 탭·메뉴에는 `ToolLook.LogoIcon`(단색 PathIcon).
-  로고 경로는 simple-icons(CC0) 24×24 — Claude(주황 #D97757), Codex→OpenAI(초록 #10A37F), Gemini(파랑→보라→분홍 그라데이션). `ToolLook.LogoPath`가 정본.
+  로고 경로는 24×24 — Claude(주황 #D97757)·Codex→OpenAI(초록 #10A37F)는 simple-icons(CC0), Antigravity(파랑→보라→분홍 Google 그라데이션)는
+  **대체 마크(위로 향하는 ＾)**다. 자체 로고가 있으나 simple-icons 에 없고(2026-09 확인) 쓸 수 있는 라이선스로 구하지 못했다 —
+  Gemini 스파크를 그대로 두면 다른 제품의 상표를 잘못 붙이는 것이라 바꿨다. `ToolLook.LogoPath`가 정본.
 - 요약 도구 카드는 로고 원 오른쪽 아래에 로그인 상태 점(초록/노랑/빨강)을 겹친다. 세션 목록·최근 세션·방 탭도 같은 아이콘.
 - 도구 모음은 **아이콘만 + 호버 툴팁**(포토샵·게임 엔진 관례): 터미널 방 도구 줄, 세션 목록의 체크 유틸(전체 체크 · 골라 체크 · 휴지통 · 영구 삭제; 목록 카드 머리 오른쪽).
 - 알림 점은 빨간색 `Controls/PulseDot`(고리가 퍼지는 반복 연출). 좌측 메뉴는 `CriticalDotInfoBadgeStyle` InfoBadge.
@@ -674,10 +703,10 @@ MUST 넷을 어긴 페이지를 만들면 테스트가 빨개진다. 규칙을 �
 - 내 규칙의 **마크다운 미리보기 칸은 좁으면 저절로 접힌다**. 본문 최소 폭(380) + 미리보기 최소 폭(190) + 간격보다 편집기 칸이 좁으면 접고, 넓어지면 다시 편다(`RuleMakerPage.OnEditorSizeChanged`). 창 하한 1024에서 목록을 펴 두면 이 경우라, `목록`을 접으면 미리보기가 돌아온다. 미리보기 열에는 XAML `MinWidth`를 두지 않는다 — 열이 최소 폭을 요구하면 격자가 제 칸보다 커져 `ActualWidth`가 실제 칸 폭을 말해 주지 않는다
 - **긴 목록은 보이는 것만 그린다**: 세션 타임라인처럼 수천 건이 될 수 있는 목록은 `ItemsRepeater`(가상화)로 그리고, 파일 읽기·파싱은 `Task.Run`으로 UI 스레드 밖에서 끝낸 뒤 완성된 목록을 **한 번에** 바인딩한다. 한 건씩 `Add`하지 않는다. 메시지 본문은 1,500자에서 접고 `더 보기`로 편다. 필터 토글은 메모리에서 다시 걸고 파일을 다시 읽지 않는다. 다른 항목을 고르면 앞의 읽기는 `CancellationTokenSource`로 취소한다
 - **도구별 거르기는 탭(`SelectorBar`), 나머지 축(프로젝트·기간)은 콤보** (UI_REFACTOR_PLAN §8.4). 요약·사용량·세션이 같은 띠를 쓴다
-- **도구 탭 두 꼴**: 화면 전체를 거르는 탭(요약·사용량·세션)은 필터 줄의 독립 띠 `전체 · Codex · Claude · Gemini`. 카드 하나만 거르는 탭(터미널)은 **그 카드 머리에 붙여** 아래에 구분선을 두고 아이콘을 넣는다. 떠 있는 띠는 어디 것인지 읽히지 않는다
+- **도구 탭 두 꼴**: 화면 전체를 거르는 탭(요약·사용량·세션)은 필터 줄의 독립 띠 `전체 · Codex · Claude · Antigravity`. 카드 하나만 거르는 탭(터미널)은 **그 카드 머리에 붙여** 아래에 구분선을 두고 아이콘을 넣는다. 떠 있는 띠는 어디 것인지 읽히지 않는다
 - **화면 루트는 `Controls/PageBody` 하나다.** 슬롯은 `Commands`(명령 줄) → `Filters`(필터·탭 줄) → `Body` → `Footer` 순서고 비운 슬롯은 줄이 사라진다. 여백 `PagePadding`(24), 줄 사이 12. 폭은 `Layout="Reading"`(`PageMaxWidth` 1280 상한, 왼쫁 정렬 — 요약·사용량·설정) / `Layout="Wide"`(창 전체 — 터미널·세션·내 규칙·내 프롬프트) 둘뿐이다. Reading 은 PageBody 가 본문을 스크롤에 담고 머리·푸터는 스크롤하지 않는다. 페이지가 `ScrollViewer`·`MaxWidth`·`Padding`으로 폭과 여백을 직접 정하면 틀린 것이다
-- **도구 순서는 `ToolLook.DisplayOrder` = Codex → Claude → Gemini**. 요약 탭·카드, 터미널 탭, 세션 필터, 컨텍스트 토글이 전부 이 순서다
-- **도구 표시는 `ToolLook` 한 곳**: 이름(`Claude Code`·`Codex CLI`·`Gemini CLI`), 짧은 이름, 배지 한 글자(C·X·G), 색(보라·회색·파랑). 뷰모델은 `ToolKind`로 분기하지 않고 여기를 부른다. 도구가 늘면 `ToolKind`·`ToolLook`·DI·터미널 프리셋·세션 필터·컨텍스트 토글을 늘린다
+- **도구 순서는 `ToolLook.DisplayOrder` = Codex → Claude → Antigravity**. 요약 탭·카드, 터미널 탭, 세션 필터, 컨텍스트 토글이 전부 이 순서다
+- **도구 표시는 `ToolLook` 한 곳**: 이름(`Claude Code`·`Codex CLI`·`Antigravity CLI`), 짧은 이름, 배지 한 글자(C·X·A), 색(주황·초록·파랑). 뷰모델은 `ToolKind`로 분기하지 않고 여기를 부른다. 도구가 늘면 `ToolKind`·`ToolLook`·DI·터미널 프리셋·세션 필터·컨텍스트 토글을 늘린다
 - **가속기 풍선 숨김**: 셸 루트 격자는 `KeyboardAcceleratorPlacementMode="Hidden"`. 안 그러면 `Ctrl+1` 같은 풍선이 본문 어디에나 뜬다. 단축키는 설정 화면에 적혀 있다
 - **저장하지 않은 편집 보호**: 편집기가 더티(`IsDirty` — 마지막 열기·저장·새로 만들기 시점과 직렬화 결과가 다름)이면 다른 목록 항목을 고르거나 새로 만들기·열기·최근 파일을 누를 때 `DiscardDialog`로 묻는다. 취소하면 선택을 이전 항목으로 되돌리고 편집기는 그대로다. 목록을 다시 채우며 같은 항목을 되찾는 것과 방금 저장한 사본을 되찾는 것은 묻지 않는다
 
