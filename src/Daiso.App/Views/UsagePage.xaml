@@ -31,6 +31,13 @@
                             <TextBlock Text="{loc:Str Key=Common_Reload}" />
                         </StackPanel>
                     </Button>
+
+                    <!-- 지금 보는 기간. 부제는 고정 설명이므로 상태값은 여기다 -->
+                    <TextBlock
+                        AutomationProperties.AutomationId="UsageStatus"
+                        Text="{x:Bind Usage.StatusText, Mode=OneWay}"
+                        Style="{StaticResource MutedText}"
+                        VerticalAlignment="Center" />
                 </StackPanel>
                 <muxc:ProgressBar
                     IsIndeterminate="True"
@@ -59,18 +66,22 @@
                             FontSize="20"
                             FontWeight="SemiBold" />
 
-                        <muxc:InfoBar
-                            IsOpen="{x:Bind Usage.NeedsPrices, Mode=OneWay}"
-                            IsClosable="False"
-                            Severity="Informational"
-                            Message="{loc:Str Key=Usage_PriceHint}">
-                            <muxc:InfoBar.ActionButton>
+                        <!-- 비어 있음 안내는 어디서나 NoticeBorder + 한 문장 (+ 다음에 할 일 버튼) 한 모양이다 -->
+                        <Border Style="{StaticResource NoticeBorder}" Visibility="{x:Bind Usage.NeedsPrices, Mode=OneWay}">
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="{loc:Str Key=Usage_PriceHint}" Style="{StaticResource PageSubtitleText}" />
                                 <Button
+                                    Grid.Column="1"
+                                    VerticalAlignment="Center"
                                     Content="{loc:Str Key=Usage_OpenSettings}"
                                     AutomationProperties.AutomationId="GoToPricesButton"
                                     Click="OnGoToPricesClick" />
-                            </muxc:InfoBar.ActionButton>
-                        </muxc:InfoBar>
+                            </Grid>
+                        </Border>
                     </StackPanel>
                 </Border>
 

@@ -630,5 +630,17 @@
             </Border>
         </Grid>
         </controls:PageBody.Body>
+
+        <!-- 푸터: 상태 줄(건수 · 검색 결과 · 내보내기 결과). 부제는 고정 설명이므로 상태값은 여기다 -->
+        <controls:PageBody.Footer>
+        <Border Style="{StaticResource FooterBorder}">
+            <TextBlock
+                AutomationProperties.AutomationId="SessionsStatus"
+                Text="{x:Bind ViewModel.StatusText, Mode=OneWay}"
+                ToolTipService.ToolTip="{x:Bind ViewModel.StatusText, Mode=OneWay}"
+                Style="{StaticResource MutedText}"
+                VerticalAlignment="Center" />
+        </Border>
+        </controls:PageBody.Footer>
     </controls:PageBody>
 </Page>

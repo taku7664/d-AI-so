@@ -545,7 +545,7 @@
                 </Grid>
 
                 <!-- 터미널 패널: 진짜 터미널(xterm)이 남은 높이를 다 쓴다. DataContext = TerminalRoomViewModel -->
-                <Border x:Name="TerminalPanel" Visibility="Collapsed" CornerRadius="6" BorderThickness="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+                <Border x:Name="TerminalPanel" Style="{StaticResource CardBorder}" Padding="0" Visibility="Collapsed">
                     <terminal:TerminalHost x:Name="Embedded" />
                 </Border>
             </Grid>

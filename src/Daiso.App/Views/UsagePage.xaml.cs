@@ -1,3 +1,4 @@
+using Daiso.App.Strings;
 using Daiso.App.Controls;
 using Daiso.App.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,7 +16,7 @@ public sealed partial class UsagePage : Page, IPageHeaderSource
         InitializeComponent();
         SelectorBarVisuals.ResetPressedOnLeave(ToolTabs);
         Usage = App.Services.GetRequiredService<UsageViewModel>();
-        Header = new PageHeader("Usage_Title").Follow(Usage, nameof(UsageViewModel.StatusText), () => Usage.StatusText);
+        Header = new PageHeader("Usage_Title", UiStrings.Get("Usage_Subtitle"));
 
         // 뒤로/앞으로가 뷰모델의 탭을 바꾸면 탭 띠도 따라간다
         Usage.PropertyChanged += (_, e) =>

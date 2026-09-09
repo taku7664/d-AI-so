@@ -791,6 +791,12 @@
   <data name="Terminal_Title" xml:space="preserve">
     <value>터미널</value>
   </data>
+  <data name="Usage_Subtitle" xml:space="preserve">
+    <value>도구별 토큰 사용량과 추정 비용을 기간으로 봅니다</value>
+  </data>
+  <data name="Sessions_Subtitle" xml:space="preserve">
+    <value>도구들이 남긴 대화 기록을 찾고, 이어서 열고, 정리합니다</value>
+  </data>
   <data name="Terminal_Subtitle" xml:space="preserve">
     <value>앱을 떠나지 않고 CLI를 방으로 띄웁니다</value>
   </data>

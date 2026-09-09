@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Daiso.App.Strings;
 using Microsoft.UI.Xaml;
@@ -19,7 +18,7 @@ public sealed partial class PageHeader : ObservableObject
     private string? _subtitle;
 
     /// <param name="titleKey">문구 키. 왼쪽 메뉴 항목과 같은 말이어야 한다 (ARCHITECTURE §6.2).</param>
-    /// <param name="subtitle">고정 부제. 뷰모델 값을 따라가는 부제는 <see cref="Follow"/>로 붙인다.</param>
+    /// <param name="subtitle">고정 설명 한 줄. 상태값(건수·기간)은 부제가 아니라 본문·푸터에 둔다 (UI_REFACTOR_PLAN Stage 6).</param>
     public PageHeader(string titleKey, string? subtitle = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(titleKey);
@@ -29,25 +28,6 @@ public sealed partial class PageHeader : ObservableObject
     }
 
     public Visibility SubtitleVisibility => string.IsNullOrEmpty(Subtitle) ? Visibility.Collapsed : Visibility.Visible;
-
-    /// <summary>부제가 뷰모델 속성을 따라가게 한다. 지금 값을 바로 싣고, 그 속성이 바뀌면 다시 싣는다.</summary>
-    public PageHeader Follow(INotifyPropertyChanged source, string propertyName, Func<string?> read)
-    {
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentException.ThrowIfNullOrWhiteSpace(propertyName);
-        ArgumentNullException.ThrowIfNull(read);
-
-        Subtitle = read();
-        source.PropertyChanged += (_, e) =>
-        {
-            if (e.PropertyName == propertyName)
-            {
-                Subtitle = read();
-            }
-        };
-
-        return this;
-    }
 }
 
 /// <summary>셸이 제목을 그릴 수 있게 페이지가 구현한다. 일곱 페이지 전부.</summary>

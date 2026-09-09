@@ -17,7 +17,7 @@ public sealed partial class SessionsPage : Page, IPageHeaderSource
         InitializeComponent();
         FocusRelease.Attach(this);
         ViewModel = App.Services.GetRequiredService<SessionsViewModel>();
-        Header = new PageHeader("Sessions_Title").Follow(ViewModel, nameof(SessionsViewModel.StatusText), () => ViewModel.StatusText);
+        Header = new PageHeader("Sessions_Title", UiStrings.Get("Sessions_Subtitle"));
         Shell.PropertyChanged += OnShellPropertyChanged;
         Doctor = App.Services.GetRequiredService<ContextDoctorViewModel>();
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
