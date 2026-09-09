@@ -302,14 +302,73 @@ internal sealed class PseudoConsole : IDisposable
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern bool CreatePipe(out SafeFileHandle hReadPipe, out SafeFileHandle hWritePipe, ref SecurityAttributes lpPipeAttributes, int nSize);
 
-    [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern int CreatePseudoConsole(Coord size, SafeFileHandle hInput, SafeFileHandle hOutput, uint dwFlags, out IntPtr phPC);
+    // ── ConPTY 진입점: 동봉한 conpty.dll(Windows Terminal 의 OpenConsole) 을 먼저, 없으면 OS 의 kernel32 ──────────
+    //
+    // Windows 10 내장 ConPTY(conhost 19045)는 대체 화면(?1049)·마우스 모드를 터미널에 그대로 넘기지 않고 자기가 삼킨 뒤
+    // 주 화면 N줄을 다시 그린다. 그래서 Claude Code 처럼 대체 화면에서 그리는 TUI 는 xterm 에 스크롤백이 한 줄도 쌓이지 않았다
+    // (2026-09-09 측정: buffer=normal, length == rows). Microsoft.Windows.Console.ConPTY 패키지의 conpty.dll 은 최신 동작이다.
+    // 같은 API 이름·서명이라 어느 쪽을 썼는지만 기억해 같은 쪽으로 닫는다.
 
-    [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern int ResizePseudoConsole(IntPtr hPC, Coord size);
+    private static bool _bundledConpty = true;
 
-    [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern void ClosePseudoConsole(IntPtr hPC);
+    private static int CreatePseudoConsole(Coord size, SafeFileHandle hInput, SafeFileHandle hOutput, uint dwFlags, out IntPtr phPC)
+    {
+        if (_bundledConpty)
+        {
+            try
+            {
+                return Bundled.CreatePseudoConsole(size, hInput, hOutput, dwFlags, out phPC);
+            }
+            catch (DllNotFoundException)
+            {
+                _bundledConpty = false;
+            }
+        }
+
+        return Kernel32.CreatePseudoConsole(size, hInput, hOutput, dwFlags, out phPC);
+    }
+
+    private static int ResizePseudoConsole(IntPtr hPC, Coord size) =>
+        _bundledConpty ? Bundled.ResizePseudoConsole(hPC, size) : Kernel32.ResizePseudoConsole(hPC, size);
+
+    private static void ClosePseudoConsole(IntPtr hPC)
+    {
+        if (_bundledConpty)
+        {
+            Bundled.ClosePseudoConsole(hPC);
+        }
+        else
+        {
+            Kernel32.ClosePseudoConsole(hPC);
+        }
+    }
+
+    /// <summary>어느 ConPTY 를 쓰는지. 로그·진단용.</summary>
+    internal static string ConptySource => _bundledConpty ? "conpty.dll (동봉)" : "kernel32 (OS)";
+
+    private static class Bundled
+    {
+        [DllImport("conpty.dll", SetLastError = true)]
+        internal static extern int CreatePseudoConsole(Coord size, SafeFileHandle hInput, SafeFileHandle hOutput, uint dwFlags, out IntPtr phPC);
+
+        [DllImport("conpty.dll", SetLastError = true)]
+        internal static extern int ResizePseudoConsole(IntPtr hPC, Coord size);
+
+        [DllImport("conpty.dll", SetLastError = true)]
+        internal static extern void ClosePseudoConsole(IntPtr hPC);
+    }
+
+    private static class Kernel32
+    {
+        [DllImport("kernel32.dll", SetLastError = true)]
+        internal static extern int CreatePseudoConsole(Coord size, SafeFileHandle hInput, SafeFileHandle hOutput, uint dwFlags, out IntPtr phPC);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        internal static extern int ResizePseudoConsole(IntPtr hPC, Coord size);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        internal static extern void ClosePseudoConsole(IntPtr hPC);
+    }
 
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern bool InitializeProcThreadAttributeList(IntPtr lpAttributeList, int dwAttributeCount, int dwFlags, ref IntPtr lpSize);

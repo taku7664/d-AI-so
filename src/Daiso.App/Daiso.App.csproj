@@ -31,12 +31,18 @@
 
     <!-- MVVMTK0045: [ObservableProperty] 필드가 AOT에 맞지 않다는 경고. 이 앱은 AOT를 쓰지 않는다 -->
     <NoWarn>$(NoWarn);MVVMTK0045</NoWarn>
+
+    <!-- ConPTY 패키지가 x64\OpenConsole.exe 를 복사하는 조건. 패키지 props 는 SDK 가 PlatformTarget 을 정하기 전에 읽혀 스스로는 못 켠다 -->
+    <ConptyRequiresx64Host>true</ConptyRequiresx64Host>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260804001" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+    <!-- 최신 ConPTY(conpty.dll + x64\OpenConsole.exe) 동봉. Windows 10 내장 ConPTY 는 대체 화면·마우스 모드를 터미널에 넘기지 않아
+         Claude Code 같은 TUI 가 스크롤백 없이 32줄 안에서만 다시 그려졌다. 이 패키지의 복사 규칙은 PlatformTarget 이 x64 인 이 프로젝트에서 도는다 (ARCHITECTURE §5.3) -->
+    <PackageReference Include="Microsoft.Windows.Console.ConPTY" Version="1.24.260710001" />
   </ItemGroup>
 
   <ItemGroup>

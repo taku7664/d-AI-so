@@ -372,6 +372,15 @@ public sealed class TerminalHost : UserControl
 
                 break;
 
+            case "diag":
+                if (root.TryGetProperty("text", out var diag) && diag.GetString() is { } line)
+                {
+                    var log = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "d-AI-so", "term.log");
+                    File.AppendAllText(log, $"{DateTime.Now:HH:mm:ss.fff} {line}{Environment.NewLine}");
+                }
+
+                break;
+
             case "title":
                 if (root.TryGetProperty("title", out var title) && title.GetString() is { } t)
                 {
