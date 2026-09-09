@@ -97,10 +97,26 @@ public sealed class TerminalCommandBuilderTests
     public void Quoted_first_message_is_escaped_for_powershell_but_left_alone_for_cmd()
     {
         var pwsh = Builder("pwsh").BuildShellCommand("claude", "\"docs/prompts/x.md 파일을 읽고 진행\"");
-        var cmd = Builder().BuildShellCommand("agy", "-p \"docs/prompts/x.md 파일을 읽고 진행\"");
+        var cmd = Builder().BuildShellCommand("agy", "-i \"docs/prompts/x.md 파일을 읽고 진행\"");
 
         pwsh.Arguments.Should().Be("-NoExit -Command \"& claude \\\"docs/prompts/x.md 파일을 읽고 진행\\\"\"");
-        cmd.Arguments.Should().Be("/k agy -p \"docs/prompts/x.md 파일을 읽고 진행\"");
+        cmd.Arguments.Should().Be("/k agy -i \"docs/prompts/x.md 파일을 읽고 진행\"");
+    }
+
+    /// <summary>
+    /// 방금 깐 도구는 PATH 에 아직 없어 제공자가 절대 경로를 준다(<c>IProvider.LaunchTarget</c>).
+    /// 사용자 이름에 빈칸이 있으면 경로가 두 토큰으로 쪼개져 셸이 엉뚱한 것을 실행하므로 따옴표로 감싼다.
+    /// </summary>
+    [Fact]
+    public void A_command_path_with_spaces_is_quoted()
+    {
+        const string path = @"C:\Users\Hong Gildong\AppData\Local\agy\bin\agy.exe";
+
+        var pwsh = Builder("pwsh").BuildShellCommand(path, "--continue");
+        var cmd = Builder().BuildShellCommand(path, "--continue");
+
+        pwsh.Arguments.Should().Be($"-NoExit -Command \"& \\\"{path}\\\" --continue\"");
+        cmd.Arguments.Should().Be($"/k \"{path}\" --continue");
     }
 
     /// <summary>

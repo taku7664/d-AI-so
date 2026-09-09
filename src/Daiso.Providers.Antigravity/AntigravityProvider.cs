@@ -123,6 +123,36 @@ public sealed class AntigravityProvider : IProvider, IUsageReader
 
     /// <inheritdoc />
     /// <remarks>
+    /// PATH 에 있으면 이름 그대로, 없고 기본 설치 위치에 있으면 그 절대 경로. 둘 다 아니면 이름을 준다(셸이 거절하게 둔다).
+    /// 찾은 값은 기억한다 — 미리보기가 이 값을 자주 읽고, 한 번 찾은 실행 파일이 사라지는 일은 드물다.
+    /// 못 찾은 결과는 기억하지 않는다. 앱이 떠 있는 동안 설치가 끝날 수 있다.
+    /// </remarks>
+    public string LaunchTarget
+    {
+        get
+        {
+            if (_launchTarget is { } cached)
+            {
+                return cached;
+            }
+
+            if (ExecutableLocator.ExistsOnPath(ExecutableName))
+            {
+                _launchTarget = ExecutableName;
+            }
+            else if (File.Exists(DefaultBinaryPath))
+            {
+                _launchTarget = DefaultBinaryPath;
+            }
+
+            return _launchTarget ?? ExecutableName;
+        }
+    }
+
+    private string? _launchTarget;
+
+    /// <inheritdoc />
+    /// <remarks>
     /// Antigravity CLI 는 로그인 토큰을 파일이 아니라 <b>Windows 자격 증명 관리자</b>에 넣는다. 앱이 읽을 수 없고, 읽으려 들지도 않는다.
     /// 그래서 필수 파일이 없다 — 여기 있는 둘은 은퇴한 Gemini CLI 가 남긴 것과 Antigravity 의 설정 파일이고, 있으면 참고만 한다.
     /// </remarks>

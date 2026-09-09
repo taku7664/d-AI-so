@@ -13,6 +13,20 @@ public interface IProvider
     /// <summary>실행 파일 이름. npm 셸(.cmd)만 사용한다.</summary>
     string ExecutableName { get; }
 
+    /// <summary>
+    /// 실제로 띄울 대상. 보통 <see cref="ExecutableName"/> 그대로다.
+    /// <para>
+    /// 방금 깐 도구는 다를 수 있다. 설치기가 <b>사용자 PATH 레지스트리</b>에 등록해도 이미 떠 있는 프로세스의 PATH 사본은 그대로이고,
+    /// 그 프로세스가 띄우는 셸도 같은 환경을 물려받는다 — 이름만 넘기면 셸이 "그런 명령 없다"고 한다.
+    /// 그래서 PATH 에서 못 찾고 아는 설치 위치에 있으면 <b>절대 경로</b>를 준다. 앱을 다시 켜지 않아도 방금 깐 도구가 열린다.
+    /// </para>
+    /// <para>
+    /// 이름(<see cref="ExecutableName"/>)과 나눠 둔 이유: 이름은 문서·테스트가 고정으로 잠그는 값이고,
+    /// 이것은 그 PC 의 상태에 따라 달라지는 값이다.
+    /// </para>
+    /// </summary>
+    string LaunchTarget => ExecutableName;
+
     /// <summary>실행 파일이 없을 때 새 터미널에서 돌릴 설치 명령 한 줄. 예: <c>npm install -g @openai/codex</c>.</summary>
     string InstallCommand { get; }
 

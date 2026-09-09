@@ -237,7 +237,7 @@ public sealed partial class DashboardViewModel : ObservableObject
         var arguments = provider.Kind == ToolKind.Codex ? "login" : string.Empty;
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
-        await _launcher.LaunchAsync(home, provider.ExecutableName, arguments).ConfigureAwait(true);
+        await _launcher.LaunchAsync(home, provider.LaunchTarget, arguments).ConfigureAwait(true);
     }
 
     internal static string FormatSize(long bytes) => bytes switch

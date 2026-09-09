@@ -456,12 +456,12 @@ public sealed partial class SessionsViewModel : ObservableObject
         _settings.Save();
 
         await _launcher
-            .LaunchAsync(directory, provider.ExecutableName, provider.BuildResumeArguments(row.Session))
+            .LaunchAsync(directory, provider.LaunchTarget, provider.BuildResumeArguments(row.Session))
             .ConfigureAwait(true);
 
         StatusText = UiStrings.Format(
             "Sessions_ResumeStatus",
-            provider.ExecutableName,
+            provider.LaunchTarget,
             provider.BuildResumeArguments(row.Session));
     }
 

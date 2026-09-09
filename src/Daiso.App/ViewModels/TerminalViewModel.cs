@@ -769,7 +769,7 @@ public sealed partial class TerminalViewModel : ObservableObject
             }
 
             var arguments = ComposeArguments(tool, writePrompt: false);
-            return $"{tool.Provider.ExecutableName}{(arguments.Length > 0 ? " " + arguments : string.Empty)}";
+            return $"{tool.Provider.LaunchTarget}{(arguments.Length > 0 ? " " + arguments : string.Empty)}";
         }
     }
 
@@ -915,9 +915,9 @@ public sealed partial class TerminalViewModel : ObservableObject
         var directory = WorkingDirectory!;
         Remember(directory);
         var arguments = ComposeArguments(tool, writePrompt: true);
-        LastCommand = $"{directory} > {tool.Provider.ExecutableName} {arguments}".TrimEnd();
+        LastCommand = $"{directory} > {tool.Provider.LaunchTarget} {arguments}".TrimEnd();
 
-        await _launcher.LaunchAsync(directory, tool.Provider.ExecutableName, arguments).ConfigureAwait(true);
+        await _launcher.LaunchAsync(directory, tool.Provider.LaunchTarget, arguments).ConfigureAwait(true);
     }
 
     /// <summary>설치가 끝난 것으로 볼 때까지 실행 파일을 몇 초마다 다시 찾는 최대 시간.</summary>

@@ -53,7 +53,10 @@ public sealed class TerminalCommandBuilder
     /// </summary>
     private TerminalCommand BuildShell(string command, string arguments)
     {
-        var invocation = arguments.Length == 0 ? command : $"{command} {arguments}";
+        // 명령이 절대 경로일 수 있다(방금 깐 도구는 PATH 에 아직 없어 제공자가 경로를 준다).
+        // 사용자 이름에 빈칸이 있으면 `C:\Users\Hong Gildong\…\agy.exe` 가 두 토큰으로 쪼개진다
+        var target = command.Contains(' ', StringComparison.Ordinal) ? Quote(command) : command;
+        var invocation = arguments.Length == 0 ? target : $"{target} {arguments}";
         var forPowerShell = invocation.Replace("\"", "\\\"", StringComparison.Ordinal);
 
         if (_existsOnPath("pwsh"))

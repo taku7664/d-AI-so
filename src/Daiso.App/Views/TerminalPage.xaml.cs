@@ -602,13 +602,13 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
 
             var arguments = ViewModel.ComposeArguments(tool, writePrompt: true);
             var builder = new Daiso.Infrastructure.TerminalCommandBuilder(Daiso.Providers.Common.ExecutableLocator.ExistsOnPath);
-            var shell = builder.BuildShellCommand(tool.Provider.ExecutableName, arguments);
+            var shell = builder.BuildShellCommand(tool.Provider.LaunchTarget, arguments);
             var session = Daiso.Infrastructure.Pty.PtySession.Start($"{shell.FileName} {shell.Arguments}", directory);
             var tail = new Daiso.Infrastructure.SessionTail(tool.Provider, directory, DateTimeOffset.Now);
 
             var room = new TerminalRoomViewModel(tool.Provider.Kind, directory, DispatcherQueue);
             room.Bind(session, tail);
-            ViewModel.LastCommand = $"{directory} > {tool.Provider.ExecutableName} {arguments}".TrimEnd();
+            ViewModel.LastCommand = $"{directory} > {tool.Provider.LaunchTarget} {arguments}".TrimEnd();
             AddAndSelect(room);
         }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or System.Runtime.InteropServices.COMException or InvalidOperationException or IOException or UnauthorizedAccessException)

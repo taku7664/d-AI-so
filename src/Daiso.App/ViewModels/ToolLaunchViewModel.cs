@@ -99,7 +99,7 @@ public sealed partial class ToolLaunchViewModel : ObservableObject
         get
         {
             var command = IsInstalled
-                ? (Arguments.Trim().Length > 0 ? $"{Provider.ExecutableName} {Arguments.Trim()}" : Provider.ExecutableName)
+                ? (Arguments.Trim().Length > 0 ? $"{Provider.LaunchTarget} {Arguments.Trim()}" : Provider.LaunchTarget)
                 : InstallOpensPage ? Provider.InstallUri! : Provider.InstallCommand;
 
             return $"{Label}  ▸  {command}";
