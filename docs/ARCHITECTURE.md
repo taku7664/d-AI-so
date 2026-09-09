@@ -377,17 +377,23 @@ public sealed record ExportOptions(bool IncludeToolCalls = true, bool IncludeSys
 > 옛 기록을 버릴 이유가 없으므로 계속 읽어 목록·검색·사용량에 보여 준다. 그래서 형식 파서의 이름은 `GeminiTranscriptReader`·`GeminiProjectMap` 으로 남겼다 —
 > 파싱 대상이 그 형식이기 때문이다.
 >
-> **아직 확인하지 못한 것 (`agy` 를 깔고 실제 파일·`agy --help` 로 정한다)**
+> **`agy` 1.1.28 을 이 PC 에 깔고 `agy --help` 로 확인한 것 (2026-09-09)**
+> | 무엇 | 값 | 비고 |
+> |---|---|---|
+> | 시작 프롬프트 | `-i "메시지"` (= `--prompt-interactive`) | **`-p` 가 아니다.** `-p`(= `--print`)는 한 번 답하고 끝나는 비대화 모드라 방을 열어 두는 이 화면과 맞지 않는다. 추측으로 `-p` 를 넣었다가 여기서 바로잡았다 |
+> | 이어서 열기 | `--conversation <id>` | **`--resume` 는 없다** — 은퇴한 Gemini CLI 의 플래그였다. 최근 대화만 이어려면 `--continue`(`-c`) |
+> | 인자 프리셋 | `--model ` · `--sandbox` | `--sandbox` 는 값 없는 스위치. 그 밖에 `--mode`(accept-edits\|plan) · `--effort`(low\|medium\|high) · `--add-dir` · `--dangerously-skip-permissions` 가 있다 |
+> | 버전 | `agy --version` → `1.1.28` | |
+> | 설치 위치 | `%LOCALAPPDATA%\agy\bin\agy.exe` (약 181MB) | 설치 스크립트가 **사용자 PATH 레지스트리**에 등록하고 브로드캐스트한다. 이미 떠 있는 프로세스는 그 PATH 를 못 보므로 `IsInstalledAsync` 는 이 경로도 직접 본다 |
+> | 설치 스크립트가 하는 일 | 매니페스트 JSON → 바이너리 내려받기 → **SHA512 대조** → 복사 → `agy.exe install` 로 PATH 설정 | 관리자 권한 없이 사용자 폴더만. 내려받는 곳은 Google Cloud Run 인스턴스 |
+>
+> **아직 확인하지 못한 것**
 > | 무엇 | 지금 코드 | 왜 모르는가 |
 > |---|---|---|
-> | 세션 기록 위치·형식 | 옛 `~/.gemini/tmp/**/chats/*.jsonl` 만 읽는다 | 공식 문서에 경로가 없다. 같은 계열 Antigravity IDE 는 `~/.gemini/antigravity/conversations/*.pb` 에 **암호화**해 둔다(12만 바이트에 읽을 수 있는 문자열 0개) — CLI 도 그렇다면 앱이 읽을 길이 없다 |
-> | 시작 프롬프트 플래그 | `-p "메시지"` | 공식 문서에 플래그 표가 없다. 여러 이관 안내서가 `-p` 라고 적는다 |
-> | 이어서 열기 플래그 | `--resume <id>` (옛 값) | 공식 문서는 TUI 안의 `/resume` 슬래시 명령만 싣는다 |
-> | 컨텍스트 파일 이름 | `GEMINI.md` (옛 값) | `agy` 가 이 이름을 그대로 읽는지 확인 못 했다 |
-> | 사용자 슬래시 명령 위치 | 옛 `~/.gemini/commands/*.toml` | `agy` 는 확장 대신 플러그인(`agy plugin install`)을 쓴다 |
->
-> 확인 못 한 값은 **비우지 않고 옛 값을 두었다**. 프롬프트를 골랐는데 아무것도 넘기지 않으면 조용히 실패하고, 플래그가 틀리면 CLI 가 눈에 보이게 거절한다 —
-> 조용한 실패보다 보이는 실패가 낫다. 다만 **인자 프리셋 버튼은 비웠다**: 확인 안 된 플래그를 버튼으로 내주면 누르는 대로 실패하는 명령이 만들어진다.
+> | 세션 기록 위치·형식 | 옛 `~/.gemini/tmp/**/chats/*.jsonl` 만 읽는다 | 설치만으로는 아무 폴더도 생기지 않는다(`~/.gemini/antigravity-cli` 도 없다). 대화를 한 번 해야 하고 그것은 브라우저 로그인이 필요하다. 같은 계열 Antigravity IDE 는 `~/.gemini/antigravity/conversations/*.pb` 에 **암호화**해 둔다(12만 바이트에 읽을 수 있는 문자열 0개) — CLI 도 그렇다면 앱이 읽을 길이 없다 |
+> | 설정 파일 위치 | `~/.gemini/antigravity-cli/settings.json` (공식 문서 값) | 첫 실행 때 생긴다. 설치 직후에는 없다 |
+> | 컨텍스트 파일 이름 | `GEMINI.md` (옛 값) | `agy --help` 에 관련 플래그가 없다. 실제 대화로만 확인된다 |
+> | 사용자 슬래시 명령 위치 | 옛 `~/.gemini/commands/*.toml` | `agy` 는 확장 대신 플러그인(`agy plugin`)을 쓴다 |
 
 > 근거(옛 Gemini CLI 기록 형식): 이 PC의 `~/.gemini` 실제 파일(`oauth_creds.json`·`google_accounts.json`·`projects.json`·`tmp/{이름|해시}/chats/session-*.jsonl` 헤더 줄)과,
 > 설치한 Gemini CLI 0.58.0 번들의 `chatRecordingTypes.ts`/`chatRecordingService.ts`/`sessionOperations.ts` 소스를 대조했다: 첫 줄은 `sessionId`가 있는 헤더 레코드, 메시지는 `type: user|gemini|…`, `content`(문자열 또는 Part 배열), `thoughts`, `toolCalls`, `tokens {input, output, cached, thoughts, tool}` (usageMetadata에서 그대로 옮긴 값). 파일 이름은 `session-…-<짧은 id>.json|.jsonl`.
@@ -417,8 +423,9 @@ public sealed record ExportOptions(bool IncludeToolCalls = true, bool IncludeSys
 - 메시지 → `type == "user"` → User, `"gemini"` → Assistant(`content`는 문자열 또는 `[{text}]` 조각), `"info"|"warning"|"error"` → System, `toolCalls[]` → 각각 Tool 한 건(이름 + 인자 앞 300자 + 상태. 결과 본문은 넣지 않는다)
 - 프로젝트 경로: `projects.json`의 `{"projects": {"소문자 경로": "이름"}}`으로 폴더 이름 → 경로, 또는 SHA-256(경로) → 경로를 되짚는다. 모르면 null. 키가 소문자 경로라 `ProjectPathNormalizer.RestoreCasing`으로 디스크의 실제 대소문자를 되돌려 저장한다. 그래야 Claude·Codex의 같은 프로젝트와 한 묶음이 된다(§4.3)
 - 토큰: 메시지의 `tokens {input, output, cached, thoughts, tool}` — **응답마다 붙는 값이라 날짜별로 더한다**. Input = input + tool, Output = output + thoughts, CacheRead = cached, CacheCreate 0. 모델은 `model`
-- resume: `agy --resume <id>` — **미확인**(위 표). 옛 Gemini CLI 의 플래그를 그대로 두었다
-- 실행 파일: `agy` (`%LOCALAPPDATA%\agy\bin\agy.exe`, 설치 스크립트가 PATH 에 넣는다). `ExecutableLocator` 가 `.exe` 도 찾으므로 설치 감지는 그대로다
+- resume: `agy --conversation <id>` (확인). 최근 대화만 이어려면 `--continue`
+- 실행 파일: `agy` (`%LOCALAPPDATA%\agy\bin\agy.exe`). `ExecutableLocator` 가 `.exe` 도 찾는다.
+  다만 설치 감지는 **PATH 와 기본 설치 경로를 함께** 본다 — 설치 스크립트는 사용자 PATH 레지스트리에 등록하므로 이미 떠 있던 앱의 PATH 사본에는 없다
 - 설치: **앱은 명령을 돌리지 않고 공식 안내 페이지(`https://antigravity.google/docs/cli/install/`)를 브라우저로 연다** (`IProvider.InstallUri`, `IUriOpener`).
   공식 명령은 `irm https://antigravity.google/cli/install.ps1 | iex` 이고 화면에는 그대로 보여 주지만 실행은 사람이 한다.
   이유: 원격 스크립트를 메모리에서 실행하는 이 꼴은 **백신이 흔히 차단한다**(이 PC 에서 실제로 차단됐다). 앱이 사용자에게 백신을 끄라고 할 수는 없고,
@@ -426,7 +433,9 @@ public sealed record ExportOptions(bool IncludeToolCalls = true, bool IncludeSys
   `InstallCommandTests` 가 "npm 이 아님"과 "안내 페이지는 공식 도메인"을 잠근다
 - 안 깔린 도구는 시작 버튼이 곧 설치 버튼이므로 **3단계(무엇부터 할까요?)를 묻지 않는다**(`CanStart`) — 설치에 세션 선택이 필요 없는데 잠가 두면 깔러 온 사람이 막힌다.
   대안으로 확인한 것: winget 미제공(이 PC 에는 winget 자체가 없다), GitHub 릴리스에 `agy_cli_windows_x64.zip` 이 있으나
-  그 조직(`google-antigravity`)이 GitHub 인증 조직이 아니고 라이선스도 없어 앱이 사용자를 그쪽으로 보내지 않는다
+  그 조직(`google-antigravity`)이 GitHub 인증 조직이 아니고 라이선스도 없어 앱이 사용자를 그쪽으로 보내지 않는다.
+  실제로 깔아 보니 백신이 아니라 **PowerShell 실행 정책**(서명 없는 스크립트 거부)이 먼저 막았다. 스크립트를 파일로 받아
+  `pwsh -ExecutionPolicy Bypass -File` 로 그 프로세스에만 우회해 통과했다 — 영구 정책은 건드리지 않는다
 - 설정: `~/.gemini/antigravity-cli/settings.json`·`keybindings.json`
 - 내장 슬래시 명령: `/agents` `/boost` `/clear` `/config` `/fork` `/keybindings` `/permissions` `/resume` `/rewind` (공식 CLI 참고 문서)
 
@@ -519,7 +528,7 @@ RefreshAsync
 화면 열림 → 도구마다 IProvider.IsInstalledAsync
 인자 합치기  TerminalViewModel.ComposeArguments = [resume 인자] [사용자 인자] [프롬프트 시작 메시지]
              프롬프트를 골랐으면 IPromptLibrary.WriteIntoProject(docs/prompts/{id}.md) 후 PromptPresetSerializer.StarterMessage를
-             첫 메시지 인자로 붙인다: Claude·Codex는 `"메시지"`(위치 인자), Antigravity는 `-p "메시지"`(미확인, §4.5). 메시지 안 큰따옴표는 홑따옴표로
+             첫 메시지 인자로 붙인다: Claude·Codex는 `"메시지"`(위치 인자), Antigravity는 `-i "메시지"`(= `--prompt-interactive`, §4.5). 메시지 안 큰따옴표는 홑따옴표로
 터미널로 열기  설치됨 + WebView2 있음 → 내장 방(아래 "내장 터미널"). 아니면 외부 열기 또는 설치로 폴백
 새 창에서 열기 → ITerminalLauncher.LaunchAsync(dir, "claude"|"codex"|"agy", 합친 인자)
 설치   폴더 없어도 됨 → ITerminalLauncher.LaunchAsync(dir|home, "npm", "install -g <패키지>")   (IProvider.InstallCommand)
