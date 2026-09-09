@@ -101,11 +101,24 @@ public sealed class AntigravityProvider : IProvider, IUsageReader
         return patterns.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
     }
 
+    /// <summary>설치 스크립트가 실행 파일을 놓는 곳. PATH 등록은 사용자 PATH 레지스트리에 하므로 이미 돌던 프로세스는 못 본다.</summary>
+    private static string DefaultBinaryPath =>
+        Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "agy",
+            "bin",
+            "agy.exe");
+
     /// <inheritdoc />
+    /// <remarks>
+    /// PATH 뿐 아니라 기본 설치 위치도 본다. 설치 스크립트는 <b>사용자 PATH 레지스트리</b>에 등록하고 브로드캐스트하는데,
+    /// 이미 떠 있는 프로세스의 PATH 사본은 그대로다 — 설치기 자신도 "터미널을 다시 열라"고 안내한다.
+    /// PATH 만 보면 앱을 다시 켜기 전까지 방금 깐 도구를 못 깔린 것으로 표시한다.
+    /// </remarks>
     public Task<bool> IsInstalledAsync(CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
-        return Task.FromResult(ExecutableLocator.ExistsOnPath(ExecutableName));
+        return Task.FromResult(ExecutableLocator.ExistsOnPath(ExecutableName) || File.Exists(DefaultBinaryPath));
     }
 
     /// <inheritdoc />
@@ -240,13 +253,13 @@ public sealed class AntigravityProvider : IProvider, IUsageReader
     public string ImagePasteKeys => "\x16";
 
     /// <remarks>
-    /// <b>`agy` 의 이어서 열기 플래그는 아직 확인하지 못했다.</b> 공식 문서는 TUI 안의 `/resume` 슬래시 명령만 적어 두었고
-    /// 플래그 목록을 싣지 않았다. 지금 값은 은퇴한 Gemini CLI 의 것이라, `agy --help` 를 보고 맞춘 뒤 여기를 고친다.
+    /// `agy --help` (1.1.28) 로 확인: `--conversation <ID>` 가 "Resume a previous conversation by ID" 다.
+    /// `--resume` 는 없다 — 그것은 은퇴한 Gemini CLI 의 플래그였다. 가장 최근 대화만 이어려면 `--continue`(`-c`) 다.
     /// </remarks>
     public string BuildResumeArguments(SessionInfo session)
     {
         ArgumentNullException.ThrowIfNull(session);
-        return $"--resume {session.Id}";
+        return $"--conversation {session.Id}";
     }
 
     /// <inheritdoc />

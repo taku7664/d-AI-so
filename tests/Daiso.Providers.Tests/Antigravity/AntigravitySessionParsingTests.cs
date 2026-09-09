@@ -109,11 +109,15 @@ public sealed class AntigravitySessionParsingTests
     }
 
     [Fact]
+    /// <summary>
+    /// `agy --help` (1.1.28): 대화를 id 로 이어 여는 것은 `--conversation` 이다.
+    /// `--resume` 는 은퇴한 Gemini CLI 의 플래그였다 — 되돌아오면 여기서 걸린다.
+    /// </summary>
     public void Resume_uses_the_session_id()
     {
         var session = new SessionInfo(ToolKind.Antigravity, "abc", "x", null, default, default, 0, 0, 0, null, TokenUsage.Zero, null, false, false);
 
-        _provider.BuildResumeArguments(session).Should().Be("--resume abc");
+        _provider.BuildResumeArguments(session).Should().Be("--conversation abc");
     }
 
     private async Task<List<SessionMessage>> Read(string path)
