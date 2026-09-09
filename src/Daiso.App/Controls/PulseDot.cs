@@ -1,4 +1,3 @@
-using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -13,8 +12,6 @@ namespace Daiso.App.Controls;
 /// </summary>
 public sealed class PulseDot : Grid
 {
-    private static readonly Windows.UI.Color Red = Windows.UI.Color.FromArgb(255, 229, 72, 77);
-
     private readonly Storyboard _pulse = new() { RepeatBehavior = RepeatBehavior.Forever };
 
     public PulseDot()
@@ -27,7 +24,7 @@ public sealed class PulseDot : Grid
         {
             Width = 8,
             Height = 8,
-            Fill = new SolidColorBrush(Red),
+            Fill = (Brush)Application.Current.Resources["PulseDotBrush"],
             Opacity = 0,
             RenderTransformOrigin = new Windows.Foundation.Point(0.5, 0.5),
             RenderTransform = new ScaleTransform(),
@@ -36,7 +33,7 @@ public sealed class PulseDot : Grid
         {
             Width = 8,
             Height = 8,
-            Fill = new SolidColorBrush(Red),
+            Fill = (Brush)Application.Current.Resources["PulseDotBrush"],
             Stroke = (Brush)Application.Current.Resources["CardBackgroundFillColorDefaultBrush"],
             StrokeThickness = 1.5,
         };

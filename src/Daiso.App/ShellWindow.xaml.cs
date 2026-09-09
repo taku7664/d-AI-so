@@ -300,9 +300,7 @@ public sealed partial class ShellWindow : Window
 
         // Mica는 OS 테마를 따르므로 명시적 테마에서는 끄고 단색으로 칠한다.
         SystemBackdrop = null;
-        RootGrid.Background = new SolidColorBrush(dark
-            ? Color.FromArgb(255, 32, 32, 32)
-            : Color.FromArgb(255, 243, 243, 243));
+        RootGrid.Background = new SolidColorBrush(ChromeColor(dark, "Background"));
 
         ApplyTitleBarColors(dark);
     }
@@ -322,12 +320,8 @@ public sealed partial class ShellWindow : Window
     {
         var bar = AppWindow.TitleBar;
         var foreground = dark ? Colors.White : Colors.Black;
-        var background = dark
-            ? Color.FromArgb(255, 32, 32, 32)
-            : Color.FromArgb(255, 243, 243, 243);
-        var hover = dark
-            ? Color.FromArgb(255, 58, 58, 58)
-            : Color.FromArgb(255, 226, 226, 226);
+        var background = ChromeColor(dark, "Background");
+        var hover = ChromeColor(dark, "Hover");
 
         bar.ButtonForegroundColor = foreground;
         bar.ButtonInactiveForegroundColor = foreground;
@@ -339,6 +333,10 @@ public sealed partial class ShellWindow : Window
         bar.InactiveBackgroundColor = background;
         bar.ForegroundColor = foreground;
     }
+
+    /// <summary>창 바탕·제목줄 색. 값의 정본은 App.xaml 이다 — 색을 바꾸려면 그 한 곳만 고친다.</summary>
+    private static Color ChromeColor(bool dark, string role) =>
+        (Color)Application.Current.Resources[(dark ? "WindowChromeDark" : "WindowChromeLight") + role];
 
     private void ResetTitleBarColors()
     {
