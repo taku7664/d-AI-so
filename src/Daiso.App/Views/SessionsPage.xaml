@@ -451,8 +451,7 @@
                                                     Fill="{ThemeResource AccentFillColorDefaultBrush}"
                                                     Visibility="{x:Bind UserBarVisibility}" />
 
-                                                <StackPanel Grid.Column="1">
-                                                <StackPanel Visibility="{x:Bind PlainVisibility}" Spacing="{StaticResource GapMicro}">
+                                                <StackPanel Grid.Column="1" Visibility="{x:Bind PlainVisibility}" Spacing="{StaticResource GapMicro}">
                                                     <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
                                                         <Border Style="{StaticResource PillBorder}">
                                                             <TextBlock
@@ -479,6 +478,7 @@
                                                 </StackPanel>
 
                                                 <Expander
+                                                    Grid.Column="1"
                                                     HorizontalAlignment="Stretch"
                                                     Visibility="{x:Bind CollapsibleVisibility}">
                                                     <Expander.Header>
@@ -503,7 +503,6 @@
                                                             FontSize="{StaticResource CaptionFontSize}" />
                                                     </StackPanel>
                                                 </Expander>
-                                                </StackPanel>
                                             </Grid>
                                         </DataTemplate>
                                     </ItemsRepeater.ItemTemplate>
