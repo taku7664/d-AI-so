@@ -1317,6 +1317,13 @@
   <data name="Room_FindPrev" xml:space="preserve">
     <value>이전 찾기</value>
   </data>
+  <data name="Room_More" xml:space="preserve">
+    <value>더보기</value>
+    <comment>도구 줄에 늘 둘 만큼 자주 쓰지는 않는 것들</comment>
+  </data>
+  <data name="Room_FindClose" xml:space="preserve">
+    <value>찾기 닫기 (Esc)</value>
+  </data>
   <data name="Room_FindNext" xml:space="preserve">
     <value>다음 찾기</value>
   </data>
@@ -1543,7 +1550,7 @@
     <value>이 방을 닫고 프로세스를 끝냅니다</value>
   </data>
   <data name="Room_FindTip" xml:space="preserve">
-    <value>터미널 화면에서 글자 찾기 (Enter 다음, Shift+Enter 이전, Esc 닫기)</value>
+    <value>터미널 화면에서 글자 찾기 — Ctrl+F (Enter 다음, Shift+Enter 이전, Esc 닫기)</value>
   </data>
   <data name="Room_OpenFolder" xml:space="preserve">
     <value>폴더 열기</value>

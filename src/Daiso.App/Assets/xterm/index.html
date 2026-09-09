@@ -45,6 +45,7 @@
   var searchOptions = { decorations: { matchOverviewRuler: '#f0c000', activeMatchColorOverviewRuler: '#ff8800' } };
 
   // 키: 선택이 있으면 Ctrl+C는 복사, 없으면 프로세스로. Ctrl+V·Shift+Insert는 앱이 클립보드를 읽어 보낸다.
+  // Ctrl+F는 앱의 찾기 줄을 연다 — 앱 단축키는 WebView2 가 포커스를 잡으면 안 닿으므로 이 길뿐이다.
   // 앱 단축키(Ctrl+1~7·F5)는 여기서 먹어서 브라우저·앱 어느 쪽도 처리하지 않게 한다.
   term.attachCustomKeyEventHandler(function (e) {
     if (e.type !== 'keydown') return true;
@@ -60,6 +61,12 @@
     }
     if (ctrl && e.shiftKey && (e.key === 'c' || e.key === 'C')) {
       if (term.hasSelection()) post({ type: 'copy', text: term.getSelection() });
+      return false;
+    }
+    // 찾기: WebView2 가 포커스를 잡고 있어 앱의 단축키가 안 닿는다. 여기서 먹어서 앱에 알린다
+    if (ctrl && (e.key === 'f' || e.key === 'F')) {
+      e.preventDefault();
+      post({ type: 'find' });
       return false;
     }
     if (e.key === 'F5' || (ctrl && /^[1-9]$/.test(e.key))) {

@@ -139,7 +139,17 @@
             </ListView>
         </Grid>
 
-        <!-- ───── 방 도구 줄(터미널 방일 때만): 아이콘만, 호버 툴팁 ───── -->
+        <!--
+            ───── 방 도구 줄(터미널 방일 때만): 아이콘만, 호버 툴팁 ─────
+
+            폭이 넘치지 않는 것이 이 줄의 첫 규칙이다. 창 하한(1024)에서 이 줄이 쓸 수 있는 폭은
+            좌측 메뉴 210 과 본문 여백 48 을 빼고 766px 뿐인데, 예전에는 아이콘 294 + 방 이름 고정 520 =
+            814px 이라 이미 넘쳤고, 찾기를 열면 옆에 덧붙어 1084px 까지 갔다. 넘친 만큼 잘려 나갔다.
+            그래서 셋을 바꿨다 (2026-09-10):
+              · 방 이름은 고정 폭이 아니라 남는 폭(* 열)만 쓴다 — 어떤 창 크기에서도 넘치지 않는다
+              · 찾기는 덧붙지 않고 줄 자체를 찾기 모드로 바꾼다 — 폭이 늘지 않는다
+              · 늘 쓰지 않는 셋(입력 비우기·같은 폴더로 새 터미널·규칙 편집)은 더보기 안으로 넣었다
+        -->
         <Border
             x:Name="RoomTools"
             Padding="4,2"
@@ -148,15 +158,71 @@
             BorderThickness="1"
             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
             Visibility="Collapsed">
-            <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapTiny}">
-                <!-- 찾기: 아이콘을 켜면 옆에 입력칸이 나온다 -->
-                <ToggleButton x:Name="FindToggle" Style="{StaticResource ToolbarIconToggle}" Click="OnFindToggleClick" AutomationProperties.AutomationId="TerminalFindToggle" ToolTipService.ToolTip="{loc:Str Key=Room_FindTip}">
-                    <FontIcon Glyph="&#xE721;" FontSize="{StaticResource BodyFontSize}" />
-                </ToggleButton>
-                <StackPanel x:Name="FindPanel" Orientation="Horizontal" Spacing="{StaticResource GapTiny}" Visibility="Collapsed">
+            <Grid ColumnSpacing="{StaticResource GapMedium}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- 평소 줄: 늘 쓰는 넷 + 더보기 -->
+                <StackPanel x:Name="RoomToolIcons" Grid.Column="0" Orientation="Horizontal" Spacing="{StaticResource GapTiny}">
+                    <ToggleButton x:Name="FindToggle" Style="{StaticResource ToolbarIconToggle}" Click="OnFindToggleClick" AutomationProperties.AutomationId="TerminalFindToggle" ToolTipService.ToolTip="{loc:Str Key=Room_FindTip}">
+                        <FontIcon Glyph="&#xE721;" FontSize="{StaticResource BodyFontSize}" />
+                    </ToggleButton>
+
+                    <Rectangle Style="{StaticResource ToolbarSeparator}" />
+
+                    <Button x:Name="RoomPromptButton" Style="{StaticResource ToolbarIconButton}" AutomationProperties.AutomationId="RoomPromptButton" AutomationProperties.Name="{loc:Str Key=Room_ApplyPrompt}" ToolTipService.ToolTip="{loc:Str Key=Room_ApplyPromptHint}">
+                        <FontIcon Glyph="&#xE8BD;" FontSize="{StaticResource BodyFontSize}" />
+                        <Button.Flyout>
+                            <MenuFlyout x:Name="RoomPromptFlyout" Opening="OnRoomPromptFlyoutOpening" Placement="BottomEdgeAlignedLeft" />
+                        </Button.Flyout>
+                    </Button>
+
+                    <!-- 파일 첨부: 끌어놓기와 같은 길이지만, 눈에 보이는 길은 이것뿐이다 -->
+                    <Button Style="{StaticResource ToolbarIconButton}" Click="OnRoomAttachClick" AutomationProperties.AutomationId="RoomAttachButton" AutomationProperties.Name="{loc:Str Key=Room_AttachFile}" ToolTipService.ToolTip="{loc:Str Key=Room_AttachFileTip}">
+                        <FontIcon Glyph="&#xE723;" FontSize="{StaticResource BodyFontSize}" />
+                    </Button>
+
+                    <Rectangle Style="{StaticResource ToolbarSeparator}" />
+
+                    <Button Style="{StaticResource ToolbarIconButton}" Click="OnRoomOpenFolderClick" AutomationProperties.AutomationId="RoomOpenFolderButton" AutomationProperties.Name="{loc:Str Key=Room_OpenFolder}" ToolTipService.ToolTip="{loc:Str Key=Room_OpenFolderTip}">
+                        <FontIcon Glyph="&#xE838;" FontSize="{StaticResource BodyFontSize}" />
+                    </Button>
+
+                    <!-- 가끔 쓰는 것들. 아이콘 자리를 늘 차지할 값어치는 없지만 없어도 안 된다 -->
+                    <Button x:Name="RoomMoreButton" Style="{StaticResource ToolbarIconButton}" AutomationProperties.AutomationId="RoomMoreButton" AutomationProperties.Name="{loc:Str Key=Room_More}" ToolTipService.ToolTip="{loc:Str Key=Room_More}">
+                        <FontIcon Glyph="&#xE712;" FontSize="{StaticResource BodyFontSize}" />
+                        <Button.Flyout>
+                            <MenuFlyout Placement="BottomEdgeAlignedLeft">
+                                <MenuFlyoutItem AutomationProperties.AutomationId="RoomClearInputButton" Text="{loc:Str Key=Room_ClearInput}" ToolTipService.ToolTip="{loc:Str Key=Room_ClearInputTip}" Click="OnRoomClearInputClick">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE894;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem AutomationProperties.AutomationId="RoomDuplicateButton" Text="{loc:Str Key=Room_Duplicate}" ToolTipService.ToolTip="{loc:Str Key=Room_DuplicateTip}" Click="OnRoomDuplicateClick">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE8A9;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutSeparator />
+                                <!-- 이 방에 하는 일이 아니라 다른 화면으로 나가는 것이라 아래에 따로 둔다 -->
+                                <MenuFlyoutItem AutomationProperties.AutomationId="RoomRulesButton" Text="{loc:Str Key=Terminal_EditRules}" ToolTipService.ToolTip="{loc:Str Key=Room_EditRulesHint}" Click="OnRoomRulesClick">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE8A1;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
+                </StackPanel>
+
+                <!-- 찾기 줄: 평소 줄을 대신한다. 덧붙지 않으므로 폭이 늘지 않는다 -->
+                <StackPanel x:Name="FindPanel" Grid.Column="0" Orientation="Horizontal" Spacing="{StaticResource GapTiny}" Visibility="Collapsed">
+                    <FontIcon Glyph="&#xE721;" FontSize="{StaticResource BodyFontSize}" Margin="6,0,2,0" VerticalAlignment="Center" />
                     <TextBox
                         x:Name="FindBox"
-                        Width="200"
+                        Width="{StaticResource SettingInputWidth}"
                         Height="30"
                         VerticalAlignment="Center"
                         PlaceholderText="{loc:Str Key=Room_FindPlaceholder}"
@@ -169,48 +235,21 @@
                     <Button Style="{StaticResource ToolbarIconButton}" Click="OnFindNextClick" ToolTipService.ToolTip="{loc:Str Key=Room_FindNext}" AutomationProperties.Name="{loc:Str Key=Room_FindNext}">
                         <FontIcon Glyph="&#xE70D;" FontSize="{StaticResource CaptionFontSize}" />
                     </Button>
+                    <Button Style="{StaticResource ToolbarIconButton}" Click="OnFindCloseClick" AutomationProperties.AutomationId="TerminalFindClose" ToolTipService.ToolTip="{loc:Str Key=Room_FindClose}" AutomationProperties.Name="{loc:Str Key=Room_FindClose}">
+                        <FontIcon Glyph="&#xE711;" FontSize="{StaticResource CaptionFontSize}" />
+                    </Button>
                 </StackPanel>
 
-                <Rectangle Style="{StaticResource ToolbarSeparator}" />
-
-                <!-- 프롬프트 넣기 -->
-                <Button x:Name="RoomPromptButton" Style="{StaticResource ToolbarIconButton}" AutomationProperties.AutomationId="RoomPromptButton" AutomationProperties.Name="{loc:Str Key=Room_ApplyPrompt}" ToolTipService.ToolTip="{loc:Str Key=Room_ApplyPromptHint}">
-                    <FontIcon Glyph="&#xE8BD;" FontSize="{StaticResource BodyFontSize}" />
-                    <Button.Flyout>
-                        <MenuFlyout x:Name="RoomPromptFlyout" Opening="OnRoomPromptFlyoutOpening" Placement="BottomEdgeAlignedLeft" />
-                    </Button.Flyout>
-                </Button>
-                <!-- 파일 첨부: 골라서 경로를 입력 줄에 붙인다. 끌어놓기와 같은 길 -->
-                <Button Style="{StaticResource ToolbarIconButton}" Click="OnRoomAttachClick" AutomationProperties.AutomationId="RoomAttachButton" AutomationProperties.Name="{loc:Str Key=Room_AttachFile}" ToolTipService.ToolTip="{loc:Str Key=Room_AttachFileTip}">
-                    <FontIcon Glyph="&#xE723;" FontSize="{StaticResource BodyFontSize}" />
-                </Button>
-                <!-- 입력 비우기: CLI 입력 줄은 우리 것이 아니라 Ctrl+E·Ctrl+U 키를 보낸다 -->
-                <Button Style="{StaticResource ToolbarIconButton}" Click="OnRoomClearInputClick" AutomationProperties.AutomationId="RoomClearInputButton" AutomationProperties.Name="{loc:Str Key=Room_ClearInput}" ToolTipService.ToolTip="{loc:Str Key=Room_ClearInputTip}">
-                    <FontIcon Glyph="&#xE894;" FontSize="{StaticResource BodyFontSize}" />
-                </Button>
-
-                <Rectangle Style="{StaticResource ToolbarSeparator}" />
-
-                <!-- 규칙 편집 -->
-                <Button Style="{StaticResource ToolbarIconButton}" Click="OnRoomRulesClick" AutomationProperties.AutomationId="RoomRulesButton" AutomationProperties.Name="{loc:Str Key=Terminal_EditRules}" ToolTipService.ToolTip="{loc:Str Key=Room_EditRulesHint}">
-                    <FontIcon Glyph="&#xE8A1;" FontSize="{StaticResource BodyFontSize}" />
-                </Button>
-
-                <Rectangle Style="{StaticResource ToolbarSeparator}" />
-
-                <!-- 폴더 열기 · 이 폴더로 새 터미널 -->
-                <Button Style="{StaticResource ToolbarIconButton}" Click="OnRoomOpenFolderClick" AutomationProperties.AutomationId="RoomOpenFolderButton" AutomationProperties.Name="{loc:Str Key=Room_OpenFolder}" ToolTipService.ToolTip="{loc:Str Key=Room_OpenFolderTip}">
-                    <FontIcon Glyph="&#xE838;" FontSize="{StaticResource BodyFontSize}" />
-                </Button>
-                <Button Style="{StaticResource ToolbarIconButton}" Click="OnRoomDuplicateClick" AutomationProperties.AutomationId="RoomDuplicateButton" AutomationProperties.Name="{loc:Str Key=Room_Duplicate}" ToolTipService.ToolTip="{loc:Str Key=Room_DuplicateTip}">
-                    <FontIcon Glyph="&#xE8A9;" FontSize="{StaticResource BodyFontSize}" />
-                </Button>
-
-                <Rectangle Style="{StaticResource ToolbarSeparator}" />
-
-                <!-- 방 이름(도구 · 폴더 · 프로세스 제목) -->
-                <TextBlock x:Name="RoomTitleText" VerticalAlignment="Center" Margin="6,0,0,0" Style="{StaticResource MutedText}" TextTrimming="CharacterEllipsis" MaxWidth="520" />
-            </StackPanel>
+                <!-- 방 이름(도구 · 폴더 · 프로세스 제목). 도구가 아니라 표시라 오른쪽에 두고, 남는 폭만 쓴다 -->
+                <TextBlock
+                    x:Name="RoomTitleText"
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Right"
+                    Style="{StaticResource MutedText}"
+                    TextTrimming="CharacterEllipsis"
+                    TextWrapping="NoWrap" />
+            </Grid>
         </Border>
         </StackPanel>
         </controls:PageBody.Filters>

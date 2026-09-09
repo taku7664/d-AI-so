@@ -44,6 +44,9 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
                 ShowNewSession();
             }
         };
+        // 터미널 안에서 Ctrl+F. WebView2 가 포커스를 잡으면 앱 단축키가 안 닿아 이 길로 온다
+        Embedded.FindRequested += OnTerminalFindRequested;
+
         Embedded.TitleChanged += (_, title) =>
         {
             if (_room is TerminalRoomViewModel terminal)
@@ -428,15 +431,32 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
         }
     }
 
-    /// <summary>도구 줄의 찾기 아이콘: 켜면 입력칸이 나오고 포커스, 끄면 표시를 지우고 터미널로 포커스.</summary>
-    private void OnFindToggleClick(object sender, RoutedEventArgs e)
+    /// <summary>
+    /// 찾기 아이콘: 도구 줄을 찾기 모드로 바꾼다.
+    /// <para>
+    /// 옆에 덧붙이지 않고 <b>평소 줄을 대신한다</b> — 덧붙이면 창 하한에서 줄이 넘쳐 오른쪽이 잘렸다.
+    /// </para>
+    /// </summary>
+    private void OnFindToggleClick(object sender, RoutedEventArgs e) =>
+        SetFindMode(FindToggle.IsChecked == true);
+
+    /// <summary>찾기 줄의 닫기 단추.</summary>
+    private void OnFindCloseClick(object sender, RoutedEventArgs e) => SetFindMode(false);
+
+    /// <summary>터미널 안에서 Ctrl+F 를 눌렀다. 이미 열려 있으면 입력칸으로 포커스만 옮긴다.</summary>
+    private void OnTerminalFindRequested(object? sender, EventArgs e) =>
+        DispatcherQueue.TryEnqueue(() => SetFindMode(true));
+
+    private void SetFindMode(bool on)
     {
-        var on = FindToggle.IsChecked == true;
+        FindToggle.IsChecked = on;
         FindPanel.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
+        RoomToolIcons.Visibility = on ? Visibility.Collapsed : Visibility.Visible;
 
         if (on)
         {
             FindBox.Focus(FocusState.Programmatic);
+            FindBox.SelectAll();
         }
         else
         {
@@ -662,8 +682,7 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
                 e.Handled = true;
                 break;
             case Windows.System.VirtualKey.Escape:
-                FindToggle.IsChecked = false;
-                OnFindToggleClick(FindToggle, new RoutedEventArgs());
+                SetFindMode(false);
                 e.Handled = true;
                 break;
             default:

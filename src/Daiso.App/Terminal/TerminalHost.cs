@@ -117,6 +117,12 @@ public sealed class TerminalHost : UserControl
     /// <summary>프로세스가 제목을 바꿨다(OSC 0). 방 제목(탭 툴팁)에 쓴다.</summary>
     public event EventHandler<string>? TitleChanged;
 
+    /// <summary>
+    /// 터미널 안에서 Ctrl+F 를 눌렀다. 화면이 찾기 줄을 연다.
+    /// WebView2 가 포커스를 잡고 있으면 앱의 KeyboardAccelerator 가 안 닿아, 이 길로만 온다.
+    /// </summary>
+    public event EventHandler? FindRequested;
+
     /// <summary>동봉한 xterm 파일 폴더.</summary>
     public static string AssetFolder => Path.Combine(AppContext.BaseDirectory, "Assets", "xterm");
 
@@ -333,6 +339,10 @@ public sealed class TerminalHost : UserControl
 
                 _pendingOut.Clear();
                 Ready?.Invoke(this, EventArgs.Empty);
+                break;
+
+            case "find":
+                FindRequested?.Invoke(this, EventArgs.Empty);
                 break;
 
             case "in":
