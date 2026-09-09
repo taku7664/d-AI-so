@@ -128,6 +128,12 @@ public partial class App : Application
         // App
         services.AddSingleton<ISettingsStore, SettingsStore>();
         services.AddSingleton<IndexService>();
+
+        // 대화상자와 화면 이동. 셸이 창을 띄운 뒤 XamlRoot·이동 함수를 붙여 준다 (docs/REVIEW_BACKLOG.md D1)
+        services.AddSingleton<DialogHost>();
+        services.AddSingleton<IDialogHost>(provider => provider.GetRequiredService<DialogHost>());
+        services.AddSingleton<Navigator>();
+        services.AddSingleton<INavigator>(provider => provider.GetRequiredService<Navigator>());
         services.AddSingleton<KnownProjects>();
 
         services.AddSingleton<ViewModels.RoomManager>();

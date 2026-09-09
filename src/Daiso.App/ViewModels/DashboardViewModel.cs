@@ -18,6 +18,9 @@ public sealed partial class DashboardViewModel : ObservableObject
     private readonly IReadOnlyList<IProvider> _providers;
     private readonly ITerminalLauncher _launcher;
     private readonly IndexService _indexService;
+    private readonly AuthProfileViewModel _profiles;
+    private readonly IDialogHost _dialogs;
+    private readonly INavigator _navigator;
 
     [ObservableProperty]
     private bool isBusy;
@@ -34,19 +37,31 @@ public sealed partial class DashboardViewModel : ObservableObject
     public DashboardViewModel(
         IEnumerable<IProvider> providers,
         ITerminalLauncher launcher,
-        IndexService indexService)
+        IndexService indexService,
+        AuthProfileViewModel profiles,
+        IDialogHost dialogs,
+        INavigator navigator)
     {
         ArgumentNullException.ThrowIfNull(providers);
         ArgumentNullException.ThrowIfNull(launcher);
         ArgumentNullException.ThrowIfNull(indexService);
+        ArgumentNullException.ThrowIfNull(profiles);
+        ArgumentNullException.ThrowIfNull(dialogs);
+        ArgumentNullException.ThrowIfNull(navigator);
 
         _providers = providers.ToList();
         _launcher = launcher;
         _indexService = indexService;
+        _profiles = profiles;
+        _profiles.RowUseAction = UseProfileAsync;
+        _profiles.RowRemoveAction = RemoveProfileAsync;
+        _profiles.Reload();
+        _dialogs = dialogs;
+        _navigator = navigator;
 
         Tools = new ObservableCollection<ToolCardViewModel>(
             ToolLook.InDisplayOrder(_providers, provider => provider.Kind)
-                .Select(provider => new ToolCardViewModel(provider.Kind)));
+                .Select(provider => new ToolCardViewModel(provider.Kind, this)));
         VisibleTools = new ObservableCollection<ToolCardViewModel>(Tools);
     }
 
@@ -88,7 +103,7 @@ public sealed partial class DashboardViewModel : ObservableObject
         RecentSessions.Clear();
         foreach (var session in sessions.OrderByDescending(session => session.ModifiedAt).Take(RecentSessionCount))
         {
-            RecentSessions.Add(new RecentSessionViewModel(session));
+            RecentSessions.Add(new RecentSessionViewModel(session, this));
         }
 
         OnPropertyChanged(nameof(HasRecentSessions));
@@ -248,14 +263,137 @@ public sealed partial class DashboardViewModel : ObservableObject
         await _launcher.LaunchAsync(home, provider.LaunchTarget, arguments).ConfigureAwait(true);
     }
 
+
+    // ── 카드·줄에서 올라오는 일 (docs/REVIEW_BACKLOG.md D1) ──────────────
+    //
+    // 예전에는 이 아래가 전부 DashboardPage 의 Click 핸들러였다. 대화상자를 띄우려면 페이지의
+    // XamlRoot 가 필요했기 때문이다. 그래서 목록 한 줄의 생김새가 페이지에 묶여 빠져나오지 못했다.
+    // 지금은 IDialogHost·INavigator 를 거치므로 여기서 할 수 있고, 템플릿은 자기완결적이 됐다.
+
+    /// <summary>전체 프로필 목록을 도구 카드마다 자기 도구 것만 골라 넣는다.</summary>
+    public void SyncProfiles()
+    {
+        foreach (var card in Tools)
+        {
+            card.SetProfiles(_profiles.Profiles);
+        }
+    }
+
+    /// <summary>작업 결과를 그 도구 카드의 팝오버에만 적는다.</summary>
+    private void ReportProfile(ToolKind tool)
+    {
+        SyncProfiles();
+
+        foreach (var card in Tools)
+        {
+            card.ProfileStatus = card.Kind == tool ? _profiles.StatusText : null;
+        }
+    }
+
+    /// <summary>지금 로그인 상태를 이름 붙여 저장한다. 누른 카드의 도구로 저장하니 이름만 받는다.</summary>
+    public async Task SaveProfileAsync(ToolCardViewModel card)
+    {
+        ArgumentNullException.ThrowIfNull(card);
+
+        var name = await _dialogs.AskTextAsync(
+            UiStrings.Get("AuthProfile_SaveTitle"),
+            UiStrings.Format("AuthProfile_SaveBodyFor", card.Title),
+            UiStrings.Get("AuthProfile_NamePlaceholder"),
+            UiStrings.Get("Common_Save")).ConfigureAwait(true);
+
+        if (name is null)
+        {
+            return;
+        }
+
+        try
+        {
+            _profiles.Save(card.Kind, name, await ReadAuthStatusAsync(card.Kind).ConfigureAwait(true));
+            ReportProfile(card.Kind);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+        {
+            await _dialogs.NoticeAsync(UiStrings.Get("AuthProfile_SaveFailed"), ex.Message).ConfigureAwait(true);
+        }
+    }
+
+    /// <summary>고른 프로필을 현재 로그인으로 되돌린다.</summary>
+    public async Task UseProfileAsync(AuthProfileRowViewModel row)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+
+        try
+        {
+            var tool = row.Profile.Tool;
+            _profiles.Apply(row, await ReadAuthStatusAsync(tool).ConfigureAwait(true));
+            await UiCommands.RunAsync(LoadCommand).ConfigureAwait(true);
+            ReportProfile(tool);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+        {
+            await _dialogs.NoticeAsync(UiStrings.Get("AuthProfile_ApplyFailed"), ex.Message).ConfigureAwait(true);
+        }
+    }
+
+    /// <summary>프로필을 지운다. 지금 로그인은 건드리지 않는다.</summary>
+    public async Task RemoveProfileAsync(AuthProfileRowViewModel row)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+
+        var yes = await _dialogs.ConfirmAsync(
+            UiStrings.Format("AuthProfile_ConfirmRemove", row.Name),
+            UiStrings.Get("AuthProfile_ConfirmRemoveBody"),
+            UiStrings.Get("Common_Delete")).ConfigureAwait(true);
+
+        if (!yes)
+        {
+            return;
+        }
+
+        _profiles.Remove(row);
+        ReportProfile(row.Profile.Tool);
+    }
+
+    /// <summary>최근 세션을 Terminal 화면에 채워 넣고 그 화면으로 보낸다.</summary>
+    [RelayCommand]
+    public void ResumeRecent(RecentSessionViewModel? row)
+    {
+        if (row is null)
+        {
+            return;
+        }
+
+        PrepareResume(row.Session);
+        _navigator.Go("Terminal");
+    }
+
+    /// <summary>세션 목록으로 보낸다.</summary>
+    [RelayCommand]
+    public void GoToSessions() => _navigator.Go("Sessions");
+
+    /// <summary>사용량 화면으로 보낸다. 요약의 토큰 수치는 거기서 자세히 본다.</summary>
+    [RelayCommand]
+    public void GoToUsage() => _navigator.Go("Usage");
 }
 
 /// <summary>요약 화면의 최근 세션 한 줄.</summary>
-public sealed class RecentSessionViewModel
+public sealed partial class RecentSessionViewModel : ObservableObject
 {
-    public RecentSessionViewModel(SessionInfo session) => Session = session;
+    private readonly DashboardViewModel _owner;
+
+    public RecentSessionViewModel(SessionInfo session, DashboardViewModel owner)
+    {
+        ArgumentNullException.ThrowIfNull(owner);
+
+        Session = session;
+        _owner = owner;
+    }
 
     public SessionInfo Session { get; }
+
+    /// <summary>이 세션을 터미널 화면에 채워 넣고 그 화면으로 간다.</summary>
+    [RelayCommand]
+    public void Resume() => _owner.ResumeRecentCommand.Execute(this);
 
     /// <summary>도구 한 글자.</summary>
     public string ToolInitial => ToolLook.Initial(Session.Tool);
@@ -295,7 +433,23 @@ public sealed partial class ToolCardViewModel : ObservableObject
     [ObservableProperty]
     private DateTimeOffset? sessionExpiresAt;
 
-    public ToolCardViewModel(ToolKind kind) => Kind = kind;
+    private readonly DashboardViewModel _owner;
+
+    public ToolCardViewModel(ToolKind kind, DashboardViewModel owner)
+    {
+        ArgumentNullException.ThrowIfNull(owner);
+
+        Kind = kind;
+        _owner = owner;
+    }
+
+    /// <summary>로그인 절차를 띄운다.</summary>
+    [RelayCommand]
+    public Task LoginAsync() => _owner.LoginCommand.ExecuteAsync(this);
+
+    /// <summary>지금 로그인 상태를 이름 붙여 저장한다.</summary>
+    [RelayCommand]
+    public Task SaveProfileAsync() => _owner.SaveProfileAsync(this);
 
     public ToolKind Kind { get; }
 

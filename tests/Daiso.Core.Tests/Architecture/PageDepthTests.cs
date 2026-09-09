@@ -33,11 +33,11 @@ public sealed class PageDepthTests
         ["PromptsPage.xaml"] = 10,
         ["UsagePage.xaml"] = 9,
         ["SessionsPage.xaml"] = 11,
-        ["ItemTemplates.xaml"] = 7,
+        ["ItemTemplates.xaml"] = 13,
         ["SettingsPage.xaml"] = 12,
         ["RuleMakerPage.xaml"] = 14,
         ["TerminalPage.xaml"] = 14,
-        ["DashboardPage.xaml"] = 16,
+        ["DashboardPage.xaml"] = 8,
     };
 
     public static IEnumerable<object[]> Pages() => Budget.Keys.Select(name => new object[] { name });

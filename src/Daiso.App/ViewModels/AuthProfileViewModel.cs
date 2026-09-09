@@ -36,6 +36,18 @@ public sealed partial class AuthProfileViewModel : ObservableObject
     /// <summary>보관 중인 프로필.</summary>
     public ObservableCollection<AuthProfileRowViewModel> Profiles { get; } = [];
 
+    /// <summary>
+    /// 줄의 되돌리기·지우기가 실제로 할 일. 요약 화면 뷰모델이 한 번 채운다.
+    /// <para>
+    /// <b>줄을 만드는 자리에서 붙인다.</b> 밖에서 붙이면 <see cref="Reload"/> 가 줄을 새로 만들 때마다
+    /// 떨어져 나가고, 한 번 빠뜨리면 단추가 눌려도 아무 일이 없다 — 조용히 틀리는 쪽이다.
+    /// </para>
+    /// </summary>
+    public Func<AuthProfileRowViewModel, Task>? RowUseAction { get; set; }
+
+    /// <inheritdoc cref="RowUseAction" />
+    public Func<AuthProfileRowViewModel, Task>? RowRemoveAction { get; set; }
+
     /// <summary>프로필이 하나라도 있는가.</summary>
     public bool HasProfiles => Profiles.Count > 0;
 
@@ -50,7 +62,11 @@ public sealed partial class AuthProfileViewModel : ObservableObject
 
         foreach (var profile in _store.List())
         {
-            Profiles.Add(new AuthProfileRowViewModel(profile));
+            Profiles.Add(new AuthProfileRowViewModel(profile)
+            {
+                UseAction = RowUseAction,
+                RemoveAction = RowRemoveAction,
+            });
         }
 
         OnPropertyChanged(nameof(HasProfiles));
@@ -95,12 +111,29 @@ public sealed partial class AuthProfileViewModel : ObservableObject
     }
 }
 
-/// <summary>목록 한 줄.</summary>
-public sealed class AuthProfileRowViewModel
+/// <summary>
+/// 목록 한 줄. 되돌리기·지우기 명령을 스스로 들고 있다 — 그래야 이 줄의 생김새가
+/// 페이지 코드비하인드 없이 설 수 있다 (docs/REVIEW_BACKLOG.md D1).
+/// </summary>
+public sealed partial class AuthProfileRowViewModel : ObservableObject
 {
+    /// <summary>이 줄에 무엇을 할지 아는 쪽. 요약 화면 뷰모델이 채운다.</summary>
+    public Func<AuthProfileRowViewModel, Task>? UseAction { get; set; }
+
+    /// <summary>지우기를 맡는 쪽.</summary>
+    public Func<AuthProfileRowViewModel, Task>? RemoveAction { get; set; }
+
     public AuthProfileRowViewModel(AuthProfile profile) => Profile = profile;
 
     public AuthProfile Profile { get; }
+
+    /// <summary>이 프로필을 현재 로그인으로 되돌린다.</summary>
+    [RelayCommand]
+    public Task UseAsync() => UseAction?.Invoke(this) ?? Task.CompletedTask;
+
+    /// <summary>이 프로필을 지운다.</summary>
+    [RelayCommand]
+    public Task RemoveAsync() => RemoveAction?.Invoke(this) ?? Task.CompletedTask;
 
     /// <summary>도구 한 글자.</summary>
     public string ToolInitial => ToolLook.Initial(Profile.Tool);
