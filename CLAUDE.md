@@ -50,3 +50,8 @@
 **커밋 후**
 
 - [ ] `git push origin main` 했는가
+
+<!-- daiso:start -->
+@PROJECT_RULES.daiso
+Rules above are YAML. Priority MUST > SHOULD > MAY.
+<!-- daiso:end -->
