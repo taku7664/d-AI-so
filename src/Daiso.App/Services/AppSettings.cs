@@ -21,8 +21,6 @@ public sealed class AppSettings
     /// <summary>테마. "System" | "Light" | "Dark".</summary>
     public string Theme { get; set; } = "System";
 
-    /// <summary>터미널을 앱 안(내장)에서 열지. WebView2가 없으면 무시하고 외부로 간다. (ARCHITECTURE §5.3)</summary>
-
     /// <summary>내장 터미널 글자 크기(px). 8~28.</summary>
     public int TerminalFontSize { get; set; } = 14;
 
