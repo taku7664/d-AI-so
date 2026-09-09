@@ -20,12 +20,20 @@ public partial class App : Application
 
     public App()
     {
+        // 파일 끌어놓기(OLE 드래그)를 받으려면 UI 스레드가 OleInitialize 돼 있어야 XAML 이 창을 드롭 대상으로 등록한다.
+        // 생성된 Main 은 COM(STA)만 초기화하므로, 이 앱에서는 이게 없으면 창 어디에도 드롭 대상이 등록되지 않아 금지 커서가 뜬다
+        // (2026-09-09 측정: 모든 HWND 에 OleDropTargetInterface 속성 없음). 이미 초기화돼 있으면 S_FALSE 로 그냥 넘어간다.
+        _ = OleInitialize(IntPtr.Zero);
+
         InitializeComponent();
         Services = BuildServices();
 
         _crashReporter = new CrashReporter(Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread());
         _crashReporter.Hook(this);
     }
+
+    [System.Runtime.InteropServices.DllImport("ole32.dll")]
+    private static extern int OleInitialize(IntPtr reserved);
 
     /// <summary>화면에서 ViewModel을 꺼내 쓰는 통로.</summary>
     public static IServiceProvider Services { get; private set; } = null!;

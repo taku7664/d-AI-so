@@ -14,7 +14,7 @@ namespace Daiso.App.Views;
 /// 터미널 화면. 위는 탭 띠(새 터미널 + 열린 방), 아래는 새 세션 카드 또는 그 방의 터미널.
 /// 페이지는 캐시된다(NavigationCacheMode=Required). Loaded는 돌아올 때마다 다시 돌므로 한 번만 걸 것은 생성자에 둔다. (ARCHITECTURE §5.3)
 /// </summary>
-public sealed partial class TerminalPage : Page, IPageHeaderSource
+public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSink
 {
     private IRoom? _room;
 
@@ -22,7 +22,6 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource
     {
         InitializeComponent();
         FocusRelease.Attach(this);
-        _dropHide.Tick += (_, _) => { _dropHide.Stop(); DropOverlay.Visibility = Visibility.Collapsed; };
         SelectorBarVisuals.ResetPressedOnLeave(ToolTabs);
         ViewModel = App.Services.GetRequiredService<TerminalViewModel>();
         Header = new PageHeader("Terminal_Title", UiStrings.Get("Terminal_Subtitle"));
@@ -605,72 +604,34 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource
         }
     }
 
-    // ── 끌어놓기 ─────────────────────────────────────────────────────────────
+    // ── 끌어놓기 (IFileDropSink — 셸의 FileDropTarget 이 OLE 드롭을 받아 넘긴다) ───────────
 
-    private readonly DispatcherTimer _dropHide = new() { Interval = TimeSpan.FromMilliseconds(200) };
-
-    private static bool HasFiles(DragEventArgs e) => e.DataView.Contains(StandardDataFormats.StorageItems);
-
-    /// <summary>끄는 동안 계속 온다. 받겠다고 말하고(금지 커서 대신 복사 커서), 방이 있으면 터미널 위에 받는 판을 덮는다.</summary>
-    private void OnPageDragOver(object sender, DragEventArgs e)
+    /// <summary>파일 드래그가 창에 들어왔다. 방이 보이면 터미널 위에 받는 판을 덮는다 (WebView2 위로는 XAML 이 안 그려지므로 그 위 판이 표시 역할).</summary>
+    public void FileDragStarted()
     {
-        if (!HasFiles(e))
-        {
-            return;
-        }
-
-        e.AcceptedOperation = DataPackageOperation.Copy;
-        e.DragUIOverride.Caption = UiStrings.Get(TerminalPanel.Visibility == Visibility.Visible ? "Room_DropHint" : "Terminal_DropFolderHint");
-        e.DragUIOverride.IsGlyphVisible = false;
-
-        _dropHide.Stop();
         if (TerminalPanel.Visibility == Visibility.Visible)
         {
             DropOverlay.Visibility = Visibility.Visible;
         }
     }
 
-    /// <summary>
-    /// 자식 사이를 옮겨 다닐 때도 오므로 바로 걷지 않고 잠깐 기다린다. 그 사이 DragOver 가 다시 오면 그대로 둔다.
-    /// </summary>
-    private void OnPageDragLeave(object sender, DragEventArgs e)
+    public void FileDragEnded() => DropOverlay.Visibility = Visibility.Collapsed;
+
+    /// <summary>방이 있으면 파일을 CLI 에 준다(그림은 첨부, 나머지는 경로). 없으면 첫 폴더를 프로젝트 폴더로 잡는다.</summary>
+    public async Task FilesDroppedAsync(IReadOnlyList<string> paths)
     {
-        _dropHide.Stop();
-        _dropHide.Start();
-    }
-
-    private async void OnPageDrop(object sender, DragEventArgs e)
-    {
-        _dropHide.Stop();
-        DropOverlay.Visibility = Visibility.Collapsed;
-
-        if (!HasFiles(e))
+        if (TerminalPanel.Visibility == Visibility.Visible)
         {
-            return;
+            Embedded.FocusTerminal();
+            await Embedded.AttachFilesAsync(paths);
         }
-
-        try
+        else if (paths.FirstOrDefault(Directory.Exists) is { } folder)
         {
-            var items = await e.DataView.GetStorageItemsAsync();
-            var paths = items.Select(item => item.Path).Where(path => path.Length > 0).ToList();
-
-            if (TerminalPanel.Visibility == Visibility.Visible)
-            {
-                Embedded.PastePaths(paths);
-                Embedded.FocusTerminal();
-            }
-            else if (paths.FirstOrDefault(Directory.Exists) is { } folder)
-            {
-                ViewModel.SetFolder(folder);
-            }
-        }
-        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or UnauthorizedAccessException)
-        {
-            // 드롭 데이터를 못 읽었다. 한 번의 끌어놓기가 안 된 것뿐이다
+            ViewModel.SetFolder(folder);
         }
     }
 
-    /// <summary>파일을 골라 경로를 입력 줄에 붙인다. 여러 개 고를 수 있다. 그림도 경로로 준다 — CLI 가 파일을 읽는다.</summary>
+    /// <summary>파일을 골라 CLI 에 준다. 여러 개 고를 수 있다. 그림은 첨부, 나머지는 경로 (AttachFilesAsync).</summary>
     private async void OnRoomAttachClick(object sender, RoutedEventArgs e)
     {
         var picker = new FileOpenPicker { SuggestedStartLocation = PickerLocationId.PicturesLibrary };
@@ -684,12 +645,11 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource
         }
 
         var files = await picker.PickMultipleFilesAsync();
+        Embedded.FocusTerminal();
         if (files.Count > 0)
         {
-            Embedded.PastePaths(files.Select(file => file.Path));
+            await Embedded.AttachFilesAsync(files.Select(file => file.Path));
         }
-
-        Embedded.FocusTerminal();
     }
 
     /// <summary>CLI 입력 줄을 비운다 (키 전송).</summary>

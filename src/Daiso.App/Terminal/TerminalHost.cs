@@ -67,6 +67,44 @@ public sealed class TerminalHost : UserControl
     }
 
     /// <summary>
+    /// 파일들을 CLI 에 준다. 그림 파일(png·jpg·gif·bmp·webp)은 클립보드에 DIB 로 올리고 그 도구의 그림 붙이기 키를 보내
+    /// CLI 가 <c>[Image #1]</c>처럼 첨부하게 한다(그림마다 한 번씩, 사이에 잠깐 쉰다 — CLI 가 클립보드를 읽을 시간).
+    /// 그 밖의 파일은 경로를 붙인다. 끌어놓기와 파일 첨부 버튼이 다 이 길이다. 사용자의 클립보드는 덮어써진다.
+    /// </summary>
+    public async Task AttachFilesAsync(IEnumerable<string> paths)
+    {
+        ArgumentNullException.ThrowIfNull(paths);
+
+        if (_room is not { } room)
+        {
+            return;
+        }
+
+        var list = paths.Where(path => !string.IsNullOrWhiteSpace(path)).ToList();
+        var images = list.Where(ClipboardImage.IsImageFile).ToList();
+        var others = list.Except(images, StringComparer.OrdinalIgnoreCase).ToList();
+
+        if (others.Count > 0)
+        {
+            PastePaths(others);
+        }
+
+        var provider = App.Services.GetRequiredService<IEnumerable<Daiso.Core.IProvider>>().First(candidate => candidate.Kind == room.Tool);
+        foreach (var image in images)
+        {
+            if (await ClipboardImage.PutFileAsync(image))
+            {
+                room.SendRaw(provider.ImagePasteKeys);
+                await Task.Delay(600);
+            }
+            else
+            {
+                PastePaths([image]);
+            }
+        }
+    }
+
+    /// <summary>
     /// CLI 의 입력 줄을 비운다. 입력 줄은 CLI 것이라 우리가 지울 수 없고 키만 보낼 수 있다:
     /// Ctrl+E(줄 끝으로) 뒤 Ctrl+U(줄 앞까지 지우기). Claude Code·Codex·Gemini 의 줄 편집기가 다 readline 꼴이라 통한다.
     /// 여러 줄로 이어 쓴 입력은 마지막 줄만 지워질 수 있다.

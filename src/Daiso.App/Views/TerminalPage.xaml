@@ -49,16 +49,10 @@
 
     <!-- 골격은 PageBody 가 정한다: 탭 띠·방 도구 줄(필터 줄) → 본문. 폭은 Wide — 방 화면은 창을 다 쓴다 (UI_REFACTOR_PLAN §6, §8.2) -->
     <!--
-        파일 끌어놓기는 페이지가 받는다. WebView2(터미널) 위로는 드롭이 안 떨어지므로(금지 커서), 끄는 동안만 DropOverlay 를
-        터미널 위에 덮어 그 판이 받는다. 방이 있으면 경로를 입력 줄에 붙이고, 없으면 폴더를 프로젝트 폴더로 잡는다
+        파일 끌어놓기는 셸의 FileDropTarget(OLE)이 받아 이 페이지(IFileDropSink)에 넘긴다. XAML AllowDrop 은 이 환경에서 동작하지 않는다.
+        끄는 동안 DropOverlay 를 터미널 위에 덮어 어디에 놓이는지 보여 준다. 방이 있으면 파일을 CLI 에 주고, 없으면 폴더를 프로젝트 폴더로 잡는다
     -->
-    <controls:PageBody
-        x:Name="Root"
-        Layout="Wide"
-        AllowDrop="True"
-        DragOver="OnPageDragOver"
-        DragLeave="OnPageDragLeave"
-        Drop="OnPageDrop">
+    <controls:PageBody x:Name="Root" Layout="Wide">
         <controls:PageBody.Filters>
         <StackPanel Spacing="8">
 
@@ -571,10 +565,10 @@
                     <terminal:TerminalHost x:Name="Embedded" />
                 </Border>
 
-                <!-- 끌어놓기 받는 판. 끄는 동안만 보이고, 놓거나 나가면 사라진다 (코드 비하인드) -->
+                <!-- 끌어놓기 안내 판. 끄는 동안만 보이고, 놓거나 나가면 사라진다 (IFileDropSink) -->
                 <Border
                     x:Name="DropOverlay"
-                    AllowDrop="True"
+                    IsHitTestVisible="False"
                     Visibility="Collapsed"
                     CornerRadius="8"
                     BorderThickness="2"

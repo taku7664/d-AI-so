@@ -20,6 +20,9 @@ public sealed partial class ShellWindow : Window
     private readonly ISettingsStore _settings;
     private readonly NavigationHistory _history = new();
 
+    /// <summary>OLE 파일 드롭. XAML AllowDrop 이 이 환경에서 등록되지 않아 직접 등록한다 (FileDropTarget 주석).</summary>
+    private readonly FileDropTarget _fileDrop;
+
     /// <summary>지금 보고 있는 페이지의 Tag. 자리를 적을 때 쓴다.</summary>
     private string _pageTag = "Dashboard";
 
@@ -42,6 +45,9 @@ public sealed partial class ShellWindow : Window
         WatchThemeSetting();
         RestoreWindowSize();
         ApplyIcon();
+
+        _fileDrop = new FileDropTarget(() => ContentFrame.Content as IFileDropSink);
+        Activated += (_, _) => RegisterFileDrop();
 
         Navigate("Dashboard");
         WatchSpots();
@@ -87,8 +93,21 @@ public sealed partial class ShellWindow : Window
     }
 
     /// <summary>새 페이지의 제목·부제를 Header 에 싣는다. 페이지가 IPageHeaderSource 가 아니면 제목이 비는 것이 보인다.</summary>
-    private void OnFrameNavigated(object sender, Microsoft.UI.Xaml.Navigation.NavigationEventArgs e) =>
+    private void OnFrameNavigated(object sender, Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+    {
         Navigation.Header = (e.Content as Controls.IPageHeaderSource)?.Header;
+
+        // 자식 창(XAML 아일랜드·WebView2)은 나중에 생기므로 페이지를 옮길 때마다 아직 안 된 창을 등록한다
+        RegisterFileDrop();
+    }
+
+    private void RegisterFileDrop()
+    {
+        if (_fileDrop is not null)
+        {
+            _fileDrop.RegisterAll(WinRT.Interop.WindowNative.GetWindowHandle(this));
+        }
+    }
 
     private void OnSelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
     {
