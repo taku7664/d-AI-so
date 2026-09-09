@@ -1,11 +1,15 @@
 <Application
     x:Class="Daiso.App.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="using:Daiso.App.Ui">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+
+                <!-- 목록 한 줄의 생김새. 페이지에서 빼내 모은 것 (docs/REVIEW_BACKLOG.md A3) -->
+                <ui:ItemTemplates />
             </ResourceDictionary.MergedDictionaries>
 
             <!--

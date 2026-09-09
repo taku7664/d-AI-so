@@ -20,17 +20,24 @@ public sealed class PageDepthTests
 
     private static readonly string AppSource = Path.Combine(Root, "src", "Daiso.App");
 
-    /// <summary>2026-09-10 측정값. 내리는 것은 환영, 올리는 것은 안 된다.</summary>
+    /// <summary>
+    /// 2026-09-10 측정값. 내리는 것은 환영, 올리는 것은 안 된다.
+    /// <para>
+    /// 목록 한 줄을 <c>Ui/ItemTemplates.xaml</c> 로 옮긴 화면은 그만큼 얕아졌다.
+    /// 옮겨 간 사전도 여기 함께 적는다 — 안 적으면 "옮겨서 얕아진 것"이 눈속임이 된다.
+    /// </para>
+    /// </summary>
     private static readonly Dictionary<string, int> Budget = new(StringComparer.Ordinal)
     {
         ["ShellWindow.xaml"] = 6,
         ["PromptsPage.xaml"] = 10,
         ["UsagePage.xaml"] = 10,
+        ["SessionsPage.xaml"] = 11,
+        ["ItemTemplates.xaml"] = 7,
         ["SettingsPage.xaml"] = 12,
         ["RuleMakerPage.xaml"] = 14,
         ["TerminalPage.xaml"] = 14,
         ["DashboardPage.xaml"] = 16,
-        ["SessionsPage.xaml"] = 16,
     };
 
     public static IEnumerable<object[]> Pages() => Budget.Keys.Select(name => new object[] { name });
@@ -143,9 +150,17 @@ public sealed class PageDepthTests
 
     private static string Find(string fileName)
     {
-        var inViews = Path.Combine(AppSource, "Views", fileName);
+        foreach (var folder in new[] { "Views", "Ui", "." })
+        {
+            var candidate = Path.Combine(AppSource, folder, fileName);
 
-        return File.Exists(inViews) ? inViews : Path.Combine(AppSource, fileName);
+            if (File.Exists(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        throw new FileNotFoundException($"예산에 적힌 파일을 찾지 못했다: {fileName}");
     }
 
     private static string FindRepositoryRoot()

@@ -83,12 +83,8 @@
                     IsEnabled="{x:Bind ViewModel.CanPickProject, Mode=OneWay}"
                     AutomationProperties.AutomationId="ProjectCombo"
                     ItemsSource="{x:Bind ViewModel.Projects}"
-                    SelectedItem="{x:Bind ViewModel.SelectedProject, Mode=TwoWay}">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate x:DataType="vm:ProjectGroupViewModel">
-                            <TextBlock Text="{x:Bind ComboLabel}" ToolTipService.ToolTip="{x:Bind Path}" />
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
+                    SelectedItem="{x:Bind ViewModel.SelectedProject, Mode=TwoWay}"
+                    ItemTemplate="{StaticResource ProjectRowTemplate}">
                 </ComboBox>
             </Border>
 
@@ -246,68 +242,16 @@
                             Padding="8,0,8,8"
                             SelectionMode="Single"
                             ItemInvoked="OnSearchItemInvoked"
-                            Visibility="{x:Bind ViewModel.SearchTreeVisibility, Mode=OneWay}">
-                            <muxc:TreeView.ItemTemplate>
-                                <DataTemplate x:DataType="muxc:TreeViewNode">
-                                    <muxc:TreeViewItem ItemsSource="{x:Bind Children}" IsExpanded="{x:Bind IsExpanded, Mode=TwoWay}">
-                                        <TextBlock
-                                            Text="{Binding Content}"
-                                            TextTrimming="CharacterEllipsis"
-                                            TextWrapping="NoWrap"
-                                            ToolTipService.ToolTip="{Binding Content}" />
-                                    </muxc:TreeViewItem>
-                                </DataTemplate>
-                            </muxc:TreeView.ItemTemplate>
-                        </muxc:TreeView>
+                            Visibility="{x:Bind ViewModel.SearchTreeVisibility, Mode=OneWay}"
+                            ItemTemplate="{StaticResource SearchNodeTemplate}" />
 
                         <ListView
                             AutomationProperties.AutomationId="SessionList"
                             Visibility="{x:Bind ViewModel.ProjectListVisibility, Mode=OneWay}"
                             ItemsSource="{x:Bind ViewModel.Sessions}"
                             SelectedItem="{x:Bind ViewModel.SelectedSession, Mode=TwoWay}"
-                            SelectionChanged="OnSessionSelectionChanged">
-                            <ListView.ItemTemplate>
-                                <DataTemplate x:DataType="vm:SessionRowViewModel">
-                                    <Grid Padding="0,10" ColumnSpacing="{StaticResource GapLarge}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-
-                                        <CheckBox
-                                            Grid.Column="0"
-                                            MinWidth="28"
-                                            VerticalAlignment="Center"
-                                            AutomationProperties.Name="{x:Bind TitleText}"
-                                            IsChecked="{x:Bind IsChecked, Mode=TwoWay}" />
-
-                                        <controls:ToolIcon Grid.Column="1" Kind="{x:Bind Session.Tool}" Size="26" VerticalAlignment="Center" />
-
-                                        <StackPanel Grid.Column="2" Spacing="{StaticResource GapMicro}">
-                                            <TextBlock
-                                                Text="{x:Bind TitleText}"
-                                                Style="{ThemeResource BodyStrongTextBlockStyle}"
-                                                TextWrapping="NoWrap"
-                                                TextTrimming="CharacterEllipsis"
-                                                ToolTipService.ToolTip="{x:Bind FirstPromptText}" />
-                                            <TextBlock
-                                                Style="{StaticResource MutedText}"
-                                                Text="{x:Bind MetaText}"
-                                                ToolTipService.ToolTip="{x:Bind IdShort}" />
-                                        </StackPanel>
-
-                                        <Border
-                                            Grid.Column="3"
-                                            Style="{StaticResource PillBorder}"
-                                            Visibility="{x:Bind HasBadges}">
-                                            <TextBlock Text="{x:Bind Badges}" FontSize="{StaticResource CaptionFontSize}" />
-                                        </Border>
-                                    </Grid>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
+                            SelectionChanged="OnSessionSelectionChanged"
+                            ItemTemplate="{StaticResource SessionRowTemplate}" />
 
                         <Border
                             Style="{StaticResource NoticeBorder}"
@@ -430,82 +374,11 @@
                                 <!-- 보이는 것만 그린다. 메시지 2000개를 한 번에 만들면 세션 하나 여는 데 몇 초가 걸린다 -->
                                 <ItemsRepeater
                                     AutomationProperties.AutomationId="TimelineList"
-                                    ItemsSource="{x:Bind ViewModel.Timeline, Mode=OneWay}">
+                                    ItemsSource="{x:Bind ViewModel.Timeline, Mode=OneWay}"
+                                    ItemTemplate="{StaticResource MessageRowTemplate}">
                                     <ItemsRepeater.Layout>
                                         <StackLayout Spacing="0" />
                                     </ItemsRepeater.Layout>
-                                    <ItemsRepeater.ItemTemplate>
-                                        <DataTemplate x:DataType="vm:MessageViewModel">
-                                            <Grid Margin="0,0,0,12" ColumnSpacing="{StaticResource GapMedium}">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-
-                                                <Rectangle
-                                                    Grid.Column="0"
-                                                    Width="3"
-                                                    RadiusX="1.5"
-                                                    RadiusY="1.5"
-                                                    VerticalAlignment="Stretch"
-                                                    Fill="{ThemeResource AccentFillColorDefaultBrush}"
-                                                    Visibility="{x:Bind UserBarVisibility}" />
-
-                                                <StackPanel Grid.Column="1" Visibility="{x:Bind PlainVisibility}" Spacing="{StaticResource GapMicro}">
-                                                    <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
-                                                        <Border Style="{StaticResource PillBorder}">
-                                                            <TextBlock
-                                                                Text="{x:Bind RoleText}"
-                                                                FontSize="{StaticResource CaptionFontSize}"
-                                                                FontWeight="SemiBold" />
-                                                        </Border>
-                                                        <TextBlock
-                                                            Text="{x:Bind TimeText}"
-                                                            Style="{StaticResource MutedText}"
-                                                            VerticalAlignment="Center" />
-                                                    </StackPanel>
-                                                    <TextBlock
-                                                        Text="{x:Bind DisplayText, Mode=OneWay}"
-                                                        Style="{ThemeResource BodyTextBlockStyle}"
-                                                        TextWrapping="Wrap"
-                                                        IsTextSelectionEnabled="True" />
-                                                    <HyperlinkButton
-                                                        Content="{x:Bind MoreText, Mode=OneWay}"
-                                                        Visibility="{x:Bind IsTruncated}"
-                                                        Command="{x:Bind ToggleExpandedCommand}"
-                                                        Padding="0"
-                                                        FontSize="{StaticResource CaptionFontSize}" />
-                                                </StackPanel>
-
-                                                <Expander
-                                                    Grid.Column="1"
-                                                    HorizontalAlignment="Stretch"
-                                                    Visibility="{x:Bind CollapsibleVisibility}">
-                                                    <Expander.Header>
-                                                        <TextBlock Style="{StaticResource MutedText}">
-                                                            <Run Text="{x:Bind RoleText}" />
-                                                            <Run Text="·" />
-                                                            <Run Text="{x:Bind TimeText}" />
-                                                        </TextBlock>
-                                                    </Expander.Header>
-                                                    <StackPanel Spacing="{StaticResource GapXSmall}">
-                                                        <TextBlock
-                                                            Text="{x:Bind DisplayText, Mode=OneWay}"
-                                                            Style="{StaticResource MonoText}"
-                                                            TextTrimming="None"
-                                                            TextWrapping="Wrap"
-                                                            IsTextSelectionEnabled="True" />
-                                                        <HyperlinkButton
-                                                            Content="{x:Bind MoreText, Mode=OneWay}"
-                                                            Visibility="{x:Bind IsTruncated}"
-                                                            Command="{x:Bind ToggleExpandedCommand}"
-                                                            Padding="0"
-                                                            FontSize="{StaticResource CaptionFontSize}" />
-                                                    </StackPanel>
-                                                </Expander>
-                                            </Grid>
-                                        </DataTemplate>
-                                    </ItemsRepeater.ItemTemplate>
                                 </ItemsRepeater>
                                 </StackPanel>
                             </ScrollViewer>
@@ -549,40 +422,8 @@
                                     AutomationProperties.AutomationId="ContextFileList"
                                     ItemsSource="{x:Bind Doctor.Files}"
                                     SelectedItem="{x:Bind Doctor.SelectedFile, Mode=TwoWay}"
-                                    MaxHeight="200">
-                                    <ListView.ItemTemplate>
-                                        <DataTemplate x:DataType="vm:ContextFileViewModel">
-                                            <Grid
-                                                ColumnSpacing="{StaticResource GapMedium}"
-                                                Padding="0,4"
-                                                Opacity="{x:Bind Dim}"
-                                                ToolTipService.ToolTip="{x:Bind Summary}">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="Auto" />
-                                                </Grid.ColumnDefinitions>
-
-                                                <FontIcon
-                                                    Grid.Column="0"
-                                                    Glyph="{x:Bind StateGlyph}"
-                                                    FontSize="{StaticResource CaptionFontSize}"
-                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-
-                                                <TextBlock
-                                                    Grid.Column="1"
-                                                    Text="{x:Bind PathText}"
-                                                    Style="{StaticResource MonoText}" />
-
-                                                <TextBlock
-                                                    Grid.Column="2"
-                                                    Text="{x:Bind CharsText}"
-                                                    Style="{StaticResource NumberText}"
-                                                    FontSize="{StaticResource CaptionFontSize}" />
-                                            </Grid>
-                                        </DataTemplate>
-                                    </ListView.ItemTemplate>
-                                </ListView>
+                                    MaxHeight="200"
+                                    ItemTemplate="{StaticResource ContextFileTemplate}" />
 
                                 <TextBlock Text="{loc:Str Key=Sessions_SelectedFileContent}" Style="{StaticResource SectionTitleText}" />
                                 <ScrollViewer MaxHeight="180" HorizontalScrollBarVisibility="Auto">
@@ -596,45 +437,16 @@
                                 </ScrollViewer>
 
                                 <TextBlock Text="{loc:Str Key=Sessions_Duplicates}" Style="{StaticResource SectionTitleText}" />
-                                <ItemsControl ItemsSource="{x:Bind Doctor.Duplicates}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate x:DataType="x:String">
-                                            <TextBlock
-                                                Text="{x:Bind}"
-                                                Style="{StaticResource MutedText}"
-                                                TextTrimming="None"
-                                                TextWrapping="Wrap"
-                                                Margin="0,0,0,4" />
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                <ItemsControl ItemsSource="{x:Bind Doctor.Duplicates}"
+                                ItemTemplate="{StaticResource DuplicateLineTemplate}" />
 
                                 <TextBlock Text="{loc:Str Key=Sessions_Conflicts}" Style="{StaticResource SectionTitleText}" />
-                                <ItemsControl ItemsSource="{x:Bind Doctor.Conflicts}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate x:DataType="x:String">
-                                            <TextBlock
-                                                Text="{x:Bind}"
-                                                Style="{StaticResource MutedText}"
-                                                TextTrimming="None"
-                                                TextWrapping="Wrap"
-                                                Margin="0,0,0,6" />
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                <ItemsControl ItemsSource="{x:Bind Doctor.Conflicts}"
+                                ItemTemplate="{StaticResource ConflictLineTemplate}" />
 
                                 <TextBlock Text="{loc:Str Key=Common_Extras}" Style="{StaticResource SectionTitleText}" />
-                                <ItemsControl ItemsSource="{x:Bind Doctor.Facts}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate x:DataType="x:String">
-                                            <TextBlock
-                                                Text="{x:Bind}"
-                                                Style="{StaticResource MutedText}"
-                                                TextTrimming="None"
-                                                TextWrapping="Wrap" />
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                <ItemsControl ItemsSource="{x:Bind Doctor.Facts}"
+                                ItemTemplate="{StaticResource ExtraLineTemplate}" />
                             </StackPanel>
                         </ScrollViewer>
                     </muxc:PivotItem>
