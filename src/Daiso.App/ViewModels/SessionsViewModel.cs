@@ -748,8 +748,6 @@ public sealed partial class SessionRowViewModel : ObservableObject
 
     public SessionInfo Session { get; }
 
-    public string ToolIcon => Session.Tool switch { ToolKind.Claude => "🟣", ToolKind.Antigravity => "🔵", _ => "⚫" };
-
     public string ToolName => Session.Tool.ToString();
 
     public string StartedText => $"{Session.StartedAt.ToLocalTime():yyyy-MM-dd HH:mm}";
