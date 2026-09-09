@@ -59,7 +59,7 @@
             <StackPanel Spacing="{StaticResource GapXLarge}">
                 <!-- 추정 비용 -->
                 <Border Style="{StaticResource CardBorder}">
-                    <StackPanel Spacing="{StaticResource GapOffGrid10}">
+                    <StackPanel Spacing="{StaticResource GapMedium}">
                         <TextBlock
                             AutomationProperties.AutomationId="UsageCost"
                             Text="{x:Bind Usage.EstimatedCostText, Mode=OneWay}"
@@ -100,7 +100,7 @@
                     PointerExited="OnDayAreaLeft"
                     PointerCanceled="OnDayAreaLeft"
                     PointerCaptureLost="OnDayAreaLeft">
-                    <StackPanel Spacing="{StaticResource GapOffGrid10}">
+                    <StackPanel Spacing="{StaticResource GapMedium}">
                         <TextBlock Text="{loc:Str Key=Usage_Daily}" Style="{StaticResource SectionTitleText}" />
 
                         <ItemsControl ItemsSource="{x:Bind Usage.Days}">
@@ -154,7 +154,7 @@
 
                 <!-- 프로젝트별 -->
                 <Border Style="{StaticResource CardBorder}" Visibility="{x:Bind Usage.HasData, Mode=OneWay}">
-                    <StackPanel Spacing="{StaticResource GapOffGrid10}">
+                    <StackPanel Spacing="{StaticResource GapMedium}">
                         <TextBlock Text="{loc:Str Key=Usage_TopProjects}" Style="{StaticResource SectionTitleText}" />
 
                         <Grid ColumnSpacing="{StaticResource GapLarge}">
@@ -210,7 +210,7 @@
 
                 <!-- 모델별 -->
                 <Border Style="{StaticResource CardBorder}" Visibility="{x:Bind Usage.HasData, Mode=OneWay}">
-                    <StackPanel Spacing="{StaticResource GapOffGrid10}">
+                    <StackPanel Spacing="{StaticResource GapMedium}">
                         <TextBlock Text="{loc:Str Key=Usage_ByModel}" Style="{StaticResource SectionTitleText}" />
 
                         <Grid ColumnSpacing="{StaticResource GapLarge}">

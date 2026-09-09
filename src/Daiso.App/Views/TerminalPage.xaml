@@ -69,7 +69,7 @@
         <StackPanel Spacing="{StaticResource GapMedium}">
 
         <!-- ───── 탭 띠 ───── -->
-        <Grid ColumnSpacing="{StaticResource GapOffGrid10}">
+        <Grid ColumnSpacing="{StaticResource GapMedium}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
@@ -131,7 +131,7 @@
                                 ToolTipService.ToolTip="{loc:Str Key=Room_CloseTabTip}"
                                 Click="OnCloseRoomClick"
                                 DataContext="{x:Bind}">
-                                <FontIcon Glyph="&#xE711;" FontSize="{StaticResource CaptionSmallFontSize}" />
+                                <FontIcon Glyph="&#xE711;" FontSize="{StaticResource CaptionFontSize}" />
                             </Button>
                         </Grid>
                     </DataTemplate>
@@ -254,7 +254,7 @@
 
                             <!-- ───── 1. 어떤 AI로 시작할까요? ───── -->
                             <Button Grid.Row="0" Style="{StaticResource StepHeader}" Click="OnStepToolClick" AutomationProperties.AutomationId="StepToolHeader">
-                                <Grid ColumnSpacing="{StaticResource GapOffGrid10}">
+                                <Grid ColumnSpacing="{StaticResource GapMedium}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="20" />
                                         <ColumnDefinition Width="Auto" />
@@ -342,7 +342,7 @@
 
                             <!-- ───── 2. 어느 폴더에서 일할까요? ───── -->
                             <Button Grid.Row="2" Style="{StaticResource StepHeader}" Click="OnStepFolderClick" Opacity="{x:Bind ViewModel.FolderHeaderOpacity, Mode=OneWay}" IsHitTestVisible="{x:Bind ViewModel.FolderReachable, Mode=OneWay}" AutomationProperties.AutomationId="StepFolderHeader">
-                                <Grid ColumnSpacing="{StaticResource GapOffGrid10}">
+                                <Grid ColumnSpacing="{StaticResource GapMedium}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="20" />
                                         <ColumnDefinition Width="Auto" />
@@ -383,7 +383,7 @@
                                         PlaceholderText="{loc:Str Key=Terminal_FolderPath}" />
                                     <Button Grid.Column="1" Click="OnPickFolderClick" AutomationProperties.AutomationId="ProjectPickerButton" ToolTipService.ToolTip="{loc:Str Key=Terminal_BrowseTip}">
                                         <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapSmall}">
-                                            <FontIcon Glyph="&#xE8B7;" FontSize="{StaticResource BodySmallFontSize}" />
+                                            <FontIcon Glyph="&#xE8B7;" FontSize="{StaticResource BodyFontSize}" />
                                             <TextBlock Text="{loc:Str Key=Common_Browse}" />
                                         </StackPanel>
                                     </Button>
@@ -400,14 +400,14 @@
                                     </Grid.ColumnDefinitions>
                                     <Button Grid.Column="0" Click="OnEditRulesClick" AutomationProperties.AutomationId="EditRulesButton" ToolTipService.ToolTip="{loc:Str Key=Room_EditRulesHint}">
                                         <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapSmall}">
-                                            <FontIcon Glyph="&#xE8A1;" FontSize="{StaticResource BodySmallFontSize}" />
+                                            <FontIcon Glyph="&#xE8A1;" FontSize="{StaticResource BodyFontSize}" />
                                             <TextBlock Text="{loc:Str Key=Terminal_EditRules}" />
                                         </StackPanel>
                                     </Button>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{StaticResource GapSmall}" VerticalAlignment="Center">
                                         <!-- 있음/없음이 회색 본문 한 줄이면 한눈에 안 갈린다 (§2-E3) -->
-                                        <FontIcon Glyph="&#xE73E;" FontSize="{StaticResource BodySmallFontSize}" Foreground="{ThemeResource SystemFillColorSuccessBrush}" Visibility="{x:Bind ViewModel.HasRules, Mode=OneWay}" />
-                                        <FontIcon Glyph="&#xE738;" FontSize="{StaticResource BodySmallFontSize}" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Visibility="{x:Bind ViewModel.HasNoRules, Mode=OneWay}" />
+                                        <FontIcon Glyph="&#xE73E;" FontSize="{StaticResource BodyFontSize}" Foreground="{ThemeResource SystemFillColorSuccessBrush}" Visibility="{x:Bind ViewModel.HasRules, Mode=OneWay}" />
+                                        <FontIcon Glyph="&#xE738;" FontSize="{StaticResource BodyFontSize}" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Visibility="{x:Bind ViewModel.HasNoRules, Mode=OneWay}" />
                                         <TextBlock
                                             Text="{x:Bind ViewModel.RulesStatusText, Mode=OneWay}"
                                             ToolTipService.ToolTip="{x:Bind ViewModel.RulesStatusText, Mode=OneWay}"
@@ -419,7 +419,7 @@
 
                             <!-- ───── 3. 무엇부터 할까요? ───── -->
                             <Button Grid.Row="4" Style="{StaticResource StepHeader}" Click="OnStepSessionClick" Opacity="{x:Bind ViewModel.SessionHeaderOpacity, Mode=OneWay}" IsHitTestVisible="{x:Bind ViewModel.SessionReachable, Mode=OneWay}" AutomationProperties.AutomationId="StepSessionHeader">
-                                <Grid ColumnSpacing="{StaticResource GapOffGrid10}">
+                                <Grid ColumnSpacing="{StaticResource GapMedium}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="20" />
                                         <ColumnDefinition Width="Auto" />
@@ -649,7 +649,7 @@
                                                         <Button Tag="{x:Bind Flag}" Click="OnPresetClick" HorizontalAlignment="Stretch" ToolTipService.ToolTip="{loc:Str Key=Terminal_PresetTip}">
                                                             <StackPanel Spacing="{StaticResource GapHair}" Padding="2">
                                                                 <TextBlock Text="{x:Bind Label}" />
-                                                                <TextBlock Text="{x:Bind Flag}" Style="{StaticResource MutedText}" FontSize="{StaticResource CaptionSmallFontSize}" />
+                                                                <TextBlock Text="{x:Bind Flag}" Style="{StaticResource MutedText}" FontSize="{StaticResource CaptionFontSize}" />
                                                             </StackPanel>
                                                         </Button>
                                                     </DataTemplate>
@@ -730,7 +730,7 @@
                                             Visibility="{x:Bind ViewModel.SelectedTool.IsInstalled, Mode=OneWay}"
                                             ToolTipService.ToolTip="{loc:Str Key=Terminal_OpenExternalTip}">
                                             <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
-                                                <FontIcon Glyph="&#xE8A7;" FontSize="{StaticResource BodySmallFontSize}" />
+                                                <FontIcon Glyph="&#xE8A7;" FontSize="{StaticResource BodyFontSize}" />
                                                 <TextBlock Text="{loc:Str Key=Terminal_OpenExternal}" />
                                             </StackPanel>
                                         </Button>
@@ -759,7 +759,7 @@
             <Grid x:Name="RoomCard" Visibility="Collapsed">
 
                 <!-- 챗봇 패널: 말풍선 + 입력. DataContext = StreamingRoomViewModel. 지금은 UI 비공개(여는 버튼 없음), 코드는 유지 -->
-                <Grid x:Name="ChatbotPanel" RowSpacing="{StaticResource GapOffGrid10}" Visibility="Collapsed">
+                <Grid x:Name="ChatbotPanel" RowSpacing="{StaticResource GapMedium}" Visibility="Collapsed">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
@@ -790,7 +790,7 @@
                                                         Background="{ThemeResource AccentFillColorDefaultBrush}" CornerRadius="{StaticResource RadiusPill}" Padding="12,8">
                                                     <TextBlock Text="{x:Bind Text, Mode=OneWay}" Foreground="White" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
                                                 </Border>
-                                                <Grid Visibility="{x:Bind AssistantVisibility}" ColumnSpacing="{StaticResource GapOffGrid10}">
+                                                <Grid Visibility="{x:Bind AssistantVisibility}" ColumnSpacing="{StaticResource GapMedium}">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="28" />
                                                         <ColumnDefinition Width="*" />
@@ -799,7 +799,7 @@
                                                         <TextBlock Text="{x:Bind Avatar}" Foreground="White" FontSize="{StaticResource CaptionFontSize}" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                                     </Border>
                                                     <StackPanel Grid.Column="1" Spacing="{StaticResource GapTiny}">
-                                                        <TextBlock Text="{x:Bind SpeakerText}" Style="{ThemeResource BodyStrongTextBlockStyle}" FontSize="{StaticResource BodySmallFontSize}" />
+                                                        <TextBlock Text="{x:Bind SpeakerText}" Style="{ThemeResource BodyStrongTextBlockStyle}" FontSize="{StaticResource BodyFontSize}" />
                                                         <TextBlock Text="{x:Bind Text, Mode=OneWay}" Style="{ThemeResource BodyTextBlockStyle}" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
                                                     </StackPanel>
                                                 </Grid>
@@ -837,7 +837,7 @@
                             QuerySubmitted="OnRoomQuerySubmitted">
                             <AutoSuggestBox.ItemTemplate>
                                 <DataTemplate x:DataType="prompts:SlashCommand">
-                                    <Grid ColumnSpacing="{StaticResource GapOffGrid10}" Padding="0,2">
+                                    <Grid ColumnSpacing="{StaticResource GapMedium}" Padding="0,2">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" MinWidth="120" />
                                             <ColumnDefinition Width="*" />

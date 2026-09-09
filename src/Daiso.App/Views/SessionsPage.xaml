@@ -15,7 +15,7 @@
         </controls:PageBody.KeyboardAccelerators>
 
         <controls:PageBody.Commands>
-        <StackPanel Spacing="{StaticResource GapOffGrid10}">
+        <StackPanel Spacing="{StaticResource GapMedium}">
 
             <Grid ColumnSpacing="{StaticResource GapLarge}">
                 <Grid.ColumnDefinitions>
@@ -105,7 +105,7 @@
                 AutomationProperties.AutomationId="MoreFiltersButton">
                 <muxc:DropDownButton.Content>
                     <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
-                        <FontIcon Glyph="&#xE71C;" FontSize="{StaticResource BodySmallFontSize}" />
+                        <FontIcon Glyph="&#xE71C;" FontSize="{StaticResource BodyFontSize}" />
                         <TextBlock Text="{loc:Str Key=Sessions_MoreFilters}" />
                     </StackPanel>
                 </muxc:DropDownButton.Content>
@@ -151,7 +151,7 @@
 
         <!-- 본문: 목록 · 구분선 · 상세. 칸마다 따로 스크롤한다 -->
         <controls:PageBody.Body>
-        <Grid ColumnSpacing="{StaticResource GapOffGrid14}">
+        <Grid ColumnSpacing="{StaticResource GapLarge}">
             <!-- 목록 칸은 세 2단 화면이 같은 값(ListPaneWidth). 구분선을 끌어 조절하고 설정에 기억한다. 상세는 남은 폭 전부 -->
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="{StaticResource ListPaneWidth}" MinWidth="{StaticResource ListPaneMinWidth}" MaxWidth="{StaticResource ListPaneMaxWidth}" />
@@ -314,7 +314,7 @@
                             Margin="16"
                             VerticalAlignment="Top"
                             Visibility="{x:Bind ViewModel.IsListEmpty, Mode=OneWay}">
-                            <StackPanel Spacing="{StaticResource GapOffGrid10}">
+                            <StackPanel Spacing="{StaticResource GapMedium}">
                                 <!-- 인덱싱 중이면 진행을 알려준다. 첫 실행에는 목록이 비어 있는 게 정상이다 -->
                                 <StackPanel Spacing="{StaticResource GapMedium}" Visibility="{x:Bind Shell.IsIndexing, Mode=OneWay}">
                                     <TextBlock Text="{loc:Str Key=Sessions_Indexing}" Style="{StaticResource PageSubtitleText}" />
@@ -353,7 +353,7 @@
                 <muxc:Pivot Padding="8,4,8,0">
 
                     <muxc:PivotItem Header="{loc:Str Key=Sessions_Detail}">
-                        <Grid RowSpacing="{StaticResource GapOffGrid10}">
+                        <Grid RowSpacing="{StaticResource GapMedium}">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
@@ -367,7 +367,7 @@
                                     IsEnabled="{x:Bind ViewModel.HasSelectedSession, Mode=OneWay}"
                                     Click="OnResumeClick">
                                     <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
-                                        <FontIcon Glyph="&#xE768;" FontSize="{StaticResource BodySmallFontSize}" />
+                                        <FontIcon Glyph="&#xE768;" FontSize="{StaticResource BodyFontSize}" />
                                         <TextBlock Text="{loc:Str Key=Sessions_Resume}" />
                                     </StackPanel>
                                 </Button>
@@ -395,7 +395,7 @@
 
                             <StackPanel
                                 Grid.Row="2"
-                                Spacing="{StaticResource GapOffGrid10}"
+                                Spacing="{StaticResource GapMedium}"
                                 Orientation="Horizontal"
                                 VerticalAlignment="Top"
                                 Visibility="{x:Bind ViewModel.IsTimelineLoading, Mode=OneWay}">
@@ -418,7 +418,7 @@
                                 Grid.Row="2"
                                 VerticalScrollBarVisibility="Auto"
                                 Visibility="{x:Bind ViewModel.HasTimeline, Mode=OneWay}">
-                                <StackPanel Spacing="{StaticResource GapOffGrid10}">
+                                <StackPanel Spacing="{StaticResource GapMedium}">
                                     <Border
                                         Style="{StaticResource NoticeBorder}"
                                         Visibility="{x:Bind ViewModel.IsTimelineTruncated, Mode=OneWay}">
@@ -541,7 +541,7 @@
                                 <TextBlock
                                     AutomationProperties.AutomationId="ContextTotal"
                                     Text="{x:Bind Doctor.TotalCharsText, Mode=OneWay}"
-                                    FontSize="{StaticResource TitleSmallFontSize}"
+                                    FontSize="{StaticResource SubtitleFontSize}"
                                     FontWeight="SemiBold" />
 
                                 <TextBlock Text="{loc:Str Key=Sessions_FilesInOrder}" Style="{StaticResource SectionTitleText}" />

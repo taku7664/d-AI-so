@@ -65,7 +65,7 @@
             <controls:PaneSplitter Grid.Column="1" SettingsKey="Prompts" />
 
             <Border Grid.Column="2" Style="{StaticResource CardBorder}">
-                <Grid RowSpacing="{StaticResource GapOffGrid10}">
+                <Grid RowSpacing="{StaticResource GapMedium}">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />

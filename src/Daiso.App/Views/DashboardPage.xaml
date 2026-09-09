@@ -62,7 +62,7 @@
                                 <StackPanel Spacing="{StaticResource GapLarge}">
 
                                     <!-- 제목 줄: 점 · 이름 · 상태 알약 -->
-                                    <Grid ColumnSpacing="{StaticResource GapOffGrid10}">
+                                    <Grid ColumnSpacing="{StaticResource GapMedium}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
@@ -159,7 +159,7 @@
                                                         </Style>
                                                     </Flyout.FlyoutPresenterStyle>
                                                     <!-- 팝오버는 무한 폭으로 재어지므로 폭을 고정해야 * 열이 줄어들고 버튼이 안 잘린다 -->
-                                                    <StackPanel Spacing="{StaticResource GapOffGrid10}" Width="540">
+                                                    <StackPanel Spacing="{StaticResource GapMedium}" Width="540">
                                                         <TextBlock
                                                             Text="{loc:Str Key=AuthProfile_Hint}"
                                                             Style="{StaticResource PageSubtitleText}" />
@@ -274,7 +274,7 @@
                                             ToolTipService.ToolTip="{loc:Str Key=Dashboard_ResumeHere}"
                                             Click="OnResumeRecentClick"
                                             DataContext="{x:Bind}">
-                                            <FontIcon Glyph="&#xE768;" FontSize="{StaticResource BodySmallFontSize}" />
+                                            <FontIcon Glyph="&#xE768;" FontSize="{StaticResource BodyFontSize}" />
                                         </Button>
                                     </Grid>
                                 </DataTemplate>
@@ -284,7 +284,7 @@
                 </Border>
                 <!-- 세션 요약 -->
                 <Border Style="{StaticResource CardBorder}">
-                    <StackPanel Spacing="{StaticResource GapOffGrid14}">
+                    <StackPanel Spacing="{StaticResource GapLarge}">
                         <Grid ColumnSpacing="{StaticResource GapLarge}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -319,7 +319,7 @@
                                 <TextBlock Text="{loc:Str Key=Dashboard_StatSessions}" Style="{StaticResource MutedText}" />
                                 <TextBlock
                                     Text="{x:Bind ViewModel.SessionCount, Mode=OneWay}"
-                                    FontSize="{StaticResource HeadingFontSize}"
+                                    FontSize="{StaticResource TitleFontSize}"
                                     FontWeight="SemiBold" />
                             </StackPanel>
 
@@ -327,7 +327,7 @@
                                 <TextBlock Text="{loc:Str Key=Dashboard_StatSize}" Style="{StaticResource MutedText}" />
                                 <TextBlock
                                     Text="{x:Bind ViewModel.TotalSizeText, Mode=OneWay}"
-                                    FontSize="{StaticResource HeadingFontSize}"
+                                    FontSize="{StaticResource TitleFontSize}"
                                     FontWeight="SemiBold" />
                             </StackPanel>
 
@@ -335,7 +335,7 @@
                                 <TextBlock Text="{x:Bind ViewModel.UsageHeaderText}" Style="{StaticResource MutedText}" />
                                 <TextBlock
                                     Text="{x:Bind ViewModel.RecentTokensText, Mode=OneWay}"
-                                    FontSize="{StaticResource HeadingFontSize}"
+                                    FontSize="{StaticResource TitleFontSize}"
                                     FontWeight="SemiBold"
                                     ToolTipService.ToolTip="{x:Bind ViewModel.RecentTokensExact, Mode=OneWay}" />
                             </StackPanel>

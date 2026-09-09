@@ -28,17 +28,16 @@
                 이름에 밑줄을 쓰지 않는다 — StringResourceKeysTests 가 `접두어_이름` 을 문구 키로 본다.
             -->
 
-            <!-- 글자 크기. 지금 화면에서 실제로 쓰이는 아홉 값이다.
-                 18 · 20 · 28 은 각각 한 곳뿐이라 단계를 줄일 여지가 있으나, 그건 화면이 달라지는 결정이라 여기서 하지 않는다 -->
-            <x:Double x:Key="CaptionSmallFontSize">11</x:Double>
+            <!--
+                글자 크기 — 다섯 단계. 값을 바꾸면 화면 전체가 따라 바뀐다.
+                예전에는 열 단계였는데 18 · 20 · 28 이 각각 한 곳뿐이라 눈금이 아니라 목록이었다.
+                남긴 다섯은 전부 이미 쓰이던 값이라, 접으면서 낯선 크기가 새로 생기지 않았다.
+                접은 내역: 11→12 · 13→14 · 18→16 · 22→20 · 24→20 (docs/UI_TOKENS_PLAN.md A1)
+            -->
             <x:Double x:Key="CaptionFontSize">12</x:Double>
-            <x:Double x:Key="BodySmallFontSize">13</x:Double>
             <x:Double x:Key="BodyFontSize">14</x:Double>
             <x:Double x:Key="SubtitleFontSize">16</x:Double>
-            <x:Double x:Key="TitleSmallFontSize">18</x:Double>
             <x:Double x:Key="TitleFontSize">20</x:Double>
-            <x:Double x:Key="HeadingFontSize">22</x:Double>
-            <x:Double x:Key="HeadingLargeFontSize">24</x:Double>
             <x:Double x:Key="DisplayFontSize">28</x:Double>
 
             <!-- 모서리 -->
@@ -48,17 +47,18 @@
             <CornerRadius x:Key="RadiusPill">10</CornerRadius>
             <CornerRadius x:Key="RadiusRound">14</CornerRadius>
 
-            <!-- 간격. 위 주석의 "4의 배수"는 실제로는 지켜지지 않는다:
-                 10 이 27곳, 14 가 6곳이다. 눈금에 맞추면 화면 밀도가 바뀌므로 여기서는 이름으로만 드러낸다 -->
+            <!--
+                간격 — 이제 정말 4의 배수다(1 · 2 · 3 · 6 은 아이콘·배지 안쪽이라 성격이 다르다).
+                눈금 밖이던 10(27곳)·14(6곳)를 8·12 로 접었다. 가장 가까운 배수, 동점이면 내림이다 —
+                올리면 33곳이 한꺼번에 벌어져 창 하한(1024x700)에서 내용이 아래로 밀린다.
+            -->
             <x:Double x:Key="GapHair">1</x:Double>
             <x:Double x:Key="GapTiny">2</x:Double>
             <x:Double x:Key="GapMicro">3</x:Double>
             <x:Double x:Key="GapXSmall">4</x:Double>
             <x:Double x:Key="GapSmall">6</x:Double>
             <x:Double x:Key="GapMedium">8</x:Double>
-            <x:Double x:Key="GapOffGrid10">10</x:Double>
             <x:Double x:Key="GapLarge">12</x:Double>
-            <x:Double x:Key="GapOffGrid14">14</x:Double>
             <x:Double x:Key="GapXLarge">16</x:Double>
             <x:Double x:Key="GapHuge">28</x:Double>
 
@@ -103,13 +103,13 @@
 
             <!-- 페이지 제목 · 부제 -->
             <Style x:Key="PageTitleText" TargetType="TextBlock">
-                <Setter Property="FontSize" Value="{StaticResource HeadingLargeFontSize}" />
+                <Setter Property="FontSize" Value="{StaticResource TitleFontSize}" />
                 <Setter Property="FontWeight" Value="SemiBold" />
                 <Setter Property="TextTrimming" Value="CharacterEllipsis" />
             </Style>
 
             <Style x:Key="PageSubtitleText" TargetType="TextBlock">
-                <Setter Property="FontSize" Value="{StaticResource BodySmallFontSize}" />
+                <Setter Property="FontSize" Value="{StaticResource BodyFontSize}" />
                 <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
                 <Setter Property="TextWrapping" Value="Wrap" />
             </Style>
@@ -155,7 +155,7 @@
             <!-- 표의 숫자: 오른쪽 정렬 + 고정 폭 -->
             <Style x:Key="NumberText" TargetType="TextBlock">
                 <Setter Property="FontFamily" Value="Consolas" />
-                <Setter Property="FontSize" Value="{StaticResource BodySmallFontSize}" />
+                <Setter Property="FontSize" Value="{StaticResource BodyFontSize}" />
                 <Setter Property="HorizontalAlignment" Value="Right" />
                 <Setter Property="HorizontalTextAlignment" Value="Right" />
             </Style>

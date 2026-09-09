@@ -116,14 +116,14 @@
 
             <controls:PaneSplitter x:Name="ListSplitter" Grid.Column="1" SettingsKey="RuleMaker" />
 
-            <Grid Grid.Column="2" RowSpacing="{StaticResource GapOffGrid14}">
+            <Grid Grid.Column="2" RowSpacing="{StaticResource GapLarge}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
                 <!-- 이름 · 설명 · 프로젝트 폴더 -->
-                <StackPanel Grid.Row="0" Spacing="{StaticResource GapOffGrid10}">
+                <StackPanel Grid.Row="0" Spacing="{StaticResource GapMedium}">
                     <Grid ColumnSpacing="{StaticResource GapLarge}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="280" />
@@ -189,18 +189,18 @@
                     미리보기 열에는 MinWidth 를 두지 않는다. 열이 최소 폭을 요구하면 격자가 제 칸보다 커져 ActualWidth
                     가 실제 칸 폭을 말해 주지 않고, 접을지 판단할 근거가 사라진다. 최소 폭(190)은 코드 비하인드 상수다
                 -->
-                <Grid x:Name="EditorGrid" Grid.Row="1" ColumnSpacing="{StaticResource GapOffGrid14}" SizeChanged="OnEditorSizeChanged">
+                <Grid x:Name="EditorGrid" Grid.Row="1" ColumnSpacing="{StaticResource GapLarge}" SizeChanged="OnEditorSizeChanged">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="2*" MinWidth="380" />
                         <ColumnDefinition x:Name="PreviewColumn" Width="*" />
                     </Grid.ColumnDefinitions>
 
                     <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
-                        <StackPanel Spacing="{StaticResource GapOffGrid14}">
+                        <StackPanel Spacing="{StaticResource GapLarge}">
 
                             <!-- 항상 적용되는 행동 -->
                             <Border Style="{StaticResource CardBorder}">
-                                <StackPanel Spacing="{StaticResource GapOffGrid10}">
+                                <StackPanel Spacing="{StaticResource GapMedium}">
                                     <Grid ColumnSpacing="{StaticResource GapLarge}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*" />
@@ -215,7 +215,7 @@
                                             AutomationProperties.AutomationId="AddGlobalButton"
                                             Click="OnAddGlobalClick">
                                             <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
-                                                <FontIcon Glyph="&#xE710;" FontSize="{StaticResource BodySmallFontSize}" />
+                                                <FontIcon Glyph="&#xE710;" FontSize="{StaticResource BodyFontSize}" />
                                                 <TextBlock Text="{loc:Str Key=RuleMaker_AddAction}" />
                                             </StackPanel>
                                         </Button>
@@ -281,7 +281,7 @@
 
                             <!-- 규칙 목록 -->
                             <Border Style="{StaticResource CardBorder}">
-                                <StackPanel Spacing="{StaticResource GapOffGrid10}">
+                                <StackPanel Spacing="{StaticResource GapMedium}">
                                     <Grid ColumnSpacing="{StaticResource GapLarge}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*" />
@@ -296,7 +296,7 @@
                                             AutomationProperties.AutomationId="AddRuleButton"
                                             Click="OnAddRuleClick">
                                             <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
-                                                <FontIcon Glyph="&#xE710;" FontSize="{StaticResource BodySmallFontSize}" />
+                                                <FontIcon Glyph="&#xE710;" FontSize="{StaticResource BodyFontSize}" />
                                                 <TextBlock Text="{loc:Str Key=RuleMaker_AddRule}" />
                                             </StackPanel>
                                         </Button>
@@ -323,7 +323,7 @@
 
                             <!-- 선택한 규칙 -->
                             <Border Style="{StaticResource CardBorder}">
-                                <StackPanel Spacing="{StaticResource GapOffGrid10}">
+                                <StackPanel Spacing="{StaticResource GapMedium}">
                                     <Grid ColumnSpacing="{StaticResource GapLarge}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
@@ -345,7 +345,7 @@
                                     <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
                                         <Button AutomationProperties.AutomationId="AddLeafButton" Click="OnAddLeafClick">
                                             <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
-                                                <FontIcon Glyph="&#xE710;" FontSize="{StaticResource BodySmallFontSize}" />
+                                                <FontIcon Glyph="&#xE710;" FontSize="{StaticResource BodyFontSize}" />
                                                 <TextBlock Text="{loc:Str Key=RuleMaker_AddLeaf}" />
                                             </StackPanel>
                                         </Button>
@@ -444,7 +444,7 @@
                                             AutomationProperties.AutomationId="AddRuleActionButton"
                                             Click="OnAddRuleActionClick">
                                             <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
-                                                <FontIcon Glyph="&#xE710;" FontSize="{StaticResource BodySmallFontSize}" />
+                                                <FontIcon Glyph="&#xE710;" FontSize="{StaticResource BodyFontSize}" />
                                                 <TextBlock Text="{loc:Str Key=RuleMaker_AddAction}" />
                                             </StackPanel>
                                         </Button>
@@ -517,7 +517,7 @@
 
                     <!-- 미리보기 -->
                     <Border x:Name="PreviewCard" Grid.Column="1" Style="{StaticResource CardBorder}">
-                        <Grid RowSpacing="{StaticResource GapOffGrid10}">
+                        <Grid RowSpacing="{StaticResource GapMedium}">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="*" />

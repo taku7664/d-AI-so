@@ -14,7 +14,7 @@
 
                 <!-- 경로 -->
                 <Border Style="{StaticResource CardBorder}">
-                    <StackPanel Spacing="{StaticResource GapOffGrid14}">
+                    <StackPanel Spacing="{StaticResource GapLarge}">
                         <TextBlock Text="{loc:Str Key=Settings_Paths}" Style="{StaticResource SectionTitleText}" />
 
                         <StackPanel Spacing="{StaticResource GapXSmall}">
@@ -132,7 +132,7 @@
                                 AutomationProperties.AutomationId="AddPriceButton"
                                 Command="{x:Bind ViewModel.AddPriceCommand}">
                                 <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
-                                    <FontIcon Glyph="&#xE710;" FontSize="{StaticResource BodySmallFontSize}" />
+                                    <FontIcon Glyph="&#xE710;" FontSize="{StaticResource BodyFontSize}" />
                                     <TextBlock Text="{loc:Str Key=Settings_AddModel}" />
                                 </StackPanel>
                             </Button>
@@ -210,7 +210,7 @@
                                                     ToolTipService.ToolTip="{loc:Str Key=Common_Delete}"
                                                     Click="OnRemovePriceClick"
                                                     DataContext="{x:Bind}">
-                                                    <FontIcon Glyph="&#xE74D;" FontSize="{StaticResource BodySmallFontSize}" />
+                                                    <FontIcon Glyph="&#xE74D;" FontSize="{StaticResource BodyFontSize}" />
                                                 </Button>
                                             </Grid>
                                         </DataTemplate>
@@ -223,7 +223,7 @@
 
                 <!-- 단축키: 알려주지 않으면 아무도 모른다 -->
                 <Border Style="{StaticResource CardBorder}">
-                    <StackPanel Spacing="{StaticResource GapOffGrid10}">
+                    <StackPanel Spacing="{StaticResource GapMedium}">
                         <TextBlock Text="{loc:Str Key=Settings_Shortcuts}" Style="{StaticResource SectionTitleText}" />
 
                         <Grid ColumnSpacing="{StaticResource GapXLarge}" RowSpacing="{StaticResource GapSmall}">
@@ -292,7 +292,7 @@
                             AutomationProperties.AutomationId="RebuildIndexButton"
                             Command="{x:Bind ViewModel.RebuildIndexCommand}">
                             <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
-                                <FontIcon Glyph="&#xE72C;" FontSize="{StaticResource BodySmallFontSize}" />
+                                <FontIcon Glyph="&#xE72C;" FontSize="{StaticResource BodyFontSize}" />
                                 <TextBlock Text="{loc:Str Key=Settings_RebuildIndex}" />
                             </StackPanel>
                         </Button>
@@ -302,7 +302,7 @@
 
                 <!-- 정보 · 개인정보 -->
                 <Border Style="{StaticResource CardBorder}">
-                    <StackPanel Spacing="{StaticResource GapOffGrid10}">
+                    <StackPanel Spacing="{StaticResource GapMedium}">
                         <TextBlock Text="{loc:Str Key=About_Title}" Style="{StaticResource SectionTitleText}" />
 
                         <TextBlock
@@ -329,7 +329,7 @@
         <!-- 저장 바. 저장은 언제나 푸터 (UI_REFACTOR_PLAN §8.3). 스크롤하지 않는다 -->
         <controls:PageBody.Footer>
         <Border Style="{StaticResource FooterBorder}">
-            <Grid ColumnSpacing="{StaticResource GapOffGrid10}">
+            <Grid ColumnSpacing="{StaticResource GapMedium}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
