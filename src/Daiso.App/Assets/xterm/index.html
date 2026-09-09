@@ -20,7 +20,7 @@
 <script src="addon-fit.js"></script>
 <script src="addon-search.js"></script>
 <script>
-// 앱(WinUI)과의 브리지. 앱 → 페이지: {type:'out'|'paste'|'theme'|'focus'|'fit'|'reset'|'find'|'find-clear', ...}, 페이지 → 앱: {type:'in'|'resize'|'copy'|'paste'|'ready'|'title'}
+// 앱(WinUI)과의 브리지. 앱 → 페이지: {type:'out'|'paste'|'theme'|'focus'|'fit'|'reset'|'find'|'find-clear', ...}, 페이지 → 앱: {type:'in'|'resize'|'copy'|'paste'|'ready'|'title'|'drop-files'}
 // 출력은 base64 UTF-8 바이트다. 글자 중간에서 잘린 덩어리는 xterm이 이어 붙여 해석한다.
 (function () {
   var host = window.chrome && window.chrome.webview;
@@ -74,6 +74,19 @@
     e.preventDefault();
     if (term.hasSelection()) { post({ type: 'copy', text: term.getSelection() }); term.clearSelection(); }
     else post({ type: 'paste' });
+  });
+
+  // 파일 끌어놓기: 브라우저는 파일의 이름만 알지만 WebView2 는 File 객체를 함께 보내면 앱 쪽에서 전체 경로를 준다
+  // (postMessageWithAdditionalObjects → CoreWebView2File.Path). 앱이 경로를 따옴표로 감싸 붙여 넣는다. 기본 동작(파일로 이동)은 막는다
+  document.addEventListener('dragover', function (e) { e.preventDefault(); });
+  document.addEventListener('drop', function (e) {
+    e.preventDefault();
+    var files = e.dataTransfer && e.dataTransfer.files;
+    if (!host || !files || files.length === 0 || !host.postMessageWithAdditionalObjects) return;
+    var list = [];
+    for (var i = 0; i < files.length; i++) list.push(files[i]);
+    host.postMessageWithAdditionalObjects({ type: 'drop-files', count: list.length }, list);
+    term.focus();
   });
 
   term.onData(function (d) { post({ type: 'in', data: d }); });

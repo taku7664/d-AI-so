@@ -14,7 +14,7 @@ namespace Daiso.App.Terminal;
 /// <see cref="TerminalRoomViewModel"/>과 메시지로 잇는다. 네트워크는 쓰지 않는다. (ARCHITECTURE §5.3)
 ///
 /// 앱 → 페이지: out(base64 UTF-8) · paste(text) · theme · focus · fit · reset · find · find-clear
-/// 페이지 → 앱: in(키 입력) · resize(cols,rows) · copy(text) · paste(요청) · ready(cols,rows) · title
+/// 페이지 → 앱: in(키 입력) · resize(cols,rows) · copy(text) · paste(요청) · ready(cols,rows) · title · drop-files(파일 객체 동봉)
 /// </summary>
 public sealed class TerminalHost : UserControl
 {
@@ -242,7 +242,7 @@ public sealed class TerminalHost : UserControl
     {
         try
         {
-            await HandleWebMessageAsync(args.WebMessageAsJson).ConfigureAwait(true);
+            await HandleWebMessageAsync(args.WebMessageAsJson, args.AdditionalObjects).ConfigureAwait(true);
         }
         catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or JsonException or InvalidOperationException or UnauthorizedAccessException)
         {
@@ -250,7 +250,7 @@ public sealed class TerminalHost : UserControl
         }
     }
 
-    private async Task HandleWebMessageAsync(string json)
+    private async Task HandleWebMessageAsync(string json, IReadOnlyList<object>? additionalObjects)
     {
         using var document = JsonDocument.Parse(json);
         var root = document.RootElement;
@@ -300,11 +300,15 @@ public sealed class TerminalHost : UserControl
                 break;
 
             case "paste":
-                var content = Clipboard.GetContent();
-                if (content.Contains(StandardDataFormats.Text))
+                await PasteFromClipboardAsync();
+                break;
+
+            // 페이지에 끌어다 놓은 파일. 경로를 붙여 넣으면 CLI 가 그 파일(그림 포함)을 본다
+            case "drop-files":
+                var paths = (additionalObjects ?? []).OfType<CoreWebView2File>().Select(file => file.Path).ToList();
+                if (paths.Count > 0)
                 {
-                    var pasted = await content.GetTextAsync();
-                    Post(new { type = "paste", text = pasted });
+                    Post(new { type = "paste", text = QuotePaths(paths) });
                 }
 
                 break;
@@ -331,4 +335,40 @@ public sealed class TerminalHost : UserControl
             _rows = rows.GetInt32();
         }
     }
+    /// <summary>
+    /// Ctrl+V. 클립보드가 글자면 우리가 붙여 넣는다(bracketed paste 는 xterm 이 감싼다).
+    /// 파일(탐색기에서 복사)이면 경로를 붙여 넣는다. 그림만 있으면 Ctrl+V 키 자체를 CLI 에 넘긴다 —
+    /// Claude Code 같은 CLI 는 그 키를 받으면 스스로 클립보드 그림을 읽으므로, 우리가 가로채면 그림 첨부가 막힌다.
+    /// </summary>
+    private async Task PasteFromClipboardAsync()
+    {
+        var content = Clipboard.GetContent();
+
+        if (content.Contains(StandardDataFormats.Text))
+        {
+            Post(new { type = "paste", text = await content.GetTextAsync() });
+            return;
+        }
+
+        if (content.Contains(StandardDataFormats.StorageItems))
+        {
+            var items = await content.GetStorageItemsAsync();
+            var paths = items.Select(item => item.Path).Where(path => path.Length > 0).ToList();
+            if (paths.Count > 0)
+            {
+                Post(new { type = "paste", text = QuotePaths(paths) });
+                return;
+            }
+        }
+
+        if (content.Contains(StandardDataFormats.Bitmap))
+        {
+            _room?.SendRaw("\x16");
+        }
+    }
+
+    /// <summary>경로를 CLI 입력에 붙일 꼴로. 빈칸이 있으면 따옴표로 감싸고, 여럿이면 빈칸으로 잇고, 뒤에 빈칸 하나를 둔다.</summary>
+    private static string QuotePaths(IEnumerable<string> paths) =>
+        string.Join(' ', paths.Select(path => path.Contains(' ', StringComparison.Ordinal) ? $"\"{path}\"" : path)) + " ";
+
 }
