@@ -25,6 +25,24 @@ public sealed partial class TerminalPage : Page
         ViewModel = App.Services.GetRequiredService<TerminalViewModel>();
 
         RoomTabs.ItemsSource = App.Rooms.Rooms;
+
+        // 뒤로/앞으로가 등록부의 방을 바꾸면 화면도 그 방으로 간다. 이미 그 방이면 아무것도 하지 않아 되돌이가 안 생긴다
+        App.Rooms.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName != nameof(ViewModels.RoomManager.ActiveRoom) || ReferenceEquals(App.Rooms.ActiveRoom, _room))
+            {
+                return;
+            }
+
+            if (App.Rooms.ActiveRoom is { } target && App.Rooms.Rooms.Contains(target))
+            {
+                SelectRoom(target);
+            }
+            else if (App.Rooms.ActiveRoom is null)
+            {
+                ShowNewSession();
+            }
+        };
         Embedded.TitleChanged += (_, title) =>
         {
             if (_room is TerminalRoomViewModel terminal)
@@ -218,6 +236,7 @@ public sealed partial class TerminalPage : Page
     {
         _room?.MarkInactive();
         _room = null;
+        App.Rooms.ActiveRoom = null;
         RoomTabs.SelectedItem = null;
         NewTab.IsChecked = true;
         RoomCard.Visibility = Visibility.Collapsed;
@@ -230,6 +249,7 @@ public sealed partial class TerminalPage : Page
     {
         if (ReferenceEquals(_room, room))
         {
+            App.Rooms.ActiveRoom = room;
             ShowRoom(room);
             return;
         }
@@ -242,6 +262,7 @@ public sealed partial class TerminalPage : Page
         _room?.MarkInactive();
         _room = room;
         room.MarkActive();
+        App.Rooms.ActiveRoom = room;
 
         if (room is StreamingRoomViewModel chat)
         {

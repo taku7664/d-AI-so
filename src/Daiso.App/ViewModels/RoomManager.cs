@@ -15,6 +15,13 @@ public sealed partial class RoomManager : ObservableObject
     /// <summary>열린 방. 탭 띠가 이걸 그린다.</summary>
     public ObservableCollection<IRoom> Rooms { get; } = [];
 
+    /// <summary>
+    /// 지금 보고 있는 방. null 이면 새 터미널 카드.
+    /// 터미널 화면이 여기에 적고, 뒤로/앞으로가 여기에 써서 방을 되돌린다.
+    /// </summary>
+    [ObservableProperty]
+    private IRoom? activeRoom;
+
     /// <summary>어느 방이든 안 본 답이 있는가.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(UnseenVisibility))]

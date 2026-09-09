@@ -33,6 +33,20 @@ internal static class SelectorBarVisuals
         };
     }
 
+    /// <summary>
+    /// 뷰모델이 정한 탭을 탭 띠에 반영한다. 탭 띠는 사람이 누른 것만 뷰모델로 보내는 단방향이라,
+    /// 뒤로/앞으로처럼 뷰모델 쪽에서 탭이 바뀌는 경우에는 이걸로 UI를 맞춰 줘야 어긋나지 않는다.
+    /// </summary>
+    internal static void Select(SelectorBar bar, int index)
+    {
+        ArgumentNullException.ThrowIfNull(bar);
+
+        if (index >= 0 && index < bar.Items.Count && !ReferenceEquals(bar.SelectedItem, bar.Items[index]))
+        {
+            bar.SelectedItem = bar.Items[index];
+        }
+    }
+
     private static void OnLeave(object sender, PointerRoutedEventArgs e)
     {
         if (sender is SelectorBarItem item)

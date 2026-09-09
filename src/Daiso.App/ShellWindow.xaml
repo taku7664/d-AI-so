@@ -100,7 +100,44 @@
                 </muxc:NavigationViewItem>
             </muxc:NavigationView.MenuItems>
 
-            <Frame x:Name="ContentFrame" />
+            <!--
+                본문 위에 뒤로/앞으로를 겹쳐 둔다. 대제목과 같은 높이의 오른쪽 위 자리다.
+                페이지마다 두면 일곱 번 같은 것을 만들게 되고, 이력(NavigationHistory)은 어차피 셸 것이다.
+                그래서 페이지의 대제목 줄 오른쪽에는 아무것도 두지 않는다 (ARCHITECTURE §6.2)
+            -->
+            <Grid>
+                <Frame x:Name="ContentFrame" />
+
+                <StackPanel
+                    Orientation="Horizontal"
+                    Spacing="4"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Margin="{StaticResource PagePadding}">
+                    <Button
+                        x:Name="BackButton"
+                        Width="36"
+                        Height="32"
+                        Padding="0"
+                        AutomationProperties.AutomationId="HistoryBackButton"
+                        AutomationProperties.Name="{loc:Str Key=Common_Back}"
+                        ToolTipService.ToolTip="{loc:Str Key=Common_BackTip}"
+                        Click="OnBackClick">
+                        <FontIcon Glyph="&#xE72B;" FontSize="14" />
+                    </Button>
+                    <Button
+                        x:Name="ForwardButton"
+                        Width="36"
+                        Height="32"
+                        Padding="0"
+                        AutomationProperties.AutomationId="HistoryForwardButton"
+                        AutomationProperties.Name="{loc:Str Key=Common_Forward}"
+                        ToolTipService.ToolTip="{loc:Str Key=Common_ForwardTip}"
+                        Click="OnForwardClick">
+                        <FontIcon Glyph="&#xE72A;" FontSize="14" />
+                    </Button>
+                </StackPanel>
+            </Grid>
         </muxc:NavigationView>
 
         <Border

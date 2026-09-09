@@ -18,6 +18,10 @@ public sealed partial class ShellWindow : Window
 {
     private readonly ShellViewModel _viewModel;
     private readonly ISettingsStore _settings;
+    private readonly NavigationHistory _history = new();
+
+    /// <summary>지금 보고 있는 페이지의 Tag. 자리를 적을 때 쓴다.</summary>
+    private string _pageTag = "Dashboard";
 
     public ShellWindow(ShellViewModel viewModel, ISettingsStore settings)
     {
@@ -40,6 +44,7 @@ public sealed partial class ShellWindow : Window
         ApplyIcon();
 
         Navigate("Dashboard");
+        WatchSpots();
         _viewModel.StartBackgroundRefresh();
 
         AppWindow.Closing += OnClosing;
@@ -105,6 +110,126 @@ public sealed partial class ShellWindow : Window
         if (ContentFrame.CurrentSourcePageType != page)
         {
             ContentFrame.Navigate(page, null, new EntranceNavigationTransitionInfo());
+        }
+
+        _pageTag = tag;
+        RecordSpot();
+    }
+
+    // ── 뒤로/앞으로 (마우스 엄지 버튼) ────────────────────────────────────
+
+    private DashboardViewModel Dashboard { get; } = App.Services.GetRequiredService<DashboardViewModel>();
+
+    private UsageViewModel Usage { get; } = App.Services.GetRequiredService<UsageViewModel>();
+
+    private TerminalViewModel Terminal { get; } = App.Services.GetRequiredService<TerminalViewModel>();
+
+    /// <summary>
+    /// 사람이 옮겨 다니는 자리를 모두 한 이력에 모은다 — 좌측 메뉴, 도구 탭, 터미널 방.
+    /// 페이지 이동은 <see cref="Navigate"/>가 적고, 나머지는 싱글턴 뷰모델·방 등록부를 지켜본다.
+    /// </summary>
+    private void WatchSpots()
+    {
+        Dashboard.PropertyChanged += (_, e) => RecordIf(e.PropertyName, nameof(DashboardViewModel.SelectedTabIndex));
+        Usage.PropertyChanged += (_, e) => RecordIf(e.PropertyName, nameof(UsageViewModel.SelectedTabIndex));
+        Terminal.PropertyChanged += (_, e) => RecordIf(e.PropertyName, nameof(TerminalViewModel.SelectedToolIndex));
+        App.Rooms.PropertyChanged += (_, e) => RecordIf(e.PropertyName, nameof(ViewModels.RoomManager.ActiveRoom));
+
+        // 닫힌 방을 가리키는 자리는 걷어낸다. 안 그러면 뒤로가기가 없어진 방으로 간다
+        App.Rooms.Rooms.CollectionChanged += (_, _) =>
+            _history.Forget(spot => spot.Room is ViewModels.IRoom room && !App.Rooms.Rooms.Contains(room));
+
+        RootGrid.AddHandler(
+            UIElement.PointerPressedEvent,
+            new Microsoft.UI.Xaml.Input.PointerEventHandler(OnRootPointerPressed),
+            handledEventsToo: true);
+
+        UpdateHistoryButtons();
+    }
+
+    private void RecordIf(string? changed, string watched)
+    {
+        if (changed == watched)
+        {
+            RecordSpot();
+        }
+    }
+
+    private void RecordSpot()
+    {
+        _history.Record(CurrentSpot());
+        UpdateHistoryButtons();
+    }
+
+    /// <summary>갈 곳이 없으면 잠근다. 잠긴 이유는 화살표 방향이 말한다.</summary>
+    private void UpdateHistoryButtons()
+    {
+        BackButton.IsEnabled = _history.CanGoBack;
+        ForwardButton.IsEnabled = _history.CanGoForward;
+    }
+
+    private void OnBackClick(object sender, RoutedEventArgs e) => Move(_history.GoBack());
+
+    private void OnForwardClick(object sender, RoutedEventArgs e) => Move(_history.GoForward());
+
+    private void Move(NavigationSpot? target)
+    {
+        if (target is not null)
+        {
+            Apply(target);
+        }
+
+        UpdateHistoryButtons();
+    }
+
+    private NavigationSpot CurrentSpot() => new(
+        _pageTag,
+        _pageTag switch
+        {
+            "Dashboard" => Dashboard.SelectedTabIndex,
+            "Usage" => Usage.SelectedTabIndex,
+            "Terminal" => Terminal.SelectedToolIndex,
+            _ => -1,
+        },
+        _pageTag == "Terminal" ? App.Rooms.ActiveRoom : null);
+
+    /// <summary>마우스 엄지 버튼. 뒤로(XButton1) · 앞으로(XButton2).</summary>
+    private void OnRootPointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        var kind = e.GetCurrentPoint(RootGrid).Properties.PointerUpdateKind;
+
+        if (kind is not (Microsoft.UI.Input.PointerUpdateKind.XButton1Pressed
+            or Microsoft.UI.Input.PointerUpdateKind.XButton2Pressed))
+        {
+            return;
+        }
+
+        Move(kind == Microsoft.UI.Input.PointerUpdateKind.XButton1Pressed ? _history.GoBack() : _history.GoForward());
+        e.Handled = true;
+    }
+
+    /// <summary>이력의 한 자리로 되돌린다. 되돌리는 동안은 새 자리로 적히지 않는다.</summary>
+    private void Apply(NavigationSpot spot)
+    {
+        using (_history.Restoring())
+        {
+            NavigateTo(spot.PageTag);
+
+            switch (spot.PageTag)
+            {
+                case "Dashboard":
+                    Dashboard.SelectedTabIndex = spot.TabIndex;
+                    break;
+                case "Usage":
+                    Usage.SelectedTabIndex = spot.TabIndex;
+                    break;
+                case "Terminal":
+                    Terminal.SelectedToolIndex = spot.TabIndex;
+                    App.Rooms.ActiveRoom = spot.Room as ViewModels.IRoom;
+                    break;
+                default:
+                    break;
+            }
         }
     }
 

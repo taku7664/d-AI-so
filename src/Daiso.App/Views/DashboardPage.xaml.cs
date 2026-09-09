@@ -16,8 +16,18 @@ public sealed partial class DashboardPage : Page
         ViewModel = App.Services.GetRequiredService<DashboardViewModel>();
         Shell.PropertyChanged += OnShellPropertyChanged;
 
+        // 뒤로/앞으로가 뷰모델의 탭을 바꾸면 탭 띠도 따라간다
+        ViewModel.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(DashboardViewModel.SelectedTabIndex))
+            {
+                SelectorBarVisuals.Select(ToolTabs, ViewModel.SelectedTabIndex);
+            }
+        };
+
         Loaded += async (_, _) =>
         {
+            SelectorBarVisuals.Select(ToolTabs, ViewModel.SelectedTabIndex);
             await ViewModel.LoadCommand.ExecuteAsync(null);
             SyncProfiles();
         };
