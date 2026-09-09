@@ -59,6 +59,12 @@
 `tests/Daiso.Core.Tests/Sessions/SessionTitleTests.cs`가 지금 동작을 12건으로 고정했다(결함 둘 포함).
 App은 아직 자기 사본을 쓴다 — 0-2에서 지운다. `dotnet test tests/Daiso.Core.Tests` 159건 전부 초록.
 
+**Stage 0-2 완료** (2026-09-09). `SessionsViewModel`의 `CleanPrompt` 사본을 지우고 `TitleText`·`CleanCommandText`가
+`SessionTitle.Clean`을 부르게 했다. 같은 자리에서 `Badges` 것이 `CleanCommandText`에 잘못 붙어 있던 문서 주석도 제자리로 돌렸다.
+App 컴파일 경고 0·오류 0, 테스트 364건(159+108+97) 전부 초록.
+⚠️ **앱 화면으로는 확인하지 못했다** — 앱이 실행 중이라 산출물이 잠겨 있었고, 남의 실행 중 앱을 끄지 않았다.
+동작 불변의 근거는 특성화 테스트다. 0-3 전에 `tools/run-app.ps1`로 세션 목록을 한 번 눈으로 본다.
+
 ---
 
 ## 1. 요약 — 결론부터

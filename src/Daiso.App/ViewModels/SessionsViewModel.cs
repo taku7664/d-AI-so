@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using Daiso.App.Services;
 using Daiso.App.Strings;
 using Daiso.Core;
+using Daiso.Core.Sessions;
 using Microsoft.UI.Xaml.Media;
 using Windows.UI;
 
@@ -769,14 +770,14 @@ public sealed partial class SessionRowViewModel : ObservableObject
     public string FirstPromptText => Session.FirstPrompt?.Replace('\n', ' ') ?? string.Empty;
 
     /// <summary>
-    /// 목록에 보이는 제목. 슬래시 명령으로 시작한 세션은 첫 프롬프트가 `&lt;command-name&gt;` 같은
-    /// 원문이라 그대로 두면 읽히지 않는다. 태그를 걷어내고 한 줄로 만든다.
+    /// 목록에 보이는 제목. 정제 규칙은 <see cref="SessionTitle"/>가 정본이다 — 터미널 새 세션 카드도
+    /// 같은 것을 쓴다. 화면마다 규칙이 갈라지면 같은 세션이 화면마다 다르게 보인다.
     /// </summary>
     public string TitleText
     {
         get
         {
-            var cleaned = CleanPrompt(Session.FirstPrompt);
+            var cleaned = SessionTitle.Clean(Session.FirstPrompt);
 
             return cleaned.Length > 0 ? cleaned : UiStrings.Get("Sessions_NoPrompt");
         }
@@ -796,59 +797,10 @@ public sealed partial class SessionRowViewModel : ObservableObject
 
     public bool IsOrphan => Session.ProjectPath is null || !Directory.Exists(Session.ProjectPath);
 
-    /// <summary>배지 문구. 실행 중·아카이브·고아.</summary>
     /// <summary>`&lt;command-*&gt;` 태그를 걷어낸 본문. 세션 상세에서도 쓴다.</summary>
-    internal static string CleanCommandText(string raw) => CleanPrompt(raw);
+    internal static string CleanCommandText(string raw) => SessionTitle.Clean(raw);
 
-    /// <summary>태그·연속 공백을 걷어낸 한 줄짜리 프롬프트.</summary>
-    private static string CleanPrompt(string? raw)
-    {
-        if (string.IsNullOrWhiteSpace(raw))
-        {
-            return string.Empty;
-        }
-
-        var builder = new System.Text.StringBuilder(raw.Length);
-        var depth = 0;
-        var lastWasSpace = false;
-
-        foreach (var ch in raw)
-        {
-            if (ch == '<')
-            {
-                depth++;
-                continue;
-            }
-
-            if (ch == '>' && depth > 0)
-            {
-                depth--;
-                continue;
-            }
-
-            if (depth > 0)
-            {
-                continue;
-            }
-
-            if (char.IsWhiteSpace(ch))
-            {
-                if (!lastWasSpace && builder.Length > 0)
-                {
-                    builder.Append(' ');
-                    lastWasSpace = true;
-                }
-
-                continue;
-            }
-
-            builder.Append(ch);
-            lastWasSpace = false;
-        }
-
-        return builder.ToString().Trim();
-    }
-
+    /// <summary>배지 문구. 실행 중·아카이브·고아.</summary>
     public string Badges => string.Join(
         " ",
         new[]
