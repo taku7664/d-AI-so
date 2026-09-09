@@ -261,7 +261,7 @@ public sealed partial class SessionsPage : Page, IPageHeaderSource
         var body = UiStrings.Format(
             "Sessions_DeletePreviewBody",
             preview.Count,
-            DashboardViewModel.FormatSize(preview.ReclaimBytes),
+            Formats.Size(preview.ReclaimBytes),
             UiStrings.Get(permanent ? "Common_PermanentDelete" : "Sessions_MoveToRecycleBin"))
             + skipped;
 

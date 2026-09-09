@@ -74,7 +74,7 @@ public sealed class MarkdownSessionExporter : ISessionExporter
     {
         await writer.WriteLineAsync($"# {session.Tool} 세션 {session.Id}").ConfigureAwait(false);
         await writer.WriteLineAsync().ConfigureAwait(false);
-        await writer.WriteLineAsync($"- 프로젝트: {session.ProjectPath ?? "(알 수 없음)"}").ConfigureAwait(false);
+        await writer.WriteLineAsync($"- 프로젝트: {session.ProjectPath ?? SessionLabels.Unknown}").ConfigureAwait(false);
         await writer.WriteLineAsync($"- 시작: {Iso(session.StartedAt)}").ConfigureAwait(false);
         await writer.WriteLineAsync($"- 수정: {Iso(session.ModifiedAt)}").ConfigureAwait(false);
         await writer.WriteLineAsync(

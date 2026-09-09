@@ -277,8 +277,8 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
         while (reader.Read())
         {
             var date = DateOnly.ParseExact(reader.GetString(0), "yyyy-MM-dd", CultureInfo.InvariantCulture);
-            var project = reader.IsDBNull(1) ? "(알 수 없음)" : reader.GetString(1);
-            var model = reader.IsDBNull(2) ? "(알 수 없음)" : reader.GetString(2);
+            var project = reader.IsDBNull(1) ? SessionLabels.Unknown : reader.GetString(1);
+            var model = reader.IsDBNull(2) ? SessionLabels.Unknown : reader.GetString(2);
             var usage = new TokenUsage(
                 reader.GetInt64(3), reader.GetInt64(4), reader.GetInt64(5), reader.GetInt64(6), model);
 

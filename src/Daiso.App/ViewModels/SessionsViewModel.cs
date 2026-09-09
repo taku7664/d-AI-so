@@ -29,8 +29,8 @@ public sealed partial class SessionsViewModel : ObservableObject
     /// <summary>진행 중인 타임라인 읽기. 다른 세션을 고르면 앞의 것을 취소한다.</summary>
     private CancellationTokenSource? _timelineCts;
 
-    /// <summary>프로젝트 경로를 모를 때 쓰는 표식. 묶음·비교에 쓰므로 번역하지 않는다.</summary>
-    internal const string UnknownProject = "(알 수 없음)";
+    /// <summary>프로젝트 경로를 모를 때 쓰는 표식. 값의 정본은 <see cref="SessionLabels.Unknown"/> 하나다.</summary>
+    internal const string UnknownProject = SessionLabels.Unknown;
 
     private readonly IndexService _indexService;
     private readonly IReadOnlyList<IProvider> _providers;
@@ -726,7 +726,7 @@ public sealed class ProjectGroupViewModel
         : System.IO.Path.GetFileName(Path.TrimEnd('\\'));
 
     public string Summary =>
-        UiStrings.Format("Sessions_ProjectSummary", Count, DashboardViewModel.FormatSize(TotalBytes))
+        UiStrings.Format("Sessions_ProjectSummary", Count, Formats.Size(TotalBytes))
         + (IsOrphan ? UiStrings.Get("Sessions_OrphanSuffix") : string.Empty);
 
     /// <summary>드롭다운 한 줄. 이름과 건수를 함께 보여준다.</summary>
@@ -756,7 +756,7 @@ public sealed partial class SessionRowViewModel : ObservableObject
 
     public string ModifiedText => $"{Session.ModifiedAt.ToLocalTime():yyyy-MM-dd HH:mm}";
 
-    public string SizeText => DashboardViewModel.FormatSize(Session.SizeBytes);
+    public string SizeText => Formats.Size(Session.SizeBytes);
 
     /// <summary>목록 한 줄의 부제. 도구·시각·용량·메시지 수를 한 문구로 만든다.</summary>
     public string MetaText => UiStrings.Format(

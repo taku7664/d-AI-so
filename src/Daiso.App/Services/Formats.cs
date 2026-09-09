@@ -27,6 +27,15 @@ public static class Formats
         };
     }
 
+    /// <summary>바이트 수를 사람이 읽는 단위로. 화면 어디서나 같은 규칙을 쓴다.</summary>
+    public static string Size(long bytes) => bytes switch
+    {
+        < 1024 => $"{bytes} B",
+        < 1024 * 1024 => $"{bytes / 1024.0:N1} KB",
+        < 1024L * 1024 * 1024 => $"{bytes / (1024.0 * 1024):N1} MB",
+        _ => $"{bytes / (1024.0 * 1024 * 1024):N2} GB",
+    };
+
     /// <summary>정확한 값. ToolTip에 쓴다.</summary>
     public static string Exact(long value) => value.ToString("N0", CultureInfo.CurrentCulture);
 

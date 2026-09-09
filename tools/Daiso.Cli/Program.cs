@@ -213,7 +213,7 @@ internal static class Commands
             Console.WriteLine(
                 $"  {session.Tool,-6} {session.ModifiedAt:yyyy-MM-dd HH:mm} "
                 + $"{Size(session.SizeBytes),9} U{session.UserMessageCount,-4} A{session.AssistantMessageCount,-4} "
-                + $"{session.ProjectPath ?? "(알 수 없음)"}");
+                + $"{session.ProjectPath ?? SessionLabels.Unknown}");
             Console.WriteLine($"         {session.Id}  {session.FirstPrompt ?? string.Empty}");
         }
 
@@ -251,7 +251,7 @@ internal static class Commands
 
         Console.WriteLine($"'{args[1]}' 결과 {hits.Count}건");
 
-        foreach (var group in hits.GroupBy(h => h.Session.ProjectPath ?? "(알 수 없음)").Take(20))
+        foreach (var group in hits.GroupBy(h => h.Session.ProjectPath ?? SessionLabels.Unknown).Take(20))
         {
             Console.WriteLine($"  {group.Key}");
 
