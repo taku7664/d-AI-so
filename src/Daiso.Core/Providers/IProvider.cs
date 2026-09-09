@@ -45,6 +45,12 @@ public interface IProvider
     string BuildResumeArguments(SessionInfo session);
 
     /// <summary>
+    /// CLI 가 클립보드의 그림을 읽어 첨부하게 하는 키 입력(터미널로 보내는 바이트). 터미널은 키만 보낼 수 있으므로 그림은 CLI 가 스스로 읽는다.
+    /// Claude Code 는 Windows 에서 Alt+V(ESC v — Ctrl+V 는 터미널이 먹는다고 보고 피한다), Codex CLI·Gemini CLI 는 Ctrl+V(0x16).
+    /// </summary>
+    string ImagePasteKeys { get; }
+
+    /// <summary>
     /// 로그인 상태를 이루는 파일. 프로필 저장·전환이 이 목록만 다룬다. (ARCHITECTURE §5.7)
     /// 값은 읽지 않고 바이트로만 옮긴다.
     /// </summary>

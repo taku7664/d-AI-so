@@ -105,6 +105,9 @@ internal sealed class FakeProvider : IProvider, IUsageReader
     }
 
     /// <inheritdoc />
+    /// <summary>테스트 대역.</summary>
+    public string ImagePasteKeys => "\x16";
+
     public string BuildResumeArguments(SessionInfo session) => $"resume {session.Id}";
 
     /// <inheritdoc />

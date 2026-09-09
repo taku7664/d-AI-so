@@ -200,6 +200,9 @@ public sealed class GeminiProvider : IProvider, IUsageReader
     }
 
     /// <inheritdoc />
+    /// <summary>Ctrl+V. Gemini CLI 는 이 키로 클립보드 그림을 첨부한다.</summary>
+    public string ImagePasteKeys => "\x16";
+
     public string BuildResumeArguments(SessionInfo session)
     {
         ArgumentNullException.ThrowIfNull(session);

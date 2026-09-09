@@ -6,7 +6,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
 using Windows.ApplicationModel.DataTransfer;
-using Windows.Graphics.Imaging;
 
 namespace Daiso.App.Terminal;
 
@@ -38,13 +37,6 @@ public sealed class TerminalHost : UserControl
         HorizontalContentAlignment = HorizontalAlignment.Stretch;
         VerticalContentAlignment = VerticalAlignment.Stretch;
         ActualThemeChanged += (_, _) => PostTheme();
-
-        // 파일 끌어놓기. WinUI 3 의 WebView2 는 OLE 드롭을 페이지(Chromium)까지 넘기지 않아 index.html 의 drop 은 오지 않는다.
-        // 드롭은 XAML 쪽에 떨어지므로 여기서 받아 경로를 붙인다 (그림 파일도 경로로 — CLI 가 파일을 읽는다)
-        AllowDrop = true;
-        _web.AllowDrop = true;
-        DragOver += OnDragOver;
-        Drop += OnDrop;
 
         // 설정(글자 크기)이 저장되면 열린 방에도 바로 반영한다. 화면을 떠나면 끊고 돌아오면 다시 건다
         Loaded += (_, _) =>
@@ -133,7 +125,9 @@ public sealed class TerminalHost : UserControl
             core.WebMessageReceived += OnWebMessage;
             core.NewWindowRequested += (_, e) => e.Handled = true;
 
-            _web.Source = new Uri($"https://{VirtualHost}/index.html");
+            // index.html 을 고쳤을 때 WebView2 디스크 캐시의 옛 페이지가 뜨지 않게 파일 시각을 붙인다
+            var stamp = File.GetLastWriteTimeUtc(Path.Combine(AssetFolder, "index.html")).Ticks;
+            _web.Source = new Uri($"https://{VirtualHost}/index.html?v={stamp}");
 
             // 여기까지 와야 초기화된 것이다. 중간에 던지면 플래그가 안 서서 다음에 다시 시도한다
             _initialized = true;
@@ -388,72 +382,19 @@ public sealed class TerminalHost : UserControl
             }
         }
 
-        if (content.Contains(StandardDataFormats.Bitmap))
+        if (content.Contains(StandardDataFormats.Bitmap) && _room is { } room)
         {
-            var saved = await SaveClipboardImageAsync(content);
-            if (saved is not null)
-            {
-                Post(new { type = "paste", text = QuotePaths([saved]) });
-            }
+            // 그림은 CLI 가 스스로 클립보드에서 읽는다. 그 키는 도구마다 달라 IProvider 가 안다 (ToolKind 로 분기하지 않는다, ARCHITECTURE §6.2)
+            var provider = App.Services.GetRequiredService<IEnumerable<Daiso.Core.IProvider>>().First(candidate => candidate.Kind == room.Tool);
+            room.SendRaw(provider.ImagePasteKeys);
         }
     }
 
     /// <summary>
-    /// 클립보드 그림을 PNG 파일로 저장하고 경로를 돌려준다. CLI 는 키 입력밖에 못 받으므로 그림은 파일 경로로 준다.
-    /// (Claude Code 는 Windows 에서 Ctrl+V 로 그림을 읽지 않고 Alt+V 를 쓰는데, 도구마다 달라 경로 붙이기가 세 도구에 다 통하는 길이다.)
-    /// 저장 위치: %LOCALAPPDATA%\d-AI-so\clips. 오래된 것은 사람이 지운다.
+    /// 경로를 CLI 입력에 붙일 꼴로. 빈칸이 있으면 따옴표로 감싸고, 여럿이면 빈칸으로 잇고, 앞뒤에 빈칸 하나를 둔다.
+    /// 앞에도 두는 이유: CLI 가 붙인 글의 끝 빈칸을 지워 다음에 붙인 경로가 앞 경로에 들러붙었다.
     /// </summary>
-    private static async Task<string?> SaveClipboardImageAsync(DataPackageView content)
-    {
-        var reference = await content.GetBitmapAsync();
-        using var source = await reference.OpenReadAsync();
-        var decoder = await BitmapDecoder.CreateAsync(source);
-        using var bitmap = await decoder.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
-
-        var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "d-AI-so", "clips");
-        Directory.CreateDirectory(folder);
-        var path = Path.Combine(folder, $"clip-{DateTime.Now:yyyyMMdd-HHmmss-fff}.png");
-
-        using (var file = new FileStream(path, FileMode.Create, FileAccess.ReadWrite, FileShare.None))
-        {
-            var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, file.AsRandomAccessStream());
-            encoder.SetSoftwareBitmap(bitmap);
-            await encoder.FlushAsync();
-        }
-
-        return path;
-    }
-
-    private void OnDragOver(object sender, DragEventArgs e)
-    {
-        if (e.DataView.Contains(StandardDataFormats.StorageItems))
-        {
-            e.AcceptedOperation = DataPackageOperation.Copy;
-            e.DragUIOverride.IsCaptionVisible = false;
-        }
-    }
-
-    private async void OnDrop(object sender, DragEventArgs e)
-    {
-        if (!e.DataView.Contains(StandardDataFormats.StorageItems))
-        {
-            return;
-        }
-
-        try
-        {
-            var items = await e.DataView.GetStorageItemsAsync();
-            PastePaths(items.Select(item => item.Path));
-            FocusTerminal();
-        }
-        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or UnauthorizedAccessException)
-        {
-            // 드롭 데이터를 못 읽었다. 한 번의 끌어놓기가 안 된 것뿐이다
-        }
-    }
-
-    /// <summary>경로를 CLI 입력에 붙일 꼴로. 빈칸이 있으면 따옴표로 감싸고, 여럿이면 빈칸으로 잇고, 뒤에 빈칸 하나를 둔다.</summary>
     private static string QuotePaths(IEnumerable<string> paths) =>
-        string.Join(' ', paths.Select(path => path.Contains(' ', StringComparison.Ordinal) ? $"\"{path}\"" : path)) + " ";
+        " " + string.Join(' ', paths.Select(path => path.Contains(' ', StringComparison.Ordinal) ? $"\"{path}\"" : path)) + " ";
 
 }

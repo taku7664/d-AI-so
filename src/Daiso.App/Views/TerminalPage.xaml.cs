@@ -1,3 +1,4 @@
+using Windows.ApplicationModel.DataTransfer;
 using Daiso.App.Controls;
 using Daiso.App.Services;
 using Daiso.App.Strings;
@@ -21,6 +22,7 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource
     {
         InitializeComponent();
         FocusRelease.Attach(this);
+        _dropHide.Tick += (_, _) => { _dropHide.Stop(); DropOverlay.Visibility = Visibility.Collapsed; };
         SelectorBarVisuals.ResetPressedOnLeave(ToolTabs);
         ViewModel = App.Services.GetRequiredService<TerminalViewModel>();
         Header = new PageHeader("Terminal_Title", UiStrings.Get("Terminal_Subtitle"));
@@ -600,6 +602,71 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource
         if (RoomPromptFlyout.Items.Count == 0)
         {
             RoomPromptFlyout.Items.Add(new MenuFlyoutItem { Text = UiStrings.Get("Terminal_NoPrompts"), IsEnabled = false });
+        }
+    }
+
+    // ── 끌어놓기 ─────────────────────────────────────────────────────────────
+
+    private readonly DispatcherTimer _dropHide = new() { Interval = TimeSpan.FromMilliseconds(200) };
+
+    private static bool HasFiles(DragEventArgs e) => e.DataView.Contains(StandardDataFormats.StorageItems);
+
+    /// <summary>끄는 동안 계속 온다. 받겠다고 말하고(금지 커서 대신 복사 커서), 방이 있으면 터미널 위에 받는 판을 덮는다.</summary>
+    private void OnPageDragOver(object sender, DragEventArgs e)
+    {
+        if (!HasFiles(e))
+        {
+            return;
+        }
+
+        e.AcceptedOperation = DataPackageOperation.Copy;
+        e.DragUIOverride.Caption = UiStrings.Get(TerminalPanel.Visibility == Visibility.Visible ? "Room_DropHint" : "Terminal_DropFolderHint");
+        e.DragUIOverride.IsGlyphVisible = false;
+
+        _dropHide.Stop();
+        if (TerminalPanel.Visibility == Visibility.Visible)
+        {
+            DropOverlay.Visibility = Visibility.Visible;
+        }
+    }
+
+    /// <summary>
+    /// 자식 사이를 옮겨 다닐 때도 오므로 바로 걷지 않고 잠깐 기다린다. 그 사이 DragOver 가 다시 오면 그대로 둔다.
+    /// </summary>
+    private void OnPageDragLeave(object sender, DragEventArgs e)
+    {
+        _dropHide.Stop();
+        _dropHide.Start();
+    }
+
+    private async void OnPageDrop(object sender, DragEventArgs e)
+    {
+        _dropHide.Stop();
+        DropOverlay.Visibility = Visibility.Collapsed;
+
+        if (!HasFiles(e))
+        {
+            return;
+        }
+
+        try
+        {
+            var items = await e.DataView.GetStorageItemsAsync();
+            var paths = items.Select(item => item.Path).Where(path => path.Length > 0).ToList();
+
+            if (TerminalPanel.Visibility == Visibility.Visible)
+            {
+                Embedded.PastePaths(paths);
+                Embedded.FocusTerminal();
+            }
+            else if (paths.FirstOrDefault(Directory.Exists) is { } folder)
+            {
+                ViewModel.SetFolder(folder);
+            }
+        }
+        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or UnauthorizedAccessException)
+        {
+            // 드롭 데이터를 못 읽었다. 한 번의 끌어놓기가 안 된 것뿐이다
         }
     }
 

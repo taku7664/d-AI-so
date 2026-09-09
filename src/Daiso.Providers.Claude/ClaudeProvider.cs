@@ -228,6 +228,9 @@ public sealed class ClaudeProvider : IProvider, IUsageReader
     }
 
     /// <inheritdoc />
+    /// <summary>Alt+V. Claude Code 는 Windows 에서 이 키로 클립보드 그림을 첨부한다.</summary>
+    public string ImagePasteKeys => "\x1bv";
+
     public string BuildResumeArguments(SessionInfo session)
     {
         ArgumentNullException.ThrowIfNull(session);
