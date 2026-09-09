@@ -74,8 +74,17 @@ function Select-Child([string]$parentId, [int]$index) {
     $parent = Find-ById $parentId
     if (-not $parent) { Write-Warning "못 찾음: $parentId"; return $false }
 
-    $items = $parent.FindAll([System.Windows.Automation.TreeScope]::Children,
-        [System.Windows.Automation.Condition]::TrueCondition)
+    # 날짜로 묶은 목록은 직계 자식이 "항목"이 아니라 "묶음"이다. 항목 종류로 자손을 훑는다
+    $isItem = New-Object System.Windows.Automation.PropertyCondition(
+        [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+        [System.Windows.Automation.ControlType]::ListItem)
+    $items = $parent.FindAll([System.Windows.Automation.TreeScope]::Descendants, $isItem)
+
+    if ($items.Count -eq 0) {
+        $items = $parent.FindAll([System.Windows.Automation.TreeScope]::Children,
+            [System.Windows.Automation.Condition]::TrueCondition)
+    }
+
     if ($index -ge $items.Count) { Write-Warning "$parentId 에 $index 번째 항목이 없다 (총 $($items.Count))"; return $false }
 
     $item = $items.Item($index)

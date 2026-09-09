@@ -276,6 +276,69 @@ public sealed partial class TerminalViewModel : ObservableObject
     /// <summary>이 폴더·도구의 지난 세션. 최근 것이 앞. 기존 세션 이어서를 골랐을 때 목록에 보인다.</summary>
     public ObservableCollection<ResumeCandidateViewModel> ResumeCandidates { get; } = [];
 
+    /// <summary>인덱스에서 읽어 둔 원본. 검색어를 바꿀 때마다 다시 읽지 않으려고 들고 있는다.</summary>
+    private readonly List<ResumeCandidateViewModel> _allCandidates = [];
+
+    /// <summary>날짜로 묶은 목록(오늘·어제·이번 주·그 이전). 목록이 서른 줄이면 경계가 안 보인다.</summary>
+    public ObservableCollection<ResumeGroupViewModel> ResumeGroups { get; } = [];
+
+    /// <summary>목록 위 검색칸. 세션이 늘면 눈으로 찾는 것이 불가능해진다 (§2-E6).</summary>
+    [ObservableProperty]
+    private string resumeSearch = string.Empty;
+
+    partial void OnResumeSearchChanged(string value) => ApplyResumeFilter();
+
+    /// <summary>"이 폴더의 대화 N개". 세어 봤다는 것을 보여 주면 앱이 내 폴더를 안다는 신호가 된다.</summary>
+    public string ResumeCountText => UiStrings.Format("Terminal_ResumeCount", _allCandidates.Count);
+
+    /// <summary>이 폴더에 이어서 열 대화가 하나라도 있는가. 없으면 "하던 대화 이어서" 카드를 잠근다.</summary>
+    public bool HasAnyResume => _allCandidates.Count > 0;
+
+    /// <summary>검색어로 목록을 거른다. 제목·시각 어느 쪽이 맞아도 남긴다.</summary>
+    private void ApplyResumeFilter()
+    {
+        var query = ResumeSearch?.Trim() ?? string.Empty;
+
+        ResumeCandidates.Clear();
+
+        foreach (var candidate in _allCandidates)
+        {
+            if (query.Length == 0
+                || candidate.Summary.Contains(query, StringComparison.OrdinalIgnoreCase)
+                || candidate.When.Contains(query, StringComparison.OrdinalIgnoreCase))
+            {
+                ResumeCandidates.Add(candidate);
+            }
+        }
+
+        RebuildResumeGroups();
+
+        HasNoResumeCandidates = ResumeCandidates.Count == 0;
+        OnPropertyChanged(nameof(ResumeCountText));
+        OnPropertyChanged(nameof(HasAnyResume));
+    }
+
+    /// <summary>걸러진 목록을 날짜 묶음으로 다시 담는다. 순서는 최근이 앞이라 묶음 순서도 그대로다.</summary>
+    private void RebuildResumeGroups()
+    {
+        ResumeGroups.Clear();
+
+        ResumeGroupViewModel? current = null;
+
+        foreach (var candidate in ResumeCandidates)
+        {
+            var group = SessionDay.Of(candidate.Session.ModifiedAt.ToLocalTime(), DateTimeOffset.Now);
+
+            if (current is null || current.Group != group)
+            {
+                current = new ResumeGroupViewModel(group);
+                ResumeGroups.Add(current);
+            }
+
+            current.Add(candidate);
+        }
+    }
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(Preview))]
     private ResumeCandidateViewModel? selectedResume;
@@ -299,10 +362,13 @@ public sealed partial class TerminalViewModel : ObservableObject
         var tool = SelectedTool;
         var directory = WorkingDirectory;
 
+        _allCandidates.Clear();
         ResumeCandidates.Clear();
         SelectedResume = null;
         HasNoResumeCandidates = false;
         OnPropertyChanged(nameof(NoResumeCandidatesText));
+        OnPropertyChanged(nameof(ResumeCountText));
+        OnPropertyChanged(nameof(HasAnyResume));
 
         if (string.IsNullOrWhiteSpace(directory))
         {
@@ -330,10 +396,10 @@ public sealed partial class TerminalViewModel : ObservableObject
 
         foreach (var session in sessions.OrderByDescending(session => session.ModifiedAt).Take(30))
         {
-            ResumeCandidates.Add(new ResumeCandidateViewModel(session, tool.Provider.BuildResumeArguments(session)));
+            _allCandidates.Add(new ResumeCandidateViewModel(session, tool.Provider.BuildResumeArguments(session)));
         }
 
-        HasNoResumeCandidates = ResumeCandidates.Count == 0;
+        ApplyResumeFilter();
 
         if (_preparedResumeArguments is { } prepared)
         {
@@ -887,6 +953,25 @@ public sealed class ResumeCandidateViewModel
 
     private static string Format(DateTimeOffset value, string pattern) =>
         value.ToString(pattern, System.Globalization.CultureInfo.CurrentCulture);
+}
+
+/// <summary>
+/// 날짜 묶음 하나. <c>CollectionViewSource</c> 가 그룹 머리를 그리려면 묶음 자체가 목록이어야 한다.
+/// </summary>
+public sealed class ResumeGroupViewModel : System.Collections.ObjectModel.ObservableCollection<ResumeCandidateViewModel>
+{
+    public ResumeGroupViewModel(SessionDayGroup group) => Group = group;
+
+    public SessionDayGroup Group { get; }
+
+    /// <summary>머리에 쓰는 말. 문구는 Core 가 아니라 여기서 붙인다.</summary>
+    public string Title => UiStrings.Get(Group switch
+    {
+        SessionDayGroup.Today => "Time_GroupToday",
+        SessionDayGroup.Yesterday => "Time_GroupYesterday",
+        SessionDayGroup.ThisWeek => "Time_GroupThisWeek",
+        _ => "Time_GroupOlder",
+    });
 }
 
 /// <summary>프롬프트 선택 한 줄. <see cref="Preset"/>이 null이면 "프롬프트 없음".</summary>

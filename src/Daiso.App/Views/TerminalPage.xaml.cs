@@ -83,6 +83,9 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
             }
         };
         FolderBox.Loaded += (_, _) => SyncFolderBox();
+
+        // 그룹 머리를 그리려면 CollectionViewSource 에 묶음 목록을 물려야 한다(x:Bind 로는 못 준다)
+        ResumeGroupsSource.Source = ViewModel.ResumeGroups;
     }
 
     /// <summary>뷰모델의 폴더를 콤보박스 글에 맞춘다(아는 프로젝트·이어서 열기·최근 목록 갱신 뒤).</summary>
@@ -175,9 +178,9 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
     /// <summary>새로 시작 / 이어서를 고른다. 안 고른 상태는 SelectedIndex = -1 이라 여기로 안 온다.</summary>
     private void OnSessionModeChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (sender is RadioButtons { SelectedIndex: >= 0 } radios)
+        if (sender is ListView { SelectedIndex: >= 0 } cards)
         {
-            ViewModel.ChooseSessionMode(radios.SelectedIndex);
+            ViewModel.ChooseSessionMode(cards.SelectedIndex);
         }
     }
 

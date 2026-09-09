@@ -1315,6 +1315,15 @@
   <data name="Terminal_ResumeHere" xml:space="preserve">
     <value>이어서 열기</value>
   </data>
+  <data name="Terminal_NewSessionSub" xml:space="preserve">
+    <value>빈 화면에서 출발합니다</value>
+  </data>
+  <data name="Terminal_ResumeCount" xml:space="preserve">
+    <value>이 폴더의 대화 {0}개</value>
+  </data>
+  <data name="Terminal_ResumeSearch" xml:space="preserve">
+    <value>대화 검색</value>
+  </data>
   <data name="Terminal_FolderMissing" xml:space="preserve">
     <value>그런 폴더가 없어요. 경로를 다시 보거나 찾아보기로 고르세요</value>
   </data>
@@ -1455,6 +1464,18 @@
   </data>
   <data name="Time_Yesterday" xml:space="preserve">
     <value>어제 {0}</value>
+  </data>
+  <data name="Time_GroupToday" xml:space="preserve">
+    <value>오늘</value>
+  </data>
+  <data name="Time_GroupYesterday" xml:space="preserve">
+    <value>어제</value>
+  </data>
+  <data name="Time_GroupThisWeek" xml:space="preserve">
+    <value>이번 주</value>
+  </data>
+  <data name="Time_GroupOlder" xml:space="preserve">
+    <value>그 이전</value>
   </data>
   <data name="Sessions_CheckAll" xml:space="preserve">
     <value>전체 체크</value>

@@ -49,6 +49,9 @@
             <Setter Property="CornerRadius" Value="4" />
         </Style>
 
+        <!-- 세션 목록을 날짜로 묶어 머리를 그린다 (오늘·어제·이번 주·그 이전) -->
+        <CollectionViewSource x:Name="ResumeGroupsSource" IsSourceGrouped="True" />
+
         <!-- 펼쳐진 단계의 몸 -->
         <Style x:Key="StepBody" TargetType="StackPanel">
             <Setter Property="Spacing" Value="8" />
@@ -393,15 +396,40 @@
                                     <TextBlock Text="{x:Bind ViewModel.InvalidationNotice, Mode=OneWay}" TextWrapping="Wrap" />
                                 </Border>
 
-                                <muxc:RadioButtons
+                                <!-- 카드 2장. 각 카드에 부연 한 줄을 붙여 고르기 전에 무엇이 기다리는지 알려 준다 (§4.5) -->
+                                <ListView
                                     x:Name="SessionModeRadios"
                                     AutomationProperties.AutomationId="SessionModeRadios"
-                                    MaxColumns="2"
                                     SelectedIndex="{x:Bind ViewModel.SessionModeSelection, Mode=OneWay}"
-                                    SelectionChanged="OnSessionModeChanged">
-                                    <RadioButton Content="{loc:Str Key=Terminal_NewSession}" AutomationProperties.AutomationId="NewSessionRadio" ToolTipService.ToolTip="{loc:Str Key=Terminal_NewSessionTip}" />
-                                    <RadioButton Content="{loc:Str Key=Terminal_ResumeSession}" AutomationProperties.AutomationId="ResumeSessionRadio" ToolTipService.ToolTip="{loc:Str Key=Terminal_ResumeSessionTip}" />
-                                </muxc:RadioButtons>
+                                    SelectionChanged="OnSessionModeChanged"
+                                    SelectionMode="Single"
+                                    ScrollViewer.VerticalScrollMode="Disabled"
+                                    ScrollViewer.HorizontalScrollMode="Disabled">
+                                    <ListView.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal" Spacing="8" />
+                                        </ItemsPanelTemplate>
+                                    </ListView.ItemsPanel>
+                                    <ListView.ItemContainerStyle>
+                                        <Style TargetType="ListViewItem">
+                                            <Setter Property="Padding" Value="0" />
+                                            <Setter Property="MinWidth" Value="0" />
+                                            <Setter Property="CornerRadius" Value="6" />
+                                        </Style>
+                                    </ListView.ItemContainerStyle>
+                                    <ListViewItem AutomationProperties.AutomationId="NewSessionRadio" ToolTipService.ToolTip="{loc:Str Key=Terminal_NewSessionTip}">
+                                        <StackPanel Width="200" Padding="12,10" Spacing="2">
+                                            <TextBlock Text="{loc:Str Key=Terminal_NewSession}" FontWeight="SemiBold" />
+                                            <TextBlock Text="{loc:Str Key=Terminal_NewSessionSub}" Style="{StaticResource MutedText}" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </ListViewItem>
+                                    <ListViewItem AutomationProperties.AutomationId="ResumeSessionRadio" ToolTipService.ToolTip="{loc:Str Key=Terminal_ResumeSessionTip}" IsEnabled="{x:Bind ViewModel.HasAnyResume, Mode=OneWay}">
+                                        <StackPanel Width="200" Padding="12,10" Spacing="2">
+                                            <TextBlock Text="{loc:Str Key=Terminal_ResumeSession}" FontWeight="SemiBold" />
+                                            <TextBlock Text="{x:Bind ViewModel.ResumeCountText, Mode=OneWay}" Style="{StaticResource MutedText}" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </ListViewItem>
+                                </ListView>
 
                                 <!-- 새로 시작: 시작 프롬프트는 선택 사항이라 이 단계를 접지 않는다 (§4.6) -->
                                 <Grid ColumnSpacing="12" Visibility="{x:Bind ViewModel.ShowNewSessionOptions, Mode=OneWay}">
@@ -423,18 +451,34 @@
 
                                 <!-- 이어서: 이 폴더·도구의 지난 대화 -->
                                 <StackPanel Spacing="6" Visibility="{x:Bind ViewModel.ShowResumeList, Mode=OneWay}">
+                                    <!-- 검색칸. 세션이 늘면 눈으로 찾는 것이 불가능해진다 (§2-E6) -->
+                                    <TextBox
+                                        AutomationProperties.AutomationId="ResumeSearchBox"
+                                        AutomationProperties.Name="{loc:Str Key=Terminal_ResumeSearch}"
+                                        PlaceholderText="{loc:Str Key=Terminal_ResumeSearch}"
+                                        Text="{x:Bind ViewModel.ResumeSearch, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                    <!--
+                                        행 높이를 40 으로 고정하고 목록 높이를 그 정수배(5행)로 둔다.
+                                        전에는 MaxHeight 220 이라 마지막 행이 높이 중간에서 잘려 "더 있는지 끝인지" 알 수 없었다 (§2-C4)
+                                    -->
                                     <ListView
                                         AutomationProperties.AutomationId="ResumeSessionList"
-                                        ItemsSource="{x:Bind ViewModel.ResumeCandidates}"
+                                        ItemsSource="{Binding Source={StaticResource ResumeGroupsSource}}"
                                         SelectedItem="{x:Bind ViewModel.SelectedResume, Mode=TwoWay}"
                                         SelectionMode="Single"
-                                        MaxHeight="220"
+                                        MaxHeight="200"
                                         BorderThickness="1"
                                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                                         CornerRadius="4">
+                                        <ListView.ItemContainerStyle>
+                                            <Style TargetType="ListViewItem">
+                                                <Setter Property="Height" Value="40" />
+                                                <Setter Property="MinHeight" Value="40" />
+                                            </Style>
+                                        </ListView.ItemContainerStyle>
                                         <ListView.ItemTemplate>
                                             <DataTemplate x:DataType="vm:ResumeCandidateViewModel">
-                                                <Grid ColumnSpacing="12" Padding="0,4" ToolTipService.ToolTip="{x:Bind Summary}">
+                                                <Grid ColumnSpacing="12" ToolTipService.ToolTip="{x:Bind Summary}">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="Auto" />
                                                         <ColumnDefinition Width="*" />
@@ -451,6 +495,15 @@
                                                 </Grid>
                                             </DataTemplate>
                                         </ListView.ItemTemplate>
+                                        <ListView.GroupStyle>
+                                            <GroupStyle>
+                                                <GroupStyle.HeaderTemplate>
+                                                    <DataTemplate x:DataType="vm:ResumeGroupViewModel">
+                                                        <TextBlock Text="{x:Bind Title}" Style="{StaticResource MutedText}" Margin="0,4" />
+                                                    </DataTemplate>
+                                                </GroupStyle.HeaderTemplate>
+                                            </GroupStyle>
+                                        </ListView.GroupStyle>
                                     </ListView>
                                     <TextBlock
                                         Text="{x:Bind ViewModel.NoResumeCandidatesText, Mode=OneWay}"
