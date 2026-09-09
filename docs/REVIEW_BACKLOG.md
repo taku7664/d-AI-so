@@ -17,7 +17,7 @@
 
 | # | 건 | 성격 | 상태 |
 |---|---|---|---|
-| R1 | `ToolLook` 이 모든 `ToolKind` 를 다루는지 검사하는 테스트 | 조용한 실패 | ⬜ |
+| R1 | `ToolLook` 이 모든 `ToolKind` 를 다루는지 검사하는 테스트 | 조용한 실패 | ✅ |
 | R2 | 종료 시 `ServiceProvider` 를 해제하지 않아 SQLite 연결이 안 닫힘 | 자원 누수 | ⬜ |
 | R3 | `SettingsStore.Save` 가 쓰기에 실패해도 `Changed` 를 쏨 | 거짓 신호 | ⬜ |
 | R4 | `SessionsViewModel` 의 `IsBusy` 가드가 다시 읽기를 삼킴 | 동작 오류 | ⬜ |
@@ -37,3 +37,8 @@
 ---
 
 ## 작업 기록
+
+- **R1** — `ToolLookTests` 추가. `Title` · `Vendor` · `Short` · `Initial` · `Color` · `LogoPath` 여섯 switch 와
+  `DisplayOrder` 가 모든 `ToolKind` 를 다루는지 본다.
+  `ToolKind` 에 `Cursor` 를 임시로 더해 보니 **8곳이 정확히 빨개졌다**. 원복 확인.
+  - 폴백(`_ =>`)을 지울 수는 없다 — switch 식은 모든 입력을 받아야 한다. 그래서 "빠진 것"을 밖에서 본다.
