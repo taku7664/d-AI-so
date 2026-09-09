@@ -653,7 +653,7 @@ Apply(projectDir, direction, dryRun)
 - 단축키는 설정의 "단축키" 카드에 적는다. 알려주지 않는 단축키는 없는 것과 같다
 - `SelectorBar` 탭은 페이지 생성자에서 `SelectorBarVisuals.ResetPressedOnLeave`를 붙인다. WinUI 항목은 누른 뒤 포인터가 나가면 회색 눌림이 남는다. 포인터가 나가거나 선택이 바뀌면 `SelectedNormal`/`UnselectedNormal`로 되돌린다
 - **대제목 줄에는 대제목만 둔다.** 페이지마다 맨 위는 `PageTitleText` 제목 + `PageSubtitleText` 한 줄이고, 그 오른쪽에는 아무것도 놓지 않는다. 기간 콤보·다시 읽기·검색·명령바 같은 화면 도구는 **제목 아래 줄**로 내린다. 오른쪽 위는 셸이 뒤로/앞으로를 겹쳐 그리는 자리다. 모든 페이지가 대제목을 가진다 (터미널 포함)
-- **뒤로/앞으로는 셸 것이다.** `ShellWindow`가 본문 위에 겹쳐 그리고(오른쪽 위, `PagePadding` 만큼 띄워 대제목과 같은 높이), 마우스 엄지 버튼(XButton1 뒤로 / XButton2 앞으로)도 같은 `NavigationHistory`를 쓴다. 페이지마다 만들지 않는다
+- **뒤로/앞으로는 셸 것이다.** 제목줄(`TitleBar` 컨트롤)에 있다 — 뒤로는 내장 버튼(`IsBackButtonVisible`/`BackRequested`), 앞으로와 메뉴 접기(☰)는 `LeftHeader` 슬롯. 마우스 엄지 버튼(XButton1 뒤로 / XButton2 앞으로)도 같은 `NavigationHistory`를 쓴다. 페이지마다 만들지 않고, 본문 위에 겹쳐 그리지도 않는다 (UI_REFACTOR_PLAN §8.1)
 - **이력은 한 줄기다.** `NavigationHistory`(순수 로직, UI를 모른다)가 자리(`NavigationSpot` = 좌측 메뉴 페이지 + 도구 탭 + 터미널 방)를 브라우저처럼 쌓는다. 새 자리로 옮기면 앞으로 갈 곳은 지워지고, 되돌리는 동안(`Restoring`)에는 기록하지 않는다. 방을 닫으면 그 방을 가리키는 자리를 `Forget`으로 걷어낸다 — 안 그러면 뒤로가기가 없어진 방으로 간다
 - **탭 띠는 양방향이어야 한다.** 사람이 누른 것만 뷰모델로 보내면(단방향) 뒤로/앞으로처럼 뷰모델 쪽에서 탭이 바뀔 때 띠 표시가 어긋난다. `SelectorBarVisuals.Select`로 뷰모델 → 띠도 맞춘다 (페이지 `Loaded`와 뷰모델 `PropertyChanged` 둘 다에서)
 - 입력 칸이 있는 페이지는 생성자에서 `FocusRelease.Attach(this)`를 붙인다. WinUI는 빈 자리를 눌러도 포커스를 옮기지 않아 커서가 입력 칸에 남는다. 포커스를 받을 컨트롤이 없는 곳을 누르면 **크기 0인 싱크 버튼**이 받아 놓아 준다. 스크롤이 맨 위로 튀지 않으려면 세 가지를 지켜야 한다 — (1) 싱크는 **잎 컨트롤**이어야 한다. `Page`는 `ContentControl`이라 포커스가 안쪽 첫 입력 칸으로 흘러내린다(`page.Focus()`는 True를 돌려주지만 ~90ms 뒤 맨 위 TextBox로 옮겨간다). (2) 싱크는 **`ScrollViewer` 바깥**, 페이지 루트 패널에 둔다. 안에 있으면 포커스가 스크롤을 끌고 다닌다. (3) **누를 때와 뗄 때 둘 다** 처리한다. 누를 때만 하면 WinUI가 뗄 때 빈 배경 클릭을 처리하며 포커스를 `ScrollViewer` 안 첫 포커스 가능 요소로 밀어넣어 우리 처리를 덮어쓴다(누름 88ms 뒤 sink → SessionHomeBox, 직후 BringIntoView로 offset 626 → 125)
@@ -666,7 +666,7 @@ Apply(projectDir, direction, dryRun)
 **테마** — 설정의 테마는 고른 즉시 적용한다 (`SettingsViewModel.ThemeChanged` → `ShellWindow.ApplyTheme`).
 - `System`: `MicaBackdrop` + 배경 없음. OS 테마를 따른다
 - `Light` / `Dark`: Mica는 OS 테마 색으로 남아 글자와 어긋나므로 **끄고** 그 테마의 단색으로 칠한다
-- 제목줄은 `ExtendsContentIntoTitleBar`로 앱이 직접 그린다. Windows 10은 제목줄 색 API를 지원하지 않아 시스템이 그리면 밝은 띠가 남는다
+- 제목줄은 `ExtendsContentIntoTitleBar` + WinUI `TitleBar` 컨트롤(`SetTitleBar(AppTitleBar)`)로 앱이 직접 그린다. Windows 10은 제목줄 색 API를 지원하지 않아 시스템이 그리면 밝은 띠가 남는다. `TitleBar`가 끌기 영역과 버튼의 입력 통과 영역을 스스로 맞추므로 `InputNonClientPointerSource`를 손으로 만지지 않는다. `NavigationView`의 뒤로·햄버거는 숨긴다(중복)
 ---
 
 ## 7. 불변 규칙

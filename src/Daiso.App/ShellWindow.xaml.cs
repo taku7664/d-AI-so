@@ -164,13 +164,16 @@ public sealed partial class ShellWindow : Window
     /// <summary>갈 곳이 없으면 잠근다. 잠긴 이유는 화살표 방향이 말한다.</summary>
     private void UpdateHistoryButtons()
     {
-        BackButton.IsEnabled = _history.CanGoBack;
+        AppTitleBar.IsBackButtonEnabled = _history.CanGoBack;
         ForwardButton.IsEnabled = _history.CanGoForward;
     }
 
-    private void OnBackClick(object sender, RoutedEventArgs e) => Move(_history.GoBack());
+    private void OnBackRequested(TitleBar sender, object args) => Move(_history.GoBack());
 
     private void OnForwardClick(object sender, RoutedEventArgs e) => Move(_history.GoForward());
+
+    /// <summary>좌측 메뉴를 접거나 편다. NavigationView 의 햄버거는 숨겼으므로 제목줄의 이 버튼이 그 일을 한다.</summary>
+    private void OnPaneToggleClick(object sender, RoutedEventArgs e) => Navigation.IsPaneOpen = !Navigation.IsPaneOpen;
 
     private void Move(NavigationSpot? target)
     {
@@ -283,12 +286,13 @@ public sealed partial class ShellWindow : Window
 
     /// <summary>
     /// 제목줄을 앱 화면 안으로 끌어온다. Windows 10에서는 제목줄 색을 바꿀 수 없어
-    /// 시스템이 그리는 밝은 띠가 남기 때문이다. 끌어온 영역은 창 드래그로 쓴다.
+    /// 시스템이 그리는 밝은 띠가 남기 때문이다. TitleBar 컨트롤이 끌기 영역과 버튼 자리(뒤로·LeftHeader)의
+    /// 입력 통과 영역을 스스로 맞춘다.
     /// </summary>
     private void ExtendTitleBar()
     {
         ExtendsContentIntoTitleBar = true;
-        SetTitleBar(TitleBarArea);
+        SetTitleBar(AppTitleBar);
     }
 
     private void ApplyTitleBarColors(bool dark)
