@@ -47,14 +47,10 @@
         </Style>
     </Page.Resources>
 
-    <Grid Padding="{StaticResource PagePadding}" RowSpacing="8">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-
-        <StackPanel Grid.Row="0" Spacing="10">
+    <!-- 골격은 PageBody 가 정한다: 탭 띠·방 도구 줄(필터 줄) → 본문. 폭은 Wide — 방 화면은 창을 다 쓴다 (UI_REFACTOR_PLAN §6, §8.2) -->
+    <controls:PageBody Layout="Wide">
+        <controls:PageBody.Filters>
+        <StackPanel Spacing="8">
 
         <!-- ───── 탭 띠 ───── -->
         <Grid ColumnSpacing="10">
@@ -128,12 +124,10 @@
                 </ListView.ItemTemplate>
             </ListView>
         </Grid>
-        </StackPanel>
 
         <!-- ───── 방 도구 줄(터미널 방일 때만): 아이콘만, 호버 툴팁 ───── -->
         <Border
             x:Name="RoomTools"
-            Grid.Row="1"
             Padding="4,2"
             CornerRadius="6"
             Background="{ThemeResource LayerFillColorDefaultBrush}"
@@ -193,13 +187,16 @@
                 <TextBlock x:Name="RoomTitleText" VerticalAlignment="Center" Margin="6,0,0,0" Style="{StaticResource MutedText}" TextTrimming="CharacterEllipsis" MaxWidth="520" />
             </StackPanel>
         </Border>
+        </StackPanel>
+        </controls:PageBody.Filters>
 
         <!-- ───── 본문 ───── -->
-        <Grid Grid.Row="2">
+        <controls:PageBody.Body>
+        <Grid>
 
-            <!-- 새 세션 카드: 번호 붙은 네 단계. 1·2가 왼쪽, 3·4가 오른쪽, 실행 줄이 아래 -->
+            <!-- 새 세션 카드: 번호 붙은 네 단계. 1·2가 왼쪽, 3·4가 오른쪽, 실행 줄이 아래. 폭은 골격이 정한다(Wide) — 카드가 따로 폭을 정하지 않는다 -->
             <ScrollViewer x:Name="NewSessionPanel" VerticalScrollBarVisibility="Auto">
-                <Border Style="{StaticResource CardBorder}" Padding="0" MaxWidth="{StaticResource PageMaxWidth}" HorizontalAlignment="Left" VerticalAlignment="Top">
+                <Border Style="{StaticResource CardBorder}" Padding="0" VerticalAlignment="Top">
                     <StackPanel>
                         <!-- 도구 탭(로고). 순서는 ToolLook.DisplayOrder. 아이콘은 코드에서 ToolLook.LogoIcon으로 채운다 -->
                         <Border Padding="12,8,12,0" BorderThickness="0,0,0,1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
@@ -333,15 +330,25 @@
                                         DisplayMemberPath="Name" />
 
                                     <TextBlock Grid.Row="1" Grid.Column="0" Text="{loc:Str Key=Terminal_RulesLabel}" VerticalAlignment="Center" MinWidth="56" />
-                                    <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                                        <Button Click="OnEditRulesClick" AutomationProperties.AutomationId="EditRulesButton" ToolTipService.ToolTip="{loc:Str Key=Room_EditRulesHint}">
+                                    <!-- 가로 StackPanel 은 좁은 창에서 카드 밖으로 넘친다. 상태 글이 남는 폭에서 말줄임되게 격자로 둔다 (하한 1024) -->
+                                    <Grid Grid.Row="1" Grid.Column="1" ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Button Grid.Column="0" Click="OnEditRulesClick" AutomationProperties.AutomationId="EditRulesButton" ToolTipService.ToolTip="{loc:Str Key=Room_EditRulesHint}">
                                             <StackPanel Orientation="Horizontal" Spacing="6">
                                                 <FontIcon Glyph="&#xE8A1;" FontSize="13" />
                                                 <TextBlock Text="{loc:Str Key=Terminal_EditRules}" />
                                             </StackPanel>
                                         </Button>
-                                        <TextBlock Text="{x:Bind ViewModel.RulesStatusText, Mode=OneWay}" Style="{StaticResource MutedText}" VerticalAlignment="Center" TextWrapping="Wrap" />
-                                    </StackPanel>
+                                        <TextBlock
+                                            Grid.Column="1"
+                                            Text="{x:Bind ViewModel.RulesStatusText, Mode=OneWay}"
+                                            ToolTipService.ToolTip="{x:Bind ViewModel.RulesStatusText, Mode=OneWay}"
+                                            Style="{StaticResource MutedText}"
+                                            VerticalAlignment="Center" />
+                                    </Grid>
                                 </Grid>
                                 <TextBlock Text="{loc:Str Key=Terminal_PromptHint}" Style="{StaticResource MutedText}" TextWrapping="Wrap" />
                             </StackPanel>
@@ -543,5 +550,6 @@
                 </Border>
             </Grid>
         </Grid>
-    </Grid>
+        </controls:PageBody.Body>
+    </controls:PageBody>
 </Page>
