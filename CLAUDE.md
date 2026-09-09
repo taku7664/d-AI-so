@@ -4,6 +4,7 @@
 - 요구사항: `docs/REQUIREMENTS.md`
 - 아키텍처: `docs/ARCHITECTURE.md` (인터페이스·파싱 규칙의 정본. 코드가 이를 따른다)
 - 목표·완료 기준: `docs/GOAL.md`
+- 진행 중인 작업 계획: `docs/TERMINAL_CARD_PLAN.md` (새 터미널 카드 단계형 재설계, Stage 0~7)
 
 ## 빌드·실행 확인
 
