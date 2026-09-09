@@ -39,26 +39,45 @@ internal static class ClipboardImage
         return Put(dib);
     }
 
+    /// <summary>
+    /// BITMAPINFOHEADER + 32bpp 픽셀. 행은 <b>아래→위</b>(높이 양수)로 놓는다.
+    /// 위→아래(높이 음수)로 놓으면 클립보드에는 올라가지만 GDI+ 가 그림으로 읽지 못해(<c>Clipboard.GetImage() == null</c>, 2026-09-09 측정)
+    /// Claude Code 같은 CLI 가 첨부하지 못한다.
+    /// </summary>
     private static byte[] ToDib(SoftwareBitmap bitmap)
     {
         var width = bitmap.PixelWidth;
         var height = bitmap.PixelHeight;
-        var pixels = new byte[width * height * 4];
-        bitmap.CopyToBuffer(pixels.AsBuffer());
+        var rowBytes = width * 4;
+
+        // 행 간격(stride)은 잠가 봐야 안다. 32bpp 는 보통 width*4 와 같지만 믿지 않는다. 잠금은 복사 전에 푼다
+        BitmapPlaneDescription description;
+        using (var buffer = bitmap.LockBuffer(BitmapBufferAccessMode.Read))
+        {
+            description = buffer.GetPlaneDescription(0);
+        }
+
+        var source = new byte[description.StartIndex + description.Stride * height];
+        bitmap.CopyToBuffer(source.AsBuffer());
 
         const int headerSize = 40; // BITMAPINFOHEADER
-        var dib = new byte[headerSize + pixels.Length];
+        var dib = new byte[headerSize + rowBytes * height];
         var header = dib.AsSpan(0, headerSize);
         BitConverter.TryWriteBytes(header[0..4], headerSize);
         BitConverter.TryWriteBytes(header[4..8], width);
-        BitConverter.TryWriteBytes(header[8..12], -height);   // 음수 = 첫 줄이 위
+        BitConverter.TryWriteBytes(header[8..12], height);    // 양수 = 마지막 행이 먼저 (bottom-up)
         BitConverter.TryWriteBytes(header[12..14], (short)1); // planes
         BitConverter.TryWriteBytes(header[14..16], (short)32); // bpp
         BitConverter.TryWriteBytes(header[16..20], 0);        // BI_RGB
-        BitConverter.TryWriteBytes(header[20..24], pixels.Length);
+        BitConverter.TryWriteBytes(header[20..24], rowBytes * height);
         BitConverter.TryWriteBytes(header[24..28], 3780);     // 96 dpi
         BitConverter.TryWriteBytes(header[28..32], 3780);
-        pixels.CopyTo(dib, headerSize);
+
+        for (var y = 0; y < height; y++)
+        {
+            Buffer.BlockCopy(source, description.StartIndex + y * description.Stride, dib, headerSize + (height - 1 - y) * rowBytes, rowBytes);
+        }
+
         return dib;
     }
 
