@@ -3,6 +3,7 @@ using Daiso.App.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 
 namespace Daiso.App.Views;
 
@@ -20,11 +21,73 @@ public sealed partial class UsagePage : Page
 
     public UsageViewModel Usage { get; }
 
-    /// <summary>일별 줄에 마우스가 올라오면 배경·막대를 밝히고 내역 글을 보인다.</summary>
-    private void OnDayEntered(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) => HighlightDay(sender as Grid, true);
+    /// <summary>화면에 붙어 있는 일별 줄들. 포인터 밑의 줄을 여기서 찾는다.</summary>
+    private readonly List<Grid> _dayRows = new();
 
-    private void OnDayExited(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) => HighlightDay(sender as Grid, false);
+    /// <summary>지금 밝혀 둔 줄.</summary>
+    private Grid? _hoveredDay;
 
+    private void OnDayRowLoaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is Grid row && !_dayRows.Contains(row))
+        {
+            _dayRows.Add(row);
+        }
+    }
+
+    private void OnDayRowUnloaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Grid row)
+        {
+            return;
+        }
+
+        _dayRows.Remove(row);
+
+        if (ReferenceEquals(_hoveredDay, row))
+        {
+            _hoveredDay = null;
+        }
+    }
+
+    /// <summary>
+    /// 어느 줄이 포인터 밑인지 카드 쪽에서 직접 정한다.
+    /// 줄마다 PointerEntered/Exited 를 듣던 방식은 포인터가 줄 안의 자식(막대·글씨) 경계를 넘을 때마다
+    /// Exited+Entered 가 잇달아 와서 초당 수십 번 깜빡였다. 좌표로 정하면 그 전환이 무의미해진다.
+    /// </summary>
+    private void OnDayAreaMoved(object sender, PointerRoutedEventArgs e)
+    {
+        Grid? under = null;
+
+        foreach (var row in _dayRows)
+        {
+            var point = e.GetCurrentPoint(row).Position;
+
+            if (point.X >= 0 && point.Y >= 0 && point.X <= row.ActualWidth && point.Y <= row.ActualHeight)
+            {
+                under = row;
+                break;
+            }
+        }
+
+        if (ReferenceEquals(_hoveredDay, under))
+        {
+            return;
+        }
+
+        HighlightDay(_hoveredDay, false);
+        _hoveredDay = under;
+        HighlightDay(under, true);
+    }
+
+    /// <summary>카드를 벗어나거나 포인터가 취소·캡처 해제되면 밝힘을 지운다.</summary>
+    private void OnDayAreaLeft(object sender, PointerRoutedEventArgs e)
+    {
+        HighlightDay(_hoveredDay, false);
+        _hoveredDay = null;
+    }
+
+    /// <summary>줄 하나의 밝힘을 켜고 끈다. 배경 틴트·막대 밝기·내역 글.</summary>
     private static void HighlightDay(Grid? row, bool on)
     {
         if (row is null)
@@ -32,8 +95,9 @@ public sealed partial class UsagePage : Page
             return;
         }
 
+        // ListViewItem 의 호버 색. Subtle* 계열은 다크 테마에서 흰색 3% 수준이라 눈에 띄지 않는다
         row.Background = on
-            ? (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["SubtleFillColorSecondaryBrush"]
+            ? (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["ListViewItemBackgroundPointerOver"]
             : new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
 
         foreach (var child in row.Children)
@@ -41,7 +105,7 @@ public sealed partial class UsagePage : Page
             switch (child)
             {
                 case Microsoft.UI.Xaml.Shapes.Rectangle bar:
-                    bar.Fill = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources[on ? "AccentFillColorSecondaryBrush" : "AccentFillColorDefaultBrush"];
+                    bar.Opacity = on ? 1 : 0.75;
                     break;
                 case TextBlock text when Grid.GetColumn(text) == 3:
                     text.Opacity = on ? 1 : 0;

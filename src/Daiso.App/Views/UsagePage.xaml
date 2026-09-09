@@ -102,7 +102,13 @@
                 </Border>
 
                 <!-- 일별 -->
-                <Border Style="{StaticResource CardBorder}" Visibility="{x:Bind Usage.HasData, Mode=OneWay}">
+                <Border
+                    Style="{StaticResource CardBorder}"
+                    Visibility="{x:Bind Usage.HasData, Mode=OneWay}"
+                    PointerMoved="OnDayAreaMoved"
+                    PointerExited="OnDayAreaLeft"
+                    PointerCanceled="OnDayAreaLeft"
+                    PointerCaptureLost="OnDayAreaLeft">
                     <StackPanel Spacing="10">
                         <TextBlock Text="{loc:Str Key=Usage_Daily}" Style="{StaticResource SectionTitleText}" />
 
@@ -116,8 +122,8 @@
                                         Padding="6,4"
                                         CornerRadius="4"
                                         Background="Transparent"
-                                        PointerEntered="OnDayEntered"
-                                        PointerExited="OnDayExited">
+                                        Loaded="OnDayRowLoaded"
+                                        Unloaded="OnDayRowUnloaded">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="56" />
                                             <ColumnDefinition Width="360" />
@@ -138,6 +144,7 @@
                                             RadiusX="6"
                                             RadiusY="6"
                                             Width="{x:Bind BarWidth}"
+                                            Opacity="0.75"
                                             Fill="{ThemeResource AccentFillColorDefaultBrush}" />
 
                                         <TextBlock
