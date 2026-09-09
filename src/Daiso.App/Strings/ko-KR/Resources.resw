@@ -83,6 +83,12 @@
   <data name="Common_Reload" xml:space="preserve">
     <value>다시 읽기</value>
   </data>
+  <data name="Common_Back" xml:space="preserve">
+    <value>뒤로</value>
+  </data>
+  <data name="Common_BackTip" xml:space="preserve">
+    <value>뒤로 (마우스 엄지 버튼)</value>
+  </data>
   <data name="Common_Forward" xml:space="preserve">
     <value>앞으로</value>
   </data>
@@ -550,7 +556,7 @@
   </data>
 
   <!-- ── Settings ───────────────────────────────────────────────────────── -->
-  <data name="Settings_SaveFailed" xml:space="preserve">
+  <data name="Shell_SaveFailed" xml:space="preserve">
     <value>설정을 저장하지 못했습니다: {0}</value>
     <comment>{0}=까닭. 읽기 전용 폴더나 다른 프로그램이 파일을 잡고 있을 때</comment>
   </data>

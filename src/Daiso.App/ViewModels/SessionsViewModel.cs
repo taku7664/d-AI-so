@@ -26,6 +26,9 @@ public sealed partial class SessionsViewModel : ObservableObject
     /// <summary>선택한 세션의 메시지 전부(상한 안). 필터는 여기서 건다.</summary>
     private List<SessionMessage> _loadedMessages = [];
 
+    /// <summary>여러 필터를 한꺼번에 바꾸는 동안 다시 읽기를 미룬다. <see cref="ResetFilters"/> 전용.</summary>
+    private bool _suspendReload;
+
     /// <summary>진행 중인 타임라인 읽기. 다른 세션을 고르면 앞의 것을 취소한다.</summary>
     private CancellationTokenSource? _timelineCts;
 
@@ -509,11 +512,22 @@ public sealed partial class SessionsViewModel : ObservableObject
     [RelayCommand]
     public void ResetFilters()
     {
-        ToolFilterIndex = 0;
-        PeriodFilterIndex = 0;
-        MinSizeMegabytes = 0;
-        OrphansOnly = false;
-        IncludeArchived = true;
+        _suspendReload = true;
+
+        try
+        {
+            ToolFilterIndex = 0;
+            PeriodFilterIndex = 0;
+            MinSizeMegabytes = 0;
+            OrphansOnly = false;
+            IncludeArchived = true;
+        }
+        finally
+        {
+            _suspendReload = false;
+        }
+
+        ReloadForFilter();
     }
 
     /// <summary>규칙에 맞는 세션을 골라 체크한다. (N일 이상 / 고아 / N MB 초과)</summary>
@@ -683,12 +697,23 @@ public sealed partial class SessionsViewModel : ObservableObject
         NotifyTimelineState();
     }
 
+    /// <summary>
+    /// 필터가 바뀌면 바로 다시 읽는다.
+    /// <para>
+    /// 예전에는 <c>if (!IsBusy)</c> 로 감싸여 있어서 <b>읽는 중에 바뀐 필터를 통째로 버렸다</b>.
+    /// 도구 탭을 누른 직후(아직 읽는 중) 다른 탭을 누르면 탭만 바뀌고 목록은 앞 탭에 머물렀다.
+    /// 지금은 그냥 시작한다 — <see cref="LoadAsync"/> 가 세대 번호로 마지막 요청만 화면에 쓴다.
+    /// </para>
+    /// </summary>
     private void ReloadForFilter()
     {
-        if (!IsBusy)
+        // ResetFilters 처럼 여러 값을 잇달아 바꿀 때 읽기를 다섯 번 시작하지 않는다
+        if (_suspendReload)
         {
-            UiCommands.Start(ApplyFiltersCommand);
+            return;
         }
+
+        UiCommands.Start(ApplyFiltersCommand);
     }
 
     private void OnRowCheckedChanged(object? sender, EventArgs e) => NotifyChecked();

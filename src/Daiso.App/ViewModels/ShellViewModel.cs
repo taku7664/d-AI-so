@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Daiso.App.Services;
+using Daiso.App.Strings;
 
 namespace Daiso.App.ViewModels;
 
@@ -7,6 +8,7 @@ namespace Daiso.App.ViewModels;
 public sealed partial class ShellViewModel : ObservableObject
 {
     private readonly IndexService _indexService;
+    private readonly ISettingsStore _settings;
 
     /// <summary>상태바 문구.</summary>
     [ObservableProperty]
@@ -20,18 +22,57 @@ public sealed partial class ShellViewModel : ObservableObject
     [ObservableProperty]
     private bool isIndexing;
 
-    public ShellViewModel(IndexService indexService)
+    /// <summary>
+    /// 좌측 하단에 빨갛게 뜨는 알림. 없으면 null.
+    /// <para>
+    /// 실패는 그 일이 벌어진 화면이 아니라 <b>늘 같은 자리</b>에 뜬다.
+    /// 설정 화면 안에만 띄우면 다른 화면을 보고 있을 때 놓친다.
+    /// </para>
+    /// </summary>
+    [ObservableProperty]
+    private string? errorMessage;
+
+    public ShellViewModel(IndexService indexService, ISettingsStore settings)
     {
         ArgumentNullException.ThrowIfNull(indexService);
+        ArgumentNullException.ThrowIfNull(settings);
 
         _indexService = indexService;
+        _settings = settings;
         statusMessage = IndexStatus.Idle.Display;
 
         _indexService.StatusChanged += OnStatusChanged;
+
+        // 설정 저장이 실패하면 여기로 올라온다. 성공하면 알림이 지워진다
+        _settings.Changed += (_, _) => Report(
+            _settings.LastSaveError is { } reason
+                ? UiStrings.Format("Shell_SaveFailed", reason)
+                : null);
     }
 
     /// <summary>인덱싱이 돌고 있지 않은가. 빈 목록 안내를 가리는 데 쓴다.</summary>
     public bool IsNotIndexing => !IsIndexing;
+
+    /// <summary>보여줄 알림이 있는가.</summary>
+    public bool HasError => !string.IsNullOrWhiteSpace(ErrorMessage);
+
+    /// <summary>
+    /// 좌측 하단에 알림을 올린다. <paramref name="message"/> 가 null 이면 지운다.
+    /// 어디서 불러도 UI 스레드로 옮겨 준다.
+    /// </summary>
+    public void Report(string? message)
+    {
+        void Apply() => ErrorMessage = message;
+
+        if (Dispatch is { } dispatch)
+        {
+            dispatch(Apply);
+        }
+        else
+        {
+            Apply();
+        }
+    }
 
     /// <summary>UI 스레드로 값을 옮길 때 쓴다. 창이 붙기 전에는 null이다.</summary>
     public Action<Action>? Dispatch { get; set; }
@@ -41,6 +82,8 @@ public sealed partial class ShellViewModel : ObservableObject
         _ = Task.Run(() => _indexService.RefreshAsync());
 
     partial void OnIsIndexingChanged(bool value) => OnPropertyChanged(nameof(IsNotIndexing));
+
+    partial void OnErrorMessageChanged(string? value) => OnPropertyChanged(nameof(HasError));
 
     private void OnStatusChanged(object? sender, IndexStatus status)
     {

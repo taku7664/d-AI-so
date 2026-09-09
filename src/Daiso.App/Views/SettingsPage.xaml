@@ -315,15 +315,6 @@
                         <StackPanel Spacing="{StaticResource GapXSmall}">
                             <TextBlock Text="{loc:Str Key=About_WhereTitle}" Style="{StaticResource MutedText}" />
                             <TextBlock Text="{x:Bind ViewModel.SettingsFilePath}" Style="{StaticResource MonoText}" TextWrapping="Wrap" />
-
-                            <!-- 저장이 실패했을 때만 나온다. 조용히 사라지는 설정보다 시끄러운 한 줄이 낫다 -->
-                            <TextBlock
-                                AutomationProperties.AutomationId="SettingsSaveFailed"
-                                Text="{x:Bind ViewModel.SaveFailureText, Mode=OneWay}"
-                                Visibility="{x:Bind ViewModel.SaveFailed, Mode=OneWay}"
-                                Style="{StaticResource MutedText}"
-                                Foreground="{ThemeResource SystemFillColorCriticalBrush}"
-                                TextWrapping="Wrap" />
                             <TextBlock Text="{x:Bind ViewModel.DefaultIndexDatabasePath}" Style="{StaticResource MonoText}" TextWrapping="Wrap" />
                             <TextBlock Text="{x:Bind ViewModel.ProfilesPath}" Style="{StaticResource MonoText}" TextWrapping="Wrap" />
                         </StackPanel>

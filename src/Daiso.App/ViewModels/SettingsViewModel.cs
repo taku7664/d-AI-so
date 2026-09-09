@@ -50,13 +50,6 @@ public sealed partial class SettingsViewModel : ObservableObject
         _settings = settings;
         _indexService = indexService;
 
-        // 저장이 실패했는지는 저장이 끝나야 알 수 있다.
-        _settings.Changed += (_, _) =>
-        {
-            OnPropertyChanged(nameof(SaveFailed));
-            OnPropertyChanged(nameof(SaveFailureText));
-        };
-
         Load();
     }
 
@@ -89,15 +82,6 @@ public sealed partial class SettingsViewModel : ObservableObject
     /// <summary>설정 파일 위치.</summary>
     public string SettingsFilePath =>
         (_settings as SettingsStore)?.Path ?? UiStrings.Get("Common_Unknown");
-
-    /// <summary>마지막 저장이 실패했는가. 실패했으면 설정 파일 위치 옆에 까닭을 띄운다.</summary>
-    public bool SaveFailed => _settings.LastSaveError is not null;
-
-    /// <summary>저장이 왜 실패했는지 한 줄.</summary>
-    public string SaveFailureText =>
-        _settings.LastSaveError is { } reason
-            ? UiStrings.Format("Settings_SaveFailed", reason)
-            : string.Empty;
 
     /// <summary>앱 판 번호. 정보 카드에 쓴다.</summary>
     public string AppVersion => UiStrings.Format(

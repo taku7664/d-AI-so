@@ -187,11 +187,11 @@ public sealed partial class ShellWindow : Window
     /// <summary>갈 곳이 없으면 잠근다. 잠긴 이유는 화살표 방향이 말한다.</summary>
     private void UpdateHistoryButtons()
     {
-        AppTitleBar.IsBackButtonEnabled = _history.CanGoBack;
+        BackButton.IsEnabled = _history.CanGoBack;
         ForwardButton.IsEnabled = _history.CanGoForward;
     }
 
-    private void OnBackRequested(TitleBar sender, object args) => Move(_history.GoBack());
+    private void OnBackClick(object sender, RoutedEventArgs e) => Move(_history.GoBack());
 
     private void OnForwardClick(object sender, RoutedEventArgs e) => Move(_history.GoForward());
 
@@ -261,11 +261,18 @@ public sealed partial class ShellWindow : Window
 
     private void ApplyStatus()
     {
+        // 알림이 있으면 그것을 먼저 보여 준다. 실패는 진행 상황보다 급하다
+        var notice = _viewModel.ErrorMessage;
+        var hasNotice = !string.IsNullOrWhiteSpace(notice);
+
         // 보여줄 상태가 없으면 바 자체를 숨긴다. 빈 줄이 화면 아래를 먹지 않게.
-        var hasStatus = !string.IsNullOrWhiteSpace(_viewModel.StatusMessage) || _viewModel.IsIndexing;
+        var hasStatus = hasNotice || !string.IsNullOrWhiteSpace(_viewModel.StatusMessage) || _viewModel.IsIndexing;
         StatusBar.Visibility = hasStatus ? Visibility.Visible : Visibility.Collapsed;
 
-        StatusText.Text = _viewModel.StatusMessage;
+        StatusText.Text = hasNotice ? notice : _viewModel.StatusMessage;
+        StatusText.Foreground = hasNotice
+            ? (Brush)Application.Current.Resources["SystemFillColorCriticalBrush"]
+            : (Brush)Application.Current.Resources["TextFillColorPrimaryBrush"];
         StatusProgress.Visibility = _viewModel.IsIndexing ? Visibility.Visible : Visibility.Collapsed;
         StatusProgress.IsIndeterminate = _viewModel.StatusPercent <= 0;
         StatusProgress.Value = _viewModel.StatusPercent;

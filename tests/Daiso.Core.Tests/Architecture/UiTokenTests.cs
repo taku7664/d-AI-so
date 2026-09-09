@@ -74,7 +74,6 @@ public sealed partial class UiTokenTests
     [
         "TitleBarCompactHeight",
         "TitleBarExpandedHeight",
-        "TitleBarBackButtonWidth",
     ];
 
     [Fact]
