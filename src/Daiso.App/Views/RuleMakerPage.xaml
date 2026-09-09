@@ -73,7 +73,7 @@
             </Grid.ColumnDefinitions>
 
             <Border Grid.Column="0" Style="{StaticResource CardBorder}" Padding="8">
-                <Grid RowSpacing="8">
+                <Grid RowSpacing="{StaticResource GapMedium}">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*" />
                         <RowDefinition Height="Auto" />
@@ -89,7 +89,7 @@
                         ContainerContentChanging="OnGalleryContainerChanging">
                         <ListView.ItemTemplate>
                             <DataTemplate x:DataType="vm:PresetGalleryItemViewModel">
-                                <StackPanel Spacing="2" Margin="0,6,0,6" ToolTipService.ToolTip="{x:Bind Description}">
+                                <StackPanel Spacing="{StaticResource GapTiny}" Margin="0,6,0,6" ToolTipService.ToolTip="{x:Bind Description}">
                                     <TextBlock Text="{x:Bind Badge}" Style="{StaticResource MutedText}" />
                                     <TextBlock Text="{x:Bind Name}" Style="{ThemeResource BodyStrongTextBlockStyle}" TextTrimming="CharacterEllipsis" />
                                     <TextBlock
@@ -116,15 +116,15 @@
 
             <controls:PaneSplitter x:Name="ListSplitter" Grid.Column="1" SettingsKey="RuleMaker" />
 
-            <Grid Grid.Column="2" RowSpacing="14">
+            <Grid Grid.Column="2" RowSpacing="{StaticResource GapOffGrid14}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
                 <!-- 이름 · 설명 · 프로젝트 폴더 -->
-                <StackPanel Grid.Row="0" Spacing="10">
-                    <Grid ColumnSpacing="12">
+                <StackPanel Grid.Row="0" Spacing="{StaticResource GapOffGrid10}">
+                    <Grid ColumnSpacing="{StaticResource GapLarge}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="280" />
                             <ColumnDefinition Width="*" />
@@ -143,7 +143,7 @@
                             Text="{x:Bind ViewModel.Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                     </Grid>
 
-                    <Grid ColumnSpacing="8">
+                    <Grid ColumnSpacing="{StaticResource GapMedium}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
@@ -162,7 +162,7 @@
                             VerticalAlignment="Bottom"
                             AutomationProperties.AutomationId="ProjectPickerButton">
                             <muxc:DropDownButton.Content>
-                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
                                     <TextBlock Text="{loc:Str Key=Common_KnownProjects}" />
                                 </StackPanel>
                             </muxc:DropDownButton.Content>
@@ -189,19 +189,19 @@
                     미리보기 열에는 MinWidth 를 두지 않는다. 열이 최소 폭을 요구하면 격자가 제 칸보다 커져 ActualWidth
                     가 실제 칸 폭을 말해 주지 않고, 접을지 판단할 근거가 사라진다. 최소 폭(190)은 코드 비하인드 상수다
                 -->
-                <Grid x:Name="EditorGrid" Grid.Row="1" ColumnSpacing="14" SizeChanged="OnEditorSizeChanged">
+                <Grid x:Name="EditorGrid" Grid.Row="1" ColumnSpacing="{StaticResource GapOffGrid14}" SizeChanged="OnEditorSizeChanged">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="2*" MinWidth="380" />
                         <ColumnDefinition x:Name="PreviewColumn" Width="*" />
                     </Grid.ColumnDefinitions>
 
                     <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
-                        <StackPanel Spacing="14">
+                        <StackPanel Spacing="{StaticResource GapOffGrid14}">
 
                             <!-- 항상 적용되는 행동 -->
                             <Border Style="{StaticResource CardBorder}">
-                                <StackPanel Spacing="10">
-                                    <Grid ColumnSpacing="12">
+                                <StackPanel Spacing="{StaticResource GapOffGrid10}">
+                                    <Grid ColumnSpacing="{StaticResource GapLarge}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
@@ -214,8 +214,8 @@
                                             Grid.Column="1"
                                             AutomationProperties.AutomationId="AddGlobalButton"
                                             Click="OnAddGlobalClick">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <FontIcon Glyph="&#xE710;" FontSize="13" />
+                                            <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
+                                                <FontIcon Glyph="&#xE710;" FontSize="{StaticResource BodySmallFontSize}" />
                                                 <TextBlock Text="{loc:Str Key=RuleMaker_AddAction}" />
                                             </StackPanel>
                                         </Button>
@@ -224,7 +224,7 @@
                                     <ItemsControl ItemsSource="{x:Bind ViewModel.Global}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate x:DataType="vm:ActionEditViewModel">
-                                                <Grid ColumnSpacing="8" Margin="0,0,0,8">
+                                                <Grid ColumnSpacing="{StaticResource GapMedium}" Margin="0,0,0,8">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*" />
                                                         <ColumnDefinition Width="104" />
@@ -254,7 +254,7 @@
                                                         ToolTipService.ToolTip="{loc:Str Key=RuleMaker_MoveUp}"
                                                         Click="OnGlobalUpClick"
                                                         DataContext="{x:Bind}">
-                                                        <FontIcon Glyph="&#xE74A;" FontSize="12" />
+                                                        <FontIcon Glyph="&#xE74A;" FontSize="{StaticResource CaptionFontSize}" />
                                                     </Button>
                                                     <Button
                                                         Grid.Column="3"
@@ -262,7 +262,7 @@
                                                         ToolTipService.ToolTip="{loc:Str Key=RuleMaker_MoveDown}"
                                                         Click="OnGlobalDownClick"
                                                         DataContext="{x:Bind}">
-                                                        <FontIcon Glyph="&#xE74B;" FontSize="12" />
+                                                        <FontIcon Glyph="&#xE74B;" FontSize="{StaticResource CaptionFontSize}" />
                                                     </Button>
                                                     <Button
                                                         Grid.Column="4"
@@ -270,7 +270,7 @@
                                                         ToolTipService.ToolTip="{loc:Str Key=Common_Delete}"
                                                         Click="OnGlobalRemoveClick"
                                                         DataContext="{x:Bind}">
-                                                        <FontIcon Glyph="&#xE74D;" FontSize="12" />
+                                                        <FontIcon Glyph="&#xE74D;" FontSize="{StaticResource CaptionFontSize}" />
                                                     </Button>
                                                 </Grid>
                                             </DataTemplate>
@@ -281,8 +281,8 @@
 
                             <!-- 규칙 목록 -->
                             <Border Style="{StaticResource CardBorder}">
-                                <StackPanel Spacing="10">
-                                    <Grid ColumnSpacing="12">
+                                <StackPanel Spacing="{StaticResource GapOffGrid10}">
+                                    <Grid ColumnSpacing="{StaticResource GapLarge}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
@@ -295,8 +295,8 @@
                                             Grid.Column="1"
                                             AutomationProperties.AutomationId="AddRuleButton"
                                             Click="OnAddRuleClick">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <FontIcon Glyph="&#xE710;" FontSize="13" />
+                                            <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
+                                                <FontIcon Glyph="&#xE710;" FontSize="{StaticResource BodySmallFontSize}" />
                                                 <TextBlock Text="{loc:Str Key=RuleMaker_AddRule}" />
                                             </StackPanel>
                                         </Button>
@@ -323,8 +323,8 @@
 
                             <!-- 선택한 규칙 -->
                             <Border Style="{StaticResource CardBorder}">
-                                <StackPanel Spacing="10">
-                                    <Grid ColumnSpacing="12">
+                                <StackPanel Spacing="{StaticResource GapOffGrid10}">
+                                    <Grid ColumnSpacing="{StaticResource GapLarge}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
@@ -342,10 +342,10 @@
                                             Style="{StaticResource MutedText}" />
                                     </Grid>
 
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
                                         <Button AutomationProperties.AutomationId="AddLeafButton" Click="OnAddLeafClick">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <FontIcon Glyph="&#xE710;" FontSize="13" />
+                                            <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
+                                                <FontIcon Glyph="&#xE710;" FontSize="{StaticResource BodySmallFontSize}" />
                                                 <TextBlock Text="{loc:Str Key=RuleMaker_AddLeaf}" />
                                             </StackPanel>
                                         </Button>
@@ -366,19 +366,19 @@
                                             AutomationProperties.Name="{loc:Str Key=RuleMaker_MoveUp}"
                                             ToolTipService.ToolTip="{loc:Str Key=RuleMaker_MoveUp}"
                                             Click="OnNodeUpClick">
-                                            <FontIcon Glyph="&#xE74A;" FontSize="12" />
+                                            <FontIcon Glyph="&#xE74A;" FontSize="{StaticResource CaptionFontSize}" />
                                         </Button>
                                         <Button
                                             AutomationProperties.Name="{loc:Str Key=RuleMaker_MoveDown}"
                                             ToolTipService.ToolTip="{loc:Str Key=RuleMaker_MoveDown}"
                                             Click="OnNodeDownClick">
-                                            <FontIcon Glyph="&#xE74B;" FontSize="12" />
+                                            <FontIcon Glyph="&#xE74B;" FontSize="{StaticResource CaptionFontSize}" />
                                         </Button>
                                         <Button
                                             AutomationProperties.Name="{loc:Str Key=RuleMaker_DeleteNode}"
                                             ToolTipService.ToolTip="{loc:Str Key=RuleMaker_DeleteNode}"
                                             Click="OnNodeDeleteClick">
-                                            <FontIcon Glyph="&#xE74D;" FontSize="12" />
+                                            <FontIcon Glyph="&#xE74D;" FontSize="{StaticResource CaptionFontSize}" />
                                         </Button>
                                     </StackPanel>
 
@@ -396,7 +396,7 @@
                                                 <muxc:TreeViewItem
                                                     ItemsSource="{x:Bind Children}"
                                                     IsExpanded="True">
-                                                    <Grid ColumnSpacing="8">
+                                                    <Grid ColumnSpacing="{StaticResource GapMedium}">
                                                         <Grid.ColumnDefinitions>
                                                             <ColumnDefinition Width="Auto" />
                                                             <ColumnDefinition Width="*" />
@@ -430,7 +430,7 @@
                                             TextWrapping="Wrap" />
                                     </Border>
 
-                                    <Grid ColumnSpacing="12" Margin="0,6,0,0">
+                                    <Grid ColumnSpacing="{StaticResource GapLarge}" Margin="0,6,0,0">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
@@ -443,8 +443,8 @@
                                             Grid.Column="1"
                                             AutomationProperties.AutomationId="AddRuleActionButton"
                                             Click="OnAddRuleActionClick">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <FontIcon Glyph="&#xE710;" FontSize="13" />
+                                            <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
+                                                <FontIcon Glyph="&#xE710;" FontSize="{StaticResource BodySmallFontSize}" />
                                                 <TextBlock Text="{loc:Str Key=RuleMaker_AddAction}" />
                                             </StackPanel>
                                         </Button>
@@ -453,7 +453,7 @@
                                     <ItemsControl ItemsSource="{x:Bind ViewModel.SelectedRule.Actions, Mode=OneWay}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate x:DataType="vm:ActionEditViewModel">
-                                                <Grid ColumnSpacing="8" Margin="0,0,0,8">
+                                                <Grid ColumnSpacing="{StaticResource GapMedium}" Margin="0,0,0,8">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*" />
                                                         <ColumnDefinition Width="104" />
@@ -483,7 +483,7 @@
                                                         ToolTipService.ToolTip="{loc:Str Key=RuleMaker_MoveUp}"
                                                         Click="OnRuleActionUpClick"
                                                         DataContext="{x:Bind}">
-                                                        <FontIcon Glyph="&#xE74A;" FontSize="12" />
+                                                        <FontIcon Glyph="&#xE74A;" FontSize="{StaticResource CaptionFontSize}" />
                                                     </Button>
                                                     <Button
                                                         Grid.Column="3"
@@ -491,7 +491,7 @@
                                                         ToolTipService.ToolTip="{loc:Str Key=RuleMaker_MoveDown}"
                                                         Click="OnRuleActionDownClick"
                                                         DataContext="{x:Bind}">
-                                                        <FontIcon Glyph="&#xE74B;" FontSize="12" />
+                                                        <FontIcon Glyph="&#xE74B;" FontSize="{StaticResource CaptionFontSize}" />
                                                     </Button>
                                                     <Button
                                                         Grid.Column="4"
@@ -499,7 +499,7 @@
                                                         ToolTipService.ToolTip="{loc:Str Key=Common_Delete}"
                                                         Click="OnRuleActionRemoveClick"
                                                         DataContext="{x:Bind}">
-                                                        <FontIcon Glyph="&#xE74D;" FontSize="12" />
+                                                        <FontIcon Glyph="&#xE74D;" FontSize="{StaticResource CaptionFontSize}" />
                                                     </Button>
                                                 </Grid>
                                             </DataTemplate>
@@ -517,7 +517,7 @@
 
                     <!-- 미리보기 -->
                     <Border x:Name="PreviewCard" Grid.Column="1" Style="{StaticResource CardBorder}">
-                        <Grid RowSpacing="10">
+                        <Grid RowSpacing="{StaticResource GapOffGrid10}">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="*" />
@@ -559,14 +559,14 @@
         <!-- 푸터: 저장은 언제나 여기 (UI_REFACTOR_PLAN §8.3). 저장이 잠겨 있으면 그 이유가 먼저 -->
         <controls:PageBody.Footer>
         <Border Style="{StaticResource FooterBorder}">
-            <Grid ColumnSpacing="16">
+            <Grid ColumnSpacing="{StaticResource GapXLarge}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
                     <Button
                         Content="{loc:Str Key=Common_Save}"
                         Style="{ThemeResource AccentButtonStyle}"
@@ -591,8 +591,8 @@
                 </StackPanel>
 
                 <!-- 저장이 잠겨 있으면 그 이유가 먼저. 상태는 남는 폭에서 말줄임 -->
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Visibility="{x:Bind ViewModel.SaveHintVisibility, Mode=OneWay}">
-                    <FontIcon Glyph="&#xE946;" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{StaticResource GapSmall}" VerticalAlignment="Center" Visibility="{x:Bind ViewModel.SaveHintVisibility, Mode=OneWay}">
+                    <FontIcon Glyph="&#xE946;" FontSize="{StaticResource CaptionFontSize}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
                     <TextBlock
                         AutomationProperties.AutomationId="RuleMakerSaveHint"
                         Text="{loc:Str Key=RuleMaker_SaveHint}"

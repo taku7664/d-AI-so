@@ -30,8 +30,8 @@
 | 파일 | 범위 안 곳 | 상태 |
 |---|---:|---|
 | TerminalPage.xaml | 77 | ⬜ |
-| SessionsPage.xaml | 43 | ⬜ |
-| RuleMakerPage.xaml | 42 | ⬜ |
+| SessionsPage.xaml | 43 | ✅ W7 |
+| RuleMakerPage.xaml | 42 | ✅ W6 |
 | DashboardPage.xaml | 31 | ✅ W4 |
 | SettingsPage.xaml | 26 | ✅ W5 |
 | UsagePage.xaml | 18 | ✅ W3 |
@@ -50,9 +50,9 @@
    토큰 이름 → 숫자가 지금 그 자리의 숫자와 **똑같은지** 기계로 검증한다 (§4).
 3. **App.xaml 에 새 값을 만들지 않는다.** 실제로 쓰이는 값에만 이름을 붙인다.
    쓰이지 않는 "혹시 몰라서" 토큰은 두지 않는다.
-4. 토큰 이름에 `_` 를 쓰지 않는다. `StringResourceKeysTests` 가 `접두어_이름` 꼴 문자열을
+5. 토큰 이름에 `_` 를 쓰지 않는다. `StringResourceKeysTests` 가 `접두어_이름` 꼴 문자열을
    문구 키로 보기 때문이다.
-5. **눈금에서 벗어난 값은 이름으로 드러낸다.** 숨기지 않는다 (§3 참고).
+6. **눈금에서 벗어난 값은 이름으로 드러낸다.** 숨기지 않는다 (§3 참고).
 
 ---
 
@@ -164,8 +164,8 @@
 | W3 | UsagePage.xaml | ✅ |
 | W4 | DashboardPage.xaml | ✅ |
 | W5 | SettingsPage.xaml | ✅ |
-| W6 | RuleMakerPage.xaml | ⬜ |
-| W7 | SessionsPage.xaml | ⬜ |
+| W6 | RuleMakerPage.xaml | ✅ |
+| W7 | SessionsPage.xaml | ✅ |
 | W8 | TerminalPage.xaml | ⬜ |
 | W9 | 가드 테스트 · App.xaml 기존 스타일 정리 · 마무리 | ⬜ |
 
@@ -181,3 +181,5 @@
   - *도중에 잡은 것:* `PageTitleText` 스타일의 `FontSize 24` 가 첫 목록에 없었다(인라인 속성만 셌기 때문).
     `HeadingLargeFontSize` 를 더해 열 단계가 되었다.
 - **W4~W5** — DashboardPage(31) · SettingsPage(26). 값 57곳 전부 동일, 남은 날 숫자 0. 빌드 경고 0.
+- **W6~W7** — RuleMakerPage(42) · SessionsPage(43). 값 85곳 전부 동일. 빌드 경고 0.
+  SessionsPage 의 `Spacing="0"` 한 곳은 토큰을 만들지 않고 두었다 (§2 규칙 3).
