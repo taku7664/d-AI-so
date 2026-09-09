@@ -907,12 +907,35 @@ public sealed class SearchSessionViewModel
 
     public ObservableCollection<SearchMatchViewModel> Matches { get; } = [];
 
-    public string Summary =>
-        UiStrings.Format(
-            "Sessions_HitSession",
-            Session.Tool,
-            Session.ModifiedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.CurrentCulture),
-            Matches.Count);
+    /// <summary>
+    /// 트리 한 줄: 제목 · 날짜 · 건수. 도구·시각만 있던 때는 같은 프로젝트의 세션 여덟 개가
+    /// "Claude · 2026-09-08 07:36" 식으로 늘어서서 어느 대화인지 알 수 없었다. 제목이 먼저다.
+    /// </summary>
+    public string Summary
+    {
+        get
+        {
+            var title = SessionTitle.Clean(Session.FirstPrompt);
+
+            if (title.Length == 0)
+            {
+                title = UiStrings.Get("Common_NoPrompt");
+            }
+            else if (title.Length > 60)
+            {
+                title = title[..60] + "…";
+            }
+
+            return UiStrings.Format(
+                "Sessions_HitSession",
+                title,
+                Session.ModifiedAt.ToLocalTime().ToString("MM-dd HH:mm", CultureInfo.CurrentCulture),
+                Matches.Count);
+        }
+    }
+
+    /// <summary>TreeView 는 노드 내용을 ToString 으로 그린다. 형식 이름이 화면에 찍히지 않게 한다.</summary>
+    public override string ToString() => Summary;
 }
 
 /// <summary>검색 결과 트리의 매칭 문장.</summary>
@@ -932,4 +955,7 @@ public sealed class SearchMatchViewModel
     public string Snippet { get; }
 
     public string Label => $"[{Message.Role}] {Snippet}";
+
+    /// <summary>TreeView 는 노드 내용을 ToString 으로 그린다. 형식 이름이 화면에 찍히지 않게 한다.</summary>
+    public override string ToString() => Label;
 }

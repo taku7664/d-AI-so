@@ -240,12 +240,25 @@
                     </Grid>
 
                     <Grid Grid.Row="1">
+                        <!-- 노드 글은 한 줄로 자른다. 기본 템플릿은 칸 끝에서 그냥 잘려 "09-09 18" 같은 꼬리가 남았다. 전문은 툴팁 -->
                         <muxc:TreeView
                             x:Name="SearchTree"
                             Padding="8,0,8,8"
                             SelectionMode="Single"
                             ItemInvoked="OnSearchItemInvoked"
-                            Visibility="{x:Bind ViewModel.SearchTreeVisibility, Mode=OneWay}" />
+                            Visibility="{x:Bind ViewModel.SearchTreeVisibility, Mode=OneWay}">
+                            <muxc:TreeView.ItemTemplate>
+                                <DataTemplate x:DataType="muxc:TreeViewNode">
+                                    <muxc:TreeViewItem ItemsSource="{x:Bind Children}" IsExpanded="{x:Bind IsExpanded, Mode=TwoWay}">
+                                        <TextBlock
+                                            Text="{Binding Content}"
+                                            TextTrimming="CharacterEllipsis"
+                                            TextWrapping="NoWrap"
+                                            ToolTipService.ToolTip="{Binding Content}" />
+                                    </muxc:TreeViewItem>
+                                </DataTemplate>
+                            </muxc:TreeView.ItemTemplate>
+                        </muxc:TreeView>
 
                         <ListView
                             AutomationProperties.AutomationId="SessionList"

@@ -99,7 +99,8 @@ public sealed partial class SessionsPage : Page, IPageHeaderSource
 
             foreach (var session in project.Sessions)
             {
-                var sessionNode = new TreeViewNode { Content = session.Summary, IsExpanded = false };
+                // 내용은 뷰모델 자체다(ToString 이 한 줄 요약). 문자열만 넣으면 눌렀을 때 어느 세션인지 되찾을 길이 없다
+                var sessionNode = new TreeViewNode { Content = session, IsExpanded = false };
 
                 foreach (var match in session.Matches)
                 {
@@ -113,11 +114,26 @@ public sealed partial class SessionsPage : Page, IPageHeaderSource
         }
     }
 
+    /// <summary>
+    /// 검색 트리에서 누르면 그 세션이 오른쪽에 열린다 — 매칭 문장이든 세션 줄이든.
+    /// 세션 줄은 펼침도 같이 한다. 전에는 세션 줄을 눌러도 선택만 되고 아무 일도 없어서
+    /// 작은 꺾쇠를 찾아 눌러야 했다 (REQUIREMENTS §7 "항목 클릭 → 세션 선택").
+    /// </summary>
     private async void OnSearchItemInvoked(TreeView sender, TreeViewItemInvokedEventArgs args)
     {
-        if (args.InvokedItem is TreeViewNode { Content: SearchMatchViewModel match })
+        switch (args.InvokedItem)
         {
-            await ViewModel.SelectFromSearchAsync(match.Session);
+            case TreeViewNode { Content: SearchMatchViewModel match }:
+                await ViewModel.SelectFromSearchAsync(match.Session);
+                break;
+
+            case TreeViewNode { Content: SearchSessionViewModel session } node:
+                node.IsExpanded = !node.IsExpanded;
+                await ViewModel.SelectFromSearchAsync(session.Session);
+                break;
+
+            default:
+                break;
         }
     }
 
