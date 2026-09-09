@@ -10,8 +10,8 @@
     <!-- 골격은 PageBody 가 정한다: 명령 줄 → 필터 줄 → 본문. 여백 24, 줄 사이 12, 폭은 Reading(1280 상한) (UI_REFACTOR_PLAN §6) -->
     <controls:PageBody Layout="Reading">
         <controls:PageBody.Commands>
-            <StackPanel Spacing="12">
-                <StackPanel Orientation="Horizontal" Spacing="8">
+            <StackPanel Spacing="{StaticResource GapLarge}">
+                <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
                     <ComboBox
                         Width="120"
                         AutomationProperties.AutomationId="UsagePeriodCombo"
@@ -26,8 +26,8 @@
                         <Button.KeyboardAccelerators>
                             <KeyboardAccelerator Key="F5" />
                         </Button.KeyboardAccelerators>
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <FontIcon Glyph="&#xE72C;" FontSize="14" />
+                        <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
+                            <FontIcon Glyph="&#xE72C;" FontSize="{StaticResource BodyFontSize}" />
                             <TextBlock Text="{loc:Str Key=Common_Reload}" />
                         </StackPanel>
                     </Button>
@@ -56,19 +56,19 @@
         </controls:PageBody.Filters>
 
         <controls:PageBody.Body>
-            <StackPanel Spacing="16">
+            <StackPanel Spacing="{StaticResource GapXLarge}">
                 <!-- 추정 비용 -->
                 <Border Style="{StaticResource CardBorder}">
-                    <StackPanel Spacing="10">
+                    <StackPanel Spacing="{StaticResource GapOffGrid10}">
                         <TextBlock
                             AutomationProperties.AutomationId="UsageCost"
                             Text="{x:Bind Usage.EstimatedCostText, Mode=OneWay}"
-                            FontSize="20"
+                            FontSize="{StaticResource TitleFontSize}"
                             FontWeight="SemiBold" />
 
                         <!-- 비어 있음 안내는 어디서나 NoticeBorder + 한 문장 (+ 다음에 할 일 버튼) 한 모양이다 -->
                         <Border Style="{StaticResource NoticeBorder}" Visibility="{x:Bind Usage.NeedsPrices, Mode=OneWay}">
-                            <Grid ColumnSpacing="12">
+                            <Grid ColumnSpacing="{StaticResource GapLarge}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
@@ -100,7 +100,7 @@
                     PointerExited="OnDayAreaLeft"
                     PointerCanceled="OnDayAreaLeft"
                     PointerCaptureLost="OnDayAreaLeft">
-                    <StackPanel Spacing="10">
+                    <StackPanel Spacing="{StaticResource GapOffGrid10}">
                         <TextBlock Text="{loc:Str Key=Usage_Daily}" Style="{StaticResource SectionTitleText}" />
 
                         <ItemsControl ItemsSource="{x:Bind Usage.Days}">
@@ -109,10 +109,10 @@
                                     <!-- 호버: 줄 배경이 켜지고(코드 비하인드) 정확한 수치·내역은 툴팁으로 나온다 -->
                                     <Grid
                                         ToolTipService.ToolTip="{x:Bind HoverText}"
-                                        ColumnSpacing="12"
+                                        ColumnSpacing="{StaticResource GapLarge}"
                                         Margin="0,0,0,2"
                                         Padding="6,4"
-                                        CornerRadius="4"
+                                        CornerRadius="{StaticResource RadiusSmall}"
                                         Background="Transparent"
                                         Loaded="OnDayRowLoaded"
                                         Unloaded="OnDayRowUnloaded">
@@ -154,10 +154,10 @@
 
                 <!-- 프로젝트별 -->
                 <Border Style="{StaticResource CardBorder}" Visibility="{x:Bind Usage.HasData, Mode=OneWay}">
-                    <StackPanel Spacing="10">
+                    <StackPanel Spacing="{StaticResource GapOffGrid10}">
                         <TextBlock Text="{loc:Str Key=Usage_TopProjects}" Style="{StaticResource SectionTitleText}" />
 
-                        <Grid ColumnSpacing="12">
+                        <Grid ColumnSpacing="{StaticResource GapLarge}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="100" />
@@ -171,14 +171,14 @@
                         <ItemsControl ItemsSource="{x:Bind Usage.TopProjects}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="vm:UsageRowViewModel">
-                                    <Grid ColumnSpacing="12" Margin="0,0,0,8">
+                                    <Grid ColumnSpacing="{StaticResource GapLarge}" Margin="0,0,0,8">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="100" />
                                             <ColumnDefinition Width="70" />
                                         </Grid.ColumnDefinitions>
 
-                                        <StackPanel Grid.Column="0" Spacing="1">
+                                        <StackPanel Grid.Column="0" Spacing="{StaticResource GapHair}">
                                             <TextBlock
                                                 Text="{x:Bind PrimaryText}"
                                                 TextTrimming="CharacterEllipsis"
@@ -210,10 +210,10 @@
 
                 <!-- 모델별 -->
                 <Border Style="{StaticResource CardBorder}" Visibility="{x:Bind Usage.HasData, Mode=OneWay}">
-                    <StackPanel Spacing="10">
+                    <StackPanel Spacing="{StaticResource GapOffGrid10}">
                         <TextBlock Text="{loc:Str Key=Usage_ByModel}" Style="{StaticResource SectionTitleText}" />
 
-                        <Grid ColumnSpacing="12">
+                        <Grid ColumnSpacing="{StaticResource GapLarge}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="100" />
@@ -229,7 +229,7 @@
                         <ItemsControl ItemsSource="{x:Bind Usage.ByModel}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="vm:UsageRowViewModel">
-                                    <Grid ColumnSpacing="12" Margin="0,0,0,6">
+                                    <Grid ColumnSpacing="{StaticResource GapLarge}" Margin="0,0,0,6">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="100" />

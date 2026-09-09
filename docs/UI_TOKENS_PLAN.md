@@ -15,7 +15,7 @@
 
 | 속성 | 리터럴 수 | 서로 다른 값 | 이번 범위 |
 |---|---:|---:|---|
-| `Spacing` | 172 | 12 | ✅ |
+| `Spacing` · `RowSpacing` · `ColumnSpacing` · `MinRowSpacing` · `MinColumnSpacing` | 172 | 12 | ✅ |
 | `FontSize` | 72 | 9 | ✅ |
 | `BorderThickness` | 13 | 4 | ✅ |
 | `FontWeight` | 10 | 1 (`SemiBold`) | ❌ 숫자가 아니라 이름이다. 이미 뜻이 있다 |
@@ -27,18 +27,19 @@
 
 파일별 (범위 안 속성만):
 
-| 파일 | 곳 | 상태 |
+| 파일 | 범위 안 곳 | 상태 |
 |---|---:|---|
-| TerminalPage.xaml | 미측정 | ⬜ |
-| SessionsPage.xaml | 미측정 | ⬜ |
-| RuleMakerPage.xaml | 미측정 | ⬜ |
-| SettingsPage.xaml | 미측정 | ⬜ |
-| DashboardPage.xaml | 미측정 | ⬜ |
-| UsagePage.xaml | 미측정 | ⬜ |
-| PromptsPage.xaml | 미측정 | ⬜ |
-| ShellWindow.xaml | 미측정 | ⬜ |
+| TerminalPage.xaml | 77 | ⬜ |
+| SessionsPage.xaml | 43 | ⬜ |
+| RuleMakerPage.xaml | 42 | ⬜ |
+| DashboardPage.xaml | 31 | ⬜ |
+| SettingsPage.xaml | 26 | ⬜ |
+| UsagePage.xaml | 18 | ✅ W3 |
+| PromptsPage.xaml | 11 | ✅ W2 |
+| ShellWindow.xaml | 5 | ✅ W1 |
+| App.xaml (스타일 안) | 9 | ✅ W0 |
 
-> 착수 시 각 작업 단위에서 정확한 수를 채운다.
+> 합계 **262곳**. `{StaticResource}` 를 뺀 날 숫자만 센 것이고, `obj/` 의 빌드 생성 사본은 제외했다.
 
 ---
 
@@ -157,10 +158,10 @@
 
 | # | 작업 단위 | 상태 |
 |---|---|---|
-| W0 | 이 문서 · `App.xaml` 토큰 정의 · 치환 검증 스크립트 | ⬜ |
-| W1 | ShellWindow.xaml | ⬜ |
-| W2 | PromptsPage.xaml | ⬜ |
-| W3 | UsagePage.xaml | ⬜ |
+| W0 | 이 문서 · `App.xaml` 토큰 정의 · 치환 검증 스크립트 | ✅ |
+| W1 | ShellWindow.xaml | ✅ |
+| W2 | PromptsPage.xaml | ✅ |
+| W3 | UsagePage.xaml | ✅ |
 | W4 | DashboardPage.xaml | ⬜ |
 | W5 | SettingsPage.xaml | ⬜ |
 | W6 | RuleMakerPage.xaml | ⬜ |
@@ -171,3 +172,11 @@
 ## 7. 작업 기록
 
 (작업 단위가 끝날 때마다 여기에 한 줄씩 남긴다)
+
+- **W0** — `App.xaml` 에 토큰 34개 정의(글자 10 · 모서리 5 · 간격 11 + 기존 값 8). 기존 스타일 9곳이 토큰을 쓰게 바꿈.
+  치환 검증 스크립트(§4.1)와 기계 치환 스크립트를 만들었다. 손으로 고치지 않는다 — 오타로 값이 바뀔 여지를 없앤다.
+- **W1~W3** — ShellWindow(5) · PromptsPage(11) · UsagePage(18). 값 34곳 전부 동일, 남은 날 숫자 0. 빌드 경고 0.
+  - *도중에 잡은 것:* 첫 조사가 `ColumnSpacing` · `RowSpacing` 을 `Spacing` 의 부분 문자열로 세고 있었다.
+    수는 우연히 맞았지만(172) 치환 도구는 이들을 건너뛰고 있었다. 두 도구 모두 복합 이름을 알도록 고쳤다.
+  - *도중에 잡은 것:* `PageTitleText` 스타일의 `FontSize 24` 가 첫 목록에 없었다(인라인 속성만 셌기 때문).
+    `HeadingLargeFontSize` 를 더해 열 단계가 되었다.
