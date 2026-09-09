@@ -697,6 +697,7 @@ public sealed partial class TerminalViewModel : ObservableObject
         nameof(ShowNewSessionOptions), nameof(ShowResumeList),
         nameof(FolderHeaderOpacity), nameof(SessionHeaderOpacity),
         nameof(ShowPreview), nameof(StartButtonText),
+        nameof(Preview), nameof(PreviewSentence), nameof(HasPreviewSentence),
         nameof(ToolSummary), nameof(FolderSummary), nameof(SessionSummary),
         nameof(RemainingHint), nameof(HasRemainingHint), nameof(CanStart),
         nameof(HasInvalidationNotice), nameof(HasRules), nameof(HasNoRules), nameof(RulesStatusText),
@@ -713,7 +714,14 @@ public sealed partial class TerminalViewModel : ObservableObject
 
     // ── 실행 ──────────────────────────────────────────────────────────────
 
-    /// <summary>실제로 실행될 명령 한 줄. resume 인자 + 사용자 인자 + 프롬프트 시작 메시지.</summary>
+    /// <summary>
+    /// 실제로 실행될 명령 한 줄. resume 인자 + 사용자 인자 + 프롬프트 시작 메시지.
+    /// <para>
+    /// <b>도구 이름 접두어를 붙이지 않는다.</b> 이 값은 복사 버튼이 그대로 클립보드에 넣는 것이라,
+    /// `Claude ▸ ` 같은 장식이 붙으면 붙여넣어도 실행되지 않는다. 무엇을 여는지는
+    /// <see cref="PreviewSentence"/>가 사람 말로 따로 말한다. (docs/TERMINAL_CARD_PLAN.md §2-D1)
+    /// </para>
+    /// </summary>
     public string Preview
     {
         get
@@ -722,13 +730,43 @@ public sealed partial class TerminalViewModel : ObservableObject
 
             if (!tool.IsInstalled)
             {
-                return $"{tool.Label}  ▸  {tool.Provider.InstallCommand}";
+                return tool.Provider.InstallCommand;
             }
 
             var arguments = ComposeArguments(tool, writePrompt: false);
-            return $"{tool.Label}  ▸  {tool.Provider.ExecutableName}{(arguments.Length > 0 ? " " + arguments : string.Empty)}";
+            return $"{tool.Provider.ExecutableName}{(arguments.Length > 0 ? " " + arguments : string.Empty)}";
         }
     }
+
+    /// <summary>
+    /// 무슨 일이 일어나는지 사람 말 한 문장. 명령보다 크게, 명령보다 먼저 읽힌다.
+    /// 지금까지 이 화면에서 유일하게 "무엇이 실행되는가"를 알려 주는 곳은 버튼 옆 회색 잔글씨였다.
+    /// </summary>
+    public string PreviewSentence
+    {
+        get
+        {
+            var tool = SelectedTool;
+
+            if (!tool.IsInstalled)
+            {
+                return UiStrings.Format("Terminal_SentenceInstall", tool.Label);
+            }
+
+            if (!SessionDone)
+            {
+                return string.Empty;
+            }
+
+            var folder = Path.GetFileName((WorkingDirectory ?? string.Empty).TrimEnd(Path.DirectorySeparatorChar));
+
+            return IsResume
+                ? UiStrings.Format("Terminal_SentenceResume", tool.Label, folder, SelectedResume!.When)
+                : UiStrings.Format("Terminal_SentenceNew", tool.Label, folder);
+        }
+    }
+
+    public bool HasPreviewSentence => PreviewSentence.Length > 0;
 
     /// <summary>
     /// 이번 실행의 인자를 만든다. <paramref name="writePrompt"/>가 참이면 고른 프롬프트를 프로젝트 docs/prompts에 써 넣고

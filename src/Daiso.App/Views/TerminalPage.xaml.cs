@@ -191,6 +191,19 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
         ToolCards.SelectedIndex = ViewModel.ToolSelection;
     }
 
+    /// <summary>실행될 명령을 클립보드에 넣는다. 붙여넣으면 그대로 돌아가는 한 줄이어야 한다.</summary>
+    private void OnCopyPreviewClick(object sender, RoutedEventArgs e)
+    {
+        var package = new DataPackage();
+        package.SetText(ViewModel.Preview);
+        Clipboard.SetContent(package);
+
+        if (sender is Button button)
+        {
+            ToolTipService.SetToolTip(button, UiStrings.Get("Common_Copied"));
+        }
+    }
+
     private void OnPresetClick(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement { Tag: string preset })
