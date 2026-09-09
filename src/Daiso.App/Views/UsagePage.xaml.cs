@@ -87,7 +87,7 @@ public sealed partial class UsagePage : Page
         _hoveredDay = null;
     }
 
-    /// <summary>줄 하나의 밝힘을 켜고 끈다. 배경 틴트·막대 밝기·내역 글.</summary>
+    /// <summary>줄 하나의 배경을 켜고 끈다. 수치·내역은 툴팁이 맡는다.</summary>
     private static void HighlightDay(Grid? row, bool on)
     {
         if (row is null)
@@ -99,21 +99,6 @@ public sealed partial class UsagePage : Page
         row.Background = on
             ? (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["ListViewItemBackgroundPointerOver"]
             : new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
-
-        foreach (var child in row.Children)
-        {
-            switch (child)
-            {
-                case Microsoft.UI.Xaml.Shapes.Rectangle bar:
-                    bar.Opacity = on ? 1 : 0.75;
-                    break;
-                case TextBlock text when Grid.GetColumn(text) == 3:
-                    text.Opacity = on ? 1 : 0;
-                    break;
-                default:
-                    break;
-            }
-        }
     }
 
     /// <summary>탭을 누르면 뷰모델이 그 도구로 좁혀 다시 읽는다.</summary>

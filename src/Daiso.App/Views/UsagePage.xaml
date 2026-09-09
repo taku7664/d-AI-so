@@ -115,8 +115,9 @@
                         <ItemsControl ItemsSource="{x:Bind Usage.Days}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="vm:UsageDayViewModel">
-                                    <!-- 호버: 줄 배경이 켜지고 막대가 밝아지며 오른쪽에 정확한 수치·내역이 나온다(코드 비하인드) -->
+                                    <!-- 호버: 줄 배경이 켜지고(코드 비하인드) 정확한 수치·내역은 툴팁으로 나온다 -->
                                     <Grid
+                                        ToolTipService.ToolTip="{x:Bind HoverText}"
                                         ColumnSpacing="12"
                                         Margin="0,0,0,2"
                                         Padding="6,4"
@@ -144,7 +145,6 @@
                                             RadiusX="6"
                                             RadiusY="6"
                                             Width="{x:Bind BarWidth}"
-                                            Opacity="0.75"
                                             Fill="{ThemeResource AccentFillColorDefaultBrush}" />
 
                                         <TextBlock
@@ -152,16 +152,8 @@
                                             Text="{x:Bind TotalText}"
                                             Style="{StaticResource NumberText}"
                                             HorizontalAlignment="Left"
-                                            VerticalAlignment="Center"
-                                            ToolTipService.ToolTip="{x:Bind TotalExact}" />
+                                            VerticalAlignment="Center" />
 
-                                        <TextBlock
-                                            Grid.Column="3"
-                                            Text="{x:Bind Detail}"
-                                            Style="{StaticResource MutedText}"
-                                            VerticalAlignment="Center"
-                                            TextTrimming="CharacterEllipsis"
-                                            Opacity="0" />
                                     </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>

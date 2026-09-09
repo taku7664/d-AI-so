@@ -213,6 +213,9 @@ public sealed class UsageDayViewModel
             Day.Usage.Output,
             Day.Usage.CacheCreate,
             Day.Usage.CacheRead);
+
+    /// <summary>줄 위에 올렸을 때 뜨는 툴팁. 정확한 총합과 내역을 한 곳에 모은다.</summary>
+    public string HoverText => TotalExact + Environment.NewLine + Detail;
 }
 
 /// <summary>프로젝트별·모델별 한 줄.</summary>
