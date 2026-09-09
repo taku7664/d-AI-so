@@ -55,7 +55,9 @@
 
 ### 지금 어디까지 됐나
 
-**아직 시작 안 함.** (2026-09-09 계획 수립)
+**Stage 0-1 완료** (2026-09-09). `Daiso.Core/Sessions/SessionTitle.cs`에 App의 `CleanPrompt`를 그대로 이식하고,
+`tests/Daiso.Core.Tests/Sessions/SessionTitleTests.cs`가 지금 동작을 12건으로 고정했다(결함 둘 포함).
+App은 아직 자기 사본을 쓴다 — 0-2에서 지운다. `dotnet test tests/Daiso.Core.Tests` 159건 전부 초록.
 
 ---
 
@@ -355,9 +357,15 @@
 
 | # | 타입 | 내용 |
 |---|---|---|
-| 0-1 | `test` | `SessionsViewModel.CleanPrompt`의 **지금 동작**을 특성화 테스트로 고정한다(App에 둔 채, `internal` + `InternalsVisibleTo`). 아래 결함 둘도 "지금은 이렇게 된다"로 그대로 박는다 |
-| 0-2 | `refactor` | `Daiso.Core/Sessions/SessionTitle.cs`로 이동. **동작은 한 글자도 안 바꾼다.** 0-1이 그대로 초록이면 이동이 안전했다는 증거다 |
+| 0-1 | `chore` | `Daiso.Core/Sessions/SessionTitle.cs`에 `CleanPrompt`를 **한 글자도 안 바꾸고 이식**하고, `SessionTitleTests`가 **지금 동작**을 고정한다. 아래 결함 둘도 "지금은 이렇게 된다"로 그대로 박는다. **App은 아직 안 건드린다** |
+| 0-2 | `refactor` | App의 `CleanPrompt`를 지우고 `SessionTitle.Clean` 호출로 바꾼다. **표시 동작 불변.** 0-1이 그대로 초록이면 이동이 안전했다는 증거다 |
 | 0-3 | `fix` | 결함 둘 수정 + 터미널이 이걸 쓰게 한다. 0-1에서 결함을 박아 둔 케이스의 기댓값을 뒤집는다 — **그 diff가 곧 "무엇이 달라지는가"의 전문이다** |
+
+> **왜 App에 둔 채로 먼저 고정하지 않았나** (원안은 `internal` + `InternalsVisibleTo`였다):
+> `Daiso.App.Tests` 프로젝트가 없다. App은 WinUI(WinAppSDK · x64)라 테스트 호스트를 새로 세워야 하는데,
+> 그 비용이 이 단계에서 얻는 것보다 크다. 그래서 **Core에 먼저 이식하고 거기서 고정**한다.
+> 안전 성질(바꾸기 전에 고정한다)은 그대로다 — 0-1은 이식이 충실한지를, 0-2는 App이 그 이식본을 쓰는지를 각각 증명한다.
+> 이식이 충실했다는 근거: 코드만 읽고 예측한 기댓값 12건이 첫 실행에서 전부 통과했다.
 
 **0-3에서 고치는 결함** (조사에서 나왔다. 세션 화면에도 있다):
 
