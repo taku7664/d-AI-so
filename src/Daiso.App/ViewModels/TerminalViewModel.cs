@@ -132,11 +132,27 @@ public sealed partial class TerminalViewModel : ObservableObject
         RefreshPreviews();
     }
 
-    private static IReadOnlyList<string> PresetsFor(ToolKind kind) => kind switch
+    /// <summary>
+    /// 도구별 옵션 프리셋. <b>resume·continue 계열은 넣지 않는다</b> — 3단계 "하던 대화 이어서"가 같은 일을 하고,
+    /// 둘 다 있으면 어느 쪽이 이기는지 알 수 없다. (docs/TERMINAL_CARD_PLAN.md §2-B4)
+    /// </summary>
+    private static IReadOnlyList<ArgumentPreset> PresetsFor(ToolKind kind) => kind switch
     {
-        ToolKind.Claude => ["--continue", "--resume ", "--model ", "--permission-mode "],
-        ToolKind.Codex => ["resume ", "--model ", "--sandbox "],
-        ToolKind.Gemini => ["--resume ", "--model ", "--sandbox"],
+        ToolKind.Claude =>
+        [
+            new("Terminal_PresetPermission", "--permission-mode "),
+            new("Terminal_PresetModel", "--model "),
+        ],
+        ToolKind.Codex =>
+        [
+            new("Terminal_PresetModel", "--model "),
+            new("Terminal_PresetSandbox", "--sandbox "),
+        ],
+        ToolKind.Gemini =>
+        [
+            new("Terminal_PresetModel", "--model "),
+            new("Terminal_PresetSandbox", "--sandbox"),
+        ],
         _ => [],
     };
 

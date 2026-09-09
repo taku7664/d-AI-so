@@ -82,12 +82,10 @@
                 IsChecked="True"
                 Click="OnNewTabClick"
                 AutomationProperties.AutomationId="NewTerminalButton"
+                AutomationProperties.Name="{loc:Str Key=Room_NewTerminal}"
                 ToolTipService.ToolTip="{loc:Str Key=Room_NewTerminalTip}"
                 VerticalAlignment="Center">
-                <StackPanel Orientation="Horizontal" Spacing="6">
-                    <FontIcon Glyph="&#xE710;" FontSize="12" />
-                    <TextBlock Text="{loc:Str Key=Room_NewTerminal}" />
-                </StackPanel>
+                <FontIcon Glyph="&#xE710;" FontSize="14" />
             </ToggleButton>
 
             <ListView
@@ -520,32 +518,6 @@
                                 </StackPanel>
                             </StackPanel>
 
-                            <!-- ───── 옵션 인자 (Stage 6에서 "자세한 설정"으로 접는다) ───── -->
-                            <muxc:Expander
-                                HorizontalAlignment="Stretch"
-                                Margin="0,12,0,0"
-                                AutomationProperties.AutomationId="AdvancedExpander"
-                                Header="{loc:Str Key=Terminal_OptionArgs}">
-                                <StackPanel Spacing="8">
-                                    <TextBox
-                                        AutomationProperties.AutomationId="ArgumentsBox"
-                                        AutomationProperties.Name="{loc:Str Key=Terminal_OptionArgs}"
-                                        ToolTipService.ToolTip="{loc:Str Key=Terminal_ArgsTip}"
-                                        Text="{x:Bind ViewModel.SelectedTool.Arguments, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                        PlaceholderText="{loc:Str Key=Terminal_ArgsPlaceholder}" />
-                                    <TextBlock Text="{x:Bind ViewModel.SelectedTool.PresetsTitle, Mode=OneWay}" Style="{StaticResource MutedText}" />
-                                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.SelectedTool.Presets, Mode=OneWay}">
-                                        <ItemsRepeater.Layout>
-                                            <UniformGridLayout MinItemWidth="150" MinRowSpacing="8" MinColumnSpacing="8" ItemsStretch="Fill" />
-                                        </ItemsRepeater.Layout>
-                                        <ItemsRepeater.ItemTemplate>
-                                            <DataTemplate x:DataType="x:String">
-                                                <Button Content="{x:Bind}" Tag="{x:Bind}" Click="OnPresetClick" HorizontalAlignment="Stretch" ToolTipService.ToolTip="{loc:Str Key=Terminal_PresetTip}" />
-                                            </DataTemplate>
-                                        </ItemsRepeater.ItemTemplate>
-                                    </ItemsRepeater>
-                                </StackPanel>
-                            </muxc:Expander>
 
                     </StackPanel>
                     </ScrollViewer>
@@ -553,6 +525,37 @@
                             <!-- ───── 실행 줄: 남은 것 한 문장 + 사람 말 + 명령 + 버튼. 카드 바닥에 붙는다 ───── -->
                             <Border Grid.Row="1" BorderThickness="0,1,0,0" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" Padding="20,16,20,16">
                                 <StackPanel Spacing="10">
+                                    <!-- 자세한 설정: 접힌 채로 바닥 띠에 붙는다. 단계가 길어져도 손이 닿는다 (§4.6) -->
+                                    <muxc:Expander
+                                        HorizontalAlignment="Stretch"
+                                        AutomationProperties.AutomationId="AdvancedExpander"
+                                        Header="{loc:Str Key=Terminal_Advanced}">
+                                        <StackPanel Spacing="8">
+                                            <TextBox
+                                                AutomationProperties.AutomationId="ArgumentsBox"
+                                                AutomationProperties.Name="{loc:Str Key=Terminal_OptionArgs}"
+                                                ToolTipService.ToolTip="{loc:Str Key=Terminal_ArgsTip}"
+                                                Text="{x:Bind ViewModel.SelectedTool.Arguments, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                PlaceholderText="{loc:Str Key=Terminal_ArgsPlaceholder}" />
+                                            <TextBlock Text="{x:Bind ViewModel.SelectedTool.PresetsTitle, Mode=OneWay}" Style="{StaticResource MutedText}" />
+                                            <ItemsRepeater ItemsSource="{x:Bind ViewModel.SelectedTool.Presets, Mode=OneWay}">
+                                                <ItemsRepeater.Layout>
+                                                    <UniformGridLayout MinItemWidth="160" MinRowSpacing="8" MinColumnSpacing="8" ItemsStretch="Fill" />
+                                                </ItemsRepeater.Layout>
+                                                <ItemsRepeater.ItemTemplate>
+                                                    <DataTemplate x:DataType="vm:ArgumentPreset">
+                                                        <Button Tag="{x:Bind Flag}" Click="OnPresetClick" HorizontalAlignment="Stretch" ToolTipService.ToolTip="{loc:Str Key=Terminal_PresetTip}">
+                                                            <StackPanel Spacing="1" Padding="2">
+                                                                <TextBlock Text="{x:Bind Label}" />
+                                                                <TextBlock Text="{x:Bind Flag}" Style="{StaticResource MutedText}" FontSize="11" />
+                                                            </StackPanel>
+                                                        </Button>
+                                                    </DataTemplate>
+                                                </ItemsRepeater.ItemTemplate>
+                                            </ItemsRepeater>
+                                        </StackPanel>
+                                    </muxc:Expander>
+
                                     <TextBlock
                                         AutomationProperties.AutomationId="RemainingHint"
                                         Text="{x:Bind ViewModel.RemainingHint, Mode=OneWay}"

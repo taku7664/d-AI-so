@@ -186,7 +186,7 @@
     <value>옵션 인자</value>
   </data>
   <data name="Terminal_ArgsPlaceholder" xml:space="preserve">
-    <value>예: --continue</value>
+    <value>잘 모르면 비워 두세요</value>
   </data>
   <data name="Terminal_PickFolderFirst" xml:space="preserve">
     <value>폴더를 먼저 고르세요</value>
@@ -751,9 +751,6 @@
     <value>골라 체크</value>
   </data>
   <!-- 2차 정리 (Terminal·RuleMaker·Settings) -->
-  <data name="Terminal_Preview" xml:space="preserve">
-    <value>실행될 명령</value>
-  </data>
   <data name="Terminal_LastCommand" xml:space="preserve">
     <value>마지막 실행</value>
   </data>
@@ -1338,6 +1335,18 @@
   </data>
   <data name="Common_Copied" xml:space="preserve">
     <value>복사했습니다</value>
+  </data>
+  <data name="Terminal_Advanced" xml:space="preserve">
+    <value>자세한 설정</value>
+  </data>
+  <data name="Terminal_PresetPermission" xml:space="preserve">
+    <value>파일 수정 권한</value>
+  </data>
+  <data name="Terminal_PresetModel" xml:space="preserve">
+    <value>모델 고르기</value>
+  </data>
+  <data name="Terminal_PresetSandbox" xml:space="preserve">
+    <value>샌드박스</value>
   </data>
   <data name="Terminal_FolderMissing" xml:space="preserve">
     <value>그런 폴더가 없어요. 경로를 다시 보거나 찾아보기로 고르세요</value>

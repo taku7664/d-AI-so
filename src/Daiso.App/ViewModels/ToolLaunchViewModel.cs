@@ -6,12 +6,24 @@ using Daiso.Core;
 namespace Daiso.App.ViewModels;
 
 /// <summary>
+/// 옵션 인자 프리셋 하나. <paramref name="LabelKey"/>는 한국어 문구 키, <paramref name="Flag"/>는 실제로 붙는 플래그.
+/// <para>
+/// 날 플래그(<c>--sandbox</c>)만 보여 주면 일반인은 무슨 일이 일어나는지 모르고, 한국어만 보여 주면
+/// 아는 사람이 무엇이 붙는지 못 본다. 둘 다 보여 준다. (docs/TERMINAL_CARD_PLAN.md §4.8)
+/// </para>
+/// </summary>
+public sealed record ArgumentPreset(string LabelKey, string Flag)
+{
+    public string Label => UiStrings.Get(LabelKey);
+}
+
+/// <summary>
 /// 터미널 화면의 도구 한 줄. 설치돼 있으면 `{도구} 열기`, 아니면 `{도구} 설치`가 된다. (REQUIREMENTS §4, ARCHITECTURE §5.3)
 /// 설치를 눌러 새 터미널에서 설치가 돌기 시작하면 `설치 중…`으로 잠기고, 실행 파일이 보이는 순간 `열기`로 돌아온다.
 /// </summary>
 public sealed partial class ToolLaunchViewModel : ObservableObject
 {
-    public ToolLaunchViewModel(IProvider provider, IReadOnlyList<string> presets)
+    public ToolLaunchViewModel(IProvider provider, IReadOnlyList<ArgumentPreset> presets)
     {
         ArgumentNullException.ThrowIfNull(provider);
         ArgumentNullException.ThrowIfNull(presets);
@@ -40,8 +52,8 @@ public sealed partial class ToolLaunchViewModel : ObservableObject
     /// <summary>카드에 붙는 설치 상태 한 줄. 고르기 전에 알아야 헛걸음을 안 한다.</summary>
     public string InstallStateText => UiStrings.Get(IsInstalled ? "Terminal_ToolReady" : "Terminal_ToolMissing");
 
-    /// <summary>인자 프리셋.</summary>
-    public IReadOnlyList<string> Presets { get; }
+    /// <summary>인자 프리셋. 한국어 라벨이 앞, 실제 플래그가 뒤에 회색으로 붙는다.</summary>
+    public IReadOnlyList<ArgumentPreset> Presets { get; }
 
     /// <summary>프리셋 묶음 제목.</summary>
     public string PresetsTitle => UiStrings.Format("Terminal_PresetsFor", Label);
