@@ -54,8 +54,15 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
+        <!-- 대제목 줄에는 제목만. 탭 띠는 아래 줄로 (ARCHITECTURE §6.2) -->
+        <StackPanel Grid.Row="0" Spacing="10">
+            <StackPanel Spacing="2">
+                <TextBlock Text="{loc:Str Key=Terminal_Title}" Style="{StaticResource PageTitleText}" />
+                <TextBlock Text="{loc:Str Key=Terminal_Subtitle}" Style="{StaticResource PageSubtitleText}" />
+            </StackPanel>
+
         <!-- ───── 탭 띠 ───── -->
-        <Grid Grid.Row="0" ColumnSpacing="10">
+        <Grid ColumnSpacing="10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
@@ -126,6 +133,7 @@
                 </ListView.ItemTemplate>
             </ListView>
         </Grid>
+        </StackPanel>
 
         <!-- ───── 방 도구 줄(터미널 방일 때만): 아이콘만, 호버 툴팁 ───── -->
         <Border

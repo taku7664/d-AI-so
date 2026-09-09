@@ -16,7 +16,20 @@ public sealed partial class UsagePage : Page
         SelectorBarVisuals.ResetPressedOnLeave(ToolTabs);
         Usage = App.Services.GetRequiredService<UsageViewModel>();
 
-        Loaded += async (_, _) => await Usage.LoadCommand.ExecuteAsync(null);
+        // 뒤로/앞으로가 뷰모델의 탭을 바꾸면 탭 띠도 따라간다
+        Usage.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(UsageViewModel.SelectedTabIndex))
+            {
+                SelectorBarVisuals.Select(ToolTabs, Usage.SelectedTabIndex);
+            }
+        };
+
+        Loaded += async (_, _) =>
+        {
+            SelectorBarVisuals.Select(ToolTabs, Usage.SelectedTabIndex);
+            await Usage.LoadCommand.ExecuteAsync(null);
+        };
     }
 
     public UsageViewModel Usage { get; }

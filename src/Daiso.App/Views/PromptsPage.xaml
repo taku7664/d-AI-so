@@ -14,20 +14,14 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- 제목 · 명령바. 다른 화면과 같은 자리 -->
-        <Grid Grid.Row="0" ColumnSpacing="12">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-
-            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+        <!-- 대제목 줄에는 제목만. 명령바는 아래 줄로 (ARCHITECTURE §6.2) -->
+        <StackPanel Grid.Row="0" Spacing="8">
+            <StackPanel Spacing="2">
                 <TextBlock Text="{loc:Str Key=Prompts_Title}" Style="{StaticResource PageTitleText}" />
                 <TextBlock Text="{loc:Str Key=Prompts_Subtitle}" Style="{StaticResource PageSubtitleText}" />
             </StackPanel>
 
             <muxc:CommandBar
-                Grid.Column="1"
                 DefaultLabelPosition="Right"
                 HorizontalAlignment="Left"
                 Background="Transparent">
@@ -54,7 +48,7 @@
                     IsEnabled="{x:Bind ViewModel.CanRemove, Mode=OneWay}"
                     Click="OnDeleteClick" />
             </muxc:CommandBar>
-        </Grid>
+        </StackPanel>
 
         <!-- 왼쪽 목록 · 끌 수 있는 구분선 · 오른쪽 편집기. 구분선 자체가 간격 노릇을 한다 -->
         <Grid Grid.Row="1">

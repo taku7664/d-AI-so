@@ -83,6 +83,18 @@
   <data name="Common_Reload" xml:space="preserve">
     <value>다시 읽기</value>
   </data>
+  <data name="Common_Back" xml:space="preserve">
+    <value>뒤로</value>
+  </data>
+  <data name="Common_BackTip" xml:space="preserve">
+    <value>뒤로 (마우스 엄지 버튼)</value>
+  </data>
+  <data name="Common_Forward" xml:space="preserve">
+    <value>앞으로</value>
+  </data>
+  <data name="Common_ForwardTip" xml:space="preserve">
+    <value>앞으로 (마우스 엄지 버튼)</value>
+  </data>
   <data name="Common_Delete" xml:space="preserve">
     <value>삭제</value>
   </data>
@@ -778,6 +790,12 @@
   </data>
   <data name="Nav_Terminal" xml:space="preserve">
     <value>터미널</value>
+  </data>
+  <data name="Terminal_Title" xml:space="preserve">
+    <value>터미널</value>
+  </data>
+  <data name="Terminal_Subtitle" xml:space="preserve">
+    <value>앱을 떠나지 않고 CLI를 방으로 띄웁니다</value>
   </data>
   <data name="Nav_Sessions" xml:space="preserve">
     <value>세션</value>

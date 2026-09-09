@@ -17,34 +17,25 @@
                 Spacing="16"
                 Margin="0,4,0,20">
 
-                <!-- 제목 · 기간 -->
-                <Grid ColumnSpacing="12">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
+                <!-- 대제목 줄. 오른쪽 위는 셸의 뒤로/앞으로 자리라 아무것도 두지 않는다 (ARCHITECTURE §6.2) -->
+                <StackPanel Spacing="2">
+                    <TextBlock Text="{loc:Str Key=Usage_Title}" Style="{StaticResource PageTitleText}" />
+                    <TextBlock
+                        AutomationProperties.AutomationId="UsageStatus"
+                        Text="{x:Bind Usage.StatusText, Mode=OneWay}"
+                        Style="{StaticResource PageSubtitleText}" />
+                </StackPanel>
 
-                    <StackPanel Grid.Column="0" Spacing="2">
-                        <TextBlock Text="{loc:Str Key=Usage_Title}" Style="{StaticResource PageTitleText}" />
-                        <TextBlock
-                            AutomationProperties.AutomationId="UsageStatus"
-                            Text="{x:Bind Usage.StatusText, Mode=OneWay}"
-                            Style="{StaticResource PageSubtitleText}" />
-                    </StackPanel>
-
+                <!-- 화면 도구는 제목 아래 줄에 -->
+                <StackPanel Orientation="Horizontal" Spacing="8">
                     <ComboBox
-                        Grid.Column="1"
                         Width="120"
-                        VerticalAlignment="Top"
                         AutomationProperties.AutomationId="UsagePeriodCombo"
                         AutomationProperties.Name="{loc:Str Key=Common_Period}"
                         ItemsSource="{x:Bind Usage.Periods}"
                         SelectedIndex="{x:Bind Usage.PeriodIndex, Mode=TwoWay}" />
 
                     <Button
-                        Grid.Column="2"
-                        VerticalAlignment="Top"
                         AutomationProperties.AutomationId="UsageReloadButton"
                         ToolTipService.ToolTip="{loc:Str Key=Common_ReloadTip}"
                         Command="{x:Bind Usage.LoadCommand}">
@@ -56,7 +47,7 @@
                             <TextBlock Text="{loc:Str Key=Common_Reload}" />
                         </StackPanel>
                     </Button>
-                </Grid>
+                </StackPanel>
 
                 <muxc:ProgressBar
                     IsIndeterminate="True"
