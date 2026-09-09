@@ -32,8 +32,8 @@
 | TerminalPage.xaml | 77 | ⬜ |
 | SessionsPage.xaml | 43 | ⬜ |
 | RuleMakerPage.xaml | 42 | ⬜ |
-| DashboardPage.xaml | 31 | ⬜ |
-| SettingsPage.xaml | 26 | ⬜ |
+| DashboardPage.xaml | 31 | ✅ W4 |
+| SettingsPage.xaml | 26 | ✅ W5 |
 | UsagePage.xaml | 18 | ✅ W3 |
 | PromptsPage.xaml | 11 | ✅ W2 |
 | ShellWindow.xaml | 5 | ✅ W1 |
@@ -162,8 +162,8 @@
 | W1 | ShellWindow.xaml | ✅ |
 | W2 | PromptsPage.xaml | ✅ |
 | W3 | UsagePage.xaml | ✅ |
-| W4 | DashboardPage.xaml | ⬜ |
-| W5 | SettingsPage.xaml | ⬜ |
+| W4 | DashboardPage.xaml | ✅ |
+| W5 | SettingsPage.xaml | ✅ |
 | W6 | RuleMakerPage.xaml | ⬜ |
 | W7 | SessionsPage.xaml | ⬜ |
 | W8 | TerminalPage.xaml | ⬜ |
@@ -180,3 +180,4 @@
     수는 우연히 맞았지만(172) 치환 도구는 이들을 건너뛰고 있었다. 두 도구 모두 복합 이름을 알도록 고쳤다.
   - *도중에 잡은 것:* `PageTitleText` 스타일의 `FontSize 24` 가 첫 목록에 없었다(인라인 속성만 셌기 때문).
     `HeadingLargeFontSize` 를 더해 열 단계가 되었다.
+- **W4~W5** — DashboardPage(31) · SettingsPage(26). 값 57곳 전부 동일, 남은 날 숫자 0. 빌드 경고 0.
