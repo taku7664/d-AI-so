@@ -14,20 +14,14 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- 제목 · 파일 메뉴 -->
-        <Grid Grid.Row="0" ColumnSpacing="12">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-
-            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+        <!-- 대제목 줄에는 제목만. 명령바는 아래 줄로 (ARCHITECTURE §6.2, 내 프롬프트와 같은 골격) -->
+        <StackPanel Grid.Row="0" Spacing="8">
+            <StackPanel Spacing="2">
                 <TextBlock Text="{loc:Str Key=RuleMaker_Title}" Style="{StaticResource PageTitleText}" />
                 <TextBlock Text="{loc:Str Key=RuleMaker_Subtitle}" Style="{StaticResource PageSubtitleText}" />
             </StackPanel>
 
             <muxc:CommandBar
-                Grid.Column="1"
                 DefaultLabelPosition="Right"
                 HorizontalAlignment="Left"
                 Background="Transparent">
@@ -100,8 +94,7 @@
                         Click="OnLinkClick" />
                 </muxc:CommandBar.SecondaryCommands>
             </muxc:CommandBar>
-        </Grid>
-
+        </StackPanel>
 
         <!-- 왼쪽 내 규칙 목록 · 끌 수 있는 구분선 · 오른쪽 편집기 (내 프롬프트와 같은 골격) -->
         <Grid Grid.Row="1">
@@ -221,11 +214,17 @@
                     </Grid>
                 </StackPanel>
 
-                <!-- 본문 -->
-                <Grid Grid.Row="1" ColumnSpacing="14">
+                <!--
+                    본문 · 미리보기. 창 하한 1024에서는 목록 220 + 본문 + 미리보기가 나란히 들어가지 않는다
+                    (UI_REFACTOR_PLAN §5.6). 둘의 최소 폭 합보다 좁아지면 미리보기 칸을 접고(코드 비하인드
+                    OnEditorSizeChanged), 넓어지면 다시 편다. 목록을 접으면(명령바 `목록`) 그만큼 미리보기가 돌아온다.
+                    미리보기 열에는 MinWidth 를 두지 않는다. 열이 최소 폭을 요구하면 격자가 제 칸보다 커져 ActualWidth
+                    가 실제 칸 폭을 말해 주지 않고, 접을지 판단할 근거가 사라진다. 최소 폭(190)은 코드 비하인드 상수다
+                -->
+                <Grid x:Name="EditorGrid" Grid.Row="1" ColumnSpacing="14" SizeChanged="OnEditorSizeChanged">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="2*" MinWidth="360" />
-                        <ColumnDefinition Width="*" MinWidth="190" />
+                        <ColumnDefinition Width="2*" MinWidth="380" />
+                        <ColumnDefinition x:Name="PreviewColumn" Width="*" />
                     </Grid.ColumnDefinitions>
 
                     <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
@@ -260,7 +259,7 @@
                                                 <Grid ColumnSpacing="8" Margin="0,0,0,8">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="120" />
+                                                        <ColumnDefinition Width="104" />
                                                         <ColumnDefinition Width="Auto" />
                                                         <ColumnDefinition Width="Auto" />
                                                         <ColumnDefinition Width="Auto" />
@@ -268,7 +267,7 @@
 
                                                     <TextBox
                                                         Grid.Column="0"
-                                                        MinWidth="180"
+                                                        MinWidth="80"
                                                         PlaceholderText="{loc:Str Key=RuleMaker_ActionPlaceholder}"
                                                         Text="{x:Bind Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -487,7 +486,7 @@
                                                 <Grid ColumnSpacing="8" Margin="0,0,0,8">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="120" />
+                                                        <ColumnDefinition Width="104" />
                                                         <ColumnDefinition Width="Auto" />
                                                         <ColumnDefinition Width="Auto" />
                                                         <ColumnDefinition Width="Auto" />
@@ -495,7 +494,7 @@
 
                                                     <TextBox
                                                         Grid.Column="0"
-                                                        MinWidth="180"
+                                                        MinWidth="80"
                                                         PlaceholderText="{loc:Str Key=RuleMaker_ActionPlaceholder}"
                                                         Text="{x:Bind Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -546,7 +545,7 @@
                     </ScrollViewer>
 
                     <!-- 미리보기 -->
-                    <Border Grid.Column="1" Style="{StaticResource CardBorder}">
+                    <Border x:Name="PreviewCard" Grid.Column="1" Style="{StaticResource CardBorder}">
                         <Grid RowSpacing="10">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />

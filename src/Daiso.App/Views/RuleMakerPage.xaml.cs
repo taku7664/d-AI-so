@@ -432,6 +432,32 @@ public sealed partial class RuleMakerPage : Page
 
     private double _listWidth = 220;
 
+    /// <summary>
+    /// 본문 최소 폭 + 미리보기 최소 폭 + 열 간격보다 좁으면 미리보기 칸을 접는다. 창 하한 1024에서 목록을 펴 두면 이 경우다.
+    /// 판단 근거는 격자의 실제 폭이다. 미리보기 열에 MinWidth 를 두면 격자가 제 칸보다 커져 이 값이 거짓말을 하므로
+    /// 최소 폭은 여기 상수로만 둔다 (XAML 주석 참고).
+    /// </summary>
+    private void OnEditorSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        var body = EditorGrid.ColumnDefinitions[0];
+        var fits = e.NewSize.Width >= body.MinWidth + PreviewMinWidth + EditorColumnSpacing;
+
+        if (fits == (PreviewCard.Visibility == Visibility.Visible))
+        {
+            return;
+        }
+
+        PreviewCard.Visibility = fits ? Visibility.Visible : Visibility.Collapsed;
+        PreviewColumn.Width = fits ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
+        EditorGrid.ColumnSpacing = fits ? EditorColumnSpacing : 0;
+    }
+
+    /// <summary>미리보기 칸이 읽힐 최소 폭. 제목 "마크다운 미리보기"와 카드 안쪽 여백이 들어가는 값.</summary>
+    private const double PreviewMinWidth = 190;
+
+    /// <summary>XAML 의 EditorGrid ColumnSpacing 과 같은 값. 접을 때 0 으로 내렸다가 펼 때 되돌린다.</summary>
+    private const double EditorColumnSpacing = 14;
+
     /// <summary>고른 프리셋의 규칙을 지금 규칙 뒤에 붙인다.</summary>
     private void OnGalleryMergeClick(object sender, RoutedEventArgs e)
     {
