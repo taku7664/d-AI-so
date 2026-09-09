@@ -651,7 +651,7 @@ Apply(projectDir, direction, dryRun)
 - 인덱싱이 끝나면 목록·요약을 자동으로 다시 읽는다. 사람이 "다시 읽기"를 눌러야 최신이 되는 화면을 만들지 않는다
 - 단축키는 설정의 "단축키" 카드에 적는다. 알려주지 않는 단축키는 없는 것과 같다
 - `SelectorBar` 탭은 페이지 생성자에서 `SelectorBarVisuals.ResetPressedOnLeave`를 붙인다. WinUI 항목은 누른 뒤 포인터가 나가면 회색 눌림이 남는다. 포인터가 나가거나 선택이 바뀌면 `SelectedNormal`/`UnselectedNormal`로 되돌린다
-- 입력 칸이 있는 페이지는 생성자에서 `FocusRelease.Attach(this)`를 붙인다. WinUI는 빈 자리를 눌러도 포커스를 옮기지 않아 커서가 입력 칸에 남는다. 포커스를 받을 컨트롤이 없는 곳을 누르면 페이지가 잠깐 받아 놓아 준다
+- 입력 칸이 있는 페이지는 생성자에서 `FocusRelease.Attach(this)`를 붙인다. WinUI는 빈 자리를 눌러도 포커스를 옮기지 않아 커서가 입력 칸에 남는다. 포커스를 받을 컨트롤이 없는 곳을 누르면 **크기 0인 싱크 버튼**이 받아 놓아 준다. 스크롤이 맨 위로 튀지 않으려면 세 가지를 지켜야 한다 — (1) 싱크는 **잎 컨트롤**이어야 한다. `Page`는 `ContentControl`이라 포커스가 안쪽 첫 입력 칸으로 흘러내린다(`page.Focus()`는 True를 돌려주지만 ~90ms 뒤 맨 위 TextBox로 옮겨간다). (2) 싱크는 **`ScrollViewer` 바깥**, 페이지 루트 패널에 둔다. 안에 있으면 포커스가 스크롤을 끌고 다닌다. (3) **누를 때와 뗄 때 둘 다** 처리한다. 누를 때만 하면 WinUI가 뗄 때 빈 배경 클릭을 처리하며 포커스를 `ScrollViewer` 안 첫 포커스 가능 요소로 밀어넣어 우리 처리를 덮어쓴다(누름 88ms 뒤 sink → SessionHomeBox, 직후 BringIntoView로 offset 626 → 125)
 - 단축키가 있는 버튼의 툴팁에는 키를 적는다 (`다시 읽기 (F5)`, `Ctrl+S`). 가속기 풍선을 숨겼으므로(`KeyboardAcceleratorPlacementMode=Hidden`) 툴팁이 유일한 안내다. 설정의 단축키 카드에 적힌 키는 그 화면 전부에서 실제로 동작해야 한다 (F5는 요약·사용량·세션)
 - 잠긴(IsEnabled=false) 컨트롤은 왜 잠겼는지 근처 글로 말한다. 잠긴 컨트롤은 마우스를 받지 않아 툴팁이 안 뜬다. 이유를 툴팁으로 줘야 하면 `Background=Transparent`인 Border로 감싸 그쪽에 단다(세션 프로젝트 콤보). 이유가 화면에 이미 있으면(선택 0건 알약, 왼쪽에서 고르라는 안내) 그대로 둔다. 상태 줄로 말할 수도 있다(내 규칙 저장 힌트, 내 프롬프트 기본 제공 안내)
 - 잘려 보일 수 있는 글(`TextTrimming=CharacterEllipsis`)에는 전체 문구 툴팁을 단다. 머리글자·아이콘만 있는 것에는 이름 툴팁을 단다
