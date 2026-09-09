@@ -118,6 +118,29 @@ Codex 세션 파일 137개 전수 조사:
 ⚠️ 이건 인덱스 스키마(`SqliteSessionIndex`)와 `IProvider` 파싱을 함께 건드린다.
 Stage 4 착수 전에 별도 커밋으로 떼어 두는 것이 낫다.
 
+**Stage 1 완료** (2026-09-09). 카드 본문의 번호 2단 격자를 세로 아코디언 세 단계 + 실행 줄로 갈아 끼웠다.
+
+- `TerminalStep` 열거형 + `CurrentStep`·`ToolChosen`·`SessionModeChosen`. **처음에는 아무것도 안 고른 상태**로 연다
+  (`SyncTabFromViewModel`이 로드 때 탭을 켜서 1단계가 저절로 끝나던 것을 막았다)
+- 머리 높이 44px 고정 · 몸은 `Visibility`만 바꾼다(애니메이션 없음, §7.3). 끝난 단계는 `✓ + 요약 + 변경`으로 접힌다
+- 아직 못 가는 단계는 **`IsEnabled` 대신 `Opacity` + `IsHitTestVisible`** — `IsEnabled`를 쓰면 WinUI가 비활성 배경을 칠해
+  "흐린 줄"이 아니라 "회색 덩어리"가 되어 오히려 눈에 띄었다(첫 캡처에서 발견)
+- 도구를 고르기 전에는 **실행될 명령을 감춘다**. `Codex ▸ codex`를 보여 주면서 "아직 AI를 안 골랐어요"라고 하는 건 모순이다
+- 앞 단계를 바꿔 세션 선택이 무효가 되면 이유를 `NoticeBorder`로 말한다(§4.9)
+- 옵션 인자·프리셋은 `Expander`로 내렸다. 한국어 라벨은 Stage 6
+- `PrepareResume`은 세 단계를 `Done`으로 심고 3단계만 열어 둔 채 도착한다(§3.1)
+
+App 경고 0·오류 0, 테스트 380건 초록. 죽은 문구 키 둘(`Terminal_RulesLabel`·`Terminal_StartWith`)은
+`StringResourceKeysTests`가 잡아서 지웠다.
+
+⚠️ **캡처로 확인한 것은 상태 0(아무것도 안 고름) 하나뿐이다.** 나머지 네 상태는 클릭이 필요한데
+`shoot-screens.ps1`은 Ctrl+1~7만 누르고, UI 자동 조작은 하지 않았다. 높이 안정성(60px 이내)도 아직 못 쟀다.
+Stage 2에서 도구 카드를 넣을 때 사람이 눌러 가며 함께 본다.
+
+⚠️ **덤으로 찾은 별개 버그**: 캡처 중 `문제가 생겼습니다 — The operation was canceled` 대화상자가 떴다.
+`DashboardViewModel`이 세션 인덱스를 읽는 도중 화면을 옮기면 `OperationCanceledException`이 안 삼켜진다
+(`SqliteSessionIndex.cs:161` → `DashboardViewModel.cs:215`). 이 계획과 무관하고 2026-09-08자 크래시 로그에도 있다.
+
 ⚠️ **터미널 카드의 세션 목록은 캡처로 못 봤다.** "기존 세션 이어서"를 눌러야 나오는데
 `shoot-screens.ps1`은 Ctrl+1~7만 누른다. 정제기는 세션 화면과 같은 함수라 위 전수 검사가 근거이고,
 `When`·`Counts`·uuid 폴백 제거는 Core 테스트가 근거다. Stage 4에서 눈으로 함께 본다.

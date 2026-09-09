@@ -38,12 +38,21 @@
             <Setter Property="Fill" Value="{ThemeResource DividerStrokeColorDefaultBrush}" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
-        <Style x:Key="StepNumber" TargetType="Border">
-            <Setter Property="Width" Value="22" />
-            <Setter Property="Height" Value="22" />
-            <Setter Property="CornerRadius" Value="11" />
-            <Setter Property="Background" Value="{ThemeResource AccentFillColorDefaultBrush}" />
-            <Setter Property="VerticalAlignment" Value="Center" />
+        <!-- 아코디언 단계 머리. 높이를 고정해 접힘/펼침에도 카드가 흔들리지 않는다 (TERMINAL_CARD_PLAN §4.1) -->
+        <Style x:Key="StepHeader" TargetType="Button">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Height" Value="44" />
+            <Setter Property="Padding" Value="4,0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="4" />
+        </Style>
+
+        <!-- 펼쳐진 단계의 몸 -->
+        <Style x:Key="StepBody" TargetType="StackPanel">
+            <Setter Property="Spacing" Value="8" />
+            <Setter Property="Margin" Value="30,2,0,14" />
         </Style>
     </Page.Resources>
 
@@ -213,33 +222,64 @@
             <ScrollViewer x:Name="NewSessionPanel" VerticalScrollBarVisibility="Auto">
                 <Border Style="{StaticResource CardBorder}" Padding="0" VerticalAlignment="Top">
                     <StackPanel>
-                        <!-- 도구 탭(로고). 순서는 ToolLook.DisplayOrder. 아이콘은 코드에서 ToolLook.LogoIcon으로 채운다 -->
-                        <Border Padding="12,8,12,0" BorderThickness="0,0,0,1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
-                            <muxc:SelectorBar x:Name="ToolTabs" SelectionChanged="OnToolTabChanged" AutomationProperties.AutomationId="ToolTabs">
-                                <muxc:SelectorBarItem Text="Codex" IsSelected="True" AutomationProperties.AutomationId="ToolTabCodex" ToolTipService.ToolTip="Codex CLI" />
-                                <muxc:SelectorBarItem Text="Claude" AutomationProperties.AutomationId="ToolTabClaude" ToolTipService.ToolTip="Claude Code" />
-                                <muxc:SelectorBarItem Text="Gemini" AutomationProperties.AutomationId="ToolTabGemini" ToolTipService.ToolTip="Gemini CLI" />
-                            </muxc:SelectorBar>
-                        </Border>
+                        <!--
+                            아코디언 세 단계 + 실행 줄. 한 번에 한 단계만 펼친다.
+                            접힌 머리는 높이가 고정이라, 새 세션 ↔ 이어서를 오가도 카드가 흔들리지 않는다.
+                            필수 답이 채워지면 다음 단계가 저절로 열린다 — "다음" 버튼을 두지 않는다.
+                            (docs/TERMINAL_CARD_PLAN.md §4 · §7.1)
+                        -->
+                        <StackPanel Padding="20,4,20,20">
 
-                        <!-- 두 칸 최소 폭 + 간격 28 + 카드 안쪽 여백 40 이 창 하한 1024 의 카드 폭(≈717)에 들어가야 한다. 360 이면 넘쳐 오른쪽이 잘렸다 -->
-                        <Grid Padding="20,16,20,20" ColumnSpacing="28" RowSpacing="18">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" MinWidth="320" />
-                                <ColumnDefinition Width="*" MinWidth="320" />
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
+                            <!-- ───── 1. 어떤 AI로 시작할까요? ───── -->
+                            <Button Style="{StaticResource StepHeader}" Click="OnStepToolClick" AutomationProperties.AutomationId="StepToolHeader">
+                                <Grid ColumnSpacing="10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="20" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid Grid.Column="0" VerticalAlignment="Center" Height="20">
+                                        <FontIcon Glyph="&#xE73E;" FontSize="14" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Visibility="{x:Bind ViewModel.ToolMarkDone, Mode=OneWay}" />
+                                        <Ellipse Width="10" Height="10" Fill="{ThemeResource AccentFillColorDefaultBrush}" Visibility="{x:Bind ViewModel.ToolExpanded, Mode=OneWay}" />
+                                        <Ellipse Width="10" Height="10" StrokeThickness="1" Stroke="{ThemeResource TextFillColorTertiaryBrush}" Visibility="{x:Bind ViewModel.ToolMarkPending, Mode=OneWay}" />
+                                    </Grid>
+                                    <TextBlock Grid.Column="1" Text="{loc:Str Key=Terminal_StepTool}" Style="{StaticResource SectionTitleText}" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="2" Text="{x:Bind ViewModel.ToolSummary, Mode=OneWay}" Style="{StaticResource MutedText}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Visibility="{x:Bind ViewModel.ToolMarkDone, Mode=OneWay}" />
+                                    <TextBlock Grid.Column="3" Text="{loc:Str Key=Terminal_StepChange}" Style="{StaticResource MutedText}" VerticalAlignment="Center" Visibility="{x:Bind ViewModel.ToolMarkDone, Mode=OneWay}" />
+                                </Grid>
+                            </Button>
 
-                            <!-- 1. 프로젝트 폴더 -->
-                            <StackPanel Grid.Row="0" Grid.Column="0" Spacing="8">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <Border Style="{StaticResource StepNumber}"><TextBlock Text="1" Foreground="White" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border>
-                                    <TextBlock Text="{loc:Str Key=Terminal_WorkFolder}" Style="{StaticResource SectionTitleText}" VerticalAlignment="Center" />
-                                </StackPanel>
+                            <!-- 도구 탭. 순서는 ToolLook.DisplayOrder. 아이콘은 코드에서 ToolLook.LogoIcon으로 채운다 (Stage 2에서 카드 3장으로) -->
+                            <StackPanel Style="{StaticResource StepBody}" Visibility="{x:Bind ViewModel.ToolExpanded, Mode=OneWay}">
+                                <muxc:SelectorBar x:Name="ToolTabs" SelectionChanged="OnToolTabChanged" AutomationProperties.AutomationId="ToolTabs">
+                                    <muxc:SelectorBarItem Text="Codex" AutomationProperties.AutomationId="ToolTabCodex" ToolTipService.ToolTip="Codex CLI" />
+                                    <muxc:SelectorBarItem Text="Claude" AutomationProperties.AutomationId="ToolTabClaude" ToolTipService.ToolTip="Claude Code" />
+                                    <muxc:SelectorBarItem Text="Gemini" AutomationProperties.AutomationId="ToolTabGemini" ToolTipService.ToolTip="Gemini CLI" />
+                                </muxc:SelectorBar>
+                            </StackPanel>
+
+                            <!-- ───── 2. 어느 폴더에서 일할까요? ───── -->
+                            <Button Style="{StaticResource StepHeader}" Click="OnStepFolderClick" Opacity="{x:Bind ViewModel.FolderHeaderOpacity, Mode=OneWay}" IsHitTestVisible="{x:Bind ViewModel.FolderReachable, Mode=OneWay}" AutomationProperties.AutomationId="StepFolderHeader">
+                                <Grid ColumnSpacing="10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="20" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid Grid.Column="0" VerticalAlignment="Center" Height="20">
+                                        <FontIcon Glyph="&#xE73E;" FontSize="14" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Visibility="{x:Bind ViewModel.FolderMarkDone, Mode=OneWay}" />
+                                        <Ellipse Width="10" Height="10" Fill="{ThemeResource AccentFillColorDefaultBrush}" Visibility="{x:Bind ViewModel.FolderExpanded, Mode=OneWay}" />
+                                        <Ellipse Width="10" Height="10" StrokeThickness="1" Stroke="{ThemeResource TextFillColorTertiaryBrush}" Visibility="{x:Bind ViewModel.FolderMarkPending, Mode=OneWay}" />
+                                    </Grid>
+                                    <TextBlock Grid.Column="1" Text="{loc:Str Key=Terminal_WorkFolder}" Style="{StaticResource SectionTitleText}" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="2" Text="{x:Bind ViewModel.FolderSummary, Mode=OneWay}" Style="{StaticResource MutedText}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Visibility="{x:Bind ViewModel.FolderMarkDone, Mode=OneWay}" />
+                                    <TextBlock Grid.Column="3" Text="{loc:Str Key=Terminal_StepChange}" Style="{StaticResource MutedText}" VerticalAlignment="Center" Visibility="{x:Bind ViewModel.FolderMarkDone, Mode=OneWay}" />
+                                </Grid>
+                            </Button>
+
+                            <StackPanel Style="{StaticResource StepBody}" Visibility="{x:Bind ViewModel.FolderExpanded, Mode=OneWay}">
                                 <Grid ColumnSpacing="8">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
@@ -271,22 +311,81 @@
                                         </muxc:DropDownButton.Flyout>
                                     </muxc:DropDownButton>
                                 </Grid>
+                                <Grid ColumnSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Button Grid.Column="0" Click="OnEditRulesClick" AutomationProperties.AutomationId="EditRulesButton" ToolTipService.ToolTip="{loc:Str Key=Room_EditRulesHint}">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <FontIcon Glyph="&#xE8A1;" FontSize="13" />
+                                            <TextBlock Text="{loc:Str Key=Terminal_EditRules}" />
+                                        </StackPanel>
+                                    </Button>
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        Text="{x:Bind ViewModel.RulesStatusText, Mode=OneWay}"
+                                        ToolTipService.ToolTip="{x:Bind ViewModel.RulesStatusText, Mode=OneWay}"
+                                        Style="{StaticResource MutedText}"
+                                        VerticalAlignment="Center" />
+                                </Grid>
                             </StackPanel>
 
-                            <!-- 2. 세션 -->
-                            <StackPanel Grid.Row="1" Grid.Column="0" Spacing="8">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <Border Style="{StaticResource StepNumber}"><TextBlock Text="2" Foreground="White" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border>
-                                    <TextBlock Text="{loc:Str Key=Terminal_Session}" Style="{StaticResource SectionTitleText}" VerticalAlignment="Center" />
-                                </StackPanel>
+                            <!-- ───── 3. 무엇부터 할까요? ───── -->
+                            <Button Style="{StaticResource StepHeader}" Click="OnStepSessionClick" Opacity="{x:Bind ViewModel.SessionHeaderOpacity, Mode=OneWay}" IsHitTestVisible="{x:Bind ViewModel.SessionReachable, Mode=OneWay}" AutomationProperties.AutomationId="StepSessionHeader">
+                                <Grid ColumnSpacing="10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="20" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid Grid.Column="0" VerticalAlignment="Center" Height="20">
+                                        <FontIcon Glyph="&#xE73E;" FontSize="14" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Visibility="{x:Bind ViewModel.SessionMarkDone, Mode=OneWay}" />
+                                        <Ellipse Width="10" Height="10" Fill="{ThemeResource AccentFillColorDefaultBrush}" Visibility="{x:Bind ViewModel.SessionExpanded, Mode=OneWay}" />
+                                        <Ellipse Width="10" Height="10" StrokeThickness="1" Stroke="{ThemeResource TextFillColorTertiaryBrush}" Visibility="{x:Bind ViewModel.SessionMarkPending, Mode=OneWay}" />
+                                    </Grid>
+                                    <TextBlock Grid.Column="1" Text="{loc:Str Key=Terminal_Session}" Style="{StaticResource SectionTitleText}" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="2" Text="{x:Bind ViewModel.SessionSummary, Mode=OneWay}" Style="{StaticResource MutedText}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Visibility="{x:Bind ViewModel.SessionMarkDone, Mode=OneWay}" />
+                                    <TextBlock Grid.Column="3" Text="{loc:Str Key=Terminal_StepChange}" Style="{StaticResource MutedText}" VerticalAlignment="Center" Visibility="{x:Bind ViewModel.SessionMarkDone, Mode=OneWay}" />
+                                </Grid>
+                            </Button>
+
+                            <StackPanel Style="{StaticResource StepBody}" Visibility="{x:Bind ViewModel.SessionExpanded, Mode=OneWay}">
+                                <!-- 앞 단계를 바꿔 이 답이 무효가 됐다. 조용히 지우면 "왜 없어졌지"가 된다 (§4.9) -->
+                                <Border Style="{StaticResource NoticeBorder}" Visibility="{x:Bind ViewModel.HasInvalidationNotice, Mode=OneWay}">
+                                    <TextBlock Text="{x:Bind ViewModel.InvalidationNotice, Mode=OneWay}" TextWrapping="Wrap" />
+                                </Border>
+
                                 <muxc:RadioButtons
+                                    x:Name="SessionModeRadios"
                                     AutomationProperties.AutomationId="SessionModeRadios"
                                     MaxColumns="2"
-                                    SelectedIndex="{x:Bind ViewModel.SessionModeIndex, Mode=TwoWay}">
+                                    SelectedIndex="{x:Bind ViewModel.SessionModeSelection, Mode=OneWay}"
+                                    SelectionChanged="OnSessionModeChanged">
                                     <RadioButton Content="{loc:Str Key=Terminal_NewSession}" AutomationProperties.AutomationId="NewSessionRadio" ToolTipService.ToolTip="{loc:Str Key=Terminal_NewSessionTip}" />
                                     <RadioButton Content="{loc:Str Key=Terminal_ResumeSession}" AutomationProperties.AutomationId="ResumeSessionRadio" ToolTipService.ToolTip="{loc:Str Key=Terminal_ResumeSessionTip}" />
                                 </muxc:RadioButtons>
 
+                                <!-- 새로 시작: 시작 프롬프트는 선택 사항이라 이 단계를 접지 않는다 (§4.6) -->
+                                <Grid ColumnSpacing="12" Visibility="{x:Bind ViewModel.IsNewSession, Mode=OneWay}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{loc:Str Key=Terminal_PromptLabel}" VerticalAlignment="Center" MinWidth="56" />
+                                    <ComboBox
+                                        Grid.Column="1"
+                                        HorizontalAlignment="Stretch"
+                                        AutomationProperties.AutomationId="StartPromptBox"
+                                        ToolTipService.ToolTip="{loc:Str Key=Terminal_PromptHint}"
+                                        ItemsSource="{x:Bind ViewModel.PromptChoices}"
+                                        SelectedItem="{x:Bind ViewModel.SelectedPrompt, Mode=TwoWay}"
+                                        DisplayMemberPath="Name" />
+                                </Grid>
+                                <TextBlock Text="{loc:Str Key=Terminal_PromptHint}" Style="{StaticResource MutedText}" TextWrapping="Wrap" Visibility="{x:Bind ViewModel.IsNewSession, Mode=OneWay}" />
+
+                                <!-- 이어서: 이 폴더·도구의 지난 대화 -->
                                 <StackPanel Spacing="6" Visibility="{x:Bind ViewModel.IsResume, Mode=OneWay}">
                                     <ListView
                                         AutomationProperties.AutomationId="ResumeSessionList"
@@ -305,7 +404,7 @@
                                                         <ColumnDefinition Width="*" />
                                                         <ColumnDefinition Width="Auto" />
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Grid.Column="0" Text="{x:Bind When}" Style="{StaticResource MonoText}" VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="0" Text="{x:Bind When}" Style="{StaticResource MutedText}" VerticalAlignment="Center" MinWidth="72" />
                                                     <TextBlock Grid.Column="1" Text="{x:Bind Summary}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                                                     <TextBlock
                                                         Grid.Column="2"
@@ -324,84 +423,43 @@
                                 </StackPanel>
                             </StackPanel>
 
-                            <!-- 3. 시작할 때(새 세션만) -->
-                            <StackPanel Grid.Row="0" Grid.Column="1" Spacing="8" Visibility="{x:Bind ViewModel.IsNewSession, Mode=OneWay}">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <Border Style="{StaticResource StepNumber}"><TextBlock Text="3" Foreground="White" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border>
-                                    <TextBlock Text="{loc:Str Key=Terminal_StartWith}" Style="{StaticResource SectionTitleText}" VerticalAlignment="Center" />
+                            <!-- ───── 옵션 인자 (Stage 6에서 "자세한 설정"으로 접는다) ───── -->
+                            <muxc:Expander
+                                HorizontalAlignment="Stretch"
+                                Margin="0,12,0,0"
+                                AutomationProperties.AutomationId="AdvancedExpander"
+                                Header="{loc:Str Key=Terminal_OptionArgs}">
+                                <StackPanel Spacing="8">
+                                    <TextBox
+                                        AutomationProperties.AutomationId="ArgumentsBox"
+                                        AutomationProperties.Name="{loc:Str Key=Terminal_OptionArgs}"
+                                        ToolTipService.ToolTip="{loc:Str Key=Terminal_ArgsTip}"
+                                        Text="{x:Bind ViewModel.SelectedTool.Arguments, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        PlaceholderText="{loc:Str Key=Terminal_ArgsPlaceholder}" />
+                                    <TextBlock Text="{x:Bind ViewModel.SelectedTool.PresetsTitle, Mode=OneWay}" Style="{StaticResource MutedText}" />
+                                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.SelectedTool.Presets, Mode=OneWay}">
+                                        <ItemsRepeater.Layout>
+                                            <UniformGridLayout MinItemWidth="150" MinRowSpacing="8" MinColumnSpacing="8" ItemsStretch="Fill" />
+                                        </ItemsRepeater.Layout>
+                                        <ItemsRepeater.ItemTemplate>
+                                            <DataTemplate x:DataType="x:String">
+                                                <Button Content="{x:Bind}" Tag="{x:Bind}" Click="OnPresetClick" HorizontalAlignment="Stretch" ToolTipService.ToolTip="{loc:Str Key=Terminal_PresetTip}" />
+                                            </DataTemplate>
+                                        </ItemsRepeater.ItemTemplate>
+                                    </ItemsRepeater>
                                 </StackPanel>
-                                <Grid ColumnSpacing="12" RowSpacing="8">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                    </Grid.RowDefinitions>
+                            </muxc:Expander>
 
-                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Str Key=Terminal_PromptLabel}" VerticalAlignment="Center" MinWidth="56" />
-                                    <ComboBox
-                                        Grid.Row="0" Grid.Column="1"
-                                        HorizontalAlignment="Stretch"
-                                        AutomationProperties.AutomationId="StartPromptBox"
-                                        ToolTipService.ToolTip="{loc:Str Key=Terminal_PromptHint}"
-                                        ItemsSource="{x:Bind ViewModel.PromptChoices}"
-                                        SelectedItem="{x:Bind ViewModel.SelectedPrompt, Mode=TwoWay}"
-                                        DisplayMemberPath="Name" />
-
-                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="{loc:Str Key=Terminal_RulesLabel}" VerticalAlignment="Center" MinWidth="56" />
-                                    <!-- 가로 StackPanel 은 좁은 창에서 카드 밖으로 넘친다. 상태 글이 남는 폭에서 말줄임되게 격자로 둔다 (하한 1024) -->
-                                    <Grid Grid.Row="1" Grid.Column="1" ColumnSpacing="8">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <Button Grid.Column="0" Click="OnEditRulesClick" AutomationProperties.AutomationId="EditRulesButton" ToolTipService.ToolTip="{loc:Str Key=Room_EditRulesHint}">
-                                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                                <FontIcon Glyph="&#xE8A1;" FontSize="13" />
-                                                <TextBlock Text="{loc:Str Key=Terminal_EditRules}" />
-                                            </StackPanel>
-                                        </Button>
-                                        <TextBlock
-                                            Grid.Column="1"
-                                            Text="{x:Bind ViewModel.RulesStatusText, Mode=OneWay}"
-                                            ToolTipService.ToolTip="{x:Bind ViewModel.RulesStatusText, Mode=OneWay}"
-                                            Style="{StaticResource MutedText}"
-                                            VerticalAlignment="Center" />
-                                    </Grid>
-                                </Grid>
-                                <TextBlock Text="{loc:Str Key=Terminal_PromptHint}" Style="{StaticResource MutedText}" TextWrapping="Wrap" />
-                            </StackPanel>
-
-                            <!-- 4. 옵션 인자 -->
-                            <StackPanel Grid.Row="1" Grid.Column="1" Spacing="8">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <Border Style="{StaticResource StepNumber}"><TextBlock Text="4" Foreground="White" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border>
-                                    <TextBlock Text="{loc:Str Key=Terminal_OptionArgs}" Style="{StaticResource SectionTitleText}" VerticalAlignment="Center" />
-                                </StackPanel>
-                                <TextBox
-                                    AutomationProperties.AutomationId="ArgumentsBox"
-                                    AutomationProperties.Name="{loc:Str Key=Terminal_OptionArgs}"
-                                    ToolTipService.ToolTip="{loc:Str Key=Terminal_ArgsTip}"
-                                    Text="{x:Bind ViewModel.SelectedTool.Arguments, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                    PlaceholderText="{loc:Str Key=Terminal_ArgsPlaceholder}" />
-                                <TextBlock Text="{x:Bind ViewModel.SelectedTool.PresetsTitle, Mode=OneWay}" Style="{StaticResource MutedText}" />
-                                <ItemsRepeater ItemsSource="{x:Bind ViewModel.SelectedTool.Presets, Mode=OneWay}">
-                                    <ItemsRepeater.Layout>
-                                        <UniformGridLayout MinItemWidth="150" MinRowSpacing="8" MinColumnSpacing="8" ItemsStretch="Fill" />
-                                    </ItemsRepeater.Layout>
-                                    <ItemsRepeater.ItemTemplate>
-                                        <DataTemplate x:DataType="x:String">
-                                            <Button Content="{x:Bind}" Tag="{x:Bind}" Click="OnPresetClick" HorizontalAlignment="Stretch" ToolTipService.ToolTip="{loc:Str Key=Terminal_PresetTip}" />
-                                        </DataTemplate>
-                                    </ItemsRepeater.ItemTemplate>
-                                </ItemsRepeater>
-                            </StackPanel>
-
-                            <!-- 실행 줄: 버튼 + 미리보기 한 줄 -->
-                            <Border Grid.Row="2" Grid.ColumnSpan="2" BorderThickness="0,1,0,0" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" Padding="0,16,0,0">
+                            <!-- ───── 실행 줄: 남은 것 한 문장 + 명령 + 버튼 ───── -->
+                            <Border BorderThickness="0,1,0,0" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" Padding="0,16,0,0" Margin="0,16,0,0">
                                 <StackPanel Spacing="10">
+                                    <TextBlock
+                                        AutomationProperties.AutomationId="RemainingHint"
+                                        Text="{x:Bind ViewModel.RemainingHint, Mode=OneWay}"
+                                        Visibility="{x:Bind ViewModel.HasRemainingHint, Mode=OneWay}"
+                                        Style="{StaticResource MutedText}"
+                                        TextWrapping="Wrap" />
+
                                     <Grid ColumnSpacing="12">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
@@ -415,7 +473,7 @@
                                             AutomationProperties.AutomationId="OpenTerminalButton"
                                             ToolTipService.ToolTip="{loc:Str Key=Terminal_OpenTerminalTip}"
                                             Click="OnOpenTerminalClick"
-                                            IsEnabled="{x:Bind ViewModel.SelectedTool.CanPress, Mode=OneWay}">
+                                            IsEnabled="{x:Bind ViewModel.CanStart, Mode=OneWay}">
                                             <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
                                                 <FontIcon Glyph="{x:Bind ViewModel.SelectedTool.Glyph, Mode=OneWay}" FontSize="14" />
                                                 <TextBlock Text="{x:Bind ViewModel.SelectedTool.EmbeddedButtonText, Mode=OneWay}" />
@@ -426,7 +484,7 @@
                                             AutomationProperties.AutomationId="LaunchButton"
                                             Command="{x:Bind ViewModel.LaunchCommand}"
                                             CommandParameter="{x:Bind ViewModel.SelectedTool, Mode=OneWay}"
-                                            IsEnabled="{x:Bind ViewModel.SelectedTool.CanPress, Mode=OneWay}"
+                                            IsEnabled="{x:Bind ViewModel.CanStart, Mode=OneWay}"
                                             Visibility="{x:Bind ViewModel.SelectedTool.IsInstalled, Mode=OneWay}"
                                             ToolTipService.ToolTip="{loc:Str Key=Terminal_OpenExternalTip}">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
@@ -434,7 +492,7 @@
                                                 <TextBlock Text="{loc:Str Key=Terminal_OpenExternal}" />
                                             </StackPanel>
                                         </Button>
-                                        <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="2">
+                                        <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="2" Visibility="{x:Bind ViewModel.ShowPreview, Mode=OneWay}">
                                             <TextBlock Text="{loc:Str Key=Terminal_Preview}" Style="{StaticResource MutedText}" />
                                             <TextBlock
                                                 AutomationProperties.AutomationId="LaunchPreview"
@@ -462,7 +520,7 @@
                                         ToolTipService.ToolTip="{loc:Str Key=Terminal_LastCommand}" />
                                 </StackPanel>
                             </Border>
-                        </Grid>
+                        </StackPanel>
                     </StackPanel>
                 </Border>
             </ScrollViewer>

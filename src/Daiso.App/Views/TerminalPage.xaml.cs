@@ -173,20 +173,45 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
         }
     }
 
-    /// <summary>탭을 누르면 뷰모델의 도구가 바뀐다.</summary>
+    /// <summary>탭을 누르면 뷰모델의 도구가 바뀌고, 1단계가 끝나 다음 단계가 열린다.</summary>
     private void OnToolTabChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
     {
         var index = sender.Items.IndexOf(sender.SelectedItem);
 
-        if (index >= 0 && index != ViewModel.SelectedToolIndex)
+        if (index >= 0)
         {
-            ViewModel.SelectedToolIndex = index;
+            ViewModel.ChooseTool(index);
+        }
+    }
+
+    // ── 아코디언 단계 머리 ────────────────────────────────────────────────
+    // 펼쳐진 단계를 다시 누르면 접힌다. 아직 못 가는 단계는 머리 자체가 비활성이다
+
+    private void OnStepToolClick(object sender, RoutedEventArgs e) => ViewModel.GoToStep(TerminalStep.Tool);
+
+    private void OnStepFolderClick(object sender, RoutedEventArgs e) => ViewModel.GoToStep(TerminalStep.Folder);
+
+    private void OnStepSessionClick(object sender, RoutedEventArgs e) => ViewModel.GoToStep(TerminalStep.Session);
+
+    /// <summary>새로 시작 / 이어서를 고른다. 안 고른 상태는 SelectedIndex = -1 이라 여기로 안 온다.</summary>
+    private void OnSessionModeChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (sender is RadioButtons { SelectedIndex: >= 0 } radios)
+        {
+            ViewModel.ChooseSessionMode(radios.SelectedIndex);
         }
     }
 
     /// <summary>이어서 열기처럼 뷰모델이 탭을 바꾸면 탭 띠도 따라간다.</summary>
     private void SyncTabFromViewModel()
     {
+        // 아직 아무 AI도 안 고른 화면이면 탭을 켜지 않는다. 여기서 켜면 1단계가 저절로 끝나 버린다
+        if (!ViewModel.ToolChosen)
+        {
+            ToolTabs.SelectedItem = null;
+            return;
+        }
+
         if (ViewModel.SelectedToolIndex >= 0 && ViewModel.SelectedToolIndex < ToolTabs.Items.Count
             && !ReferenceEquals(ToolTabs.SelectedItem, ToolTabs.Items[ViewModel.SelectedToolIndex]))
         {

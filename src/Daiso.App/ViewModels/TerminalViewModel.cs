@@ -9,6 +9,22 @@ using Daiso.Core.Sessions;
 
 namespace Daiso.App.ViewModels;
 
+/// <summary>새 터미널 카드의 단계. 한 번에 하나만 펼친다. (docs/TERMINAL_CARD_PLAN.md §4)</summary>
+public enum TerminalStep
+{
+    /// <summary>셋 다 접혀 있다.</summary>
+    None = -1,
+
+    /// <summary>어떤 AI로 시작할까요?</summary>
+    Tool = 0,
+
+    /// <summary>어느 폴더에서 일할까요?</summary>
+    Folder = 1,
+
+    /// <summary>무엇부터 할까요?</summary>
+    Session = 2,
+}
+
 /// <summary>
 /// 새 터미널 카드의 뷰모델. 도구 → 프로젝트 폴더 → 세션(새 / 기존 이어서) → 시작할 때(프롬프트·규칙) → 옵션 인자 → 실행.
 /// 내장 터미널이 기본이고 새 창은 보조. (REQUIREMENTS §4, ARCHITECTURE §5.3)
@@ -65,6 +81,7 @@ public sealed partial class TerminalViewModel : ObservableObject
                 if (e.PropertyName is nameof(ToolLaunchViewModel.Arguments) or nameof(ToolLaunchViewModel.IsInstalled))
                 {
                     OnPropertyChanged(nameof(Preview));
+                    RefreshSteps(); // 설치 상태가 바뀌면 요약 줄과 시작 버튼이 같이 바뀐다
                 }
             };
         }
@@ -161,6 +178,16 @@ public sealed partial class TerminalViewModel : ObservableObject
     {
         RefreshPreviews();
         _ = LoadResumeCandidatesAsync();
+
+        // 폴더가 바뀌면 그 폴더의 세션 목록이 통째로 달라진다. 고른 세션은 못 쓴다
+        InvalidateSession("Terminal_StepInvalidByFolder");
+
+        if (CanLaunch && CurrentStep == TerminalStep.Folder)
+        {
+            CurrentStep = TerminalStep.Session;
+        }
+
+        RefreshSteps();
     }
 
     /// <summary>폴더 유무를 도구 줄에 알린다. 열기 버튼은 폴더가 있어야 눌린다.</summary>
@@ -283,6 +310,8 @@ public sealed partial class TerminalViewModel : ObservableObject
         {
             _preparedResumeArguments = null; // 사람이 직접 골랐다
         }
+
+        RefreshSteps();
     }
 
     partial void OnSessionModeIndexChanged(int value)
@@ -331,6 +360,215 @@ public sealed partial class TerminalViewModel : ObservableObject
     public bool HasRules => CanLaunch && File.Exists(Path.Combine(WorkingDirectory!, InstructionTemplate.DefaultRulesFileName));
 
     public string RulesStatusText => UiStrings.Get(HasRules ? "Terminal_RulesPresent" : "Terminal_RulesAbsent");
+
+    // ── 단계(아코디언) ────────────────────────────────────────────────────
+    //
+    // 이 화면에서 사람이 정하는 것은 셋뿐이다: 어떤 AI로 · 어느 폴더에서 · 새로/이어서.
+    // 한 번에 한 단계만 펼치고, 끝난 단계는 한 줄로 접는다. 필수 답이 채워지면 다음이 저절로 열린다.
+    // 높이가 거의 안 변해서, 상태가 바뀔 때 화면이 흔들리지 않는다. (docs/TERMINAL_CARD_PLAN.md §4)
+
+    /// <summary>지금 펼쳐진 단계. <see cref="TerminalStep.None"/>이면 셋 다 접혀 있다.</summary>
+    [ObservableProperty]
+    private TerminalStep currentStep = TerminalStep.Tool;
+
+    /// <summary>사람이 AI를 골랐는가. 처음에는 아무것도 안 고른 상태로 연다.</summary>
+    [ObservableProperty]
+    private bool toolChosen;
+
+    /// <summary>사람이 새로/이어서를 골랐는가. <see cref="SessionModeIndex"/>는 기본값이 있어 이것과 따로 본다.</summary>
+    [ObservableProperty]
+    private bool sessionModeChosen;
+
+    /// <summary>앞 단계를 바꿔 뒷 단계 답이 무효가 된 이유. 조용히 지우면 "왜 없어졌지"가 된다.</summary>
+    [ObservableProperty]
+    private string? invalidationNotice;
+
+    public bool HasInvalidationNotice => !string.IsNullOrEmpty(InvalidationNotice);
+
+    public bool ToolDone => ToolChosen;
+
+    public bool FolderDone => ToolDone && CanLaunch;
+
+    public bool SessionDone => FolderDone && SessionModeChosen && (IsNewSession || SelectedResume is not null);
+
+    public bool ToolExpanded => CurrentStep == TerminalStep.Tool;
+
+    public bool FolderExpanded => CurrentStep == TerminalStep.Folder;
+
+    public bool SessionExpanded => CurrentStep == TerminalStep.Session;
+
+    /// <summary>아직 오지 않은 단계는 흐리게 두고 누를 수 없게 한다. 숨기지는 않는다 — 몇 개 남았는지 보여야 안심한다.</summary>
+    public bool FolderReachable => ToolDone;
+
+    public bool SessionReachable => FolderDone;
+
+    // 머리에 그리는 표시. 셋 중 하나만 참이다: 끝남(✓ + 요약 + 변경) · 지금(●) · 아직(○)
+    public bool ToolMarkDone => ToolDone && !ToolExpanded;
+
+    public bool ToolMarkPending => !ToolDone && !ToolExpanded;
+
+    public bool FolderMarkDone => FolderDone && !FolderExpanded;
+
+    public bool FolderMarkPending => !FolderDone && !FolderExpanded;
+
+    public bool SessionMarkDone => SessionDone && !SessionExpanded;
+
+    public bool SessionMarkPending => !SessionDone && !SessionExpanded;
+
+    /// <summary>라디오에 물리는 값. 아직 안 골랐으면 −1이라 아무것도 켜지지 않는다.</summary>
+    public int SessionModeSelection => SessionModeChosen ? SessionModeIndex : -1;
+
+    // 아직 못 가는 단계는 흐리게 + 누를 수 없게 한다. IsEnabled 를 쓰면 WinUI 가 비활성 배경을 칠해
+    // "흐린 줄"이 아니라 "회색 덩어리"가 되어 오히려 눈에 띈다
+    public double FolderHeaderOpacity => FolderReachable ? 1.0 : 0.4;
+
+    public double SessionHeaderOpacity => SessionReachable ? 1.0 : 0.4;
+
+    /// <summary>실행될 명령을 보여도 되는가. 도구를 고르기 전에는 남의 명령을 보여 주는 셈이라 감춘다.</summary>
+    public bool ShowPreview => ToolDone;
+
+    /// <summary>접혔을 때 머리에 남는 한 줄. "내가 뭘 골랐더라"를 여기서 확인한다.</summary>
+    public string ToolSummary => ToolDone
+        ? (SelectedTool.IsInstalled ? SelectedTool.Label : UiStrings.Format("Terminal_StepToolNeedsInstall", SelectedTool.Label))
+        : string.Empty;
+
+    public string FolderSummary
+    {
+        get
+        {
+            if (!FolderDone)
+            {
+                return string.Empty;
+            }
+
+            var name = Path.GetFileName(WorkingDirectory!.TrimEnd(Path.DirectorySeparatorChar));
+            var rules = UiStrings.Get(HasRules ? "Terminal_StepRulesPresent" : "Terminal_StepRulesAbsent");
+
+            return $"{(name.Length > 0 ? name : WorkingDirectory)}  ·  {rules}";
+        }
+    }
+
+    public string SessionSummary
+    {
+        get
+        {
+            if (!SessionDone)
+            {
+                return string.Empty;
+            }
+
+            return IsNewSession
+                ? UiStrings.Get("Terminal_NewSession")
+                : UiStrings.Format("Terminal_StepResumeSummary", SelectedResume!.When);
+        }
+    }
+
+    /// <summary>실행 줄에 띄우는 "무엇이 남았나" 한 문장. 다 채워졌으면 빈 문자열.</summary>
+    public string RemainingHint
+    {
+        get
+        {
+            if (!ToolDone)
+            {
+                return UiStrings.Get("Terminal_StepNeedTool");
+            }
+
+            if (!FolderDone)
+            {
+                return UiStrings.Get("Terminal_StepNeedFolder");
+            }
+
+            if (!SessionModeChosen)
+            {
+                return UiStrings.Get("Terminal_StepNeedMode");
+            }
+
+            return SessionDone ? string.Empty : UiStrings.Get("Terminal_StepNeedSession");
+        }
+    }
+
+    public bool HasRemainingHint => RemainingHint.Length > 0;
+
+    /// <summary>필수 셋이 다 찼고 도구도 누를 수 있는가.</summary>
+    public bool CanStart => SessionDone && SelectedTool.CanPress;
+
+    /// <summary>AI를 고른다. 탭·카드 어느 쪽에서 부르든 여기로 온다.</summary>
+    public void ChooseTool(int index)
+    {
+        var changed = SelectedToolIndex != index;
+        SelectedToolIndex = index;
+        ToolChosen = true;
+
+        if (changed)
+        {
+            InvalidateSession("Terminal_StepInvalidByTool");
+        }
+
+        CurrentStep = FolderDone ? TerminalStep.Session : TerminalStep.Folder;
+        RefreshSteps();
+    }
+
+    /// <summary>새로 시작 / 이어서를 고른다.</summary>
+    public void ChooseSessionMode(int mode)
+    {
+        SessionModeIndex = mode;
+        SessionModeChosen = true;
+        InvalidationNotice = null;
+        CurrentStep = TerminalStep.Session;
+        RefreshSteps();
+    }
+
+    /// <summary>머리를 눌러 그 단계로 간다. 펼쳐진 단계를 다시 누르면 접는다.</summary>
+    public void GoToStep(TerminalStep step)
+    {
+        CurrentStep = CurrentStep == step ? TerminalStep.None : step;
+        RefreshSteps();
+    }
+
+    /// <summary>앞 단계가 바뀌어 세션 선택이 못 쓰게 됐다. 이유를 남기고 그 단계를 다시 연다.</summary>
+    private void InvalidateSession(string reasonKey)
+    {
+        if (!SessionModeChosen && SelectedResume is null)
+        {
+            return;
+        }
+
+        SessionModeChosen = false;
+        SelectedResume = null;
+        InvalidationNotice = UiStrings.Get(reasonKey);
+    }
+
+    /// <summary>단계에서 나오는 값들을 한꺼번에 다시 읽게 한다. 갈래가 많아 개별 특성으로 엮지 않는다.</summary>
+    private void RefreshSteps()
+    {
+        foreach (var name in StepDependentProperties)
+        {
+            OnPropertyChanged(name);
+        }
+    }
+
+    private static readonly string[] StepDependentProperties =
+    [
+        nameof(ToolDone), nameof(FolderDone), nameof(SessionDone),
+        nameof(ToolExpanded), nameof(FolderExpanded), nameof(SessionExpanded),
+        nameof(FolderReachable), nameof(SessionReachable),
+        nameof(ToolMarkDone), nameof(ToolMarkPending),
+        nameof(FolderMarkDone), nameof(FolderMarkPending),
+        nameof(SessionMarkDone), nameof(SessionMarkPending),
+        nameof(SessionModeSelection), nameof(FolderHeaderOpacity), nameof(SessionHeaderOpacity),
+        nameof(ShowPreview),
+        nameof(ToolSummary), nameof(FolderSummary), nameof(SessionSummary),
+        nameof(RemainingHint), nameof(HasRemainingHint), nameof(CanStart),
+        nameof(HasInvalidationNotice), nameof(HasRules), nameof(RulesStatusText),
+    ];
+
+    partial void OnCurrentStepChanged(TerminalStep value) => RefreshSteps();
+
+    partial void OnToolChosenChanged(bool value) => RefreshSteps();
+
+    partial void OnSessionModeChosenChanged(bool value) => RefreshSteps();
+
+    partial void OnInvalidationNoticeChanged(string? value) => OnPropertyChanged(nameof(HasInvalidationNotice));
 
     // ── 실행 ──────────────────────────────────────────────────────────────
 
@@ -403,7 +641,15 @@ public sealed partial class TerminalViewModel : ObservableObject
         SessionModeIndex = 1;
         _autoOpen = autoOpen;
         _autoOpenTool = tool;
+
+        // 세 단계가 이미 채워진 채로 도착한다. 훑는 연출 없이 접힌 상태로 뜨고, 마지막 단계만 열어 둔다
+        ToolChosen = true;
+        SessionModeChosen = true;
+        InvalidationNotice = null;
+        CurrentStep = TerminalStep.Session;
+
         OnPropertyChanged(nameof(Preview));
+        RefreshSteps();
     }
 
     /// <summary>자동 열기 요청을 한 번만 꺼내 온다(다시 부르면 false). 화면 로드 때 탭 기본 선택이 도구를 덮어쓴 것을 되돌린다.</summary>
