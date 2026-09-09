@@ -53,7 +53,7 @@
 | A2 | `Width`/`Height` 토큰화 | 디자인 | ⬜ |
 | A3 | `DataTemplate` 컴포넌트화 | 구조 | ⬜ |
 | A4 | 화면 골격(`Pivot`·`ScrollViewer`) 재설계 | 구조 | ⬜ |
-| A5 | 마이그레이션을 도구 3개로 확장 | 기능 | ⬜ |
+| A5 | 마이그레이션을 도구 3개로 확장 | 기능 | ✅ |
 | A6 | Provider 계층 한글 문구 → resw | 계약 | ✅ |
 
 ### 원인 (고치기 전에 찾은 것)
@@ -152,3 +152,22 @@
     전부 "죽은 키"로 잡았다. **테스트가 정확히 일한 것이다** — resw 를 부르는 곳이 App 밖으로 늘어난 사실을
     알려 준 것이라, 스캔 범위를 `src/` 전체로 넓혔다.
   - CLI(`Daiso.Cli`)는 resw 를 읽지 않으므로 `키 = 값` 을 그대로 찍는다. 진단용 도구라 그편이 낫다.
+- **A5** — 마이그레이션을 도구 수와 무관하게 만들었다.
+
+  | | 전 | 후 |
+  |---|---|---|
+  | 방향 | `enum { ClaudeToCodex, CodexToClaude }` | `record struct MigrationDirection(ToolKind From, ToolKind To)` |
+  | 계획 | `Plan(claude, codex)` | `Plan(tools, sources, left, right)` |
+  | 고를 수 있는 방향 | 2 (고정) | **6** (도구 3개 기준, `plan.Directions` 가 만든다) |
+  | 화면 | 버튼 두 개 | 방향 목록에서 하나 고르고 `옮기기` |
+
+  - **import 전개 규칙을 능력으로 바꿨다.** 예전에는 "대상이 Codex 면 전개"라고 도구 이름으로 박혀 있었다.
+    지금은 `IProvider.SupportsInstructionImports` 를 본다. **기본값은 false** —
+    확인되지 않은 도구로 옮길 때는 내용을 펼쳐 두므로 안전한 쪽으로 틀린다.
+    Claude 만 true 로 확인해 두었다. Antigravity(`GEMINI.md`)의 import 지원 여부는 확인하지 못해 false 다.
+  - Core 의 안내·경고도 완성 문장을 버리고 `MigrationNote(Key, Argument, Argument2)` 가 됐다 (A6 와 같은 원칙).
+    문구 9개를 resw 로 옮겼다.
+  - diff 는 본디 둘 사이의 것이라 비교 짝은 밖에서 고른다. 기본은 **파일이 실제로 있는 도구 둘**이다.
+  - CLI 는 `--to` 에 더해 `--from` 을 받는다. 도구가 셋이면 반대편이 하나로 정해지지 않기 때문이다.
+  - *도중에 잡은 것:* `Migration_ToCodex` · `Migration_ToClaude` 문구 두 개가 죽은 키로 남았다.
+    방향 두 개 전용 버튼 이름이었다. **`StringResourceKeysTests` 가 잡아 줬다.**

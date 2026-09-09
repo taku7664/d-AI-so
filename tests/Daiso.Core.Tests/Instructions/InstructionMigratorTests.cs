@@ -11,42 +11,68 @@ public sealed class InstructionMigratorTests
 
     private readonly InstructionMigrator _migrator = new();
 
+    /// <summary>
+    /// 이 테스트가 보는 세상: Claude 는 import 를 읽고 Codex 는 못 읽는다.
+    /// 도구 목록을 밖에서 주는 것이 새 계약이다 (docs/REVIEW_BACKLOG.md A5).
+    /// </summary>
+    private static readonly IReadOnlyList<InstructionToolInfo> Tools =
+    [
+        new(ToolKind.Claude, "CLAUDE.md", SupportsImports: true),
+        new(ToolKind.Codex, "AGENTS.md", SupportsImports: false),
+    ];
+
+    private static readonly MigrationDirection ClaudeToCodex = new(ToolKind.Claude, ToolKind.Codex);
+
+    private static readonly MigrationDirection CodexToClaude = new(ToolKind.Codex, ToolKind.Claude);
+
+    /// <summary>두 도구를 비교하는 계획. 왼쪽이 Claude, 오른쪽이 Codex 다.</summary>
+    private InstructionMigrationPlan Plan(InstructionSource claude, InstructionSource codex) =>
+        _migrator.Plan(
+            Tools,
+            new Dictionary<ToolKind, InstructionSource>
+            {
+                [ToolKind.Claude] = claude,
+                [ToolKind.Codex] = codex,
+            },
+            ToolKind.Claude,
+            ToolKind.Codex);
+
     [Fact]
     public void With_neither_file_there_is_nothing_to_do()
     {
-        var plan = _migrator.Plan(InstructionSource.Missing, InstructionSource.Missing);
+        var plan = Plan(InstructionSource.Missing, InstructionSource.Missing);
 
         plan.CanMigrate.Should().BeFalse();
         plan.Suggested.Should().BeNull();
         plan.Diff.Should().BeEmpty();
-        plan.Notes.Should().ContainSingle().Which.Should().Contain("모두 없다");
+        plan.Notes.Should().ContainSingle().Which.Key.Should().Be("MigrationNote_NoneExist");
     }
 
     [Fact]
     public void With_only_claude_the_suggested_direction_is_to_codex()
     {
-        var plan = _migrator.Plan(InstructionSource.Of("# 규칙\n한국어로 답한다\n"), InstructionSource.Missing);
+        var plan = Plan(InstructionSource.Of("# 규칙\n한국어로 답한다\n"), InstructionSource.Missing);
 
-        plan.Suggested.Should().Be(MigrationDirection.ClaudeToCodex);
+        plan.Suggested.Should().Be(ClaudeToCodex);
         plan.Diff.Should().OnlyContain(line => line.Kind == DiffKind.Removed);
     }
 
     [Fact]
     public void With_only_codex_the_suggested_direction_is_to_claude()
     {
-        var plan = _migrator.Plan(InstructionSource.Missing, InstructionSource.Of("# 규칙\n"));
+        var plan = Plan(InstructionSource.Missing, InstructionSource.Of("# 규칙\n"));
 
-        plan.Suggested.Should().Be(MigrationDirection.CodexToClaude);
+        plan.Suggested.Should().Be(CodexToClaude);
         plan.Diff.Should().OnlyContain(line => line.Kind == DiffKind.Added);
     }
 
     [Fact]
     public void With_both_files_the_direction_is_left_to_the_user()
     {
-        var plan = _migrator.Plan(InstructionSource.Of("가\n"), InstructionSource.Of("나\n"));
+        var plan = Plan(InstructionSource.Of("가\n"), InstructionSource.Of("나\n"));
 
         plan.Suggested.Should().BeNull();
-        plan.Notes.Should().Contain(note => note.Contains("방향을 고르면"));
+        plan.Notes.Should().Contain(note => note.Key == "MigrationNote_BodiesDiffer");
     }
 
     [Fact]
@@ -57,16 +83,16 @@ public sealed class InstructionMigratorTests
         var codex = InstructionSource.Of(
             "# 규칙\n한국어로 답한다\n\n<!-- daiso:start -->\n" + CodexBody + "\n<!-- daiso:end -->\n");
 
-        var plan = _migrator.Plan(claude, codex);
+        var plan = Plan(claude, codex);
 
         plan.BodiesEqual.Should().BeTrue();
-        plan.Notes.Should().Contain(note => note.Contains("옮길 것이 없다"));
+        plan.Notes.Should().Contain(note => note.Key == "MigrationNote_BodiesSame");
     }
 
     [Fact]
     public void The_diff_reports_line_numbers_of_the_side_that_has_the_line()
     {
-        var plan = _migrator.Plan(InstructionSource.Of("가\n같음\n"), InstructionSource.Of("같음\n나\n"));
+        var plan = Plan(InstructionSource.Of("가\n같음\n"), InstructionSource.Of("같음\n나\n"));
 
         plan.Diff.Should().SatisfyRespectively(
             first =>
@@ -95,11 +121,11 @@ public sealed class InstructionMigratorTests
     [Fact]
     public void Rendering_to_codex_puts_the_codex_block_back()
     {
-        var plan = _migrator.Plan(
+        var plan = Plan(
             InstructionSource.Of("# 규칙\n한국어로 답한다\n\n" + ClaudeBlock),
             InstructionSource.Missing);
 
-        var result = _migrator.Render(plan, MigrationDirection.ClaudeToCodex);
+        var result = _migrator.Render(plan, ClaudeToCodex);
 
         result.Target.Should().Be(ToolKind.Codex);
         result.Content.Should().Contain("# 규칙").And.Contain(CodexBody);
@@ -109,11 +135,11 @@ public sealed class InstructionMigratorTests
     [Fact]
     public void Rendering_to_claude_puts_the_import_block_back()
     {
-        var plan = _migrator.Plan(
+        var plan = Plan(
             InstructionSource.Missing,
             InstructionSource.Of("# 규칙\n\n<!-- daiso:start -->\n" + CodexBody + "\n<!-- daiso:end -->\n"));
 
-        var result = _migrator.Render(plan, MigrationDirection.CodexToClaude);
+        var result = _migrator.Render(plan, CodexToClaude);
 
         result.Target.Should().Be(ToolKind.Claude);
         result.Content.Should().Contain("@PROJECT_RULES.daiso");
@@ -123,9 +149,9 @@ public sealed class InstructionMigratorTests
     [Fact]
     public void Rendering_without_a_source_file_fails()
     {
-        var plan = _migrator.Plan(InstructionSource.Missing, InstructionSource.Of("# 규칙\n"));
+        var plan = Plan(InstructionSource.Missing, InstructionSource.Of("# 규칙\n"));
 
-        var act = () => _migrator.Render(plan, MigrationDirection.ClaudeToCodex);
+        var act = () => _migrator.Render(plan, ClaudeToCodex);
 
         act.Should().Throw<InvalidOperationException>().WithMessage("*CLAUDE.md*");
     }
@@ -138,11 +164,11 @@ public sealed class InstructionMigratorTests
             "# 규칙\n@docs/style.md\n끝\n",
             new Dictionary<string, string?>(StringComparer.Ordinal) { ["docs/style.md"] = "들여쓰기는 4칸\n" });
 
-        var result = _migrator.Render(_migrator.Plan(claude, InstructionSource.Missing), MigrationDirection.ClaudeToCodex);
+        var result = _migrator.Render(Plan(claude, InstructionSource.Missing), ClaudeToCodex);
 
         result.Content.Should().Contain("들여쓰기는 4칸");
         result.Content.Should().NotContain("@docs/style.md");
-        result.Warnings.Should().ContainSingle().Which.Should().Contain("인라인 전개");
+        result.Warnings.Should().ContainSingle().Which.Key.Should().Be("MigrationNote_ImportInlined");
     }
 
     [Fact]
@@ -153,10 +179,10 @@ public sealed class InstructionMigratorTests
             "# 규칙\n@없는파일.md\n",
             new Dictionary<string, string?>(StringComparer.Ordinal) { ["없는파일.md"] = null });
 
-        var result = _migrator.Render(_migrator.Plan(claude, InstructionSource.Missing), MigrationDirection.ClaudeToCodex);
+        var result = _migrator.Render(Plan(claude, InstructionSource.Missing), ClaudeToCodex);
 
         result.Content.Should().Contain("@없는파일.md");
-        result.Warnings.Should().ContainSingle().Which.Should().Contain("읽지 못해");
+        result.Warnings.Should().ContainSingle().Which.Key.Should().Be("MigrationNote_ImportUnreadable");
     }
 
     [Fact]
@@ -165,7 +191,7 @@ public sealed class InstructionMigratorTests
         // Claude는 import 문법을 쓰므로 AGENTS.md → CLAUDE.md 방향에서는 펼칠 것이 없다.
         var codex = InstructionSource.Of("# 규칙\n@docs/style.md\n");
 
-        var result = _migrator.Render(_migrator.Plan(InstructionSource.Missing, codex), MigrationDirection.CodexToClaude);
+        var result = _migrator.Render(Plan(InstructionSource.Missing, codex), CodexToClaude);
 
         result.Content.Should().Contain("@docs/style.md");
         result.Warnings.Should().BeEmpty();
@@ -179,7 +205,7 @@ public sealed class InstructionMigratorTests
             "# 규칙\n```\n@docs/style.md\n```\n",
             new Dictionary<string, string?>(StringComparer.Ordinal) { ["docs/style.md"] = "펼치면 안 된다\n" });
 
-        var result = _migrator.Render(_migrator.Plan(claude, InstructionSource.Missing), MigrationDirection.ClaudeToCodex);
+        var result = _migrator.Render(Plan(claude, InstructionSource.Missing), ClaudeToCodex);
 
         result.Content.Should().Contain("@docs/style.md");
         result.Content.Should().NotContain("펼치면 안 된다");
@@ -188,11 +214,11 @@ public sealed class InstructionMigratorTests
     [Fact]
     public void Rendering_twice_gives_the_same_content()
     {
-        var plan = _migrator.Plan(InstructionSource.Of("# 규칙\n한국어\n\n" + ClaudeBlock), InstructionSource.Missing);
+        var plan = Plan(InstructionSource.Of("# 규칙\n한국어\n\n" + ClaudeBlock), InstructionSource.Missing);
 
-        var first = _migrator.Render(plan, MigrationDirection.ClaudeToCodex);
-        var second = _migrator.Render(_migrator.Plan(InstructionSource.Of(first.Content), InstructionSource.Missing),
-            MigrationDirection.ClaudeToCodex);
+        var first = _migrator.Render(plan, ClaudeToCodex);
+        var second = _migrator.Render(Plan(InstructionSource.Of(first.Content), InstructionSource.Missing),
+            ClaudeToCodex);
 
         second.Content.Should().Be(first.Content);
     }

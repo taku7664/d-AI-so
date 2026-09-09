@@ -350,7 +350,7 @@ internal static class Commands
         }
     }
 
-    /// <summary>CLAUDE.md ↔ AGENTS.md 비교·복사. `--apply` 없이는 쓰지 않는다. (REQUIREMENTS §7)</summary>
+    /// <summary>도구 사이 지시문 비교·복사. `--apply` 없이는 쓰지 않는다. (REQUIREMENTS §7)</summary>
     private static int Migrate(string projectDir, string[] args)
     {
         var directory = Path.GetFullPath(projectDir);
@@ -358,13 +358,19 @@ internal static class Commands
         var plan = service.Plan(directory);
 
         Console.WriteLine($"[migrate] {directory}");
-        Console.WriteLine($"  CLAUDE.md: {(plan.Claude.Exists ? "있음" : "없음")}"
-            + $"   AGENTS.md: {(plan.Codex.Exists ? "있음" : "없음")}");
 
+        foreach (var info in plan.Tools)
+        {
+            Console.WriteLine($"  {info.RulesFileName}: {(plan.SourceOf(info.Tool).Exists ? "있음" : "없음")}");
+        }
+
+        // 이 도구는 화면 문구(resw)를 읽지 않는다. 키와 값을 그대로 찍는다 — 진단에는 그편이 낫다
         foreach (var note in plan.Notes)
         {
-            Console.WriteLine($"  · {note}");
+            Console.WriteLine($"  · {note.Key} {note.Argument} {note.Argument2}".TrimEnd());
         }
+
+        Console.WriteLine($"  고를 수 있는 방향: {string.Join(", ", plan.Directions.Select(d => $"{d.From}->{d.To}"))}");
 
         if (!plan.CanMigrate)
         {
@@ -421,9 +427,30 @@ internal static class Commands
 
         return args[index + 1].ToLowerInvariant() switch
         {
-            "codex" or "agents" => MigrationDirection.ClaudeToCodex,
-            "claude" => MigrationDirection.CodexToClaude,
+            // --from 을 생략하면 반대편 하나를 원본으로 본다. 도구가 셋이면 --from 으로 정확히 짚는다
+            "codex" or "agents" => new MigrationDirection(From(args, ToolKind.Claude), ToolKind.Codex),
+            "claude" => new MigrationDirection(From(args, ToolKind.Codex), ToolKind.Claude),
+            "antigravity" or "gemini" => new MigrationDirection(From(args, ToolKind.Claude), ToolKind.Antigravity),
             _ => null,
+        };
+    }
+
+    /// <summary>`--from &lt;도구&gt;`. 없으면 기본값.</summary>
+    private static ToolKind From(string[] args, ToolKind fallback)
+    {
+        var index = Array.IndexOf(args, "--from");
+
+        if (index < 0 || index + 1 >= args.Length)
+        {
+            return fallback;
+        }
+
+        return args[index + 1].ToLowerInvariant() switch
+        {
+            "claude" => ToolKind.Claude,
+            "codex" or "agents" => ToolKind.Codex,
+            "antigravity" or "gemini" => ToolKind.Antigravity,
+            _ => fallback,
         };
     }
 

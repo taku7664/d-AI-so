@@ -521,14 +521,38 @@
   </data>
 
   <!-- ── 지시문 마이그레이션 ────────────────────────────────────────────── -->
+  <data name="Migration_Run" xml:space="preserve">
+    <value>옮기기</value>
+    <comment>고른 방향으로 대상 파일 하나를 쓴다</comment>
+  </data>
+  <data name="Migration_DirectionLabel" xml:space="preserve">
+    <value>{0} → {1}</value>
+    <comment>{0}=원본 파일 이름, {1}=대상 파일 이름</comment>
+  </data>
+  <data name="MigrationNote_NoneExist" xml:space="preserve">
+    <value>지시문 파일이 하나도 없다. 연동으로 새로 만들 수 있다</value>
+  </data>
+  <data name="MigrationNote_TargetMissing" xml:space="preserve">
+    <value>{0} 이 없다. 있는 파일에서 생성할 수 있다</value>
+    <comment>{0}=없는 파일 이름</comment>
+  </data>
+  <data name="MigrationNote_BodiesSame" xml:space="preserve">
+    <value>{0} 과 {1} 의 마커 블록 밖 본문이 같다. 옮길 것이 없다</value>
+  </data>
+  <data name="MigrationNote_BodiesDiffer" xml:space="preserve">
+    <value>본문이 {0}줄 다르다. 방향을 고르면 대상 파일을 원본 본문으로 덮어쓴다</value>
+  </data>
+  <data name="MigrationNote_HasImports" xml:space="preserve">
+    <value>{0} 에 import {1}개. import 를 못 읽는 도구로 옮길 때 인라인 전개된다</value>
+  </data>
+  <data name="MigrationNote_ImportInlined" xml:space="preserve">
+    <value>import를 인라인 전개했다: @{0} ({1}자)</value>
+  </data>
+  <data name="MigrationNote_ImportUnreadable" xml:space="preserve">
+    <value>import를 읽지 못해 줄을 그대로 두었다: @{0}</value>
+  </data>
   <data name="Migration_DialogTitle" xml:space="preserve">
     <value>CLAUDE.md ↔ AGENTS.md</value>
-  </data>
-  <data name="Migration_ToCodex" xml:space="preserve">
-    <value>CLAUDE.md → AGENTS.md</value>
-  </data>
-  <data name="Migration_ToClaude" xml:space="preserve">
-    <value>AGENTS.md → CLAUDE.md</value>
   </data>
   <data name="Migration_DiffHint" xml:space="preserve">
     <value>왼쪽이 CLAUDE.md, 오른쪽이 AGENTS.md입니다. daiso 마커 블록은 비교에서 제외합니다</value>

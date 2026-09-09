@@ -44,6 +44,15 @@ public interface IProvider
     /// <summary>도구가 읽는 프로젝트 지시문 파일 이름. "CLAUDE.md" | "AGENTS.md" | "GEMINI.md".</summary>
     string RulesFileName { get; }
 
+    /// <summary>
+    /// 지시문 파일에서 <c>@경로</c> import 를 읽을 수 있는가.
+    /// <para>
+    /// <b>확인된 것만 true 다.</b> 기본값은 false — 모르는 도구로 옮길 때는 내용을 그 자리에 펼쳐 두므로
+    /// 안전한 쪽으로 틀린다. 반대로 잘못 true 로 두면 대상 도구가 import 줄을 글자 그대로 읽는다.
+    /// </para>
+    /// </summary>
+    bool SupportsInstructionImports => false;
+
     /// <summary>컨텍스트로 로드되는 파일 경로를 로드 순서대로 돌려준다. (ARCHITECTURE §4.4)</summary>
     IReadOnlyList<string> ContextFilePatterns(string projectDir);
 

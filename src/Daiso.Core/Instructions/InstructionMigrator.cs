@@ -1,12 +1,19 @@
+using System.Globalization;
+
 namespace Daiso.Core;
 
 /// <summary>
-/// CLAUDE.md ↔ AGENTS.md 마이그레이션. (REQUIREMENTS §7, ARCHITECTURE §5.6)
+/// 도구 사이 지시문 마이그레이션. (REQUIREMENTS §7, ARCHITECTURE §5.6)
 ///
 /// 규칙 셋:
 /// - 비교·복사 대상은 daiso 마커 블록을 **뺀** 본문이다. 블록은 대상 도구 형식으로 다시 만들어 붙인다
-/// - 대상이 Codex면 Claude 전용 <c>@경로</c> import를 인라인 전개한다 (Codex에는 import 문법이 없다)
+/// - 대상이 <c>@경로</c> import 를 못 읽는 도구면 그 내용을 자리에 펼친다
 /// - 원본은 읽기만 한다
+///
+/// <para>
+/// 도구 이름·파일 이름·문법 지원 여부를 스스로 알지 않는다. <see cref="InstructionToolInfo"/> 로 받는다 —
+/// 그래서 도구가 셋이 되어도 이 클래스는 그대로다 (docs/REVIEW_BACKLOG.md A5).
+/// </para>
 /// </summary>
 public sealed class InstructionMigrator : IInstructionMigrator
 {
@@ -37,30 +44,43 @@ public sealed class InstructionMigrator : IInstructionMigrator
     }
 
     /// <inheritdoc />
-    public InstructionMigrationPlan Plan(InstructionSource claude, InstructionSource codex)
+    public InstructionMigrationPlan Plan(
+        IReadOnlyList<InstructionToolInfo> tools,
+        IReadOnlyDictionary<ToolKind, InstructionSource> sources,
+        ToolKind left,
+        ToolKind right)
     {
-        ArgumentNullException.ThrowIfNull(claude);
-        ArgumentNullException.ThrowIfNull(codex);
+        ArgumentNullException.ThrowIfNull(tools);
+        ArgumentNullException.ThrowIfNull(sources);
 
-        var claudeBody = BodyOf(claude);
-        var codexBody = BodyOf(codex);
-        var diff = Compare(claudeBody, codexBody);
+        var bodies = tools.ToDictionary(
+            info => info.Tool,
+            info => BodyOf(sources.TryGetValue(info.Tool, out var source) ? source : InstructionSource.Missing));
 
-        MigrationDirection? suggested = (claude.Exists, codex.Exists) switch
-        {
-            (true, false) => MigrationDirection.ClaudeToCodex,
-            (false, true) => MigrationDirection.CodexToClaude,
-            _ => null,
-        };
+        var diff = Compare(
+            bodies.TryGetValue(left, out var leftBody) ? leftBody : string.Empty,
+            bodies.TryGetValue(right, out var rightBody) ? rightBody : string.Empty);
+
+        var present = tools
+            .Where(info => sources.TryGetValue(info.Tool, out var source) && source.Exists)
+            .ToList();
+
+        // 원본이 하나뿐이면 방향이 뻔하다: 그것에서 나머지로. 둘 이상이면 사람이 고른다
+        MigrationDirection? suggested = present.Count == 1
+            ? tools.Where(info => info.Tool != present[0].Tool)
+                .Select(info => (MigrationDirection?)new MigrationDirection(present[0].Tool, info.Tool))
+                .FirstOrDefault()
+            : null;
 
         return new InstructionMigrationPlan(
-            claude,
-            codex,
-            claudeBody,
-            codexBody,
+            tools,
+            sources,
+            bodies,
+            left,
+            right,
             diff,
             suggested,
-            Notes(claude, codex, diff));
+            Notes(tools, sources, left, right, diff));
     }
 
     /// <inheritdoc />
@@ -68,26 +88,27 @@ public sealed class InstructionMigrator : IInstructionMigrator
     {
         ArgumentNullException.ThrowIfNull(plan);
 
-        var (source, body, target) = direction switch
+        if (!direction.IsValid)
         {
-            MigrationDirection.ClaudeToCodex => (plan.Claude, plan.ClaudeBody, ToolKind.Codex),
-            MigrationDirection.CodexToClaude => (plan.Codex, plan.CodexBody, ToolKind.Claude),
-            _ => throw new ArgumentOutOfRangeException(nameof(direction), direction, "알 수 없는 방향"),
-        };
+            throw new ArgumentOutOfRangeException(nameof(direction), direction, "같은 도구로는 옮길 수 없다");
+        }
+
+        var source = plan.SourceOf(direction.From);
+        var body = plan.BodyOf(direction.From);
 
         if (!source.Exists)
         {
-            var missing = direction == MigrationDirection.ClaudeToCodex ? "CLAUDE.md" : "AGENTS.md";
-            throw new InvalidOperationException($"원본 {missing}이 없어 옮길 내용이 없다");
+            throw new InvalidOperationException($"원본 {plan.FileNameOf(direction.From)} 이 없어 옮길 내용이 없다");
         }
 
-        var warnings = new List<string>();
+        var warnings = new List<MigrationNote>();
 
-        // Codex에는 import 문법이 없다. 옮기면서 내용을 그 자리에 펼친다.
-        var moved = target == ToolKind.Codex ? Inline(body, source.Imports, warnings) : body;
-        var content = _markerWriter.Apply(moved, _template.For(target, _rulesFileName));
+        // 대상이 import 문법을 못 읽으면 옮기면서 내용을 그 자리에 펼친다
+        var targetInfo = plan.Tools.FirstOrDefault(info => info.Tool == direction.To);
+        var moved = targetInfo is { SupportsImports: true } ? body : Inline(body, source.Imports, warnings);
+        var content = _markerWriter.Apply(moved, _template.For(direction.To, _rulesFileName));
 
-        return new MigrationResult(target, content, warnings);
+        return new MigrationResult(direction.To, content, warnings);
     }
 
     private string BodyOf(InstructionSource source) =>
@@ -97,7 +118,7 @@ public sealed class InstructionMigrator : IInstructionMigrator
     private static string Inline(
         string body,
         IReadOnlyDictionary<string, string?> imports,
-        List<string> warnings)
+        List<MigrationNote> warnings)
     {
         if (imports.Count == 0)
         {
@@ -126,53 +147,70 @@ public sealed class InstructionMigrator : IInstructionMigrator
             if (!imports.TryGetValue(path, out var imported) || imported is null)
             {
                 output.Add(line);
-                warnings.Add($"import를 읽지 못해 줄을 그대로 두었다: @{path}");
+                warnings.Add(new MigrationNote("MigrationNote_ImportUnreadable", path));
                 continue;
             }
 
             output.AddRange(InstructionImports.SplitLines(imported));
-            warnings.Add($"import를 인라인 전개했다: @{path} ({imported.Length}자)");
+            warnings.Add(new MigrationNote("MigrationNote_ImportInlined", path, Count(imported.Length)));
         }
 
         return string.Join('\n', output);
     }
 
-    private static IReadOnlyList<string> Notes(
-        InstructionSource claude,
-        InstructionSource codex,
+    /// <summary>문구에 끼울 수. 문화권에 흔들리지 않게 고정한다.</summary>
+    private static string Count(int value) => value.ToString(CultureInfo.InvariantCulture);
+
+    private static IReadOnlyList<MigrationNote> Notes(
+        IReadOnlyList<InstructionToolInfo> tools,
+        IReadOnlyDictionary<ToolKind, InstructionSource> sources,
+        ToolKind left,
+        ToolKind right,
         IReadOnlyList<DiffLine> diff)
     {
-        var notes = new List<string>();
+        var notes = new List<MigrationNote>();
 
-        switch (claude.Exists, codex.Exists)
+        bool Exists(ToolKind tool) => sources.TryGetValue(tool, out var source) && source.Exists;
+        string Name(ToolKind tool) => tools.FirstOrDefault(info => info.Tool == tool)?.RulesFileName ?? string.Empty;
+
+        var present = tools.Where(info => Exists(info.Tool)).ToList();
+
+        if (present.Count == 0)
         {
-            case (false, false):
-                notes.Add("CLAUDE.md와 AGENTS.md가 모두 없다. 연동으로 새로 만들 수 있다");
-                break;
-            case (true, false):
-                notes.Add("AGENTS.md가 없다. CLAUDE.md → AGENTS.md 생성을 권한다");
-                break;
-            case (false, true):
-                notes.Add("CLAUDE.md가 없다. AGENTS.md → CLAUDE.md 생성을 권한다");
-                break;
-            default:
-                var changed = diff.Count(line => line.Kind != DiffKind.Same);
-                notes.Add(changed == 0
-                    ? "마커 블록 밖 본문이 같다. 옮길 것이 없다"
-                    : $"본문이 {changed}줄 다르다. 방향을 고르면 대상 파일을 원본 본문으로 덮어쓴다");
-                break;
+            notes.Add(new MigrationNote("MigrationNote_NoneExist"));
+
+            return notes;
         }
 
-        var imports = InstructionImports.Find(claude.Content);
-        if (imports.Count > 0)
+        foreach (var absent in tools.Where(info => !Exists(info.Tool)))
         {
-            notes.Add($"CLAUDE.md에 import {imports.Count}개. AGENTS.md로 옮길 때 인라인 전개된다");
+            notes.Add(new MigrationNote("MigrationNote_TargetMissing", absent.RulesFileName));
+        }
+
+        if (Exists(left) && Exists(right))
+        {
+            var changed = diff.Count(line => line.Kind != DiffKind.Same);
+
+            notes.Add(changed == 0
+                ? new MigrationNote("MigrationNote_BodiesSame", Name(left), Name(right))
+                : new MigrationNote("MigrationNote_BodiesDiffer", Count(changed)));
+        }
+
+        // import 를 쓰는 원본이 있고 그것을 못 읽는 도구가 있으면, 옮길 때 펼쳐진다고 미리 알린다
+        foreach (var info in present)
+        {
+            var imports = InstructionImports.Find(sources[info.Tool].Content);
+
+            if (imports.Count > 0 && tools.Any(other => other.Tool != info.Tool && !other.SupportsImports))
+            {
+                notes.Add(new MigrationNote("MigrationNote_HasImports", info.RulesFileName, Count(imports.Count)));
+            }
         }
 
         return notes;
     }
 
-    /// <summary>줄 단위 LCS. 왼쪽이 CLAUDE.md, 오른쪽이 AGENTS.md다.</summary>
+    /// <summary>줄 단위 LCS. 좌우가 어느 도구인지는 부르는 쪽이 정한다.</summary>
     private static IReadOnlyList<DiffLine> Compare(string left, string right)
     {
         // 빈 문자열도 SplitLines는 빈 줄 하나를 준다. 없는 파일이 빈 줄로 보이지 않게 걸러 낸다.

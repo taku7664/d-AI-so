@@ -47,6 +47,10 @@ public sealed class ClaudeProvider : IProvider, IUsageReader
     /// <inheritdoc />
     public string RulesFileName => RulesFile;
 
+    /// <inheritdoc />
+    /// <remarks><c>@경로</c> import 를 읽는다. 이 앱이 쓰는 규칙 파일 연동이 그 문법에 기대고 있다.</remarks>
+    public bool SupportsInstructionImports => true;
+
     /// <summary>`~/.claude`.</summary>
     public string ConfigDirectory => _home.Combine(".claude");
 

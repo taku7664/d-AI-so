@@ -315,43 +315,46 @@ public sealed partial class RuleMakerPage : Page, IPageHeaderSource
             return;
         }
 
+        // 방향은 이제 둘이 아니다. 고를 수 있는 것을 목록으로 주고 하나를 고르게 한다
+        var picker = new ComboBox
+        {
+            ItemsSource = migration.Directions,
+            DisplayMemberPath = nameof(MigrationDirectionViewModel.Label),
+            SelectedIndex = migration.Directions.Count > 0 ? 0 : -1,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+        };
+
+        // AutomationProperties 는 붙임 속성이라 개체 초기자로는 못 준다
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(picker, "MigrationDirectionPicker");
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(picker, UiStrings.Get("Migration_DialogTitle"));
+
         var dialog = new ContentDialog
         {
             XamlRoot = XamlRoot,
             Title = UiStrings.Get("Migration_DialogTitle"),
-            Content = BuildMigrationView(migration),
-            PrimaryButtonText = UiStrings.Get("Migration_ToCodex"),
-            SecondaryButtonText = UiStrings.Get("Migration_ToClaude"),
+            Content = BuildMigrationView(migration, picker),
+            PrimaryButtonText = UiStrings.Get("Migration_Run"),
             CloseButtonText = UiStrings.Get("Common_Close"),
-            IsPrimaryButtonEnabled = migration.CanMigrateToCodex,
-            IsSecondaryButtonEnabled = migration.CanMigrateToClaude,
+            IsPrimaryButtonEnabled = migration.CanMigrate,
             DefaultButton = ContentDialogButton.Close,
         };
 
-        var choice = await dialog.ShowAsync();
-
-        var direction = choice switch
-        {
-            ContentDialogResult.Primary => (MigrationDirection?)MigrationDirection.ClaudeToCodex,
-            ContentDialogResult.Secondary => MigrationDirection.CodexToClaude,
-            _ => null,
-        };
-
-        if (direction is null)
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary
+            || picker.SelectedItem is not MigrationDirectionViewModel chosen)
         {
             return;
         }
 
         try
         {
-            var result = migration.Apply(direction.Value);
+            var result = migration.Apply(chosen.Direction);
             var target = migration.TargetFileName(result.Target);
 
             await ShowAsync(
                 UiStrings.Format("Migration_Updated", target),
                 result.Warnings.Count == 0
                     ? UiStrings.Get("Migration_NoWarnings")
-                    : string.Join('\n', result.Warnings));
+                    : string.Join('\n', result.Warnings.Select(MigrationViewModel.Render)));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
         {
@@ -359,9 +362,11 @@ public sealed partial class RuleMakerPage : Page, IPageHeaderSource
         }
     }
 
-    private static FrameworkElement BuildMigrationView(MigrationViewModel migration)
+    private static FrameworkElement BuildMigrationView(MigrationViewModel migration, ComboBox picker)
     {
         var panel = new StackPanel { Spacing = 8, Width = 640 };
+
+        panel.Children.Add(picker);
 
         panel.Children.Add(new TextBlock
         {

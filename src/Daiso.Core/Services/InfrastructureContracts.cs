@@ -16,8 +16,14 @@ public interface IRuleFileService
 /// </summary>
 public interface IInstructionMigrationService
 {
-    /// <summary>프로젝트 루트의 두 파일을 읽어 비교한다. import는 재귀 해석한다.</summary>
+    /// <summary>도구가 늘면 방향도 는다. 화면이 고를 목록을 만들 때 쓴다.</summary>
+    IReadOnlyList<ToolKind> Tools { get; }
+
+    /// <summary>프로젝트 루트의 지시문 파일들을 읽어 비교한다. import는 재귀 해석한다.</summary>
     InstructionMigrationPlan Plan(string projectDir);
+
+    /// <summary>비교할 짝을 직접 고른다. diff 는 둘 사이의 것이라 셋 이상은 짝을 골라 봐야 한다.</summary>
+    InstructionMigrationPlan Plan(string projectDir, (ToolKind Left, ToolKind Right) pair);
 
     /// <summary>고른 방향으로 대상 파일 하나만 쓴다. <paramref name="dryRun"/>이면 내용만 만들고 쓰지 않는다.</summary>
     MigrationResult Apply(string projectDir, MigrationDirection direction, bool dryRun);
