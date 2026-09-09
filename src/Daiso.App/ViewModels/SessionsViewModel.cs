@@ -779,7 +779,7 @@ public sealed partial class SessionRowViewModel : ObservableObject
         {
             var cleaned = SessionTitle.Clean(Session.FirstPrompt);
 
-            return cleaned.Length > 0 ? cleaned : UiStrings.Get("Sessions_NoPrompt");
+            return cleaned.Length > 0 ? cleaned : UiStrings.Get("Common_NoPrompt");
         }
     }
 

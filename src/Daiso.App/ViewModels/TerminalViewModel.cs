@@ -5,6 +5,7 @@ using Daiso.App.Services;
 using Daiso.App.Strings;
 using Daiso.Core;
 using Daiso.Core.Prompts;
+using Daiso.Core.Sessions;
 
 namespace Daiso.App.ViewModels;
 
@@ -512,18 +513,59 @@ public sealed class ResumeCandidateViewModel
     /// <summary>이 세션을 이어서 열 때 붙는 인자(예: --resume id).</summary>
     public string ResumeArguments { get; }
 
-    public string When => Session.ModifiedAt.LocalDateTime.ToString("MM-dd HH:mm", System.Globalization.CultureInfo.CurrentCulture);
+    /// <summary>
+    /// 읽히는 시각. <c>09-09 15:02</c>·<c>09-09 15:00</c> 처럼 절대 시각만 보여 주면
+    /// 2분 차이 나는 두 세션 중 어느 것이 최근인지 눈으로 못 가린다. 갈래는 <see cref="SessionMoment"/>가 정한다.
+    /// </summary>
+    public string When
+    {
+        get
+        {
+            var local = Session.ModifiedAt.ToLocalTime();
+            var moment = SessionMoment.Of(local, DateTimeOffset.Now);
 
+            return moment.Kind switch
+            {
+                SessionMomentKind.JustNow => UiStrings.Get("Time_JustNow"),
+                SessionMomentKind.MinutesAgo => UiStrings.Format("Time_MinutesAgo", moment.Value),
+                SessionMomentKind.HoursAgo => UiStrings.Format("Time_HoursAgo", moment.Value),
+                SessionMomentKind.Yesterday => UiStrings.Format("Time_Yesterday", Format(local, "HH:mm")),
+                _ => Format(local, "MM-dd HH:mm"),
+            };
+        }
+    }
+
+    /// <summary>
+    /// 목록에 보이는 제목. 정제 규칙은 <see cref="SessionTitle"/>가 정본이다 — 세션 화면도 같은 것을 쓴다.
+    /// 첫 메시지가 없으면 세션 id 대신 문구를 보여 준다. uuid 는 사람이 세션을 가리지 못한다
+    /// </summary>
     public string Summary
     {
         get
         {
-            var first = (Session.FirstPrompt ?? string.Empty).ReplaceLineEndings(" ").Trim();
-            return first.Length == 0 ? Session.Id : first.Length > 80 ? first[..80] + "…" : first;
+            var cleaned = SessionTitle.Clean(Session.FirstPrompt);
+
+            if (cleaned.Length == 0)
+            {
+                return UiStrings.Get("Common_NoPrompt");
+            }
+
+            return cleaned.Length > 80 ? cleaned[..80] + "…" : cleaned;
         }
     }
 
-    public string Counts => UiStrings.Format("Terminal_SessionCounts", Session.UserMessageCount, Session.AssistantMessageCount);
+    /// <summary>주고받은 횟수 합. 내역은 <see cref="CountsTip"/>에 둔다.</summary>
+    public string Counts => UiStrings.Format(
+        "Terminal_SessionCounts",
+        Session.UserMessageCount + Session.AssistantMessageCount);
+
+    public string CountsTip => UiStrings.Format(
+        "Terminal_SessionCountsTip",
+        Session.UserMessageCount,
+        Session.AssistantMessageCount);
+
+    private static string Format(DateTimeOffset value, string pattern) =>
+        value.ToString(pattern, System.Globalization.CultureInfo.CurrentCulture);
 }
 
 /// <summary>프롬프트 선택 한 줄. <see cref="Preset"/>이 null이면 "프롬프트 없음".</summary>

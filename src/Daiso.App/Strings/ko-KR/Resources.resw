@@ -107,6 +107,9 @@
   <data name="Common_Unknown" xml:space="preserve">
     <value>(알 수 없음)</value>
   </data>
+  <data name="Common_NoPrompt" xml:space="preserve">
+    <value>(첫 메시지 없음)</value>
+  </data>
   <data name="Common_PickFolder" xml:space="preserve">
     <value>폴더 고르기</value>
   </data>
@@ -735,9 +738,6 @@
   <data name="Sessions_Title" xml:space="preserve">
     <value>세션</value>
   </data>
-  <data name="Sessions_NoPrompt" xml:space="preserve">
-    <value>(첫 메시지 없음)</value>
-  </data>
   <data name="Sessions_EmptyList" xml:space="preserve">
     <value>조건에 맞는 세션이 없습니다. 필터를 넓혀 보세요.</value>
   </data>
@@ -1298,7 +1298,10 @@
     <value>이 폴더에 {0} 세션이 없습니다</value>
   </data>
   <data name="Terminal_SessionCounts" xml:space="preserve">
-    <value>나 {0} · 답 {1}</value>
+    <value>주고받음 {0}회</value>
+  </data>
+  <data name="Terminal_SessionCountsTip" xml:space="preserve">
+    <value>내 질문 {0} · 답 {1}</value>
   </data>
   <data name="Terminal_StartWith" xml:space="preserve">
     <value>시작할 때</value>
@@ -1392,6 +1395,18 @@
   </data>
   <data name="Terminal_OpenExternalTip" xml:space="preserve">
     <value>별도 터미널 창(Windows Terminal 또는 셸)으로 엽니다</value>
+  </data>
+  <data name="Time_JustNow" xml:space="preserve">
+    <value>방금</value>
+  </data>
+  <data name="Time_MinutesAgo" xml:space="preserve">
+    <value>{0}분 전</value>
+  </data>
+  <data name="Time_HoursAgo" xml:space="preserve">
+    <value>{0}시간 전</value>
+  </data>
+  <data name="Time_Yesterday" xml:space="preserve">
+    <value>어제 {0}</value>
   </data>
   <data name="Sessions_CheckAll" xml:space="preserve">
     <value>전체 체크</value>

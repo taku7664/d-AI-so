@@ -63,7 +63,23 @@ App은 아직 자기 사본을 쓴다 — 0-2에서 지운다. `dotnet test test
 `SessionTitle.Clean`을 부르게 했다. 같은 자리에서 `Badges` 것이 `CleanCommandText`에 잘못 붙어 있던 문서 주석도 제자리로 돌렸다.
 App 컴파일 경고 0·오류 0, 테스트 364건(159+108+97) 전부 초록.
 ⚠️ **앱 화면으로는 확인하지 못했다** — 앱이 실행 중이라 산출물이 잠겨 있었고, 남의 실행 중 앱을 끄지 않았다.
-동작 불변의 근거는 특성화 테스트다. 0-3 전에 `tools/run-app.ps1`로 세션 목록을 한 번 눈으로 본다.
+동작 불변의 근거는 특성화 테스트다.
+
+**Stage 0-3 완료** (2026-09-09). 결함 둘을 고치고 터미널을 연결했다.
+
+- `SessionTitle.Clean` — `<`는 **진짜 태그처럼 보일 때만** 태그로 친다(다음이 글자 또는 `/`+글자이고, 다음 `<` 전에 `>`가 온다).
+  ANSI CSI 시퀀스는 통째로 건너뛰고, 남은 제어문자는 버린다. 0-1에서 반대로 박아 둔 기댓값 셋을 뒤집었다
+- `Daiso.Core/Sessions/SessionMoment.cs` 신설 — "방금 / N분 전 / N시간 전 / 어제 / 그 이전" 갈래만 고르는 순수 함수.
+  **문구는 Core가 모른다.** 어제 23:50을 오늘 00:10에 보면 "어제"가 아니라 "20분 전"이 되도록 경과를 먼저 본다
+- `ResumeCandidateViewModel` — `Summary`가 `SessionTitle.Clean`을 쓰고 **uuid 폴백을 버렸다**(`Common_NoPrompt`).
+  `When`은 상대 시각, `Counts`는 `주고받음 N회` + 내역은 `CountsTip` 툴팁으로
+- 문구 키: `Sessions_NoPrompt` → `Common_NoPrompt`(두 화면 공용), `Terminal_SessionCountsTip`·`Time_*` 넷 추가
+
+App 컴파일 경고 0·오류 0, 테스트 **378건**(173+108+97) 전부 초록 — `StringResourceKeysTests` 포함이라
+키 누락도 죽은 키도 없다.
+
+⚠️ **남은 것: 화면 캡처 확인.** 앱이 실행 중이라 `tools/run-app.ps1`·`shoot-screens.ps1`을 돌리지 못했다.
+앱을 닫고 1024에서 터미널·세션 두 화면을 찍어 `<command-name>`·네모 글자·uuid가 없는지 눈으로 봐야 Stage 0이 끝난다.
 
 ---
 

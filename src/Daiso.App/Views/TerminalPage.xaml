@@ -307,7 +307,12 @@
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Grid.Column="0" Text="{x:Bind When}" Style="{StaticResource MonoText}" VerticalAlignment="Center" />
                                                     <TextBlock Grid.Column="1" Text="{x:Bind Summary}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                                                    <TextBlock Grid.Column="2" Text="{x:Bind Counts}" Style="{StaticResource MutedText}" VerticalAlignment="Center" />
+                                                    <TextBlock
+                                                        Grid.Column="2"
+                                                        Text="{x:Bind Counts}"
+                                                        ToolTipService.ToolTip="{x:Bind CountsTip}"
+                                                        Style="{StaticResource MutedText}"
+                                                        VerticalAlignment="Center" />
                                                 </Grid>
                                             </DataTemplate>
                                         </ListView.ItemTemplate>
