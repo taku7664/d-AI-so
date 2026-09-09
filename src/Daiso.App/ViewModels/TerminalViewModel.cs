@@ -41,6 +41,7 @@ public sealed partial class TerminalViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanLaunch))]
     [NotifyPropertyChangedFor(nameof(HasRules))]
+    [NotifyPropertyChangedFor(nameof(HasNoRules))]
     [NotifyPropertyChangedFor(nameof(RulesStatusText))]
     private string? workingDirectory;
 
@@ -87,6 +88,7 @@ public sealed partial class TerminalViewModel : ObservableObject
         }
 
         RecentFolders = new ObservableCollection<string>(_settings.Current.RecentFolders);
+        RebuildFolderChoices();
         WorkingDirectory = RecentFolders.FirstOrDefault();
         RefreshPreviews();
         LoadPromptChoices();
@@ -143,10 +145,20 @@ public sealed partial class TerminalViewModel : ObservableObject
     /// <summary>최근에 연 폴더. 최신 것이 앞. 폴더 콤보박스의 목록.</summary>
     public ObservableCollection<string> RecentFolders { get; }
 
-    /// <summary>앱이 이미 아는 프로젝트 폴더(세션 인덱스·최근 폴더). 대화상자 없이 여기서 고른다.</summary>
+    /// <summary>앱이 이미 아는 프로젝트 폴더(세션 인덱스·최근 폴더).</summary>
     public ObservableCollection<string> ProjectChoices { get; } = [];
 
-    /// <summary>인덱스·최근 폴더에서 프로젝트 목록을 다시 읽는다.</summary>
+    /// <summary>
+    /// 폴더 칸 하나가 보여 주는 목록 전부. 최근 연 폴더가 앞, 그 뒤에 앱이 아는 프로젝트.
+    /// <para>
+    /// 전에는 "프로젝트 폴더" 콤보와 "아는 프로젝트" 드롭다운이 나란히 있었다. 둘 다 폴더를 고르는 것처럼
+    /// 보이는데 무엇이 다른지 라벨만으로는 알 수 없었다. 하나로 합치고, 새 폴더는 `찾아보기`로만 간다.
+    /// (docs/TERMINAL_CARD_PLAN.md §2-B6 · §5)
+    /// </para>
+    /// </summary>
+    public ObservableCollection<string> FolderChoices { get; } = [];
+
+    /// <summary>인덱스·최근 폴더에서 프로젝트 목록을 다시 읽고 폴더 칸 목록을 새로 만든다.</summary>
     public async Task LoadProjectChoicesAsync(CancellationToken ct = default)
     {
         var known = await _knownProjects.ListAsync(ct).ConfigureAwait(true);
@@ -157,7 +169,33 @@ public sealed partial class TerminalViewModel : ObservableObject
         {
             ProjectChoices.Add(path);
         }
+
+        RebuildFolderChoices();
     }
+
+    /// <summary>최근 폴더 + 아는 프로젝트를 겹치지 않게 한 목록으로 만든다.</summary>
+    private void RebuildFolderChoices()
+    {
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var keep = WorkingDirectory;
+
+        FolderChoices.Clear();
+
+        foreach (var path in RecentFolders.Concat(ProjectChoices))
+        {
+            if (!string.IsNullOrWhiteSpace(path) && seen.Add(path))
+            {
+                FolderChoices.Add(path);
+            }
+        }
+
+        // 목록을 비우는 동안 편집형 콤보의 글이 지워질 수 있다
+        WorkingDirectory = keep;
+        OnPropertyChanged(nameof(WorkingDirectory));
+    }
+
+    /// <summary>경로를 적었는데 그런 폴더가 없다. 다음 단계로 못 넘어가는 이유를 그 자리에서 말한다.</summary>
+    public bool FolderMissing => !string.IsNullOrWhiteSpace(WorkingDirectory) && !Directory.Exists(WorkingDirectory);
 
     /// <summary>폴더가 정해졌고 실제로 있는가. 열기 버튼 활성에 쓴다.</summary>
     public bool CanLaunch => !string.IsNullOrWhiteSpace(WorkingDirectory) && Directory.Exists(WorkingDirectory);
@@ -217,6 +255,8 @@ public sealed partial class TerminalViewModel : ObservableObject
 
         WorkingDirectory = keep;
         OnPropertyChanged(nameof(WorkingDirectory)); // 값이 같아도 콤보박스 글을 다시 맞춘다(목록을 비우는 동안 글이 지워질 수 있다)
+
+        RebuildFolderChoices();
     }
 
     // ── 세션: 새 세션 / 기존 세션 이어서 ────────────────────────────────────
@@ -225,6 +265,7 @@ public sealed partial class TerminalViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsNewSession))]
     [NotifyPropertyChangedFor(nameof(IsResume))]
+    [NotifyPropertyChangedFor(nameof(StartButtonText))]
     [NotifyPropertyChangedFor(nameof(Preview))]
     private int sessionModeIndex;
 
@@ -359,6 +400,9 @@ public sealed partial class TerminalViewModel : ObservableObject
     /// <summary>프로젝트 폴더에 규칙 파일(PROJECT_RULES.daiso)이 있는가.</summary>
     public bool HasRules => CanLaunch && File.Exists(Path.Combine(WorkingDirectory!, InstructionTemplate.DefaultRulesFileName));
 
+    /// <summary>규칙 파일이 없다. 아이콘을 갈라 그리려고 따로 둔다(XAML은 부정을 못 쓴다).</summary>
+    public bool HasNoRules => !HasRules;
+
     public string RulesStatusText => UiStrings.Get(HasRules ? "Terminal_RulesPresent" : "Terminal_RulesAbsent");
 
     // ── 단계(아코디언) ────────────────────────────────────────────────────
@@ -421,11 +465,36 @@ public sealed partial class TerminalViewModel : ObservableObject
     /// <summary>AI 카드 목록에 물리는 값. 아직 안 골랐으면 −1이라 아무 카드도 켜지지 않는다.</summary>
     public int ToolSelection => ToolChosen ? SelectedToolIndex : -1;
 
+    // 라디오가 아무것도 안 켜져 있는데 "새로 시작"의 하위 내용(프롬프트)이 보이면,
+    // 고르지도 않은 것의 속을 미리 펼쳐 놓은 셈이라 모순이다. 고른 뒤에만 보인다
+    public bool ShowNewSessionOptions => SessionModeChosen && IsNewSession;
+
+    public bool ShowResumeList => SessionModeChosen && IsResume;
+
     // 아직 못 가는 단계는 흐리게 + 누를 수 없게 한다. IsEnabled 를 쓰면 WinUI 가 비활성 배경을 칠해
     // "흐린 줄"이 아니라 "회색 덩어리"가 되어 오히려 눈에 띈다
     public double FolderHeaderOpacity => FolderReachable ? 1.0 : 0.4;
 
     public double SessionHeaderOpacity => SessionReachable ? 1.0 : 0.4;
+
+    /// <summary>
+    /// 기본 버튼 글. "새로 시작할지 이어서 할지 안 골랐어요"라고 해 놓고 버튼이 `터미널로 열기`면 말이 어긋난다.
+    /// 무엇을 하는 버튼인지 그대로 적는다. 설치가 안 됐으면 설치 흐름의 글을 그대로 쓴다.
+    /// </summary>
+    public string StartButtonText
+    {
+        get
+        {
+            var tool = SelectedTool;
+
+            if (!tool.IsInstalled || tool.IsInstalling)
+            {
+                return tool.EmbeddedButtonText;
+            }
+
+            return UiStrings.Get(IsResume ? "Terminal_ResumeHere" : "Terminal_StartHere");
+        }
+    }
 
     /// <summary>실행될 명령을 보여도 되는가. 도구를 고르기 전에는 남의 명령을 보여 주는 셈이라 감춘다.</summary>
     public bool ShowPreview => ToolDone;
@@ -559,11 +628,13 @@ public sealed partial class TerminalViewModel : ObservableObject
         nameof(FolderMarkDone), nameof(FolderMarkPending),
         nameof(SessionMarkDone), nameof(SessionMarkPending),
         nameof(SessionModeSelection), nameof(ToolSelection),
+        nameof(ShowNewSessionOptions), nameof(ShowResumeList),
         nameof(FolderHeaderOpacity), nameof(SessionHeaderOpacity),
-        nameof(ShowPreview),
+        nameof(ShowPreview), nameof(StartButtonText),
         nameof(ToolSummary), nameof(FolderSummary), nameof(SessionSummary),
         nameof(RemainingHint), nameof(HasRemainingHint), nameof(CanStart),
-        nameof(HasInvalidationNotice), nameof(HasRules), nameof(RulesStatusText),
+        nameof(HasInvalidationNotice), nameof(HasRules), nameof(HasNoRules), nameof(RulesStatusText),
+        nameof(FolderMissing),
     ];
 
     partial void OnCurrentStepChanged(TerminalStep value) => RefreshSteps();

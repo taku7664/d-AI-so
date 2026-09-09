@@ -1309,6 +1309,21 @@
   <data name="Terminal_ToolReady" xml:space="preserve">
     <value>준비됨</value>
   </data>
+  <data name="Terminal_StartHere" xml:space="preserve">
+    <value>시작하기</value>
+  </data>
+  <data name="Terminal_ResumeHere" xml:space="preserve">
+    <value>이어서 열기</value>
+  </data>
+  <data name="Terminal_FolderMissing" xml:space="preserve">
+    <value>그런 폴더가 없어요. 경로를 다시 보거나 찾아보기로 고르세요</value>
+  </data>
+  <data name="Terminal_BrowseTip" xml:space="preserve">
+    <value>목록에 없는 폴더를 직접 고릅니다</value>
+  </data>
+  <data name="Common_Browse" xml:space="preserve">
+    <value>찾아보기</value>
+  </data>
   <data name="Terminal_ToolMissing" xml:space="preserve">
     <value>설치 안 됨</value>
   </data>
@@ -1334,10 +1349,10 @@
     <value>아직 폴더를 안 골랐어요</value>
   </data>
   <data name="Terminal_StepNeedMode" xml:space="preserve">
-    <value>새로 시작할지 이어서 할지 골라 주세요</value>
+    <value>아직 새로 시작할지 이어서 할지 안 골랐어요</value>
   </data>
   <data name="Terminal_StepNeedSession" xml:space="preserve">
-    <value>이어서 열 대화를 골라 주세요</value>
+    <value>아직 이어서 열 대화를 안 골랐어요</value>
   </data>
   <data name="Terminal_StepInvalidByTool" xml:space="preserve">
     <value>AI를 바꿔서 대화를 다시 골라야 해요</value>
@@ -1410,9 +1425,6 @@
   </data>
   <data name="Terminal_FolderTip" xml:space="preserve">
     <value>경로를 직접 적거나 최근 폴더에서 고릅니다. 모든 도구가 같은 폴더를 씁니다</value>
-  </data>
-  <data name="Terminal_KnownProjectsTip" xml:space="preserve">
-    <value>세션 기록과 최근 폴더에서 앱이 아는 프로젝트를 고릅니다</value>
   </data>
   <data name="Terminal_NewSessionTip" xml:space="preserve">
     <value>빈 대화로 시작합니다</value>

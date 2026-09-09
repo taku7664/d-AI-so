@@ -74,6 +74,8 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
                     SyncTabFromViewModel();
                     break;
                 case nameof(TerminalViewModel.WorkingDirectory):
+                case nameof(TerminalViewModel.FolderExpanded):
+                    // 접혀 있던 ComboBox 는 Loaded 가 늦어 글이 비어 보인다. 펼칠 때 다시 맞춘다
                     SyncFolderBox();
                     break;
                 default:
@@ -87,6 +89,23 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
     private void SyncFolderBox()
     {
         var value = ViewModel.WorkingDirectory ?? string.Empty;
+
+        // 목록에 있는 값은 SelectedItem 으로 잡아야 편집형 ComboBox 가 글을 보여 준다.
+        // Text 만 넣으면 SelectedItem 이 null 인 채라 자리표시자("폴더 경로")가 그대로 남는다
+        var match = ViewModel.FolderChoices.FirstOrDefault(
+            path => string.Equals(path, value, StringComparison.OrdinalIgnoreCase));
+
+        if (match is not null)
+        {
+            if (!ReferenceEquals(FolderBox.SelectedItem, match))
+            {
+                FolderBox.SelectedItem = match;
+            }
+
+            return;
+        }
+
+        FolderBox.SelectedItem = null;
 
         if (!string.Equals(FolderBox.Text, value, StringComparison.Ordinal))
         {
@@ -116,37 +135,6 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
     public PageHeader Header { get; }
 
     // ── 새 세션 카드 ───────────────────────────────────────────────────────
-
-    /// <summary>앱이 아는 프로젝트를 목록으로 보여준다. 목록에 없는 폴더만 "다른 폴더 고르기"로 간다.</summary>
-    private async void OnProjectFlyoutOpening(object? sender, object e)
-    {
-        await ViewModel.LoadProjectChoicesAsync();
-
-        ProjectFlyout.Items.Clear();
-
-        var labels = Formats.Labels([.. ViewModel.ProjectChoices]);
-
-        for (var i = 0; i < ViewModel.ProjectChoices.Count; i++)
-        {
-            var path = ViewModel.ProjectChoices[i];
-            var item = new MenuFlyoutItem { Text = labels[i], Icon = new SymbolIcon(Symbol.Folder) };
-
-            ToolTipService.SetToolTip(item, path);
-            item.Click += (_, _) => ViewModel.SetFolder(path);
-            ProjectFlyout.Items.Add(item);
-        }
-
-        if (ProjectFlyout.Items.Count == 0)
-        {
-            ProjectFlyout.Items.Add(new MenuFlyoutItem { Text = UiStrings.Get("Common_NoKnownProjects"), IsEnabled = false });
-        }
-
-        ProjectFlyout.Items.Add(new MenuFlyoutSeparator());
-
-        var browse = new MenuFlyoutItem { Text = UiStrings.Get("Common_BrowseOther") };
-        browse.Click += (_, _) => OnPickFolderClick(browse, new RoutedEventArgs());
-        ProjectFlyout.Items.Add(browse);
-    }
 
     private async void OnPickFolderClick(object sender, RoutedEventArgs e)
     {

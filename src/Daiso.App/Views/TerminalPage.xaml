@@ -317,6 +317,7 @@
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <!-- Text는 x:Bind 대신 코드에서 잇는다. 편집형 ComboBox는 로드 때 SelectedItem=null로 Text를 비워 바인딩 값을 덮는다 -->
+                                    <!-- 목록 하나에 최근 폴더 + 아는 프로젝트가 다 들어 있다. 새 폴더는 찾아보기로만 간다 (§2-B6) -->
                                     <ComboBox
                                         x:Name="FolderBox"
                                         Grid.Column="0"
@@ -326,22 +327,22 @@
                                         AutomationProperties.Name="{loc:Str Key=Terminal_FolderPath}"
                                         ToolTipService.ToolTip="{loc:Str Key=Terminal_FolderTip}"
                                         FontFamily="Consolas"
-                                        ItemsSource="{x:Bind ViewModel.RecentFolders}"
+                                        ItemsSource="{x:Bind ViewModel.FolderChoices}"
                                         TextSubmitted="OnFolderTextSubmitted"
                                         SelectionChanged="OnFolderSelectionChanged"
                                         PlaceholderText="{loc:Str Key=Terminal_FolderPath}" />
-                                    <muxc:DropDownButton Grid.Column="1" AutomationProperties.AutomationId="ProjectPickerButton" ToolTipService.ToolTip="{loc:Str Key=Terminal_KnownProjectsTip}">
-                                        <muxc:DropDownButton.Content>
-                                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                                <FontIcon Glyph="&#xE8B7;" FontSize="13" />
-                                                <TextBlock Text="{loc:Str Key=Common_KnownProjects}" />
-                                            </StackPanel>
-                                        </muxc:DropDownButton.Content>
-                                        <muxc:DropDownButton.Flyout>
-                                            <MenuFlyout x:Name="ProjectFlyout" Opening="OnProjectFlyoutOpening" />
-                                        </muxc:DropDownButton.Flyout>
-                                    </muxc:DropDownButton>
+                                    <Button Grid.Column="1" Click="OnPickFolderClick" AutomationProperties.AutomationId="ProjectPickerButton" ToolTipService.ToolTip="{loc:Str Key=Terminal_BrowseTip}">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <FontIcon Glyph="&#xE8B7;" FontSize="13" />
+                                            <TextBlock Text="{loc:Str Key=Common_Browse}" />
+                                        </StackPanel>
+                                    </Button>
                                 </Grid>
+
+                                <!-- 그런 폴더가 없다. 다음 단계로 못 가는 이유를 그 자리에서 말한다 -->
+                                <Border Style="{StaticResource NoticeBorder}" Visibility="{x:Bind ViewModel.FolderMissing, Mode=OneWay}">
+                                    <TextBlock Text="{loc:Str Key=Terminal_FolderMissing}" TextWrapping="Wrap" />
+                                </Border>
                                 <Grid ColumnSpacing="8">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
@@ -353,12 +354,16 @@
                                             <TextBlock Text="{loc:Str Key=Terminal_EditRules}" />
                                         </StackPanel>
                                     </Button>
-                                    <TextBlock
-                                        Grid.Column="1"
-                                        Text="{x:Bind ViewModel.RulesStatusText, Mode=OneWay}"
-                                        ToolTipService.ToolTip="{x:Bind ViewModel.RulesStatusText, Mode=OneWay}"
-                                        Style="{StaticResource MutedText}"
-                                        VerticalAlignment="Center" />
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                        <!-- 있음/없음이 회색 본문 한 줄이면 한눈에 안 갈린다 (§2-E3) -->
+                                        <FontIcon Glyph="&#xE73E;" FontSize="13" Foreground="{ThemeResource SystemFillColorSuccessBrush}" Visibility="{x:Bind ViewModel.HasRules, Mode=OneWay}" />
+                                        <FontIcon Glyph="&#xE738;" FontSize="13" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Visibility="{x:Bind ViewModel.HasNoRules, Mode=OneWay}" />
+                                        <TextBlock
+                                            Text="{x:Bind ViewModel.RulesStatusText, Mode=OneWay}"
+                                            ToolTipService.ToolTip="{x:Bind ViewModel.RulesStatusText, Mode=OneWay}"
+                                            Style="{StaticResource MutedText}"
+                                            VerticalAlignment="Center" />
+                                    </StackPanel>
                                 </Grid>
                             </StackPanel>
 
@@ -399,7 +404,7 @@
                                 </muxc:RadioButtons>
 
                                 <!-- 새로 시작: 시작 프롬프트는 선택 사항이라 이 단계를 접지 않는다 (§4.6) -->
-                                <Grid ColumnSpacing="12" Visibility="{x:Bind ViewModel.IsNewSession, Mode=OneWay}">
+                                <Grid ColumnSpacing="12" Visibility="{x:Bind ViewModel.ShowNewSessionOptions, Mode=OneWay}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="*" />
@@ -414,10 +419,10 @@
                                         SelectedItem="{x:Bind ViewModel.SelectedPrompt, Mode=TwoWay}"
                                         DisplayMemberPath="Name" />
                                 </Grid>
-                                <TextBlock Text="{loc:Str Key=Terminal_PromptHint}" Style="{StaticResource MutedText}" TextWrapping="Wrap" Visibility="{x:Bind ViewModel.IsNewSession, Mode=OneWay}" />
+                                <TextBlock Text="{loc:Str Key=Terminal_PromptHint}" Style="{StaticResource MutedText}" TextWrapping="Wrap" Visibility="{x:Bind ViewModel.ShowNewSessionOptions, Mode=OneWay}" />
 
                                 <!-- 이어서: 이 폴더·도구의 지난 대화 -->
-                                <StackPanel Spacing="6" Visibility="{x:Bind ViewModel.IsResume, Mode=OneWay}">
+                                <StackPanel Spacing="6" Visibility="{x:Bind ViewModel.ShowResumeList, Mode=OneWay}">
                                     <ListView
                                         AutomationProperties.AutomationId="ResumeSessionList"
                                         ItemsSource="{x:Bind ViewModel.ResumeCandidates}"
@@ -507,7 +512,7 @@
                                             IsEnabled="{x:Bind ViewModel.CanStart, Mode=OneWay}">
                                             <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
                                                 <FontIcon Glyph="{x:Bind ViewModel.SelectedTool.Glyph, Mode=OneWay}" FontSize="14" />
-                                                <TextBlock Text="{x:Bind ViewModel.SelectedTool.EmbeddedButtonText, Mode=OneWay}" />
+                                                <TextBlock Text="{x:Bind ViewModel.StartButtonText, Mode=OneWay}" />
                                             </StackPanel>
                                         </Button>
                                         <Button
