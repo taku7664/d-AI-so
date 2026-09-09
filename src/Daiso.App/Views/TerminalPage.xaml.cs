@@ -564,7 +564,10 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
         {
             var extra = string.IsNullOrWhiteSpace(tool.Arguments) ? string.Empty : " " + tool.Arguments.Trim();
             var claudeArgs = "--print --output-format stream-json --input-format stream-json --include-partial-messages --verbose --dangerously-skip-permissions" + extra;
-            var session = Daiso.Infrastructure.Chat.ClaudeChatSession.Start("cmd.exe", $"/c claude {claudeArgs}", directory);
+            // 이름("claude")만 넘기면 방금 깐 도구를 셸이 못 찾는다. 제공자가 주는 실행 위치를 쓴다 (ARCHITECTURE LaunchTarget 규칙)
+            var launch = tool.Provider.LaunchTarget;
+            var quoted = launch.Contains(' ', StringComparison.Ordinal) ? $"\"{launch}\"" : launch;
+            var session = Daiso.Infrastructure.Chat.ClaudeChatSession.Start("cmd.exe", $"/c {quoted} {claudeArgs}", directory);
 
             var room = new StreamingRoomViewModel(tool.Provider.Kind, directory, DispatcherQueue);
             room.SetCommands(App.Services.GetRequiredService<Daiso.Infrastructure.SlashCommandReader>().Read(tool.Provider.Kind, directory));
