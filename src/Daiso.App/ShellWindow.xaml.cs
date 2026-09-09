@@ -433,5 +433,9 @@ public sealed partial class ShellWindow : Window
         _settings.Current.WindowWidth = AppWindow.Size.Width;
         _settings.Current.WindowHeight = AppWindow.Size.Height;
         _settings.Save();
+
+        // 설정을 쓴 다음에 컨테이너를 닫는다 — 싱글턴 중에 IDisposable 이 있다.
+        // 특히 SqliteSessionIndex 는 쓰기 연결을 열어 두고 있어, 닫지 않으면 WAL 체크포인트가 돌지 않는다.
+        App.DisposeServices();
     }
 }

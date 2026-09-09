@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using Daiso.Infrastructure;
 
 namespace Daiso.App.Services;
 
@@ -13,6 +14,13 @@ public interface ISettingsStore
 
     /// <summary>지금 값을 디스크에 쓴다.</summary>
     void Save();
+
+    /// <summary>
+    /// 마지막 저장이 실패한 까닭. 성공했으면 null.
+    /// 저장은 실패해도 앱을 멈추지 않지만, <b>말은 해야 한다</b> —
+    /// 읽기 전용 폴더나 동기화 도구가 파일을 잡고 있으면 설정이 다음 실행에 사라진다.
+    /// </summary>
+    string? LastSaveError { get; }
 }
 
 /// <summary>`%LOCALAPPDATA%\d-AI-so\settings.json` 기반 설정 저장소.</summary>
@@ -42,6 +50,9 @@ public sealed class SettingsStore : ISettingsStore
     /// <inheritdoc />
     public AppSettings Current { get; private set; }
 
+    /// <inheritdoc />
+    public string? LastSaveError { get; private set; }
+
     /// <summary>설정 파일 경로.</summary>
     public string Path { get; }
 
@@ -63,9 +74,15 @@ public sealed class SettingsStore : ISettingsStore
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            // 설정을 못 써도 앱은 계속 돌아가야 한다.
+            // 설정을 못 써도 앱은 계속 돌아가야 한다. 다만 조용히 넘어가지는 않는다 —
+            // 예전에는 실패해도 성공과 똑같이 지나가서, 설정이 다음 실행에 사라진 이유를 알 길이 없었다.
+            LastSaveError = SensitiveTextMasker.MaskSensitive(ex.Message);
+            Changed?.Invoke(this, EventArgs.Empty);
+
+            return;
         }
 
+        LastSaveError = null;
         Changed?.Invoke(this, EventArgs.Empty);
     }
 

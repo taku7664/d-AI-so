@@ -38,6 +38,25 @@ public partial class App : Application
     /// <summary>화면에서 ViewModel을 꺼내 쓰는 통로.</summary>
     public static IServiceProvider Services { get; private set; } = null!;
 
+    /// <summary>
+    /// 창이 닫힐 때 컨테이너를 해제한다. 싱글턴 중 <see cref="IDisposable"/> 인 것들이 정리된다
+    /// (<c>SqliteSessionIndex</c> 의 쓰기 연결 등). 해제 자체가 실패해도 종료를 막지 않는다.
+    /// </summary>
+    public static void DisposeServices()
+    {
+        if (Services is IDisposable disposable)
+        {
+            try
+            {
+                disposable.Dispose();
+            }
+            catch (Exception ex) when (ex is ObjectDisposedException or InvalidOperationException)
+            {
+                // 이미 닫혔거나 닫는 중이다. 종료 경로에서 더 할 일이 없다.
+            }
+        }
+    }
+
     /// <summary>열려 있는 Shell 창. 파일 선택 대화상자가 창 핸들을 필요로 한다.</summary>
     public static Window? MainWindow { get; private set; }
 

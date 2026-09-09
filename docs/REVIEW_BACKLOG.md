@@ -18,8 +18,8 @@
 | # | 건 | 성격 | 상태 |
 |---|---|---|---|
 | R1 | `ToolLook` 이 모든 `ToolKind` 를 다루는지 검사하는 테스트 | 조용한 실패 | ✅ |
-| R2 | 종료 시 `ServiceProvider` 를 해제하지 않아 SQLite 연결이 안 닫힘 | 자원 누수 | ⬜ |
-| R3 | `SettingsStore.Save` 가 쓰기에 실패해도 `Changed` 를 쏨 | 거짓 신호 | ⬜ |
+| R2 | 종료 시 `ServiceProvider` 를 해제하지 않아 SQLite 연결이 안 닫힘 | 자원 누수 | ✅ |
+| R3 | 설정 저장 실패를 아무도 모름 | 조용한 실패 | ✅ |
 | R4 | `SessionsViewModel` 의 `IsBusy` 가드가 다시 읽기를 삼킴 | 동작 오류 | ⬜ |
 | R5 | 페이지를 추가할 때 배선을 빠뜨리면 조용히 요약 화면이 뜸 | 조용한 실패 | ⬜ |
 | R6 | 컴포넌트 어휘가 없어 페이지 트리가 최대 16겹 | 구조 | ⬜ |
@@ -42,3 +42,11 @@
   `DisplayOrder` 가 모든 `ToolKind` 를 다루는지 본다.
   `ToolKind` 에 `Cursor` 를 임시로 더해 보니 **8곳이 정확히 빨개졌다**. 원복 확인.
   - 폴백(`_ =>`)을 지울 수는 없다 — switch 식은 모든 입력을 받아야 한다. 그래서 "빠진 것"을 밖에서 본다.
+- **R2** — `App.DisposeServices()` 를 만들고 `ShellWindow.OnClosed` 가 **설정을 쓴 다음에** 부른다.
+  싱글턴 중 `IDisposable` 인 것들(특히 `SqliteSessionIndex` 의 쓰기 연결)이 닫히고 WAL 체크포인트가 돈다.
+  해제 자체가 실패해도 종료를 막지 않는다.
+- **R3** — 처음에 "실패하면 `Changed` 를 쏘지 말자"로 고쳤다가 **되물렀다**.
+  메모리의 `Current` 는 이미 바뀐 뒤라, 알림을 막으면 화면이 메모리 값과도 어긋난다.
+  진짜 결함은 재계산이 아니라 **실패를 아무도 모른다**는 것이었다.
+  `ISettingsStore.LastSaveError` 를 두고, 설정 화면의 파일 위치 아래에 까닭을 붉게 한 줄 띄운다.
+  까닭은 `SensitiveTextMasker` 를 거쳐 적는다 (예외 메시지에 경로·토큰이 섞일 수 있다).

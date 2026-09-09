@@ -550,6 +550,10 @@
   </data>
 
   <!-- ── Settings ───────────────────────────────────────────────────────── -->
+  <data name="Settings_SaveFailed" xml:space="preserve">
+    <value>설정을 저장하지 못했습니다: {0}</value>
+    <comment>{0}=까닭. 읽기 전용 폴더나 다른 프로그램이 파일을 잡고 있을 때</comment>
+  </data>
   <data name="Settings_Paths" xml:space="preserve">
     <value>경로</value>
   </data>
