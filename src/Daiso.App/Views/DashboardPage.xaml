@@ -119,9 +119,11 @@
                                             Style="{StaticResource MutedText}" />
                                     </StackPanel>
 
+                                    <!-- Expander 기본값은 내용을 가운데 놓는다. 키: 값 줄은 왼쪽에 붙어야 위아래가 한 표로 읽힌다 -->
                                     <Expander
                                         Header="{loc:Str Key=Common_Extras}"
                                         HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Left"
                                         Visibility="{x:Bind HasExtras, Mode=OneWay}">
                                         <ItemsControl ItemsSource="{x:Bind Extras}">
                                             <ItemsControl.ItemTemplate>
