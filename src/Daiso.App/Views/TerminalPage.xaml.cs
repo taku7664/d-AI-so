@@ -160,10 +160,95 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
     /// <summary>카드를 누르면 뷰모델의 도구가 바뀌고, 1단계가 끝나 다음 단계가 열린다.</summary>
     private void OnToolCardChanged(object sender, SelectionChangedEventArgs e)
     {
+        PaintCards();
+
         if (sender is ListView { SelectedIndex: >= 0 } cards)
         {
             ViewModel.ChooseTool(cards.SelectedIndex);
         }
+    }
+
+    // ── 카드 채움 ─────────────────────────────────────────────────────────
+    //
+    // AI 카드·새로/이어서 카드의 고름·호버 채움은 목록 컨테이너가 아니라 카드(Border)가 칠한다.
+    // WinUI 의 ListViewItemPresenter 는 채움을 위아래 2px 안쪽에 모서리 없이 그려서 둥근 테두리 카드와 어긋났다 —
+    // 테두리는 둥근데 채움은 각지고, 위쪽에 안 칠해진 띠가 남았다. 색은 목록의 기본 브러시를 그대로 쓴다.
+
+    private readonly List<Border> _cards = new();
+
+    private Border? _hoveredCard;
+
+    private void OnCardLoaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is Border card)
+        {
+            if (!_cards.Contains(card))
+            {
+                _cards.Add(card);
+            }
+
+            PaintCard(card);
+        }
+    }
+
+    private void OnCardPointerEntered(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        if (sender is Border card)
+        {
+            _hoveredCard = card;
+            PaintCard(card);
+        }
+    }
+
+    private void OnCardPointerExited(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        if (sender is Border card)
+        {
+            if (ReferenceEquals(_hoveredCard, card))
+            {
+                _hoveredCard = null;
+            }
+
+            PaintCard(card);
+        }
+    }
+
+    /// <summary>선택이 바뀌면 카드 전부를 다시 칠한다. 화면에서 내려간 카드는 잊는다.</summary>
+    private void PaintCards()
+    {
+        _cards.RemoveAll(card => !card.IsLoaded);
+
+        foreach (var card in _cards)
+        {
+            PaintCard(card);
+        }
+    }
+
+    private void PaintCard(Border card)
+    {
+        DependencyObject? node = card;
+
+        while (node is not null and not ListViewItem)
+        {
+            node = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(node);
+        }
+
+        // 색은 WinUI 목록 기본값 그대로다(generic.xaml): 고름·호버 = SubtleFillColorSecondary, 고른 것 위 호버 = SubtleFillColorTertiary.
+        // 리소스 키로 꺼내지 않고 ActualTheme 로 고르는 이유: 페이지·앱 리소스로 풀면 창 테마가 아니라 앱 기본 테마 값이 나온다
+        // (다크 창에서 라이트 값 #09000000 이 나와 카드가 오히려 어두워졌다). UsagePage 의 줄 밝힘과 같은 방식이다.
+        // 배경을 비우지 않고 투명으로 두는 이유: Border 는 배경이 없으면 안쪽이 히트테스트되지 않아 호버가 글자 위에서만 뜬다
+        var selected = node is ListViewItem { IsSelected: true };
+        var hovered = ReferenceEquals(_hoveredCard, card);
+        var dark = card.ActualTheme == ElementTheme.Dark;
+
+        var color = (selected, hovered) switch
+        {
+            (true, true) => dark ? Windows.UI.Color.FromArgb(0x0A, 0xFF, 0xFF, 0xFF) : Windows.UI.Color.FromArgb(0x06, 0, 0, 0),
+            (true, false) or (false, true) => dark ? Windows.UI.Color.FromArgb(0x0F, 0xFF, 0xFF, 0xFF) : Windows.UI.Color.FromArgb(0x09, 0, 0, 0),
+            _ => Microsoft.UI.Colors.Transparent,
+        };
+
+        card.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(color);
     }
 
     // ── 아코디언 단계 머리 ────────────────────────────────────────────────
@@ -178,6 +263,8 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
     /// <summary>새로 시작 / 이어서를 고른다. 안 고른 상태는 SelectedIndex = -1 이라 여기로 안 온다.</summary>
     private void OnSessionModeChanged(object sender, SelectionChangedEventArgs e)
     {
+        PaintCards();
+
         if (sender is ListView { SelectedIndex: >= 0 } cards)
         {
             ViewModel.ChooseSessionMode(cards.SelectedIndex);
