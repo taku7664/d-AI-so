@@ -387,12 +387,23 @@ public sealed record ExportOptions(bool IncludeToolCalls = true, bool IncludeSys
 > | 설치 위치 | `%LOCALAPPDATA%\agy\bin\agy.exe` (약 181MB) | 설치 스크립트가 **사용자 PATH 레지스트리**에 등록하고 브로드캐스트한다. 이미 떠 있는 프로세스는 그 PATH 를 못 보므로 `IsInstalledAsync` 는 이 경로도 직접 본다 |
 > | 설치 스크립트가 하는 일 | 매니페스트 JSON → 바이너리 내려받기 → **SHA512 대조** → 복사 → `agy.exe install` 로 PATH 설정 | 관리자 권한 없이 사용자 폴더만. 내려받는 곳은 Google Cloud Run 인스턴스 |
 >
+> **로그인하고 대화까지 해 본 뒤 확인한 것 (2026-09-09 실측)**
+> | 무엇 | 값 |
+> |---|---|
+> | 설정 | `~/.gemini/antigravity-cli/settings.json` — `colorScheme` · `model` · `trustedWorkspaces`. **첫 실행 때 생긴다**(설치 직후에는 없다) |
+> | 로그인 토큰 | **파일에 없다.** Windows 자격 증명 관리자의 일반 자격 증명 `gemini:antigravity` (`cmdkey /list` 에 `LegacyGeneric:target=gemini:antigravity`) |
+> | 계정 이메일 | 읽을 수 있는 파일에 없다 (로그 파일 안에만 있다) |
+> | 대화 기록 | **암호화가 아니다.** `~/.gemini/antigravity-cli/brain/{대화 id}/.system_generated/logs/transcript.jsonl` — 한 줄에 한 단계인 평범한 JSONL 이다: `step_index` · `source`(USER_EXPLICIT\|MODEL) · `type`(USER_INPUT\|PLANNER_RESPONSE…) · `status` · `created_at` · `content` · `tool_calls[]`. `transcript_full.jsonl` 도 있다 |
+> | 그 밖 | `conversations/{id}.db`(SQLite) · `cache/conversation_metadata.json`(제목·미리보기·작업 폴더) · `history.jsonl`(입력 이력) · `annotations/*.pbtxt` |
+>
+> 앞서 이 문서는 "IDE 가 `.pb` 로 암호화하니 CLI 도 그럴 것"이라고 적었다. **틀렸다.** IDE 의 `~/.gemini/antigravity/conversations/*.pb` 는 실제로 암호화돼 있지만
+> CLI 는 별도 폴더에 평문 JSONL 로 쓴다. 한 제품군이라고 저장 방식이 같을 것이라 미루면 안 된다.
+>
 > **아직 확인하지 못한 것**
 > | 무엇 | 지금 코드 | 왜 모르는가 |
 > |---|---|---|
-> | 세션 기록 위치·형식 | 옛 `~/.gemini/tmp/**/chats/*.jsonl` 만 읽는다 | 설치만으로는 아무 폴더도 생기지 않는다(`~/.gemini/antigravity-cli` 도 없다). 대화를 한 번 해야 하고 그것은 브라우저 로그인이 필요하다. 같은 계열 Antigravity IDE 는 `~/.gemini/antigravity/conversations/*.pb` 에 **암호화**해 둔다(12만 바이트에 읽을 수 있는 문자열 0개) — CLI 도 그렇다면 앱이 읽을 길이 없다 |
-> | 설정 파일 위치 | `~/.gemini/antigravity-cli/settings.json` (공식 문서 값) | 첫 실행 때 생긴다. 설치 직후에는 없다 |
-> | 컨텍스트 파일 이름 | `GEMINI.md` (옛 값) | `agy --help` 에 관련 플래그가 없다. 실제 대화로만 확인된다 |
+> | 세션 목록·검색·사용량 연결 | 옛 `~/.gemini/tmp/**/chats/*.jsonl` 만 읽는다 | 형식은 위와 같이 확인됐으나 **아직 구현하지 않았다**. 토큰 수를 어디서 얻는지, 대화 id 와 프로젝트 폴더를 무엇으로 잇는지(추정: `cache/conversation_metadata.json` 의 `WorkspaceURIs`)를 더 봐야 한다 |
+> | 컨텍스트 파일 이름 | `GEMINI.md` (옛 값) | `agy --help` 에 관련 플래그가 없다. `builtin/skills/agy-customizations/docs/rules.md` 를 읽어 확인할 수 있다 |
 > | 사용자 슬래시 명령 위치 | 옛 `~/.gemini/commands/*.toml` | `agy` 는 확장 대신 플러그인(`agy plugin`)을 쓴다 |
 
 > 근거(옛 Gemini CLI 기록 형식): 이 PC의 `~/.gemini` 실제 파일(`oauth_creds.json`·`google_accounts.json`·`projects.json`·`tmp/{이름|해시}/chats/session-*.jsonl` 헤더 줄)과,
@@ -403,12 +414,18 @@ public sealed record ExportOptions(bool IncludeToolCalls = true, bool IncludeSys
 - `%USERPROFILE%\.gemini\oauth_creds.json` → `access_token`, `refresh_token`, `expiry_date`(ms), `token_type`, `scope`. **값은 읽지 않는다**
 - `refresh_token`이 있으면 CLI가 알아서 갱신하므로 만료 개념 없음 → `SessionExpiresAt = null` → LoggedIn. 없으면 `expiry_date`로 판정
 - 계정: `google_accounts.json`의 `active` 이메일. `AccountLabel`과 `Email` 둘 다 이 값
-- **Antigravity CLI 는 로그인 토큰을 파일이 아니라 Windows 자격 증명 관리자에 넣는다.** 앱은 읽지 않는다. 그래서 만료를 못 보여 주며,
-  그 사실을 부가 정보 줄(`Antigravity 로그인: Windows 자격 증명 관리자에 보관 (앱이 읽지 않음)`)로 밝힌다 — 아무 말이 없으면
-  앱이 못 읽는 것인지 로그인이 안 된 것인지 구분할 수 없다
-- `~/.gemini/antigravity-cli/settings.json` 이 있으면 `agy` 를 설정한 적이 있다는 뜻이라, 옛 로그인 파일이 없어도 `Missing` 으로 보지 않는다.
-  그 안에 `apiKey` 가 있으면 인증 방식을 `API 키`로, 없으면 `브라우저 로그인`으로 적는다
-- 프로필(§5.7) 파일: `oauth_creds.json`(선택), `antigravity-cli/settings.json`(선택). **필수 파일이 없다** — 토큰이 파일에 없기 때문이다
+- **판정의 근거는 자격 증명 관리자 항목 `gemini:antigravity` 하나뿐이다.** 있으면 LoggedIn, 없으면 Missing.
+  `ICredentialProbe`(`WindowsCredentialProbe` → `CredReadW`)가 **존재만** 본다. 이 API 에 "있는지만 묻기"가 없어 구조체가 잠깐 메모리에 오지만
+  `CredentialBlob` 은 건드리지 않고 곧바로 `CredFree` 한다. 토큰은 화면·로그·파일 어디에도 쓰지 않는다
+- **만료는 알 수 없다**(`SessionExpiresAt = null`). CLI 가 알아서 갱신하고 앱은 그 시각을 볼 수 없다. 부가 정보에 `만료: 알 수 없음`으로 이유를 적는다 —
+  아무 말이 없으면 앱이 못 읽는 것인지 로그인이 안 된 것인지 구분할 수 없다
+- **이메일 자리는 비운다.** 읽을 수 있는 계정 파일은 은퇴한 Gemini CLI 의 `google_accounts.json` 뿐이고,
+  다른 계정으로 `agy` 에 로그인했으면 그 값은 틀린 값이다. 부가 정보에 `계정 이메일: CLI가 파일에 남기지 않습니다`로 밝힌다
+- **은퇴한 Gemini CLI 의 `oauth_creds.json` 은 이 도구의 상태가 아니다.** 처음 이식할 때는 그 파일의 `refresh_token`·`expiry_date`·`scope` 를
+  Antigravity 카드에 그대로 얹었는데, 죽은 도구의 액세스 토큰 만료를 이 도구 것처럼 보여 주는 셈이었다.
+  이제는 파일이 있으면 `참고: … (이 도구와 무관)` 한 줄만 적는다. `AntigravityAuthTests` 가 그 파일에서 토큰 사실이 새어 나오지 않는지 잠근다
+- `settings.json` 의 `apiKey` 가 있으면 `인증 방식: API 키`, 없으면 `브라우저 로그인`. `model` 값이 있으면 `고른 모델`로 보여 준다
+- 프로필(§5.7) 파일: `antigravity-cli/settings.json`(선택). **필수 파일이 없다** — 자격 증명이 파일이 아니라 프로필로 로그인을 옮길 수 없다
 
 **세션**
 - 루트: `%USERPROFILE%\.gemini	mp\{프로젝트 이름 | SHA-256}\chats\session-*.jsonl`. 아카이브 개념 없음

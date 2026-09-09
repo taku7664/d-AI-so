@@ -95,7 +95,7 @@
 | 2 | `다른 폴더 고르기…` 대화상자 확정 클릭 | GOAL Step 12 완료 기준. 아는 프로젝트는 드롭다운에서 고르므로 대화상자는 예외 경로가 됐다 | 사람이 직접 확인 |
 | 3 | 화면 문구 존댓말·리소스 전환 결과 화면 확인 | 문구 205개를 리소스로 옮겼다. 키 누락·죽은 키는 검사했고 빌드는 통과했지만, 실제 화면에서 문구가 비지 않는지는 사람이 봐야 한다 | 사람이 직접 확인 |
 | 4 | `settings.json` 권한·훅 GUI 편집기 | REQ §7에서 **후순위(선택)** 로 표시 | 하지 않음 |
-| 5 | **Antigravity CLI 세션 기록 형식 확정** | ARCHITECTURE §4.5. `agy` 1.1.28 을 깔아 플래그·설치 위치는 확정했다. 남은 것은 대화 기록 위치·형식이고, 그것은 브라우저 로그인 후 대화를 한 번 해야 생긴다 | 사람이 `agy` 로그인 후 |
+| 5 | **Antigravity 대화 기록을 세션 목록·검색·사용량에 연결** | ARCHITECTURE §4.5. 위치·형식은 확인됐다 — `~/.gemini/antigravity-cli/brain/{id}/.system_generated/logs/transcript.jsonl` 평문 JSONL. 아직 읽지 않는다 | 다음 작업 |
 
 설치는 끝났다(2026-09-09, `agy` 1.1.28, `%LOCALAPPDATA%gyin`). 막은 것은 백신이 아니라 **PowerShell 실행 정책**이었고,
 스크립트를 파일로 받아 `pwsh -ExecutionPolicy Bypass -File` 로 그 프로세스에만 우회해 통과했다.
