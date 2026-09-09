@@ -105,7 +105,11 @@ public sealed partial class UsagePage : Page, IPageHeaderSource
         _hoveredDay = null;
     }
 
-    /// <summary>줄 하나의 배경을 켜고 끈다. 수치·내역은 툴팁이 맡는다.</summary>
+    /// <summary>
+    /// 줄 하나를 켜고 끈다: 배경은 액센트 반투명, 막대는 밝은 액센트. 수치·내역은 툴팁이 맡는다.
+    /// ListViewItemBackgroundPointerOver(Subtle 계열)는 다크에서 흰색 6% 라 눈에 띄지 않았고, Application.Current.Resources 로 꺼내면
+    /// 창의 테마가 아니라 앱 기본 테마 값이 나와 더 흐려졌다. 그래서 줄의 ActualTheme 로 색을 직접 고른다.
+    /// </summary>
     private static void HighlightDay(Grid? row, bool on)
     {
         if (row is null)
@@ -113,10 +117,27 @@ public sealed partial class UsagePage : Page, IPageHeaderSource
             return;
         }
 
-        // ListViewItem 의 호버 색. Subtle* 계열은 다크 테마에서 흰색 3% 수준이라 눈에 띄지 않는다
-        row.Background = on
-            ? (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["ListViewItemBackgroundPointerOver"]
-            : new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
+        var dark = row.ActualTheme == ElementTheme.Dark;
+        var accent = (Windows.UI.Color)Application.Current.Resources[dark ? "SystemAccentColorLight2" : "SystemAccentColorDark1"];
+
+        row.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(on
+            ? Windows.UI.Color.FromArgb(0x40, accent.R, accent.G, accent.B)
+            : Microsoft.UI.Colors.Transparent);
+
+        // 막대의 원래 브러시는 XAML 의 ThemeResource(창 테마를 따른다)다. 끌 때 리소스에서 다시 꺼내면 다른 테마 값이 나와
+        // 막대가 진해지므로, 켤 때 원래 것을 Tag 에 두고 끌 때 그대로 되돌린다
+        if (row.Children.OfType<Microsoft.UI.Xaml.Shapes.Rectangle>().FirstOrDefault() is { } bar)
+        {
+            if (on)
+            {
+                bar.Tag ??= bar.Fill;
+                bar.Fill = new Microsoft.UI.Xaml.Media.SolidColorBrush(accent);
+            }
+            else if (bar.Tag is Microsoft.UI.Xaml.Media.Brush original)
+            {
+                bar.Fill = original;
+            }
+        }
     }
 
     /// <summary>탭을 누르면 뷰모델이 그 도구로 좁혀 다시 읽는다.</summary>
