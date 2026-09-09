@@ -171,7 +171,7 @@ public sealed partial class UsageViewModel : ObservableObject
             + (usage.CacheRead / Million * price.CacheReadPerMillion);
     }
 
-    partial void OnPeriodIndexChanged(int value) => _ = LoadCommand.ExecuteAsync(null);
+    partial void OnPeriodIndexChanged(int value) => UiCommands.Start(LoadCommand);
 
     /// <summary>탭. 0은 전체, 그 뒤는 <see cref="Services.ToolLook.DisplayOrder"/> 순서의 도구 하나. (요약과 같은 규칙)</summary>
     [ObservableProperty]
@@ -184,7 +184,7 @@ public sealed partial class UsageViewModel : ObservableObject
             ? Services.ToolLook.DisplayOrder[SelectedTabIndex - 1]
             : null;
 
-    partial void OnSelectedTabIndexChanged(int value) => _ = LoadCommand.ExecuteAsync(null);
+    partial void OnSelectedTabIndexChanged(int value) => UiCommands.Start(LoadCommand);
 }
 
 /// <summary>일별 막대 한 줄.</summary>

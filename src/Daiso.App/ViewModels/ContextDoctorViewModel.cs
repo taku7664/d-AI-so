@@ -65,7 +65,7 @@ public sealed partial class ContextDoctorViewModel : ObservableObject
     public Task SetProjectAsync(string? projectDir)
     {
         ProjectPath = projectDir;
-        return InspectCommand.ExecuteAsync(null);
+        return UiCommands.RunAsync(InspectCommand);
     }
 
     /// <summary>현재 폴더와 도구로 리포트를 만든다.</summary>
@@ -169,7 +169,7 @@ public sealed partial class ContextDoctorViewModel : ObservableObject
     partial void OnSelectedFileChanged(ContextFileViewModel? value) =>
         OnPropertyChanged(nameof(SelectedFileContent));
 
-    partial void OnToolIndexChanged(int value) => _ = InspectCommand.ExecuteAsync(null);
+    partial void OnToolIndexChanged(int value) => UiCommands.Start(InspectCommand);
 }
 
 /// <summary>컨텍스트 파일 한 줄.</summary>

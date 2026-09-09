@@ -668,7 +668,7 @@ public sealed partial class SessionsViewModel : ObservableObject
     {
         if (!IsBusy)
         {
-            _ = ApplyFiltersCommand.ExecuteAsync(null);
+            UiCommands.Start(ApplyFiltersCommand);
         }
     }
 

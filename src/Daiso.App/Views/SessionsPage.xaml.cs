@@ -1,5 +1,6 @@
 using Daiso.App;
 using Daiso.App.Controls;
+using Daiso.App.Services;
 using Daiso.App.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
@@ -26,7 +27,7 @@ public sealed partial class SessionsPage : Page, IPageHeaderSource
         Loaded += async (_, _) =>
         {
             SelectorBarVisuals.Select(ToolTabs, ViewModel.ToolFilterIndex);
-            await ViewModel.LoadCommand.ExecuteAsync(null);
+            await UiCommands.RunAsync(ViewModel.LoadCommand);
         };
     }
 
@@ -57,7 +58,7 @@ public sealed partial class SessionsPage : Page, IPageHeaderSource
     {
         if (e.PropertyName == nameof(ShellViewModel.IsIndexing) && !Shell.IsIndexing)
         {
-            _ = ViewModel.LoadCommand.ExecuteAsync(null);
+            UiCommands.Start(ViewModel.LoadCommand);
         }
     }
 
@@ -142,7 +143,7 @@ public sealed partial class SessionsPage : Page, IPageHeaderSource
     {
         if (e.Key == VirtualKey.Enter)
         {
-            await ViewModel.SearchCommand.ExecuteAsync(null);
+            await UiCommands.RunAsync(ViewModel.SearchCommand);
         }
     }
 

@@ -1,5 +1,6 @@
 using Daiso.App.Strings;
 using Daiso.App.Controls;
+using Daiso.App.Services;
 using Daiso.App.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
@@ -30,7 +31,7 @@ public sealed partial class UsagePage : Page, IPageHeaderSource
         Loaded += async (_, _) =>
         {
             SelectorBarVisuals.Select(ToolTabs, Usage.SelectedTabIndex);
-            await Usage.LoadCommand.ExecuteAsync(null);
+            await UiCommands.RunAsync(Usage.LoadCommand);
         };
     }
 

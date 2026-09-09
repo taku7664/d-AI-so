@@ -1,4 +1,5 @@
 using Daiso.App.Controls;
+using Daiso.App.Services;
 using Daiso.App.Strings;
 using Daiso.App.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,7 +30,7 @@ public sealed partial class DashboardPage : Page, IPageHeaderSource
         Loaded += async (_, _) =>
         {
             SelectorBarVisuals.Select(ToolTabs, ViewModel.SelectedTabIndex);
-            await ViewModel.LoadCommand.ExecuteAsync(null);
+            await UiCommands.RunAsync(ViewModel.LoadCommand);
             SyncProfiles();
         };
     }
@@ -69,7 +70,7 @@ public sealed partial class DashboardPage : Page, IPageHeaderSource
     {
         if (e.PropertyName == nameof(ShellViewModel.IsIndexing) && !Shell.IsIndexing)
         {
-            _ = ViewModel.LoadCommand.ExecuteAsync(null);
+            UiCommands.Start(ViewModel.LoadCommand);
         }
     }
 
@@ -164,7 +165,7 @@ public sealed partial class DashboardPage : Page, IPageHeaderSource
         try
         {
             Profiles.Apply(row, await ViewModel.ReadAuthStatusAsync(row.Profile.Tool));
-            await ViewModel.LoadCommand.ExecuteAsync(null);
+            await UiCommands.RunAsync(ViewModel.LoadCommand);
             ReportProfile(row.Profile.Tool);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
