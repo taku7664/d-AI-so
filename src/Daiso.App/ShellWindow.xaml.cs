@@ -86,6 +86,10 @@ public sealed partial class ShellWindow : Window
         }
     }
 
+    /// <summary>새 페이지의 제목·부제를 Header 에 싣는다. 페이지가 IPageHeaderSource 가 아니면 제목이 비는 것이 보인다.</summary>
+    private void OnFrameNavigated(object sender, Microsoft.UI.Xaml.Navigation.NavigationEventArgs e) =>
+        Navigation.Header = (e.Content as Controls.IPageHeaderSource)?.Header;
+
     private void OnSelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
     {
         if (args.SelectedItem is NavigationViewItem { Tag: string tag })

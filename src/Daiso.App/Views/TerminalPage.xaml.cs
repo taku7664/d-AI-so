@@ -13,7 +13,7 @@ namespace Daiso.App.Views;
 /// 터미널 화면. 위는 탭 띠(새 터미널 + 열린 방), 아래는 새 세션 카드 또는 그 방의 터미널.
 /// 페이지는 캐시된다(NavigationCacheMode=Required). Loaded는 돌아올 때마다 다시 돌므로 한 번만 걸 것은 생성자에 둔다. (ARCHITECTURE §5.3)
 /// </summary>
-public sealed partial class TerminalPage : Page
+public sealed partial class TerminalPage : Page, IPageHeaderSource
 {
     private IRoom? _room;
 
@@ -23,6 +23,7 @@ public sealed partial class TerminalPage : Page
         FocusRelease.Attach(this);
         SelectorBarVisuals.ResetPressedOnLeave(ToolTabs);
         ViewModel = App.Services.GetRequiredService<TerminalViewModel>();
+        Header = new PageHeader("Terminal_Title", UiStrings.Get("Terminal_Subtitle"));
 
         RoomTabs.ItemsSource = App.Rooms.Rooms;
 
@@ -116,6 +117,9 @@ public sealed partial class TerminalPage : Page
     }
 
     public TerminalViewModel ViewModel { get; }
+
+    /// <summary>셸이 NavigationView.Header 에 그리는 대제목·부제.</summary>
+    public PageHeader Header { get; }
 
     // ── 새 세션 카드 ───────────────────────────────────────────────────────
 

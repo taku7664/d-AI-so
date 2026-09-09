@@ -20,15 +20,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- 대제목 줄에는 제목만. 검색은 아래 줄로 (ARCHITECTURE §6.2) -->
         <StackPanel Grid.Row="0" Spacing="10">
-            <StackPanel Spacing="2">
-                <TextBlock Text="{loc:Str Key=Sessions_Title}" Style="{StaticResource PageTitleText}" />
-                <TextBlock
-                    AutomationProperties.AutomationId="SessionsStatus"
-                    Text="{x:Bind ViewModel.StatusText, Mode=OneWay}"
-                    Style="{StaticResource PageSubtitleText}" />
-            </StackPanel>
 
             <Grid ColumnSpacing="12">
                 <Grid.ColumnDefinitions>

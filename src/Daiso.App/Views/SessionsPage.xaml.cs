@@ -10,13 +10,14 @@ using Daiso.App.Strings;
 
 namespace Daiso.App.Views;
 
-public sealed partial class SessionsPage : Page
+public sealed partial class SessionsPage : Page, IPageHeaderSource
 {
     public SessionsPage()
     {
         InitializeComponent();
         FocusRelease.Attach(this);
         ViewModel = App.Services.GetRequiredService<SessionsViewModel>();
+        Header = new PageHeader("Sessions_Title").Follow(ViewModel, nameof(SessionsViewModel.StatusText), () => ViewModel.StatusText);
         Shell.PropertyChanged += OnShellPropertyChanged;
         Doctor = App.Services.GetRequiredService<ContextDoctorViewModel>();
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
@@ -25,6 +26,9 @@ public sealed partial class SessionsPage : Page
     }
 
     public SessionsViewModel ViewModel { get; }
+
+    /// <summary>셸이 NavigationView.Header 에 그리는 대제목·부제.</summary>
+    public PageHeader Header { get; }
 
     /// <summary>첫 실행 인덱싱 진행을 빈 목록 안내에 함께 보여준다.</summary>
     public ShellViewModel Shell { get; } = App.Services.GetRequiredService<ShellViewModel>();

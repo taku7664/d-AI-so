@@ -10,13 +10,14 @@ using Windows.Storage.Pickers;
 
 namespace Daiso.App.Views;
 
-public sealed partial class RuleMakerPage : Page
+public sealed partial class RuleMakerPage : Page, IPageHeaderSource
 {
     public RuleMakerPage()
     {
         InitializeComponent();
         FocusRelease.Attach(this);
         ViewModel = App.Services.GetRequiredService<RuleMakerViewModel>();
+        Header = new PageHeader("RuleMaker_Title", UiStrings.Get("RuleMaker_Subtitle"));
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
 
         Loaded += (_, _) =>
@@ -33,6 +34,9 @@ public sealed partial class RuleMakerPage : Page
     }
 
     public RuleMakerViewModel ViewModel { get; }
+
+    /// <summary>셸이 NavigationView.Header 에 그리는 대제목·부제.</summary>
+    public PageHeader Header { get; }
 
     /// <summary>지금 트리에서 고른 노드. 없으면 루트.</summary>
     private ConditionNodeViewModel? SelectedNode =>

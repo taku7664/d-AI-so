@@ -9,13 +9,14 @@ using Windows.ApplicationModel.DataTransfer;
 
 namespace Daiso.App.Views;
 
-public sealed partial class PromptsPage : Page
+public sealed partial class PromptsPage : Page, IPageHeaderSource
 {
     public PromptsPage()
     {
         InitializeComponent();
         FocusRelease.Attach(this);
         ViewModel = App.Services.GetRequiredService<PromptsViewModel>();
+        Header = new PageHeader("Prompts_Title", UiStrings.Get("Prompts_Subtitle"));
 
         Loaded += (_, _) =>
         {
@@ -30,6 +31,9 @@ public sealed partial class PromptsPage : Page
     }
 
     public PromptsViewModel ViewModel { get; }
+
+    /// <summary>셸이 NavigationView.Header 에 그리는 대제목·부제.</summary>
+    public PageHeader Header { get; }
 
     /// <summary>편집기에 실려 있는 목록 항목.</summary>
     private PromptGalleryItemViewModel? _loadedItem;

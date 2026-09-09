@@ -7,13 +7,14 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace Daiso.App.Views;
 
-public sealed partial class DashboardPage : Page
+public sealed partial class DashboardPage : Page, IPageHeaderSource
 {
     public DashboardPage()
     {
         InitializeComponent();
         SelectorBarVisuals.ResetPressedOnLeave(ToolTabs);
         ViewModel = App.Services.GetRequiredService<DashboardViewModel>();
+        Header = new PageHeader("Dashboard_Title", UiStrings.Get("Dashboard_ToolStatusHint"));
         Shell.PropertyChanged += OnShellPropertyChanged;
 
         // 뒤로/앞으로가 뷰모델의 탭을 바꾸면 탭 띠도 따라간다
@@ -54,6 +55,9 @@ public sealed partial class DashboardPage : Page
     }
 
     public DashboardViewModel ViewModel { get; }
+
+    /// <summary>셸이 NavigationView.Header 에 그리는 대제목·부제.</summary>
+    public PageHeader Header { get; }
 
     /// <summary>로그인 프로필 카드.</summary>
     public AuthProfileViewModel Profiles { get; } = App.Services.GetRequiredService<AuthProfileViewModel>();

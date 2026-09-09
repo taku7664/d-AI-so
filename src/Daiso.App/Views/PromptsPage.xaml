@@ -14,12 +14,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- 대제목 줄에는 제목만. 명령바는 아래 줄로 (ARCHITECTURE §6.2) -->
         <StackPanel Grid.Row="0" Spacing="8">
-            <StackPanel Spacing="2">
-                <TextBlock Text="{loc:Str Key=Prompts_Title}" Style="{StaticResource PageTitleText}" />
-                <TextBlock Text="{loc:Str Key=Prompts_Subtitle}" Style="{StaticResource PageSubtitleText}" />
-            </StackPanel>
 
             <muxc:CommandBar
                 DefaultLabelPosition="Right"

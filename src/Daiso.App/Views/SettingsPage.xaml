@@ -20,10 +20,6 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" Spacing="16" Margin="0,0,0,8">
 
-                <StackPanel Spacing="2">
-                    <TextBlock Text="{loc:Str Key=Settings_Title}" Style="{StaticResource PageTitleText}" />
-                    <TextBlock Text="{x:Bind ViewModel.RestartNotice}" Style="{StaticResource PageSubtitleText}" />
-                </StackPanel>
 
                 <!-- 경로 -->
                 <Border Style="{StaticResource CardBorder}">

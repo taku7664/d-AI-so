@@ -8,13 +8,14 @@ using Microsoft.UI.Xaml.Input;
 namespace Daiso.App.Views;
 
 /// <summary>토큰 사용량. 일별·프로젝트별·모델별. (REQUIREMENTS §7)</summary>
-public sealed partial class UsagePage : Page
+public sealed partial class UsagePage : Page, IPageHeaderSource
 {
     public UsagePage()
     {
         InitializeComponent();
         SelectorBarVisuals.ResetPressedOnLeave(ToolTabs);
         Usage = App.Services.GetRequiredService<UsageViewModel>();
+        Header = new PageHeader("Usage_Title").Follow(Usage, nameof(UsageViewModel.StatusText), () => Usage.StatusText);
 
         // 뒤로/앞으로가 뷰모델의 탭을 바꾸면 탭 띠도 따라간다
         Usage.PropertyChanged += (_, e) =>
@@ -33,6 +34,9 @@ public sealed partial class UsagePage : Page
     }
 
     public UsageViewModel Usage { get; }
+
+    /// <summary>셸이 NavigationView.Header 에 그리는 대제목·부제.</summary>
+    public PageHeader Header { get; }
 
     /// <summary>화면에 붙어 있는 일별 줄들. 포인터 밑의 줄을 여기서 찾는다.</summary>
     private readonly List<Grid> _dayRows = new();
