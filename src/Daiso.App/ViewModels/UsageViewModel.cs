@@ -72,13 +72,18 @@ public sealed partial class UsageViewModel : ObservableObject
     public bool NeedsPrices => HasData && EstimatedCost == 0m;
 
     /// <summary>인덱스에서 사용량을 다시 읽는다.</summary>
+    /// <summary>
+    /// 몇 번째 읽기인가. <c>IsBusy</c> 를 보고 되돌아가면 안 되기 때문에 둔다:
+    /// <c>[RelayCommand]</c> 는 같은 명령을 다시 부르면 앞 실행의 토큰을 끊고 새 실행을 시작하는데,
+    /// 그때 <c>IsBusy</c> 는 아직 앞 실행의 <c>true</c> 라서 새 실행이 그대로 돌아가 버렸다.
+    /// 탭이나 기간을 바꿔도 화면이 옛 값 그대로 남던 원인이다.
+    /// </summary>
+    private int loadGeneration;
+
     [RelayCommand]
     public async Task LoadAsync(CancellationToken ct)
     {
-        if (IsBusy)
-        {
-            return;
-        }
+        var generation = ++loadGeneration;
 
         IsBusy = true;
 
@@ -99,7 +104,11 @@ public sealed partial class UsageViewModel : ObservableObject
         }
         finally
         {
-            IsBusy = false;
+            // 나를 밀어낸 뒤 실행이 이미 돌고 있으면 그쪽이 끝날 때 끈다
+            if (generation == loadGeneration)
+            {
+                IsBusy = false;
+            }
         }
     }
 

@@ -5,9 +5,8 @@ using Daiso.App.Services;
 using Daiso.Core;
 using Daiso.App.Strings;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.UI;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
-using Windows.UI;
 
 namespace Daiso.App.ViewModels;
 
@@ -137,7 +136,7 @@ public sealed partial class DashboardViewModel : ObservableObject
     public int UsageDayCount => UsageDays;
 
     /// <summary>사람이 읽는 총 용량.</summary>
-    public string TotalSizeText => FormatSize(TotalSizeBytes);
+    public string TotalSizeText => Formats.Size(TotalSizeBytes);
 
     /// <summary>최근 사용량 요약 문구.</summary>
     public string RecentUsageText => UiStrings.Format(
@@ -192,13 +191,18 @@ public sealed partial class DashboardViewModel : ObservableObject
     }
 
     /// <summary>도구 상태와 세션·사용량 요약을 다시 읽는다.</summary>
+    /// <summary>
+    /// 몇 번째 읽기인가. <c>IsBusy</c> 를 보고 되돌아가면 안 되기 때문에 둔다:
+    /// <c>[RelayCommand]</c> 는 같은 명령을 다시 부르면 앞 실행의 토큰을 끊고 새 실행을 시작하는데,
+    /// 그때 <c>IsBusy</c> 는 아직 앞 실행의 <c>true</c> 라서 새 실행이 그대로 돌아가 버렸다.
+    /// 탭이나 기간을 바꿔도 화면이 옛 값 그대로 남던 원인이다.
+    /// </summary>
+    private int loadGeneration;
+
     [RelayCommand]
     public async Task LoadAsync(CancellationToken ct)
     {
-        if (IsBusy)
-        {
-            return;
-        }
+        var generation = ++loadGeneration;
 
         IsBusy = true;
 
@@ -220,7 +224,11 @@ public sealed partial class DashboardViewModel : ObservableObject
         }
         finally
         {
-            IsBusy = false;
+            // 나를 밀어낸 뒤 실행이 이미 돌고 있으면 그쪽이 끝날 때 끈다
+            if (generation == loadGeneration)
+            {
+                IsBusy = false;
+            }
         }
     }
 
@@ -240,13 +248,6 @@ public sealed partial class DashboardViewModel : ObservableObject
         await _launcher.LaunchAsync(home, provider.LaunchTarget, arguments).ConfigureAwait(true);
     }
 
-    internal static string FormatSize(long bytes) => bytes switch
-    {
-        < 1024 => $"{bytes} B",
-        < 1024 * 1024 => $"{bytes / 1024.0:N1} KB",
-        < 1024L * 1024 * 1024 => $"{bytes / (1024.0 * 1024):N1} MB",
-        _ => $"{bytes / (1024.0 * 1024 * 1024):N2} GB",
-    };
 }
 
 /// <summary>요약 화면의 최근 세션 한 줄.</summary>
@@ -273,7 +274,7 @@ public sealed class RecentSessionViewModel
 
     /// <summary>시각과 용량.</summary>
     public string MetaText =>
-        $"{Session.ModifiedAt.ToLocalTime():yyyy-MM-dd HH:mm} · {DashboardViewModel.FormatSize(Session.SizeBytes)}";
+        $"{Session.ModifiedAt.ToLocalTime():yyyy-MM-dd HH:mm} · {Formats.Size(Session.SizeBytes)}";
 }
 
 /// <summary>도구 하나의 카드 상태. 토큰 값은 어떤 속성에도 담지 않는다. (ARCHITECTURE §7.1)</summary>
@@ -339,13 +340,13 @@ public sealed partial class ToolCardViewModel : ObservableObject
         OnPropertyChanged(nameof(AccountsButtonText));
     }
 
-    /// <summary>상태 점 색. 초록·주황·빨강.</summary>
-    public Brush StateBrush => new SolidColorBrush(State switch
+    /// <summary>상태 점 색. 값은 App.xaml 이 정한다 — 색을 바꾸려면 그 한 곳만 고친다.</summary>
+    public Brush StateBrush => (Brush)Application.Current.Resources[State switch
     {
-        AuthState.LoggedIn => Color.FromArgb(255, 16, 137, 62),
-        AuthState.ExpiringSoon => Color.FromArgb(255, 191, 122, 0),
-        _ => Color.FromArgb(255, 196, 43, 28),
-    });
+        AuthState.LoggedIn => "AuthOkBrush",
+        AuthState.ExpiringSoon => "AuthWarnBrush",
+        _ => "AuthErrorBrush",
+    }];
 
     /// <summary>상태 설명.</summary>
     public string StateText => State switch
