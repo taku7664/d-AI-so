@@ -574,7 +574,9 @@ public sealed partial class TerminalViewModel : ObservableObject
                 return tool.EmbeddedButtonText;
             }
 
-            return UiStrings.Get(IsResume ? "Terminal_ResumeHere" : "Terminal_StartHere");
+            // 무효화로 선택이 풀려도 SessionModeIndex 는 1로 남는다. "안 골랐다"고 하면서 버튼이
+            // `이어서 열기`면 또 말이 어긋난다 — 고른 적이 있을 때만 이어서로 부른다
+            return UiStrings.Get(ShowResumeList ? "Terminal_ResumeHere" : "Terminal_StartHere");
         }
     }
 
