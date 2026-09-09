@@ -34,6 +34,7 @@
             제목줄. WinUI TitleBar 컨트롤이 아이콘·제목·창 끌기 영역·뒤로 버튼을 준다 (UI_REFACTOR_PLAN §8.1).
             뒤로는 내장 버튼, 앞으로와 메뉴 접기는 LeftHeader 슬롯. 순서는 [뒤로][앞으로][☰] 아이콘 DAIso.
             이력(NavigationHistory)은 셸 것이므로 페이지는 뒤로/앞으로를 그리지 않는다.
+            세 단추의 상자 크기(36x32)와 글리프 크기(16)는 App.xaml 의 제목줄 크기 값과 함께 맞춰 둔 것이다.
         -->
         <muxc:TitleBar
             x:Name="AppTitleBar"
@@ -46,7 +47,8 @@
                 <ImageIconSource ImageSource="Assets/daiso.ico" />
             </muxc:TitleBar.IconSource>
             <muxc:TitleBar.LeftHeader>
-                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                <!-- 왼쪽 여백 2 는 내장 뒤로 버튼의 Margin 2 와 합쳐 단추 사이 간격을 Spacing 과 같은 4 로 만든다 -->
+                <StackPanel Orientation="Horizontal" Spacing="4" Margin="2,0,0,0" VerticalAlignment="Center">
                     <!-- 내장 뒤로 버튼처럼 평평하게. 잠겨도 상자가 보이지 않게 잠김 상태의 배경·테두리를 지운다 -->
                     <StackPanel.Resources>
                         <SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="Transparent" />
@@ -63,7 +65,7 @@
                         AutomationProperties.Name="{loc:Str Key=Common_Forward}"
                         ToolTipService.ToolTip="{loc:Str Key=Common_ForwardTip}"
                         Click="OnForwardClick">
-                        <FontIcon Glyph="&#xE72A;" FontSize="14" />
+                        <FontIcon Glyph="&#xE72A;" FontSize="16" />
                     </Button>
                     <Button
                         Width="36"
@@ -75,7 +77,7 @@
                         AutomationProperties.Name="{loc:Str Key=Common_ToggleNav}"
                         ToolTipService.ToolTip="{loc:Str Key=Common_ToggleNav}"
                         Click="OnPaneToggleClick">
-                        <FontIcon Glyph="&#xE700;" FontSize="14" />
+                        <FontIcon Glyph="&#xE700;" FontSize="16" />
                     </Button>
                 </StackPanel>
             </muxc:TitleBar.LeftHeader>
