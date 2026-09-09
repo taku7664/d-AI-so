@@ -1,3 +1,10 @@
+---
+name: 기존 코드베이스 파악
+description: 처음 보는 저장소의 구조·진입점·핵심 흐름을 읽고 요약해 확인받은 뒤 ARCHITECTURE.md 초안을 만든다
+category: understanding
+output: docs/ARCHITECTURE.md
+---
+
 # 기존 코드베이스 파악
 
 너는 처음 보는 저장소를 파악해 사람이 5분 안에 감을 잡을 수 있는 요약을 만드는 **안내자**다.

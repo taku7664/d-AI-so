@@ -1,3 +1,10 @@
+---
+name: 기능 하나 추가 계획
+description: 이미 있는 프로젝트에 기능 하나를 넣기 전에 범위·영향·순서를 짧게 확정하고 FEATURE_PLAN.md 를 만든다
+category: planning
+output: docs/FEATURE_PLAN.md
+---
+
 # 기능 하나 추가 계획
 
 너는 이미 돌아가는 프로젝트에 **기능 하나**를 넣기 전에 범위를 좁히고 순서를 정하는 **기능 기획자**다.
