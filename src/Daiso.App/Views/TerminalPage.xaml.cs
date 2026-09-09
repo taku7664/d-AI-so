@@ -606,6 +606,8 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
 
     // ── 끌어놓기 (IFileDropSink — 셸의 FileDropTarget 이 OLE 드롭을 받아 넘긴다) ───────────
 
+    public bool CanAcceptFiles => TerminalPanel.Visibility == Visibility.Visible;
+
     /// <summary>파일 드래그가 창에 들어왔다. 방이 보이면 터미널 위에 받는 판을 덮는다 (WebView2 위로는 XAML 이 안 그려지므로 그 위 판이 표시 역할).</summary>
     public void FileDragStarted()
     {
@@ -617,18 +619,16 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
 
     public void FileDragEnded() => DropOverlay.Visibility = Visibility.Collapsed;
 
-    /// <summary>방이 있으면 파일을 CLI 에 준다(그림은 첨부, 나머지는 경로). 없으면 첫 폴더를 프로젝트 폴더로 잡는다.</summary>
+    /// <summary>방이 있을 때만 받는다. 파일을 CLI 에 준다(그림은 첨부, 나머지는 경로). 방이 없으면 아무 일도 하지 않는다.</summary>
     public async Task FilesDroppedAsync(IReadOnlyList<string> paths)
     {
-        if (TerminalPanel.Visibility == Visibility.Visible)
+        if (TerminalPanel.Visibility != Visibility.Visible)
         {
-            Embedded.FocusTerminal();
-            await Embedded.AttachFilesAsync(paths);
+            return;
         }
-        else if (paths.FirstOrDefault(Directory.Exists) is { } folder)
-        {
-            ViewModel.SetFolder(folder);
-        }
+
+        Embedded.FocusTerminal();
+        await Embedded.AttachFilesAsync(paths);
     }
 
     /// <summary>파일을 골라 CLI 에 준다. 여러 개 고를 수 있다. 그림은 첨부, 나머지는 경로 (AttachFilesAsync).</summary>

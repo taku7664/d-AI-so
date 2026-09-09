@@ -7,6 +7,9 @@ namespace Daiso.App.Services;
 /// <summary>탐색기에서 끌어온 파일을 받을 페이지가 구현한다. 셸이 지금 페이지에 물어서 넘긴다.</summary>
 public interface IFileDropSink
 {
+    /// <summary>지금 파일을 받을 수 있는가. false 면 커서가 금지로 나온다 (터미널: 방이 있을 때만).</summary>
+    bool CanAcceptFiles { get; }
+
     /// <summary>파일 드래그가 창에 들어왔다. 받는 판을 보이는 데 쓴다.</summary>
     void FileDragStarted();
 
@@ -61,7 +64,7 @@ public sealed class FileDropTarget : FileDropTarget.IDropTarget
 
     int IDropTarget.DragEnter(IDataObject data, uint keyState, POINTL point, ref uint effect)
     {
-        _accepting = HasFiles(data) && _sink() is not null;
+        _accepting = HasFiles(data) && _sink() is { CanAcceptFiles: true };
         effect = _accepting ? DROPEFFECT_COPY : DROPEFFECT_NONE;
 
         if (_accepting)

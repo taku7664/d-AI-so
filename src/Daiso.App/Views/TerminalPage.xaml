@@ -50,7 +50,7 @@
     <!-- 골격은 PageBody 가 정한다: 탭 띠·방 도구 줄(필터 줄) → 본문. 폭은 Wide — 방 화면은 창을 다 쓴다 (UI_REFACTOR_PLAN §6, §8.2) -->
     <!--
         파일 끌어놓기는 셸의 FileDropTarget(OLE)이 받아 이 페이지(IFileDropSink)에 넘긴다. XAML AllowDrop 은 이 환경에서 동작하지 않는다.
-        끄는 동안 DropOverlay 를 터미널 위에 덮어 어디에 놓이는지 보여 준다. 방이 있으면 파일을 CLI 에 주고, 없으면 폴더를 프로젝트 폴더로 잡는다
+        끄는 동안 DropOverlay 를 터미널 위에 덮어 어디에 놓이는지 보여 준다. 방이 있을 때만 파일을 CLI 에 준다
     -->
     <controls:PageBody x:Name="Root" Layout="Wide">
         <controls:PageBody.Filters>
