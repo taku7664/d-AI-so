@@ -47,7 +47,9 @@
 
 **Stage 2 완료** (2026-09-09). `Controls/PageHeader`(제목·부제, `Follow`로 뷰모델 값을 따라감) + `IPageHeaderSource`. 셸이 `Frame.Navigated`에서 `NavigationView.Header`에 싣고 `HeaderTemplate` 하나로 그린다. 일곱 페이지에서 대제목 `StackPanel`을 걷어냈다. Header 기본 여백(56,44)은 `NavigationViewHeaderMargin` 리소스를 24,24 로 덮어썼다. 1024 캡처에서 일곱 화면 제목 위 y=79 로 모두 같다(픽셀 측정).
 
-**Stage 3 완료** (2026-09-09). `Controls/PageBody`(Grid 상속 — `FocusRelease`가 루트 패널을 요구한다). 슬롯 `Commands`·`Filters`·`Body`·`Footer`, `Layout=Reading|Wide`. Reading 은 본문을 스크롤에 담고(스크롤바는 창 오른쪽 끝) 폭을 `PageMaxWidth`(1280)로 막는다. `PagePadding`을 24 로, `ContentMaxWidth`를 `PageMaxWidth`로 바꿨다. 요약·사용량·설정을 이관했고 설정의 저장 바는 `Footer`다. 1600 캡처에서 세 화면 카드 좌·우 끝이 x=234·1511 로 같다(픽셀 측정). **다음은 Stage 4다.**
+**Stage 3 완료** (2026-09-09). `Controls/PageBody`(Grid 상속 — `FocusRelease`가 루트 패널을 요구한다). 슬롯 `Commands`·`Filters`·`Body`·`Footer`, `Layout=Reading|Wide`. Reading 은 본문을 스크롤에 담고(스크롤바는 창 오른쪽 끝) 폭을 `PageMaxWidth`(1280)로 막는다. `PagePadding`을 24 로, `ContentMaxWidth`를 `PageMaxWidth`로 바꿨다. 요약·사용량·설정을 이관했고 설정의 저장 바는 `Footer`다. 1600 캡처에서 세 화면 카드 좌·우 끝이 x=234·1511 로 같다(픽셀 측정).
+
+**Stage 4 완료** (2026-09-09). 세션·내 규칙·내 프롬프트를 `PageBody Layout="Wide"`로 옮겼다. 목록 칸은 `ListPaneWidth`(320) / `ListPaneMinWidth`(220) / `ListPaneMaxWidth`(600) 한 벌 + `PaneSplitter`. 저장(내 규칙: 저장·다른 이름으로·라이브러리에, 내 프롬프트: 내 프롬프트에 저장)은 `Footer`의 `FooterBorder` 바로 내려왔고 `Ctrl+S`는 그대로다. 페이지 안내 줄(상태·저장 힌트)도 같은 푸터라 하단이 한 겹이다. 1600 캡처에서 세션·내 프롬프트 목록 칸이 x=233–553 으로 같다. 내 규칙은 이 PC 의 `settings.json`에 끌어 둔 220 이 저장돼 있어 그 값이 살아난다 — 설계대로(저장된 폭이 기본값을 이긴다). **다음은 Stage 5다.**
 
 직전 작업으로 들어간 것(이 계획 이전에 커밋됨):
 - 마우스 엄지 버튼 뒤로/앞으로 + `Daiso.App/Services/NavigationHistory.cs`

@@ -429,12 +429,15 @@ public sealed partial class RuleMakerPage : Page, IPageHeaderSource
             _listWidth = ListColumn.ActualWidth;
         }
 
-        ListColumn.Width = show ? new GridLength(Math.Max(ListColumn.MinWidth, _listWidth)) : new GridLength(0);
-        ListColumn.MinWidth = show ? 180 : 0;
+        ListColumn.Width = show ? new GridLength(Math.Max(ListPaneMinWidth, _listWidth)) : new GridLength(0);
+        ListColumn.MinWidth = show ? ListPaneMinWidth : 0;
         ListSplitter.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    private double _listWidth = 220;
+    /// <summary>목록 칸 최소 폭. XAML 의 ListPaneMinWidth 와 같은 리소스를 읽는다 (세 2단 화면이 같은 값).</summary>
+    private static double ListPaneMinWidth => (double)Application.Current.Resources["ListPaneMinWidth"];
+
+    private double _listWidth = ((GridLength)Application.Current.Resources["ListPaneWidth"]).Value;
 
     /// <summary>
     /// 본문 최소 폭 + 미리보기 최소 폭 + 열 간격보다 좁으면 미리보기 칸을 접는다. 창 하한 1024에서 목록을 펴 두면 이 경우다.

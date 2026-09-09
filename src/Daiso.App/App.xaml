@@ -15,6 +15,18 @@
             <x:Double x:Key="PageMaxWidth">1280</x:Double>
             <Thickness x:Key="PagePadding">24</Thickness>
 
+            <!-- 2단 화면의 목록 칸. 세션·내 규칙·내 프롬프트가 같은 값을 쓴다. 끌어서 바꾸고(PaneSplitter) 설정에 기억한다 -->
+            <GridLength x:Key="ListPaneWidth">320</GridLength>
+            <x:Double x:Key="ListPaneMinWidth">220</x:Double>
+            <x:Double x:Key="ListPaneMaxWidth">600</x:Double>
+
+            <!-- 푸터 바: 저장·안내가 놓이는 줄. 위에 구분선. 저장은 언제나 여기다 -->
+            <Style x:Key="FooterBorder" TargetType="Border">
+                <Setter Property="Padding" Value="0,12,0,0" />
+                <Setter Property="BorderThickness" Value="0,1,0,0" />
+                <Setter Property="BorderBrush" Value="{ThemeResource DividerStrokeColorDefaultBrush}" />
+            </Style>
+
             <!-- 카드: 페이지 안의 한 덩어리 -->
             <Style x:Key="CardBorder" TargetType="Border">
                 <Setter Property="Padding" Value="20" />

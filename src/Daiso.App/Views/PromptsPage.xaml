@@ -7,14 +7,9 @@
     xmlns:vm="using:Daiso.App.ViewModels"
     xmlns:controls="using:Daiso.App.Controls">
 
-    <Grid Padding="{StaticResource PagePadding}" RowSpacing="14">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
-
-        <StackPanel Grid.Row="0" Spacing="8">
+    <!-- 골격은 PageBody 가 정한다: 명령 줄 → 목록·편집기(본문) → 푸터(저장·안내). 폭은 Wide (UI_REFACTOR_PLAN §6) -->
+    <controls:PageBody Layout="Wide">
+        <controls:PageBody.Commands>
 
             <muxc:CommandBar
                 DefaultLabelPosition="Right"
@@ -26,29 +21,19 @@
                     AutomationProperties.AutomationId="PromptNewButton"
                     Click="OnNewClick" />
                 <muxc:AppBarButton
-                    Label="{loc:Str Key=Prompts_SaveToLibrary}"
-                    Icon="Save"
-                    AutomationProperties.AutomationId="PromptSaveButton"
-                    ToolTipService.ToolTip="Ctrl+S"
-                    IsEnabled="{x:Bind ViewModel.CanSave, Mode=OneWay}"
-                    Command="{x:Bind ViewModel.SaveToLibraryCommand}">
-                    <muxc:AppBarButton.KeyboardAccelerators>
-                        <KeyboardAccelerator Modifiers="Control" Key="S" />
-                    </muxc:AppBarButton.KeyboardAccelerators>
-                </muxc:AppBarButton>
-                <muxc:AppBarButton
                     Label="{loc:Str Key=Common_Delete}"
                     Icon="Delete"
                     AutomationProperties.AutomationId="PromptDeleteButton"
                     IsEnabled="{x:Bind ViewModel.CanRemove, Mode=OneWay}"
                     Click="OnDeleteClick" />
             </muxc:CommandBar>
-        </StackPanel>
+        </controls:PageBody.Commands>
 
         <!-- 왼쪽 목록 · 끌 수 있는 구분선 · 오른쪽 편집기. 구분선 자체가 간격 노릇을 한다 -->
-        <Grid Grid.Row="1">
+        <controls:PageBody.Body>
+        <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition x:Name="ListColumn" Width="280" MinWidth="180" MaxWidth="560" />
+                <ColumnDefinition x:Name="ListColumn" Width="{StaticResource ListPaneWidth}" MinWidth="{StaticResource ListPaneMinWidth}" MaxWidth="{StaticResource ListPaneMaxWidth}" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
@@ -200,12 +185,39 @@
                 </Grid>
             </Border>
         </Grid>
+        </controls:PageBody.Body>
 
-        <TextBlock
-            Grid.Row="2"
-            AutomationProperties.AutomationId="PromptStatus"
-            Text="{x:Bind ViewModel.StatusText, Mode=OneWay}"
-            Style="{StaticResource MutedText}"
-            TextWrapping="Wrap" />
-    </Grid>
+        <!-- 푸터: 저장은 언제나 여기 (UI_REFACTOR_PLAN §8.3). 안내 줄도 여기라 하단이 한 겹이다 -->
+        <controls:PageBody.Footer>
+        <Border Style="{StaticResource FooterBorder}">
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Button
+                    Grid.Column="0"
+                    Content="{loc:Str Key=Prompts_SaveToLibrary}"
+                    Style="{ThemeResource AccentButtonStyle}"
+                    AutomationProperties.AutomationId="PromptSaveButton"
+                    ToolTipService.ToolTip="Ctrl+S"
+                    IsEnabled="{x:Bind ViewModel.CanSave, Mode=OneWay}"
+                    Command="{x:Bind ViewModel.SaveToLibraryCommand}">
+                    <Button.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control" Key="S" />
+                    </Button.KeyboardAccelerators>
+                </Button>
+
+                <TextBlock
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    AutomationProperties.AutomationId="PromptStatus"
+                    Text="{x:Bind ViewModel.StatusText, Mode=OneWay}"
+                    Style="{StaticResource MutedText}"
+                    TextWrapping="Wrap" />
+            </Grid>
+        </Border>
+        </controls:PageBody.Footer>
+    </controls:PageBody>
 </Page>

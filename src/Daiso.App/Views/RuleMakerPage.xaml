@@ -7,14 +7,9 @@
     xmlns:vm="using:Daiso.App.ViewModels"
     xmlns:controls="using:Daiso.App.Controls">
 
-    <Grid Padding="{StaticResource PagePadding}" RowSpacing="14">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
-
-        <StackPanel Grid.Row="0" Spacing="8">
+    <!-- 골격은 PageBody 가 정한다: 명령 줄 → 목록·편집기(본문) → 푸터(저장·안내). 폭은 Wide (UI_REFACTOR_PLAN §6) -->
+    <controls:PageBody Layout="Wide">
+        <controls:PageBody.Commands>
 
             <muxc:CommandBar
                 DefaultLabelPosition="Right"
@@ -35,17 +30,6 @@
                         <KeyboardAccelerator Modifiers="Control" Key="O" />
                     </muxc:AppBarButton.KeyboardAccelerators>
                 </muxc:AppBarButton>
-                <muxc:AppBarButton
-                    Label="{loc:Str Key=Common_Save}"
-                    Icon="Save"
-                    AutomationProperties.AutomationId="SaveButton"
-                    ToolTipService.ToolTip="Ctrl+S"
-                    IsEnabled="{x:Bind ViewModel.CanSave, Mode=OneWay}"
-                    Click="OnSaveClick">
-                    <muxc:AppBarButton.KeyboardAccelerators>
-                        <KeyboardAccelerator Modifiers="Control" Key="S" />
-                    </muxc:AppBarButton.KeyboardAccelerators>
-                </muxc:AppBarButton>
                 <muxc:AppBarSeparator />
                 <muxc:AppBarButton
                     Label="{loc:Str Key=RuleMaker_Migrate}"
@@ -62,12 +46,6 @@
 
                 <muxc:CommandBar.SecondaryCommands>
                     <muxc:AppBarButton
-                        Label="{loc:Str Key=RuleMaker_SaveAs}"
-                        Icon="SaveLocal"
-                        AutomationProperties.AutomationId="SaveAsButton"
-                        IsEnabled="{x:Bind ViewModel.CanSave, Mode=OneWay}"
-                        Click="OnSaveAsClick" />
-                    <muxc:AppBarButton
                         Label="{loc:Str Key=RuleMaker_Recent}"
                         Icon="Clock"
                         AutomationProperties.AutomationId="RecentButton">
@@ -76,12 +54,6 @@
                         </muxc:AppBarButton.Flyout>
                     </muxc:AppBarButton>
                     <muxc:AppBarButton
-                        Label="{loc:Str Key=RuleMaker_SaveToLibrary}"
-                        Icon="Library"
-                        AutomationProperties.AutomationId="SaveToLibraryButton"
-                        IsEnabled="{x:Bind ViewModel.CanSave, Mode=OneWay}"
-                        Click="OnSaveToLibraryClick" />
-                    <muxc:AppBarButton
                         Label="{loc:Str Key=RuleMaker_LinkProject}"
                         Icon="Link"
                         AutomationProperties.AutomationId="LinkButton"
@@ -89,12 +61,13 @@
                         Click="OnLinkClick" />
                 </muxc:CommandBar.SecondaryCommands>
             </muxc:CommandBar>
-        </StackPanel>
+        </controls:PageBody.Commands>
 
         <!-- 왼쪽 내 규칙 목록 · 끌 수 있는 구분선 · 오른쪽 편집기 (내 프롬프트와 같은 골격) -->
-        <Grid Grid.Row="1">
+        <controls:PageBody.Body>
+        <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition x:Name="ListColumn" Width="220" MinWidth="180" MaxWidth="480" />
+                <ColumnDefinition x:Name="ListColumn" Width="{StaticResource ListPaneWidth}" MinWidth="{StaticResource ListPaneMinWidth}" MaxWidth="{StaticResource ListPaneMaxWidth}" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
@@ -578,20 +551,59 @@
                 </Grid>
             </Grid>
         </Grid>
+        </controls:PageBody.Body>
 
-        <!-- 상태. 저장이 잠겨 있으면 그 이유가 먼저 -->
-        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="16">
-            <StackPanel Orientation="Horizontal" Spacing="6" Visibility="{x:Bind ViewModel.SaveHintVisibility, Mode=OneWay}">
-                <FontIcon Glyph="&#xE946;" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+        <!-- 푸터: 저장은 언제나 여기 (UI_REFACTOR_PLAN §8.3). 저장이 잠겨 있으면 그 이유가 먼저 -->
+        <controls:PageBody.Footer>
+        <Border Style="{StaticResource FooterBorder}">
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                    <Button
+                        Content="{loc:Str Key=Common_Save}"
+                        Style="{ThemeResource AccentButtonStyle}"
+                        AutomationProperties.AutomationId="SaveButton"
+                        ToolTipService.ToolTip="Ctrl+S"
+                        IsEnabled="{x:Bind ViewModel.CanSave, Mode=OneWay}"
+                        Click="OnSaveClick">
+                        <Button.KeyboardAccelerators>
+                            <KeyboardAccelerator Modifiers="Control" Key="S" />
+                        </Button.KeyboardAccelerators>
+                    </Button>
+                    <Button
+                        Content="{loc:Str Key=RuleMaker_SaveAs}"
+                        AutomationProperties.AutomationId="SaveAsButton"
+                        IsEnabled="{x:Bind ViewModel.CanSave, Mode=OneWay}"
+                        Click="OnSaveAsClick" />
+                    <Button
+                        Content="{loc:Str Key=RuleMaker_SaveToLibrary}"
+                        AutomationProperties.AutomationId="SaveToLibraryButton"
+                        IsEnabled="{x:Bind ViewModel.CanSave, Mode=OneWay}"
+                        Click="OnSaveToLibraryClick" />
+                </StackPanel>
+
+                <!-- 저장이 잠겨 있으면 그 이유가 먼저. 상태는 남는 폭에서 말줄임 -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Visibility="{x:Bind ViewModel.SaveHintVisibility, Mode=OneWay}">
+                    <FontIcon Glyph="&#xE946;" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                    <TextBlock
+                        AutomationProperties.AutomationId="RuleMakerSaveHint"
+                        Text="{loc:Str Key=RuleMaker_SaveHint}"
+                        Style="{StaticResource MutedText}" />
+                </StackPanel>
                 <TextBlock
-                    AutomationProperties.AutomationId="RuleMakerSaveHint"
-                    Text="{loc:Str Key=RuleMaker_SaveHint}"
+                    Grid.Column="2"
+                    VerticalAlignment="Center"
+                    AutomationProperties.AutomationId="RuleMakerStatus"
+                    Text="{x:Bind ViewModel.StatusText, Mode=OneWay}"
+                    ToolTipService.ToolTip="{x:Bind ViewModel.StatusText, Mode=OneWay}"
                     Style="{StaticResource MutedText}" />
-            </StackPanel>
-            <TextBlock
-                AutomationProperties.AutomationId="RuleMakerStatus"
-                Text="{x:Bind ViewModel.StatusText, Mode=OneWay}"
-                Style="{StaticResource MutedText}" />
-        </StackPanel>
-    </Grid>
+            </Grid>
+        </Border>
+        </controls:PageBody.Footer>
+    </controls:PageBody>
 </Page>

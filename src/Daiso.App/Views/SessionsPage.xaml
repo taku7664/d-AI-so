@@ -7,20 +7,15 @@
     xmlns:controls="using:Daiso.App.Controls"
     xmlns:vm="using:Daiso.App.ViewModels">
 
-    <Grid Padding="{StaticResource PagePadding}" RowSpacing="14">
-        <Grid.KeyboardAccelerators>
+    <!-- 골격은 PageBody 가 정한다: 검색(명령 줄) → 필터 줄 → 목록·상세(본문). 폭은 Wide (UI_REFACTOR_PLAN §6, §8.2) -->
+    <controls:PageBody Layout="Wide">
+        <controls:PageBody.KeyboardAccelerators>
             <KeyboardAccelerator Modifiers="Control" Key="F" Invoked="OnFocusSearchInvoked" />
             <KeyboardAccelerator Key="Escape" Invoked="OnClearSearchInvoked" />
-        </Grid.KeyboardAccelerators>
+        </controls:PageBody.KeyboardAccelerators>
 
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
-
-        <StackPanel Grid.Row="0" Spacing="10">
+        <controls:PageBody.Commands>
+        <StackPanel Spacing="10">
 
             <Grid ColumnSpacing="12">
                 <Grid.ColumnDefinitions>
@@ -66,9 +61,11 @@
                 </StackPanel>
             </Grid>
         </StackPanel>
+        </controls:PageBody.Commands>
 
-        <!-- 필터 (바꾸면 바로 적용) -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="12">
+        <!-- 필터 줄 (바꾸면 바로 적용) -->
+        <controls:PageBody.Filters>
+        <StackPanel Orientation="Horizontal" Spacing="12">
             <!-- 잠긴 컨트롤은 마우스를 받지 않아 툴팁이 안 뜬다. 검색 중 잠기는 이유는 투명 테두리가 대신 말한다 -->
             <Border Background="Transparent" ToolTipService.ToolTip="{loc:Str Key=Sessions_SearchScopeHint}">
                 <ComboBox
@@ -148,12 +145,14 @@
                 Margin="0,0,0,6"
                 IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}" />
         </StackPanel>
+        </controls:PageBody.Filters>
 
-        <!-- 본문: 프로젝트 · 세션 · 상세 -->
-        <Grid Grid.Row="2" ColumnSpacing="14">
-            <!-- 목록은 고정 폭(구분선을 끌어 조절, 설정에 기억), 상세는 남은 폭 전부. 상세가 400px 고정이라 대화가 좁게 보이던 것을 고침 -->
+        <!-- 본문: 목록 · 구분선 · 상세. 칸마다 따로 스크롤한다 -->
+        <controls:PageBody.Body>
+        <Grid ColumnSpacing="14">
+            <!-- 목록 칸은 세 2단 화면이 같은 값(ListPaneWidth). 구분선을 끌어 조절하고 설정에 기억한다. 상세는 남은 폭 전부 -->
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="420" MinWidth="320" MaxWidth="900" />
+                <ColumnDefinition Width="{StaticResource ListPaneWidth}" MinWidth="{StaticResource ListPaneMinWidth}" MaxWidth="{StaticResource ListPaneMaxWidth}" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" MinWidth="320" />
             </Grid.ColumnDefinitions>
@@ -628,7 +627,6 @@
                 </muxc:Pivot>
             </Border>
         </Grid>
-
-        <!-- 정리 -->
-    </Grid>
+        </controls:PageBody.Body>
+    </controls:PageBody>
 </Page>
