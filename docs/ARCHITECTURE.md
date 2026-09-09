@@ -419,7 +419,14 @@ public sealed record ExportOptions(bool IncludeToolCalls = true, bool IncludeSys
 - 토큰: 메시지의 `tokens {input, output, cached, thoughts, tool}` — **응답마다 붙는 값이라 날짜별로 더한다**. Input = input + tool, Output = output + thoughts, CacheRead = cached, CacheCreate 0. 모델은 `model`
 - resume: `agy --resume <id>` — **미확인**(위 표). 옛 Gemini CLI 의 플래그를 그대로 두었다
 - 실행 파일: `agy` (`%LOCALAPPDATA%\agy\bin\agy.exe`, 설치 스크립트가 PATH 에 넣는다). `ExecutableLocator` 가 `.exe` 도 찾으므로 설치 감지는 그대로다
-- 설치: `irm https://antigravity.google/cli/install.ps1 | iex` — **npm 이 아니다.** `InstallCommandTests` 가 이 사실을 잠근다
+- 설치: **앱은 명령을 돌리지 않고 공식 안내 페이지(`https://antigravity.google/docs/cli/install/`)를 브라우저로 연다** (`IProvider.InstallUri`, `IUriOpener`).
+  공식 명령은 `irm https://antigravity.google/cli/install.ps1 | iex` 이고 화면에는 그대로 보여 주지만 실행은 사람이 한다.
+  이유: 원격 스크립트를 메모리에서 실행하는 이 꼴은 **백신이 흔히 차단한다**(이 PC 에서 실제로 차단됐다). 앱이 사용자에게 백신을 끄라고 할 수는 없고,
+  앱이 남의 스크립트를 대신 실행해 주는 것도 옳지 않다. npm 도구(Claude·Codex)는 `InstallUri` 가 null 이라 지금처럼 새 터미널에서 명령을 돌린다.
+  `InstallCommandTests` 가 "npm 이 아님"과 "안내 페이지는 공식 도메인"을 잠근다
+- 안 깔린 도구는 시작 버튼이 곧 설치 버튼이므로 **3단계(무엇부터 할까요?)를 묻지 않는다**(`CanStart`) — 설치에 세션 선택이 필요 없는데 잠가 두면 깔러 온 사람이 막힌다.
+  대안으로 확인한 것: winget 미제공(이 PC 에는 winget 자체가 없다), GitHub 릴리스에 `agy_cli_windows_x64.zip` 이 있으나
+  그 조직(`google-antigravity`)이 GitHub 인증 조직이 아니고 라이선스도 없어 앱이 사용자를 그쪽으로 보내지 않는다
 - 설정: `~/.gemini/antigravity-cli/settings.json`·`keybindings.json`
 - 내장 슬래시 명령: `/agents` `/boost` `/clear` `/config` `/fork` `/keybindings` `/permissions` `/resume` `/rewind` (공식 CLI 참고 문서)
 
