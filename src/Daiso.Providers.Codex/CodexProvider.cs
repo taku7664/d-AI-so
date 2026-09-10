@@ -63,6 +63,15 @@ public sealed class CodexProvider : IProvider, IUsageReader
         }
     }
 
+    /// <inheritdoc />
+    /// <remarks>
+    /// <c>/model</c> 은 "choose what model and reasoning effort to use" — <b>고르기 창만 연다</b> (0.153.4, 2026-09-10 확인).
+    /// 인자를 받는 명령은 실행 파일에 <c>Usage: /goal [&lt;objective&gt;|…]</c> 같은 안내가 있는데 <c>/model</c> 에는 없다.
+    /// 그래서 이름을 받으면 null — 이름을 붙여 보냈다가 AI 에게 가는 메시지가 되는 일을 만들지 않는다.
+    /// </remarks>
+    public string? ModelSwitchInput(string? modelId) =>
+        string.IsNullOrWhiteSpace(modelId) ? "/model" : null;
+
     /// <summary>날짜별 폴더가 있는 세션 루트.</summary>
     public string SessionsRoot => Path.Combine(ConfigDirectory, "sessions");
 

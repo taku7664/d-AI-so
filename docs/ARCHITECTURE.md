@@ -249,7 +249,8 @@ public interface IProvider
 
     IReadOnlyList<AuthFile> AuthFiles { get; }   // 로그인 상태를 이루는 파일 (§5.7 프로필)
 
-    Task<IReadOnlyList<ModelOption>> ListModelsAsync(CancellationToken ct) => [];   // 새 터미널 카드의 모델 칸. 못 읽으면 빈 목록
+    Task<IReadOnlyList<ModelOption>> ListModelsAsync(CancellationToken ct) => [];   // 방 도구 줄 "모델 바꾸기"의 목록. 못 읽으면 빈 목록
+    string? ModelSwitchInput(string? modelId) => null;   // 열린 세션에서 칠 입력. id null = 도구의 고르기 창. 이름으로 못 바꾸면 null
 }
 
 public sealed record AuthFile(string Path, bool Required);
@@ -265,8 +266,15 @@ public sealed record ModelOption(string Id, string Name, string? Description = n
 | Claude (2.1.266) | **목록 명령이 없다.** `claude --help` 가 드는 별칭 `fable` · `opus` · `sonnet` + `~/.claude.json` 의 `additionalModelOptionsCache[]` (`value` · `label` · `description`, 계정에 따라 붙는 모델) | 별칭은 공식. 뒤의 배열은 **문서에 없는 내부 항목** | `ClaudeModelList` |
 
 - 어느 쪽이든 못 읽으면 빈 목록이지 예외가 아니다. 사람은 인자 칸에 `--model` 을 직접 적을 수 있다
-- 모델 칸은 인자 칸의 `--model` 을 **고쳐 쓴다** (`ModelArgument.Apply`/`Read`). 따로 들고 있다가 실행 때 붙이면 사람이 적은 `--model` 과 겹쳐 어느 쪽이 이기는지 알 수 없다. 칸이 곧 실행될 인자다
-- 이미 열린 방에서 바꾸는 것은 앱이 하지 않는다. CLI 안의 `/model` 이 그 일을 한다
+- 쓰는 곳은 **열린 방의 도구 줄 "모델 바꾸기"** 다(새 터미널 카드는 인자 칸의 "모델 고르기" 프리셋 그대로). 목록은 도구별로 앱이 떠 있는 동안 한 번 읽는다
+
+**열린 세션에서 모델 바꾸기 (`ModelSwitchInput`)** — 고르면 입력 줄을 비우고(Ctrl+E·Ctrl+U) 이 글을 친 뒤 150ms 뒤에 Enter. 글과 Enter 가 한 덩어리로 들어오면 붙여넣기로 보고 Enter 를 줄바꿈으로 삼키는 CLI 가 있다
+
+| 도구 | 입력 | 근거 (2026-09-10) |
+|---|---|---|
+| Claude | `/model <id>` · 고르기 창 `/model` | 공식 명령 참고 `/model [model]`: 바로 바꾸고 **새 세션 기본값으로도 저장** |
+| Antigravity | `/model <id>` · 고르기 창 `/model` | 1.1.28 실행 파일의 변경 기록: 이름·slug·라벨로 바꾸고 기본값 저장. `/model <name> <prompt>` 는 한 번만 묻는 다른 명령이라 뒤에 아무것도 안 붙인다 |
+| Codex | 고르기 창 `/model` 만. 이름은 null | 0.153.4 의 `/model` 은 "choose what model and reasoning effort to use". 인자를 받는 명령은 `Usage: /goal …` 안내가 있는데 `/model` 은 없다 → 목록을 내밀지 않는다 |
 
 ### 3.3 Infrastructure
 

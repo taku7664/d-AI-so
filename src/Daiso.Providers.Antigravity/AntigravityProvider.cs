@@ -68,6 +68,15 @@ public sealed class AntigravityProvider : IProvider, IUsageReader
     }
 
     /// <inheritdoc />
+    /// <remarks>
+    /// <c>/model &lt;name&gt;</c> — 이름·slug·라벨로 바로 바꾸고 기본값으로 저장한다. 이름이 없으면 고르기 창을 연다.
+    /// 1.1.28 실행 파일에 든 변경 기록과 <c>Model set to %s</c> · <c>Invalid model %q (available: %s)</c> 안내로 확인했다(2026-09-10).
+    /// <c>/model &lt;name&gt; &lt;prompt&gt;</c> 는 한 번만 다른 모델로 묻는 다른 명령이라, 이름 뒤에는 아무것도 붙이지 않는다.
+    /// </remarks>
+    public string? ModelSwitchInput(string? modelId) =>
+        string.IsNullOrWhiteSpace(modelId) ? "/model" : $"/model {modelId.Trim()}";
+
+    /// <inheritdoc />
     public ToolKind Kind => ToolKind.Antigravity;
 
     /// <inheritdoc />
