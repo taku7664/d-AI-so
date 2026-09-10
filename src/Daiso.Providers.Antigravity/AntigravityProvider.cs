@@ -27,6 +27,11 @@ public sealed class AntigravityProvider : IProvider, IUsageReader
 
     private readonly ICredentialProbe _credentials;
 
+    private readonly ICommandRunner _runner;
+
+    /// <summary><c>agy models</c> 는 서버에 묻는다. 네트워크가 막혔을 때 모델 칸이 영영 "읽는 중"이지 않게 끊는다.</summary>
+    private static readonly TimeSpan ModelsTimeout = TimeSpan.FromSeconds(30);
+
     public AntigravityProvider()
         : this(ProviderHome.FromUserProfile(), new WindowsCredentialProbe())
     {
@@ -38,12 +43,28 @@ public sealed class AntigravityProvider : IProvider, IUsageReader
     }
 
     public AntigravityProvider(ProviderHome home, ICredentialProbe credentials)
+        : this(home, credentials, new ProcessCommandRunner())
+    {
+    }
+
+    public AntigravityProvider(ProviderHome home, ICredentialProbe credentials, ICommandRunner runner)
     {
         ArgumentNullException.ThrowIfNull(home);
         ArgumentNullException.ThrowIfNull(credentials);
+        ArgumentNullException.ThrowIfNull(runner);
 
         _home = home;
         _credentials = credentials;
+        _runner = runner;
+    }
+
+    /// <inheritdoc />
+    /// <remarks>세 도구 중 유일하게 공식 명령(<c>agy models</c>)이 있다 (<see cref="AntigravityModelList"/>). 못 돌리면 빈 목록.</remarks>
+    public async Task<IReadOnlyList<ModelOption>> ListModelsAsync(CancellationToken ct)
+    {
+        var output = await _runner.RunAsync(LaunchTarget, AntigravityModelList.Arguments, ModelsTimeout, ct).ConfigureAwait(false);
+
+        return AntigravityModelList.Parse(output);
     }
 
     /// <inheritdoc />

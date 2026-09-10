@@ -51,6 +51,28 @@ public sealed class ClaudeProvider : IProvider, IUsageReader
     /// <remarks><c>@경로</c> import 를 읽는다. 이 앱이 쓰는 규칙 파일 연동이 그 문법에 기대고 있다.</remarks>
     public bool SupportsInstructionImports => true;
 
+    /// <inheritdoc />
+    /// <remarks>목록 명령이 없어 별칭과 <c>~/.claude.json</c> 의 계정별 모델을 합친다 (<see cref="ClaudeModelList"/>).</remarks>
+    public async Task<IReadOnlyList<ModelOption>> ListModelsAsync(CancellationToken ct)
+    {
+        var path = _home.Combine(".claude.json");
+        string? json = null;
+
+        try
+        {
+            if (File.Exists(path))
+            {
+                json = await File.ReadAllTextAsync(path, ct).ConfigureAwait(false);
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // CLI 가 쓰는 중이다. 별칭만으로도 고를 수 있다
+        }
+
+        return ClaudeModelList.From(json);
+    }
+
     /// <summary>`~/.claude`.</summary>
     public string ConfigDirectory => _home.Combine(".claude");
 

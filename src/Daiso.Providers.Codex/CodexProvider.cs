@@ -44,6 +44,25 @@ public sealed class CodexProvider : IProvider, IUsageReader
     /// <summary>`~/.codex`.</summary>
     public string ConfigDirectory => _home.Combine(".codex");
 
+    /// <inheritdoc />
+    /// <remarks>CLI 가 받아 둔 <c>models_cache.json</c> 을 읽는다 (<see cref="CodexModelCache"/>). CLI 를 한 번도 안 돌렸으면 빈 목록.</remarks>
+    public async Task<IReadOnlyList<ModelOption>> ListModelsAsync(CancellationToken ct)
+    {
+        var path = Path.Combine(ConfigDirectory, CodexModelCache.FileName);
+
+        try
+        {
+            return File.Exists(path)
+                ? CodexModelCache.Parse(await File.ReadAllTextAsync(path, ct).ConfigureAwait(false))
+                : [];
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // CLI 가 캐시를 새로 쓰는 중이다
+            return [];
+        }
+    }
+
     /// <summary>날짜별 폴더가 있는 세션 루트.</summary>
     public string SessionsRoot => Path.Combine(ConfigDirectory, "sessions");
 

@@ -102,4 +102,20 @@ public interface IProvider
     /// <para>기본값은 true. 파일이 아닌 도구가 스스로 false 로 밝힌다.</para>
     /// </summary>
     bool LoginLivesInFiles => true;
+
+    /// <summary>
+    /// 이 도구가 받는 모델. 새 터미널 카드의 모델 칸이 쓰고, 고른 값은 <c>--model</c> 로 붙는다 (<see cref="ModelArgument"/>).
+    ///
+    /// <para>
+    /// <b>얻는 길이 도구마다 다르다</b> — 공식 명령이 있는 도구(<c>agy models</c>), CLI 가 받아 둔 캐시 파일만 있는 도구(Codex),
+    /// 목록이 아예 없어 문서의 별칭에 기대는 도구(Claude). 그래서 계약은 "목록을 달라"까지만 정하고 방법은 구현이 고른다.
+    /// </para>
+    ///
+    /// <para>
+    /// 못 읽으면 <b>빈 목록</b>이다. 예외로 알리지 않는다 — 모델 칸은 거들 뿐이고 사람은 인자 칸에 직접 적을 수 있다.
+    /// 기본값도 빈 목록이라, 방법을 모르는 새 도구는 칸이 "목록 없음"으로 뜬다.
+    /// </para>
+    /// </summary>
+    Task<IReadOnlyList<ModelOption>> ListModelsAsync(CancellationToken ct) =>
+        Task.FromResult<IReadOnlyList<ModelOption>>([]);
 }

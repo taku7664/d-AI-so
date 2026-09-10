@@ -305,6 +305,21 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
         }
     }
 
+    /// <summary>
+    /// 모델 칸에서 고른 줄을 인자 칸에 반영한다.
+    /// <para>
+    /// 선택은 한 방향(<c>OneWay</c>)으로만 묶고 여기서 받는다. 탭을 바꾸면 콤보가 목록을 갈아 끼우며 선택을 비우는데,
+    /// 양방향으로 묶으면 그 빈 값이 새 탭의 모델을 지운다. 다른 탭의 줄이 오면 뷰모델이 알아보고 무시한다.
+    /// </para>
+    /// </summary>
+    private void OnModelPicked(object sender, SelectionChangedEventArgs e)
+    {
+        if (e.AddedItems.Count > 0 && e.AddedItems[0] is ModelChoiceViewModel choice)
+        {
+            ViewModel.SelectedTool.PickModel(choice);
+        }
+    }
+
     /// <summary>새 세션 카드의 "규칙 편집": 이 폴더를 내 규칙 화면에 넘기고 그 화면으로 간다.</summary>
     private void OnEditRulesClick(object sender, RoutedEventArgs e) => GoToRules(ViewModel.WorkingDirectory);
 

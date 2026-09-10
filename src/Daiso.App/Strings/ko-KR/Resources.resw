@@ -1481,8 +1481,20 @@
   <data name="Terminal_PresetPermission" xml:space="preserve">
     <value>파일 수정 권한</value>
   </data>
-  <data name="Terminal_PresetModel" xml:space="preserve">
-    <value>모델 고르기</value>
+  <data name="Terminal_ModelHeader" xml:space="preserve">
+    <value>모델</value>
+  </data>
+  <data name="Terminal_ModelTip" xml:space="preserve">
+    <value>고르면 아래 인자 칸의 모델 지정을 바꿔 씁니다. 목록은 도구가 알려 준 것입니다</value>
+  </data>
+  <data name="Terminal_ModelDefault" xml:space="preserve">
+    <value>도구 설정대로</value>
+  </data>
+  <data name="Terminal_ModelLoading" xml:space="preserve">
+    <value>모델 목록을 읽는 중…</value>
+  </data>
+  <data name="Terminal_ModelNone" xml:space="preserve">
+    <value>이 도구가 모델 목록을 주지 않았습니다. 인자 칸에 모델을 직접 적을 수 있습니다</value>
   </data>
   <data name="Terminal_PresetSandbox" xml:space="preserve">
     <value>샌드박스</value>

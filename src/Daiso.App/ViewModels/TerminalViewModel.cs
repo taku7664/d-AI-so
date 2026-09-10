@@ -135,28 +135,34 @@ public sealed partial class TerminalViewModel : ObservableObject
         }
 
         RefreshPreviews();
+
+        // 모델 목록은 깔린 도구에만 한 번 묻는다. agy 는 서버에 물어 몇 초 걸리므로 화면을 붙잡지 않는다
+        foreach (var tool in Tools.Where(tool => tool.IsInstalled))
+        {
+            _ = tool.LoadModelsAsync(ct);
+        }
     }
 
     /// <summary>
     /// 도구별 옵션 프리셋. <b>resume·continue 계열은 넣지 않는다</b> — 3단계 "하던 대화 이어서"가 같은 일을 하고,
     /// 둘 다 있으면 어느 쪽이 이기는지 알 수 없다. (docs/TERMINAL_CARD_PLAN.md §2-B4)
+    /// <para>
+    /// <c>--model</c> 도 넣지 않는다 — 모델 칸이 도구가 알려 준 목록으로 같은 일을 한다(<see cref="ToolLaunchViewModel.ModelChoices"/>).
+    /// </para>
     /// </summary>
     private static IReadOnlyList<ArgumentPreset> PresetsFor(ToolKind kind) => kind switch
     {
         ToolKind.Claude =>
         [
             new("Terminal_PresetPermission", "--permission-mode "),
-            new("Terminal_PresetModel", "--model "),
         ],
         ToolKind.Codex =>
         [
-            new("Terminal_PresetModel", "--model "),
             new("Terminal_PresetSandbox", "--sandbox "),
         ],
         // `agy --help` (1.1.28) 로 확인한 플래그만 둔다. `--sandbox` 는 값이 없는 스위치라 뒤에 빈칸을 붙이지 않는다
         ToolKind.Antigravity =>
         [
-            new("Terminal_PresetModel", "--model "),
             new("Terminal_PresetSandbox", "--sandbox"),
         ],
         _ => [],

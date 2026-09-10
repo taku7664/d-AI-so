@@ -248,10 +248,25 @@ public interface IProvider
     string BuildResumeArguments(SessionInfo session);   // "--resume <id>" | "resume <id>"
 
     IReadOnlyList<AuthFile> AuthFiles { get; }   // 로그인 상태를 이루는 파일 (§5.7 프로필)
+
+    Task<IReadOnlyList<ModelOption>> ListModelsAsync(CancellationToken ct) => [];   // 새 터미널 카드의 모델 칸. 못 읽으면 빈 목록
 }
 
 public sealed record AuthFile(string Path, bool Required);
+public sealed record ModelOption(string Id, string Name, string? Description = null);   // Id 가 --model 뒤에 그대로 붙는다
 ```
+
+**모델 목록 (`ListModelsAsync`) — 얻는 길이 도구마다 다르다** (2026-09-10 이 PC 에서 확인)
+
+| 도구 | 어디서 | 믿을 만한가 | 구현 |
+|---|---|---|---|
+| Antigravity (agy 1.1.28) | 공식 명령 `agy models` → 한 줄에 `id<TAB>이름`. 첫 줄 `Fetching available models...` 는 탭이 없어 건너뛴다 | 공식. 서버에 물어 몇 초 걸리고 인터넷이 필요하다 → 30초에 끊는다. 추론 강도가 id 에 붙어 있다(`-high`) | `AntigravityModelList`, `ICommandRunner` |
+| Codex (0.153.4) | CLI 가 받아 둔 `~/.codex/models_cache.json` 의 `models[]` (`slug` · `display_name` · `description` · `visibility`). `visibility: "hide"` 는 뺀다 | **문서에 없는 내부 파일.** CLI 를 한 번도 안 돌렸으면 없다 | `CodexModelCache` |
+| Claude (2.1.266) | **목록 명령이 없다.** `claude --help` 가 드는 별칭 `fable` · `opus` · `sonnet` + `~/.claude.json` 의 `additionalModelOptionsCache[]` (`value` · `label` · `description`, 계정에 따라 붙는 모델) | 별칭은 공식. 뒤의 배열은 **문서에 없는 내부 항목** | `ClaudeModelList` |
+
+- 어느 쪽이든 못 읽으면 빈 목록이지 예외가 아니다. 사람은 인자 칸에 `--model` 을 직접 적을 수 있다
+- 모델 칸은 인자 칸의 `--model` 을 **고쳐 쓴다** (`ModelArgument.Apply`/`Read`). 따로 들고 있다가 실행 때 붙이면 사람이 적은 `--model` 과 겹쳐 어느 쪽이 이기는지 알 수 없다. 칸이 곧 실행될 인자다
+- 이미 열린 방에서 바꾸는 것은 앱이 하지 않는다. CLI 안의 `/model` 이 그 일을 한다
 
 ### 3.3 Infrastructure
 
