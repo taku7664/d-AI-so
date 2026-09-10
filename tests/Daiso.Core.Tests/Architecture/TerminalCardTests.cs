@@ -121,6 +121,32 @@ public sealed partial class TerminalCardTests
     }
 
     [Fact]
+    public void 프롬프트는_세부_설정_단계에_있다()
+    {
+        var text = File.ReadAllText(PagePath);
+        var advanced = text.IndexOf("x:Name=\"StepAdvancedHeader\"", StringComparison.Ordinal);
+        var prompt = text.IndexOf("AutomationProperties.AutomationId=\"StartPromptBox\"", StringComparison.Ordinal);
+
+        advanced.Should().BePositive();
+        prompt.Should().BeGreaterThan(advanced, because: "프롬프트는 골라도 되고 안 골라도 되는 것이라 (선택) 세부 설정 안에 둔다");
+    }
+
+    [Fact]
+    public void 프롬프트는_새로_시작을_고른_뒤에만_보인다()
+    {
+        // 4단계로 옮겼다고 늘 보이면, "이어서"를 고른 사람에게 첫 메시지를 묻는 셈이다
+        var text = File.ReadAllText(PagePath);
+
+        PromptOnlyForNewSession().IsMatch(text).Should().BeTrue(
+            because: "이어서 할 대화에는 보낼 첫 메시지가 없다");
+    }
+
+    [GeneratedRegex(
+        @"<ComboBox(?=[^>]*AutomationId=""StartPromptBox"")(?=[^>]*Visibility=""\{x:Bind ViewModel\.ShowNewSessionOptions)[^>]*>",
+        RegexOptions.Singleline | RegexOptions.CultureInvariant)]
+    private static partial Regex PromptOnlyForNewSession();
+
+    [Fact]
     public void 새_터미널_단추는_탭_높이의_정사각형이다()
     {
         var text = File.ReadAllText(PagePath);

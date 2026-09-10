@@ -544,24 +544,7 @@
                                     </ListViewItem>
                                 </ListView>
 
-                                <!-- 새로 시작: 시작 프롬프트는 선택 사항이라 이 단계를 접지 않는다 (§4.6) -->
-                                <!-- 라벨 칸 폭은 "대화" 줄과 같은 72 로 고정한다. 글자 폭대로 두면 두 줄의 콤보가 서로 다른 곳에서 시작한다 -->
-                                <Grid ColumnSpacing="{StaticResource GapLarge}" Visibility="{x:Bind ViewModel.ShowNewSessionOptions, Mode=OneWay}">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="72" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="{loc:Str Key=Terminal_PromptLabel}" VerticalAlignment="Center" />
-                                    <ComboBox
-                                        Grid.Column="1"
-                                        HorizontalAlignment="Stretch"
-                                        AutomationProperties.AutomationId="StartPromptBox"
-                                        ToolTipService.ToolTip="{loc:Str Key=Terminal_PromptHint}"
-                                        ItemsSource="{x:Bind ViewModel.PromptChoices}"
-                                        SelectedItem="{x:Bind ViewModel.SelectedPrompt, Mode=TwoWay}"
-                                        DisplayMemberPath="Name" />
-                                </Grid>
-                                <TextBlock Text="{loc:Str Key=Terminal_PromptHint}" Style="{StaticResource MutedText}" TextWrapping="Wrap" Visibility="{x:Bind ViewModel.ShowNewSessionOptions, Mode=OneWay}" />
+                                <!-- 시작 프롬프트는 4단계(선택)로 옮겼다 — 필수 단계는 "새로/이어서"까지만 묻는다 (2026-09-10 사람의 요청) -->
 
                                 <!--
                                     이어서: 이 폴더·도구의 지난 대화. 폴더 칸처럼 콤보박스 하나로 고른다 — 목록이 카드 높이를 먹지 않는다.
@@ -638,6 +621,22 @@
                                             VerticalAlignment="Center" />
                                     </StackPanel>
                                 </Grid>
+
+                                <!--
+                                    프롬프트: 새로 시작할 때 첫 메시지로 보낼 것. 골라도 되고 안 골라도 된다.
+                                    3단계에 있다가 여기로 옮겼다 — 필수 단계에서 선택 사항을 물으면 답이 끝난 줄 모른다 (2026-09-10 사람의 요청).
+                                    "이어서"에는 첫 메시지라는 것이 없으므로 새로 시작을 고른 뒤에만 보인다
+                                -->
+                                <ComboBox
+                                    HorizontalAlignment="Stretch"
+                                    AutomationProperties.AutomationId="StartPromptBox"
+                                    Header="{loc:Str Key=Terminal_PromptLabel}"
+                                    ToolTipService.ToolTip="{loc:Str Key=Terminal_PromptHint}"
+                                    Visibility="{x:Bind ViewModel.ShowNewSessionOptions, Mode=OneWay}"
+                                    ItemsSource="{x:Bind ViewModel.PromptChoices}"
+                                    SelectedItem="{x:Bind ViewModel.SelectedPrompt, Mode=TwoWay}"
+                                    DisplayMemberPath="Name" />
+                                <TextBlock Text="{loc:Str Key=Terminal_PromptHint}" Style="{StaticResource MutedText}" TextWrapping="Wrap" Visibility="{x:Bind ViewModel.ShowNewSessionOptions, Mode=OneWay}" />
 
                                 <!-- 모델: 도구가 알려 준 목록. 고르면 아래 인자 칸의 모델 플래그를 고쳐 쓴다. 칸이 곧 실행될 인자다 -->
                                 <ComboBox
