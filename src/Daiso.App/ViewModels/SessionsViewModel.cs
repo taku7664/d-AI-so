@@ -147,6 +147,9 @@ public sealed partial class SessionsViewModel : ObservableObject
     /// <summary>지울 대상이 있는가. 파괴적인 버튼의 활성 조건.</summary>
     public bool HasChecked => CheckedCount > 0;
 
+    /// <summary>고른 것이 없는가. 평소 머리(제목·건수·고르기)는 이때만 나온다.</summary>
+    public bool HasNoChecked => CheckedCount == 0;
+
     /// <summary>선택 개수 문구.</summary>
     public string CheckedText => UiStrings.Format("Sessions_CheckedCount", CheckedCount);
 
@@ -732,6 +735,7 @@ public sealed partial class SessionsViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(CheckedCount));
         OnPropertyChanged(nameof(HasChecked));
+        OnPropertyChanged(nameof(HasNoChecked));
         OnPropertyChanged(nameof(CheckedText));
         OnPropertyChanged(nameof(AllChecked));
     }

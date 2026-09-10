@@ -418,17 +418,33 @@
                         Text="{x:Bind InstalledText, Mode=OneWay}"
                         Style="{StaticResource MutedText}" />
                 </StackPanel>
-                <!-- Expander 기본값은 내용을 가운데 놓는다. 키: 값 줄은 왼쪽에 붙어야 위아래가 한 표로 읽힌다 -->
-                <Expander
-                    Header="{loc:Str Key=Common_Extras}"
-                    HorizontalAlignment="Stretch"
-                    HorizontalContentAlignment="Left"
+                <!--
+                    부가 정보는 <b>펼치지 않고 띄운다</b>. 카드는 UniformGridLayout 의 한 칸이라 모든 칸이 같은 높이를 쓴다 —
+                    Expander 를 펼치면 그 줄의 카드 셋이 다 같이 늘고, 늘어난 만큼도 칸 높이에 못 미쳐 내용이 잘렸다.
+                    팝오버는 카드 밖에 그려지므로 카드 높이가 그대로다 (2026-09-11 사람의 지적)
+                -->
+                <muxc:DropDownButton
+                    HorizontalAlignment="Left"
+                    Content="{loc:Str Key=Common_Extras}"
+                    AutomationProperties.AutomationId="ExtrasButton"
                     Visibility="{x:Bind HasExtras, Mode=OneWay}">
-                    <!-- 세션 화면의 부가 정보 줄과 같은 것이다. 사전에서 가져다 쓴다 -->
-                    <ItemsControl
-                        ItemsSource="{x:Bind Extras}"
-                        ItemTemplate="{StaticResource ExtraLineTemplate}" />
-                </Expander>
+                    <muxc:DropDownButton.Flyout>
+                        <Flyout Placement="BottomEdgeAlignedLeft">
+                            <Flyout.FlyoutPresenterStyle>
+                                <Style TargetType="FlyoutPresenter">
+                                    <Setter Property="MaxWidth" Value="480" />
+                                    <Setter Property="Padding" Value="16" />
+                                </Style>
+                            </Flyout.FlyoutPresenterStyle>
+                            <!-- 줄이 많으면 팝오버 안에서 스크롤한다. 세션 화면의 부가 정보 줄과 같은 것이다 -->
+                            <ScrollViewer MaxHeight="320" VerticalScrollBarVisibility="Auto">
+                                <ItemsControl
+                                    ItemsSource="{x:Bind Extras}"
+                                    ItemTemplate="{StaticResource ExtraLineTemplate}" />
+                            </ScrollViewer>
+                        </Flyout>
+                    </muxc:DropDownButton.Flyout>
+                </muxc:DropDownButton>
                 <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
                     <Button
                         Content="{x:Bind LoginLabel, Mode=OneWay}"

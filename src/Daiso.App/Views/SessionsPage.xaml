@@ -177,86 +177,120 @@
                     </Grid.RowDefinitions>
 
                     <!--
-                        머리: 제목·건수 왼쪽, 고르는 도구 오른쪽(전체 체크 · 골라 체크).
-                        지우기 둘은 <b>고른 것이 있을 때만 나온다</b> — 목록/상세 짝 화면에서 파괴 명령은 선택에 딸린 명령이다
-                        (learn.microsoft.com/windows/apps/design/controls/list-details). 잠긴 채로 늘 떠 있으면
-                        무엇을 지우는 단추인지 알 수 없고, 회색 휴지통 두 개가 머리의 절반을 먹는다 (2026-09-11 사람의 지적)
+                        머리는 두 얼굴이다.
+                        · 평소: 제목 · 건수 · 전체 체크 · 골라 체크
+                        · 고른 것이 있으면 통째로 <b>선택 명령 줄</b>로 바뀐다: 해제 · N개 선택 · 휴지통 · 영구 삭제
+
+                        둘을 한 줄에 다 넣으면 목록 칸(최소 220)에서 휴지통이 잘린다. 잘린 아이콘은 없는 것만 못하다.
+                        선택하면 머리가 바뀌는 것은 목록/상세 짝 화면의 표준 얼개다 — 파괴 명령은 선택에 딸린 명령이고,
+                        선택 중에는 제목·건수보다 "몇 개를 무엇 할 것인가"가 먼저다
+                        (learn.microsoft.com/windows/apps/design/controls/list-details · command-bar-flyout)
                     -->
-                    <Grid Grid.Row="0" Margin="12,10,12,6" ColumnSpacing="{StaticResource GapMedium}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
+                    <Grid Grid.Row="0" Margin="12,10,12,6">
+                        <!-- 평소 얼굴 -->
+                        <Grid ColumnSpacing="{StaticResource GapMedium}" Visibility="{x:Bind ViewModel.HasNoChecked, Mode=OneWay}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
 
-                        <TextBlock
-                            Grid.Column="0"
-                            Margin="4,0,0,0"
-                            VerticalAlignment="Center"
-                            Style="{StaticResource SectionTitleText}"
-                            Text="{x:Bind ViewModel.ListHeaderText, Mode=OneWay}" />
-
-                        <TextBlock
-                            Grid.Column="1"
-                            VerticalAlignment="Center"
-                            Style="{StaticResource MutedText}"
-                            Text="{x:Bind ViewModel.SessionCountText, Mode=OneWay}" />
-
-                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="{StaticResource GapTiny}" VerticalAlignment="Center">
-                            <CheckBox
-                                MinWidth="0"
-                                Padding="0"
-                                Margin="0,0,2,0"
-                                IsThreeState="False"
-                                AutomationProperties.AutomationId="CheckAllBox"
-                                AutomationProperties.Name="{loc:Str Key=Sessions_CheckAll}"
-                                ToolTipService.ToolTip="{loc:Str Key=Sessions_CheckAllTip}"
-                                IsChecked="{x:Bind ViewModel.AllChecked, Mode=OneWay}"
-                                Click="OnCheckAllClick" />
-                            <muxc:DropDownButton Padding="6" AutomationProperties.AutomationId="SelectMenuButton" AutomationProperties.Name="{loc:Str Key=Sessions_SelectMenu}" ToolTipService.ToolTip="{loc:Str Key=Sessions_SelectMenuTip}">
-                                <muxc:DropDownButton.Content>
-                                    <FontIcon Glyph="&#xE762;" FontSize="{StaticResource BodyFontSize}" />
-                                </muxc:DropDownButton.Content>
-                                <muxc:DropDownButton.Flyout>
-                                    <MenuFlyout>
-                                        <MenuFlyoutItem Text="{loc:Str Key=Sessions_SelectOld}" AutomationProperties.AutomationId="SelectOldButton" Click="OnSelectOldClick" />
-                                        <MenuFlyoutItem Text="{loc:Str Key=Sessions_SelectOrphan}" AutomationProperties.AutomationId="SelectOrphanButton" Click="OnSelectOrphanClick" />
-                                        <MenuFlyoutItem Text="{loc:Str Key=Sessions_SelectLarge}" AutomationProperties.AutomationId="SelectLargeButton" Click="OnSelectLargeClick" />
-                                    </MenuFlyout>
-                                </muxc:DropDownButton.Flyout>
-                            </muxc:DropDownButton>
-                            <!-- 선택에 딸린 명령. 고른 것이 없으면 통째로 사라진다 -->
-                            <StackPanel
-                                Orientation="Horizontal"
-                                Spacing="{StaticResource GapTiny}"
+                            <TextBlock
+                                Grid.Column="0"
+                                Margin="4,0,0,0"
                                 VerticalAlignment="Center"
-                                AutomationProperties.AutomationId="SelectionCommands"
-                                Visibility="{x:Bind ViewModel.HasChecked, Mode=OneWay}">
-                                <Border Style="{StaticResource PillBorder}" VerticalAlignment="Center">
-                                    <TextBlock AutomationProperties.AutomationId="CheckedCountText" Text="{x:Bind ViewModel.CheckedText, Mode=OneWay}" FontSize="{StaticResource CaptionFontSize}" />
-                                </Border>
-                                <Button
-                                    Padding="6"
-                                    Background="Transparent"
-                                    BorderThickness="0"
-                                    AutomationProperties.AutomationId="RecycleButton"
-                                    AutomationProperties.Name="{loc:Str Key=Sessions_SendToRecycleBin}"
-                                    ToolTipService.ToolTip="{loc:Str Key=Sessions_SendToRecycleBin}"
-                                    Click="OnRecycleClick">
-                                    <FontIcon Glyph="&#xE74D;" FontSize="{StaticResource BodyFontSize}" />
-                                </Button>
-                                <Button
-                                    Padding="6"
-                                    Background="Transparent"
-                                    BorderThickness="0"
-                                    AutomationProperties.AutomationId="PermanentButton"
-                                    AutomationProperties.Name="{loc:Str Key=Common_PermanentDelete}"
-                                    ToolTipService.ToolTip="{loc:Str Key=Sessions_PermanentDeleteTip}"
-                                    Click="OnPermanentClick">
-                                    <FontIcon Glyph="&#xE107;" FontSize="{StaticResource BodyFontSize}" Foreground="{ThemeResource SystemFillColorCriticalBrush}" />
-                                </Button>
+                                Style="{StaticResource SectionTitleText}"
+                                Text="{x:Bind ViewModel.ListHeaderText, Mode=OneWay}" />
+
+                            <TextBlock
+                                Grid.Column="1"
+                                VerticalAlignment="Center"
+                                TextTrimming="CharacterEllipsis"
+                                Style="{StaticResource MutedText}"
+                                Text="{x:Bind ViewModel.SessionCountText, Mode=OneWay}" />
+
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="{StaticResource GapTiny}" VerticalAlignment="Center">
+                                <CheckBox
+                                    MinWidth="0"
+                                    Padding="0"
+                                    Margin="0,0,2,0"
+                                    IsThreeState="False"
+                                    AutomationProperties.AutomationId="CheckAllBox"
+                                    AutomationProperties.Name="{loc:Str Key=Sessions_CheckAll}"
+                                    ToolTipService.ToolTip="{loc:Str Key=Sessions_CheckAllTip}"
+                                    IsChecked="{x:Bind ViewModel.AllChecked, Mode=OneWay}"
+                                    Click="OnCheckAllClick" />
+                                <muxc:DropDownButton Padding="6" AutomationProperties.AutomationId="SelectMenuButton" AutomationProperties.Name="{loc:Str Key=Sessions_SelectMenu}" ToolTipService.ToolTip="{loc:Str Key=Sessions_SelectMenuTip}">
+                                    <muxc:DropDownButton.Content>
+                                        <FontIcon Glyph="&#xE762;" FontSize="{StaticResource BodyFontSize}" />
+                                    </muxc:DropDownButton.Content>
+                                    <muxc:DropDownButton.Flyout>
+                                        <MenuFlyout>
+                                            <MenuFlyoutItem Text="{loc:Str Key=Sessions_SelectOld}" AutomationProperties.AutomationId="SelectOldButton" Click="OnSelectOldClick" />
+                                            <MenuFlyoutItem Text="{loc:Str Key=Sessions_SelectOrphan}" AutomationProperties.AutomationId="SelectOrphanButton" Click="OnSelectOrphanClick" />
+                                            <MenuFlyoutItem Text="{loc:Str Key=Sessions_SelectLarge}" AutomationProperties.AutomationId="SelectLargeButton" Click="OnSelectLargeClick" />
+                                        </MenuFlyout>
+                                    </muxc:DropDownButton.Flyout>
+                                </muxc:DropDownButton>
                             </StackPanel>
-                        </StackPanel>
+                        </Grid>
+
+                        <!-- 선택 명령 줄. 고른 것이 없으면 통째로 사라진다 -->
+                        <Grid
+                            ColumnSpacing="{StaticResource GapTiny}"
+                            AutomationProperties.AutomationId="SelectionCommands"
+                            Visibility="{x:Bind ViewModel.HasChecked, Mode=OneWay}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <Button
+                                Grid.Column="0"
+                                Padding="6"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                AutomationProperties.AutomationId="ClearChecksButton"
+                                AutomationProperties.Name="{loc:Str Key=Sessions_ClearChecks}"
+                                ToolTipService.ToolTip="{loc:Str Key=Sessions_ClearChecks}"
+                                Click="OnClearChecksClick">
+                                <FontIcon Glyph="&#xE711;" FontSize="{StaticResource BodyFontSize}" />
+                            </Button>
+
+                            <TextBlock
+                                Grid.Column="1"
+                                VerticalAlignment="Center"
+                                Margin="2,0,0,0"
+                                TextTrimming="CharacterEllipsis"
+                                Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                AutomationProperties.AutomationId="CheckedCountText"
+                                Text="{x:Bind ViewModel.CheckedText, Mode=OneWay}" />
+
+                            <Button
+                                Grid.Column="2"
+                                Padding="6"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                AutomationProperties.AutomationId="RecycleButton"
+                                AutomationProperties.Name="{loc:Str Key=Sessions_SendToRecycleBin}"
+                                ToolTipService.ToolTip="{loc:Str Key=Sessions_SendToRecycleBin}"
+                                Click="OnRecycleClick">
+                                <FontIcon Glyph="&#xE74D;" FontSize="{StaticResource BodyFontSize}" />
+                            </Button>
+                            <Button
+                                Grid.Column="3"
+                                Padding="6"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                AutomationProperties.AutomationId="PermanentButton"
+                                AutomationProperties.Name="{loc:Str Key=Common_PermanentDelete}"
+                                ToolTipService.ToolTip="{loc:Str Key=Sessions_PermanentDeleteTip}"
+                                Click="OnPermanentClick">
+                                <FontIcon Glyph="&#xE107;" FontSize="{StaticResource BodyFontSize}" Foreground="{ThemeResource SystemFillColorCriticalBrush}" />
+                            </Button>
+                        </Grid>
                     </Grid>
 
                     <Grid Grid.Row="1">

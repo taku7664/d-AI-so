@@ -64,9 +64,22 @@ public sealed partial class SessionsPageTests
             RegexOptions.CultureInvariant);
 
     [GeneratedRegex(
-        @"<StackPanel(?=[^>]*AutomationId=""SelectionCommands"")(?=[^>]*Visibility=""\{x:Bind ViewModel\.HasChecked)[^>]*>",
+        @"<\w+(?=[^>]*AutomationId=""SelectionCommands"")(?=[^>]*Visibility=""\{x:Bind ViewModel\.HasChecked)[^>]*>",
         RegexOptions.CultureInvariant)]
     private static partial Regex SelectionCommandsHidden();
+
+    [Fact]
+    public void 고르면_머리가_선택_명령_줄로_바뀐다()
+    {
+        // 제목·건수·고르기·휴지통 둘을 한 줄에 다 넣으면 목록 칸(최소 220)에서 휴지통이 잘린다.
+        // 평소 얼굴은 HasNoChecked, 선택 명령 줄은 HasChecked — 둘이 자리를 나눠 쓰지 않고 갈아탄다
+        var text = File.ReadAllText(PagePath);
+
+        text.Should().Contain(
+            "Visibility=\"{x:Bind ViewModel.HasNoChecked, Mode=OneWay}\"",
+            because: "고른 것이 있으면 제목·건수 자리를 선택 명령 줄에 내준다");
+        text.Should().Contain("ClearChecksButton", because: "선택 명령 줄에서 빠져나올 길이 있어야 한다");
+    }
 
     private static string FindRepositoryRoot()
     {

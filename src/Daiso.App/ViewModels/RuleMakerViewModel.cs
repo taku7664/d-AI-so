@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Daiso.App.Services;
@@ -130,30 +130,55 @@ public sealed partial class RuleMakerViewModel : ObservableObject
     /// <summary>아직 고르지 않았는가. 안내 문구를 띄운다.</summary>
     public bool HasNoGallerySelection => SelectedGalleryItem is null;
 
-    /// <summary>갤러리를 다시 채운다. 기본 제공은 항상 같고, 내 라이브러리는 폴더를 다시 읽는다.</summary>
+    /// <summary>
+    /// 목록 위 출처 거르개. 내 프롬프트 화면과 같은 말·같은 순서다 (전체 · 내 규칙 · 기본 제공 규칙).
+    /// 기본 제공이 여럿이라 내가 만든 것이 그 아래에 파묻혔다 (2026-09-11 사람의 지적).
+    /// </summary>
+    public IReadOnlyList<string> SourceFilters { get; } =
+    [
+        UiStrings.Get("Common_All"),
+        UiStrings.Get("RuleMaker_GalleryMine"),
+        UiStrings.Get("RuleMaker_GalleryBuiltIn"),
+    ];
+
+    /// <summary>0 = 전체, 1 = 내 규칙, 2 = 기본 제공 규칙.</summary>
+    [ObservableProperty]
+    private int sourceFilterIndex;
+
+    partial void OnSourceFilterIndexChanged(int value) => RefreshGallery();
+
+    /// <summary>
+    /// 갤러리를 다시 채운다. 기본 제공은 항상 같고, 내 라이브러리는 폴더를 다시 읽는다.
+    /// <para>내 것이 앞, 기본 제공이 뒤다 — 내가 만든 것을 남의 것 아래에서 찾게 두지 않는다.</para>
+    /// </summary>
     [RelayCommand]
     public void RefreshGallery()
     {
         var keep = SelectedGalleryItem?.Key;
 
         Gallery.Clear();
-
-        foreach (var item in BuiltInPresets.List(_serializer))
-        {
-            Gallery.Add(PresetGalleryItemViewModel.FromBuiltIn(item, _serializer));
-        }
-
         RefreshLibrary();
 
-        foreach (var path in LibraryPresets)
+        if (SourceFilterIndex != 2)
         {
-            try
+            foreach (var path in LibraryPresets)
             {
-                Gallery.Add(PresetGalleryItemViewModel.FromFile(path, _ruleFiles.Load(path)));
+                try
+                {
+                    Gallery.Add(PresetGalleryItemViewModel.FromFile(path, _ruleFiles.Load(path)));
+                }
+                catch (Exception ex) when (ex is RuleParseException or IOException or UnauthorizedAccessException)
+                {
+                    // 깨진 라이브러리 파일은 갤러리에서 빼고 넘어간다. 열기 메뉴로는 여전히 열 수 있고 거기서 오류를 본다.
+                }
             }
-            catch (Exception ex) when (ex is RuleParseException or IOException or UnauthorizedAccessException)
+        }
+
+        if (SourceFilterIndex != 1)
+        {
+            foreach (var item in BuiltInPresets.List(_serializer))
             {
-                // 깨진 라이브러리 파일은 갤러리에서 빼고 넘어간다. 열기 메뉴로는 여전히 열 수 있고 거기서 오류를 본다.
+                Gallery.Add(PresetGalleryItemViewModel.FromBuiltIn(item, _serializer));
             }
         }
 
@@ -740,8 +765,10 @@ public sealed class PresetGalleryItemViewModel
 
     public string Description => Preset.Description ?? string.Empty;
 
-    /// <summary>갈래와 출처를 한 줄로.</summary>
-    public string Badge => UiStrings.Format("RuleMaker_GalleryBadge", Category, Source);
+    /// <summary>갈래와 출처를 한 줄로. 내 규칙은 갈래가 곧 출처라 한 번만 적는다.</summary>
+    public string Badge => string.Equals(Category, Source, StringComparison.Ordinal)
+        ? Source
+        : UiStrings.Format("RuleMaker_GalleryBadge", Category, Source);
 
     /// <summary>목록 항목의 접근성 이름. 스크린 리더와 UI 자동화가 이 값을 읽는다.</summary>
     public override string ToString() => Name;

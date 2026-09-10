@@ -1,4 +1,4 @@
-<Page
+﻿<Page
     x:Class="Daiso.App.Views.RuleMakerPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -31,10 +31,12 @@
                     </muxc:AppBarButton.KeyboardAccelerators>
                 </muxc:AppBarButton>
                 <muxc:AppBarSeparator />
+                <!-- `마이그레이션` 은 이 화면을 쓸 사람이 모르는 말이다. 무엇을 어디로 옮기는지 툴팁이 말한다 (2026-09-11 사람의 지적) -->
                 <muxc:AppBarButton
                     Label="{loc:Str Key=RuleMaker_Migrate}"
                     Icon="Sync"
                     AutomationProperties.AutomationId="MigrateButton"
+                    ToolTipService.ToolTip="{loc:Str Key=RuleMaker_MigrateTip}"
                     Click="OnMigrateClick" />
 
                 <muxc:AppBarToggleButton
@@ -42,6 +44,7 @@
                     Icon="List"
                     IsChecked="True"
                     AutomationProperties.AutomationId="ToggleListButton"
+                    ToolTipService.ToolTip="{loc:Str Key=RuleMaker_ToggleListTip}"
                     Click="OnToggleListClick" />
 
                 <muxc:CommandBar.SecondaryCommands>
@@ -79,8 +82,24 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
+                    <!-- 내 프롬프트 화면과 같은 거르개. 같은 자리, 같은 말 (2026-09-11 사람의 요청) -->
+                    <Grid Grid.Row="0" ColumnSpacing="{StaticResource GapMedium}" Margin="4,2,4,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{loc:Str Key=Common_ViewFilter}" VerticalAlignment="Center" />
+                        <ComboBox
+                            Grid.Column="1"
+                            HorizontalAlignment="Stretch"
+                            AutomationProperties.AutomationId="RuleSourceFilter"
+                            AutomationProperties.Name="{loc:Str Key=Common_ViewFilter}"
+                            ItemsSource="{x:Bind ViewModel.SourceFilters}"
+                            SelectedIndex="{x:Bind ViewModel.SourceFilterIndex, Mode=TwoWay}" />
+                    </Grid>
+
                     <ListView
-                        Grid.Row="0"
+                        Grid.Row="1"
                         AutomationProperties.AutomationId="GalleryList"
                         ItemsSource="{x:Bind ViewModel.Gallery}"
                         SelectedItem="{x:Bind ViewModel.SelectedGalleryItem, Mode=TwoWay}"

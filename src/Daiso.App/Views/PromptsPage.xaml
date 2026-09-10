@@ -51,12 +51,12 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{loc:Str Key=Prompts_SourceFilter}" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="0" Text="{loc:Str Key=Common_ViewFilter}" VerticalAlignment="Center" />
                         <ComboBox
                             Grid.Column="1"
                             HorizontalAlignment="Stretch"
                             AutomationProperties.AutomationId="PromptSourceFilter"
-                            AutomationProperties.Name="{loc:Str Key=Prompts_SourceFilter}"
+                            AutomationProperties.Name="{loc:Str Key=Common_ViewFilter}"
                             ItemsSource="{x:Bind ViewModel.SourceFilters}"
                             SelectedIndex="{x:Bind ViewModel.SourceFilterIndex, Mode=TwoWay}" />
                     </Grid>

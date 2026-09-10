@@ -128,6 +128,9 @@
   <data name="Common_Period" xml:space="preserve">
     <value>기간</value>
   </data>
+  <data name="Common_ViewFilter" xml:space="preserve">
+    <value>보기</value>
+  </data>
   <data name="Common_Extras" xml:space="preserve">
     <value>부가 정보</value>
   </data>
@@ -377,7 +380,13 @@
     <value>프로젝트에 연동</value>
   </data>
   <data name="RuleMaker_Migrate" xml:space="preserve">
-    <value>지시문 마이그레이션</value>
+    <value>지시문 맞추기</value>
+  </data>
+  <data name="RuleMaker_MigrateTip" xml:space="preserve">
+    <value>Claude 가 읽는 CLAUDE.md 와 Codex·Antigravity 가 읽는 AGENTS.md 의 내용을 한쪽에서 다른 쪽으로 옮겨, 두 파일을 같게 맞춥니다</value>
+  </data>
+  <data name="RuleMaker_ToggleListTip" xml:space="preserve">
+    <value>왼쪽 규칙 목록을 접거나 폅니다</value>
   </data>
   <data name="RuleMaker_Name" xml:space="preserve">
     <value>이름</value>
@@ -493,10 +502,10 @@
     <value>최근 파일 없음</value>
   </data>
   <data name="RuleMaker_GalleryBuiltIn" xml:space="preserve">
-    <value>기본 제공</value>
+    <value>기본 제공 규칙</value>
   </data>
   <data name="RuleMaker_GalleryMine" xml:space="preserve">
-    <value>내 라이브러리</value>
+    <value>내 규칙</value>
   </data>
   <data name="RuleMaker_GalleryBadge" xml:space="preserve">
     <value>{0} · {1}</value>
@@ -1089,9 +1098,7 @@
   <data name="Prompts_Mine" xml:space="preserve">
     <value>내 프롬프트</value>
   </data>
-  <data name="Prompts_SourceFilter" xml:space="preserve">
-    <value>보기</value>
-  </data>
+
   <data name="Prompts_Badge" xml:space="preserve">
     <value>{0} · {1}</value>
   </data>
@@ -1597,6 +1604,9 @@
   </data>
   <data name="Time_Yesterday" xml:space="preserve">
     <value>어제 {0}</value>
+  </data>
+  <data name="Sessions_ClearChecks" xml:space="preserve">
+    <value>선택 해제</value>
   </data>
   <data name="Sessions_CheckAll" xml:space="preserve">
     <value>전체 체크</value>

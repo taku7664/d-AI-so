@@ -1,4 +1,4 @@
-using Daiso.App;
+﻿using Daiso.App;
 using Daiso.App.Controls;
 using Daiso.App.Services;
 using Daiso.App.ViewModels;
@@ -226,6 +226,9 @@ public sealed partial class SessionsPage : Page, IPageHeaderSource
     /// <summary>목록 머리의 전체 체크. 하나라도 안 체크된 것이 있으면 전부 켜고, 전부 켜져 있으면 전부 끈다.</summary>
     private void OnCheckAllClick(object sender, RoutedEventArgs e) =>
         ViewModel.CheckAll(sender is CheckBox { IsChecked: true });
+
+    /// <summary>선택 명령 줄의 ✕. 체크를 다 풀면 머리가 평소 얼굴로 돌아간다.</summary>
+    private void OnClearChecksClick(object sender, RoutedEventArgs e) => ViewModel.CheckAll(false);
 
     private void OnSelectOldClick(object sender, RoutedEventArgs e) =>
         ViewModel.SelectByRuleCommand.Execute("old");
