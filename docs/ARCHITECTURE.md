@@ -837,3 +837,22 @@ MUST 넷을 어긴 페이지를 만들면 테스트가 빨개진다. 규칙을 �
 | App | 수동 | — |
 
 fixture 규칙: 실제 파일에서 구조만 발췌, 경로는 `C:\Fixture\Project`, 프롬프트는 `더미 질문 N`, 토큰은 `DUMMY_TOKEN_*`.
+
+### SearchablePicker — 고르는 칸 하나로 모은다 (2026-09-11)
+
+`src/Daiso.App/Controls/SearchablePicker.cs`. 누르거나 포커스가 오면 **맨 위에 검색칸이 붙은 목록**이 열리고,
+목록은 `VisibleItemCount`(기본 5)줄까지만 보이고 그 이상은 안에서 스크롤한다.
+
+| 속성 | 뜻 |
+|---|---|
+| `ItemsSource` · `SelectedItem` · `ItemTemplate` | 콤보박스와 같다. 고른 것도 같은 틀로 그린다 |
+| `PlaceholderText` · `SearchPlaceholder` | 칸이 비었을 때 / 검색칸의 자리표시자 |
+| `VisibleItemCount` | 한 번에 보일 줄 수(기본 5). 줄 높이는 40 고정 |
+| `AllowFreeText` | 목록에 없는 것도 적어 쓸 수 있는가. Enter 로 `FreeTextSubmitted` |
+| `SelectionChanged` · `FreeTextSubmitted` | "값이 바뀐 것"이 아니라 "사람이 고른 것"만 온다 |
+
+검색은 항목의 `ToString()` 으로 거른다 — 목록에 쓰는 뷰모델은 사람이 읽는 글을 `ToString()` 으로 내놓아야 한다.
+
+**콤보박스를 안 쓰는 이유**: WinUI 콤보 팝업에는 검색칸을 넣을 자리가 없고, 편집형 콤보는 겉이 그냥 입력 칸이라
+"고를 것이 있다"는 사실이 화살표 하나에 걸린다. 목록이 서른 줄이 되면 훑어 고르는 것이 불가능해진다.
+쓰는 곳: 새 터미널 카드의 `폴더`(AllowFreeText) · `대화`.

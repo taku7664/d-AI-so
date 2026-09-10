@@ -92,47 +92,38 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
         FolderBox.Loaded += (_, _) => SyncFolderBox();
     }
 
-    /// <summary>뷰모델의 폴더를 콤보박스 글에 맞춘다(아는 프로젝트·이어서 열기·최근 목록 갱신 뒤).</summary>
+    /// <summary>
+    /// 뷰모델의 폴더를 칸에 맞춘다(아는 프로젝트·이어서 열기·최근 목록 갱신 뒤).
+    /// 고른 폴더는 최근 목록에 들어가므로 <see cref="TerminalViewModel.FolderChoices"/> 에서 늘 찾을 수 있다.
+    /// </summary>
     private void SyncFolderBox()
     {
-        var value = ViewModel.WorkingDirectory ?? string.Empty;
+        var value = ViewModel.WorkingDirectory;
 
-        // 목록에 있는 값은 SelectedItem 으로 잡아야 편집형 ComboBox 가 글을 보여 준다.
-        // Text 만 넣으면 SelectedItem 이 null 인 채라 자리표시자("폴더 경로")가 그대로 남는다
-        var match = ViewModel.FolderChoices.FirstOrDefault(
-            path => string.Equals(path, value, StringComparison.OrdinalIgnoreCase));
-
-        if (match is not null)
-        {
-            if (!ReferenceEquals(FolderBox.SelectedItem, match))
-            {
-                FolderBox.SelectedItem = match;
-            }
-
-            return;
-        }
-
-        FolderBox.SelectedItem = null;
-
-        if (!string.Equals(FolderBox.Text, value, StringComparison.Ordinal))
-        {
-            FolderBox.Text = value;
-        }
+        FolderBox.SelectedItem = string.IsNullOrEmpty(value)
+            ? null
+            : ViewModel.FolderChoices.FirstOrDefault(path => string.Equals(path, value, StringComparison.OrdinalIgnoreCase))
+                ?? value;
     }
 
-    /// <summary>직접 친 경로(Enter 또는 포커스 이동).</summary>
-    private void OnFolderTextSubmitted(ComboBox sender, ComboBoxTextSubmittedEventArgs args)
+    /// <summary>목록에서 골랐다.</summary>
+    private void OnFolderPicked(object sender, object picked)
     {
-        ViewModel.SetFolder(args.Text.Trim());
-        args.Handled = true;
-    }
-
-    /// <summary>최근 폴더 목록에서 고름.</summary>
-    private void OnFolderSelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (FolderBox.SelectedItem is string path && !string.Equals(path, ViewModel.WorkingDirectory, StringComparison.Ordinal))
+        if (picked is string path)
         {
             ViewModel.SetFolder(path);
+        }
+    }
+
+    /// <summary>검색칸에 경로를 그대로 적고 Enter. 목록에 없는 폴더는 이 길로만 들어온다(찾아보기 말고).</summary>
+    private void OnFolderTyped(object sender, string typed) => ViewModel.SetFolder(typed);
+
+    /// <summary>대화를 골랐다. 고른 순간이 3단계의 답이다.</summary>
+    private void OnSessionPicked(object sender, object picked)
+    {
+        if (picked is ViewModels.ResumeCandidateViewModel candidate)
+        {
+            ViewModel.SelectedSession = candidate;
         }
     }
 
@@ -268,7 +259,7 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
     /// 굴림이 끝나면 포커스를 줄 칸. 굴리는 도중에 포커스를 주면 WinUI 가 그 자리로 곧장 튀어 부드러움이 깨지므로
     /// 굴림이 멈춘 뒤(<see cref="OnStepsScrollViewChanged"/>)에 준다.
     /// </summary>
-    private Control? _pendingStepFocus;
+    private FrameworkElement? _pendingStepFocus;
 
     /// <summary>
     /// 뷰모델이 단계를 열었다. 그 단계 머리를 맨 위로 부드럽게 굴리고, 멈추면 <b>그 단계에서 답할 칸</b>에 포커스를 둔다.
@@ -283,7 +274,7 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
             _ => StepSessionHeader,
         };
 
-        Control answer = step switch
+        FrameworkElement answer = step switch
         {
             TerminalStep.Tool => ToolCards,
             TerminalStep.Folder => FolderBox,
@@ -293,7 +284,7 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
         DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () => RevealStep(header, answer));
     }
 
-    private void RevealStep(FrameworkElement header, Control answer)
+    private void RevealStep(FrameworkElement header, FrameworkElement answer)
     {
         if (!header.IsLoaded || NewSessionPanel.Visibility != Visibility.Visible)
         {
@@ -309,7 +300,7 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
         if (Math.Abs(target - StepsScroll.VerticalOffset) < 1)
         {
             _pendingStepFocus = null;
-            answer.Focus(FocusState.Programmatic);
+            FocusAnswer(answer);
             return;
         }
 
@@ -317,12 +308,28 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
         StepsScroll.ChangeView(null, target, null, disableAnimation: false);
     }
 
+    /// <summary>단계의 답할 칸에 포커스를 준다. 콤보·목록은 Control 이고 고르는 칸(SearchablePicker)은 아니다.</summary>
+    private static void FocusAnswer(FrameworkElement answer)
+    {
+        switch (answer)
+        {
+            case Controls.SearchablePicker picker:
+                picker.FocusPicker();
+                break;
+            case Control control:
+                control.Focus(FocusState.Programmatic);
+                break;
+            default:
+                break;
+        }
+    }
+
     private void OnStepsScrollViewChanged(object? sender, ScrollViewerViewChangedEventArgs e)
     {
         if (!e.IsIntermediate && _pendingStepFocus is { } answer)
         {
             _pendingStepFocus = null;
-            answer.Focus(FocusState.Programmatic);
+            FocusAnswer(answer);
         }
     }
 

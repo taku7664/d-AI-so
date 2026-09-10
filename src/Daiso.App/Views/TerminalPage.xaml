@@ -421,21 +421,25 @@
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
-                                            <!-- Text는 x:Bind 대신 코드에서 잇는다. 편집형 ComboBox는 로드 때 SelectedItem=null로 Text를 비워 바인딩 값을 덮는다 -->
-                                            <!-- 목록 하나에 최근 폴더 + 아는 프로젝트가 다 들어 있다. 새 폴더는 찾아보기로만 간다 (§2-B6) -->
-                                            <ComboBox
+                                            <!--
+                                                목록 하나에 최근 폴더 + 아는 프로젝트가 다 들어 있다. 새 폴더는 찾아보기로만 간다 (§2-B6).
+                                                누르거나 포커스가 오면 검색칸이 붙은 목록이 열린다 — 편집형 콤보는 겉이 그냥 입력 칸이라
+                                                고를 것이 있다는 사실이 화살표 하나에 걸려 있었다 (2026-09-11 사람의 요청).
+                                                경로를 직접 적는 길은 검색칸이 겸한다(AllowFreeText)
+                                            -->
+                                            <controls:SearchablePicker
                                                 x:Name="FolderBox"
                                                 Grid.Column="0"
                                                 HorizontalAlignment="Stretch"
-                                                IsEditable="True"
+                                                AllowFreeText="True"
                                                 AutomationProperties.AutomationId="WorkingDirBox"
                                                 AutomationProperties.Name="{loc:Str Key=Terminal_FolderLabel}"
                                                 ToolTipService.ToolTip="{loc:Str Key=Terminal_FolderTip}"
-                                                FontFamily="Consolas"
                                                 ItemsSource="{x:Bind ViewModel.FolderChoices}"
-                                                TextSubmitted="OnFolderTextSubmitted"
-                                                SelectionChanged="OnFolderSelectionChanged"
-                                                PlaceholderText="{loc:Str Key=Terminal_FolderPick}" />
+                                                PlaceholderText="{loc:Str Key=Terminal_FolderPick}"
+                                                SearchPlaceholder="{loc:Str Key=Terminal_FolderSearch}"
+                                                SelectionChanged="OnFolderPicked"
+                                                FreeTextSubmitted="OnFolderTyped" />
                                             <Button Grid.Column="1" Click="OnPickFolderClick" AutomationProperties.AutomationId="ProjectPickerButton" ToolTipService.ToolTip="{loc:Str Key=Terminal_BrowseTip}">
                                                 <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapSmall}">
                                                     <FontIcon Glyph="&#xE8B7;" FontSize="{StaticResource BodyFontSize}" />
@@ -484,22 +488,18 @@
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" Text="{loc:Str Key=Terminal_ResumeLabel}" VerticalAlignment="Center" />
-                                    <ComboBox
+                                    <!-- 지난 대화가 서른 줄까지 온다. 검색칸이 붙은 목록으로 골라야 훑을 수 있다 -->
+                                    <controls:SearchablePicker
                                         x:Name="ResumeBox"
                                         Grid.Column="1"
                                         HorizontalAlignment="Stretch"
                                         AutomationProperties.AutomationId="ResumeSessionBox"
                                         AutomationProperties.Name="{loc:Str Key=Terminal_ResumeLabel}"
                                         PlaceholderText="{loc:Str Key=Terminal_ResumePick}"
+                                        SearchPlaceholder="{loc:Str Key=Terminal_ResumeSearch}"
                                         ItemsSource="{x:Bind ViewModel.SessionChoices}"
-                                        SelectedItem="{x:Bind ViewModel.SelectedSession, Mode=TwoWay}"
-                                        ItemTemplate="{StaticResource ResumeCandidateTemplate}">
-                                        <ComboBox.ItemContainerStyle>
-                                            <Style TargetType="ComboBoxItem">
-                                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                                            </Style>
-                                        </ComboBox.ItemContainerStyle>
-                                    </ComboBox>
+                                        ItemTemplate="{StaticResource ResumeCandidateTemplate}"
+                                        SelectionChanged="OnSessionPicked" />
                                 </Grid>
                             </StackPanel>
 

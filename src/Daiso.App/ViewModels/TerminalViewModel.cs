@@ -952,6 +952,9 @@ public sealed class ResumeCandidateViewModel
 
     private static string Format(DateTimeOffset value, string pattern) =>
         value.ToString(pattern, System.Globalization.CultureInfo.CurrentCulture);
+
+    /// <summary>검색칸이 이 글로 거른다. 접근성 이름도 겸한다 — 시각과 제목 둘 다로 찾을 수 있어야 한다.</summary>
+    public override string ToString() => $"{When} {Summary}";
 }
 
 /// <summary>프롬프트 선택 한 줄. <see cref="Preset"/>이 null이면 "프롬프트 없음".</summary>

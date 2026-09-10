@@ -203,6 +203,12 @@
   <data name="Terminal_FolderLabel" xml:space="preserve">
     <value>폴더</value>
   </data>
+  <data name="Terminal_FolderSearch" xml:space="preserve">
+    <value>폴더 이름으로 찾거나 경로를 적으세요</value>
+  </data>
+  <data name="Terminal_ResumeSearch" xml:space="preserve">
+    <value>대화 제목으로 찾기</value>
+  </data>
   <data name="Terminal_FolderPick" xml:space="preserve">
     <value>폴더를 선택해주세요</value>
   </data>
