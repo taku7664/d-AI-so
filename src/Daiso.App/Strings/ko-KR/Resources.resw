@@ -191,6 +191,9 @@
   <data name="Terminal_WorkFolder" xml:space="preserve">
     <value>(필수) 어떤 폴더에서 작업하실건가요?</value>
   </data>
+  <data name="Terminal_FolderLabel" xml:space="preserve">
+    <value>폴더</value>
+  </data>
   <data name="Terminal_FolderPath" xml:space="preserve">
     <value>폴더 경로</value>
   </data>

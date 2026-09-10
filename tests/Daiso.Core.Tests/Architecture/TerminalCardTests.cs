@@ -175,6 +175,22 @@ public sealed partial class TerminalCardTests
     }
 
     [Fact]
+    public void 답하는_칸은_모두_같은_세로선에서_시작한다()
+    {
+        // 폴더(2) · 대화(3) · 세부 설정(4) 셋 다 `라벨 72 | 칸`.
+        // 폴더 칸만 라벨 없이 왼쪽 끝에서 시작하던 때는 그 줄만 튀어나와 보였다 (2026-09-10 사람의 지적)
+        var text = File.ReadAllText(PagePath);
+
+        foreach (var key in new[] { "Terminal_FolderLabel", "Terminal_ResumeLabel", "Terminal_RulesLabel" })
+        {
+            text.Should().Contain($"Text=\"{{loc:Str Key={key}}}\"", because: "답하는 칸 앞에는 라벨이 있다");
+        }
+
+        Regex.Matches(text, @"<ColumnDefinition Width=""72"" />").Should().HaveCount(
+            3, because: "라벨 칸 폭이 하나라도 다르면 세로선이 어긋난다");
+    }
+
+    [Fact]
     public void 옵션_인자_아래에_추천_단추를_두지_않는다()
     {
         // 2026-09-10 사람의 요청. 적을 사람은 적고, 모르는 사람은 비워 둔다.

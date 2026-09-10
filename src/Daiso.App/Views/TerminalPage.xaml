@@ -404,54 +404,67 @@
                                     <TextBlock Grid.Column="1" Text="{loc:Str Key=Terminal_WorkFolder}" Style="{StaticResource SectionTitleText}" VerticalAlignment="Center" />
                             </Grid>
 
+                            <!--
+                                2단계도 "라벨 72 | 칸" 이다 — 3·4 단계와 같은 세로선에서 칸이 시작한다.
+                                라벨 없이 칸부터 시작하던 때는 폴더 칸만 왼쪽으로 튀어나와 보였다 (2026-09-10 사람의 지적)
+                            -->
                             <StackPanel Grid.Row="3" Style="{StaticResource StepBody}" Visibility="{x:Bind ViewModel.FolderExpanded, Mode=OneWay}">
-                                <Grid ColumnSpacing="{StaticResource GapMedium}">
+                                <Grid ColumnSpacing="{StaticResource GapLarge}">
                                     <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="72" />
                                         <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <!-- Text는 x:Bind 대신 코드에서 잇는다. 편집형 ComboBox는 로드 때 SelectedItem=null로 Text를 비워 바인딩 값을 덮는다 -->
-                                    <!-- 목록 하나에 최근 폴더 + 아는 프로젝트가 다 들어 있다. 새 폴더는 찾아보기로만 간다 (§2-B6) -->
-                                    <ComboBox
-                                        x:Name="FolderBox"
-                                        Grid.Column="0"
-                                        HorizontalAlignment="Stretch"
-                                        IsEditable="True"
-                                        AutomationProperties.AutomationId="WorkingDirBox"
-                                        AutomationProperties.Name="{loc:Str Key=Terminal_FolderPath}"
-                                        ToolTipService.ToolTip="{loc:Str Key=Terminal_FolderTip}"
-                                        FontFamily="Consolas"
-                                        ItemsSource="{x:Bind ViewModel.FolderChoices}"
-                                        TextSubmitted="OnFolderTextSubmitted"
-                                        SelectionChanged="OnFolderSelectionChanged"
-                                        PlaceholderText="{loc:Str Key=Terminal_FolderPath}" />
-                                    <Button Grid.Column="1" Click="OnPickFolderClick" AutomationProperties.AutomationId="ProjectPickerButton" ToolTipService.ToolTip="{loc:Str Key=Terminal_BrowseTip}">
-                                        <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapSmall}">
-                                            <FontIcon Glyph="&#xE8B7;" FontSize="{StaticResource BodyFontSize}" />
-                                            <TextBlock Text="{loc:Str Key=Common_Browse}" />
-                                        </StackPanel>
-                                    </Button>
+                                    <TextBlock Grid.Column="0" Text="{loc:Str Key=Terminal_FolderLabel}" VerticalAlignment="Center" />
+                                    <StackPanel Grid.Column="1" Spacing="{StaticResource GapMedium}">
+                                        <Grid ColumnSpacing="{StaticResource GapMedium}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <!-- Text는 x:Bind 대신 코드에서 잇는다. 편집형 ComboBox는 로드 때 SelectedItem=null로 Text를 비워 바인딩 값을 덮는다 -->
+                                            <!-- 목록 하나에 최근 폴더 + 아는 프로젝트가 다 들어 있다. 새 폴더는 찾아보기로만 간다 (§2-B6) -->
+                                            <ComboBox
+                                                x:Name="FolderBox"
+                                                Grid.Column="0"
+                                                HorizontalAlignment="Stretch"
+                                                IsEditable="True"
+                                                AutomationProperties.AutomationId="WorkingDirBox"
+                                                AutomationProperties.Name="{loc:Str Key=Terminal_FolderLabel}"
+                                                ToolTipService.ToolTip="{loc:Str Key=Terminal_FolderTip}"
+                                                FontFamily="Consolas"
+                                                ItemsSource="{x:Bind ViewModel.FolderChoices}"
+                                                TextSubmitted="OnFolderTextSubmitted"
+                                                SelectionChanged="OnFolderSelectionChanged"
+                                                PlaceholderText="{loc:Str Key=Terminal_FolderPath}" />
+                                            <Button Grid.Column="1" Click="OnPickFolderClick" AutomationProperties.AutomationId="ProjectPickerButton" ToolTipService.ToolTip="{loc:Str Key=Terminal_BrowseTip}">
+                                                <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapSmall}">
+                                                    <FontIcon Glyph="&#xE8B7;" FontSize="{StaticResource BodyFontSize}" />
+                                                    <TextBlock Text="{loc:Str Key=Common_Browse}" />
+                                                </StackPanel>
+                                            </Button>
 
-                                    <!--
-                                        마지막에 쓴 폴더가 미리 채워져 있을 때만 나온다. 목록에서 같은 항목을 다시 골라도
-                                        SelectionChanged 가 오지 않아 확인할 길이 없었다 — 그래서 그 자리에 단추를 낸다.
-                                        다른 폴더를 고르면 그것으로 답이 되므로 이 단추는 사라진다
-                                    -->
-                                    <Button
-                                        Grid.Column="2"
-                                        Style="{StaticResource AccentButtonStyle}"
-                                        AutomationProperties.AutomationId="ConfirmFolderButton"
-                                        Visibility="{x:Bind ViewModel.FolderNeedsConfirm, Mode=OneWay}"
-                                        Command="{x:Bind ViewModel.ConfirmFolderCommand}"
-                                        ToolTipService.ToolTip="{loc:Str Key=Terminal_UseThisFolderTip}"
-                                        Content="{loc:Str Key=Terminal_UseThisFolder}" />
+                                            <!--
+                                                마지막에 쓴 폴더가 미리 채워져 있을 때만 나온다. 목록에서 같은 항목을 다시 골라도
+                                                SelectionChanged 가 오지 않아 확인할 길이 없었다 — 그래서 그 자리에 단추를 낸다.
+                                                다른 폴더를 고르면 그것으로 답이 되므로 이 단추는 사라진다
+                                            -->
+                                            <Button
+                                                Grid.Column="2"
+                                                Style="{StaticResource AccentButtonStyle}"
+                                                AutomationProperties.AutomationId="ConfirmFolderButton"
+                                                Visibility="{x:Bind ViewModel.FolderNeedsConfirm, Mode=OneWay}"
+                                                Command="{x:Bind ViewModel.ConfirmFolderCommand}"
+                                                ToolTipService.ToolTip="{loc:Str Key=Terminal_UseThisFolderTip}"
+                                                Content="{loc:Str Key=Terminal_UseThisFolder}" />
+                                        </Grid>
+
+                                        <!-- 그런 폴더가 없다. 다음 단계로 못 가는 이유를 그 자리에서 말한다 -->
+                                        <Border Style="{StaticResource NoticeBorder}" Visibility="{x:Bind ViewModel.FolderMissing, Mode=OneWay}">
+                                            <TextBlock Text="{loc:Str Key=Terminal_FolderMissing}" TextWrapping="Wrap" />
+                                        </Border>
+                                    </StackPanel>
                                 </Grid>
-
-                                <!-- 그런 폴더가 없다. 다음 단계로 못 가는 이유를 그 자리에서 말한다 -->
-                                <Border Style="{StaticResource NoticeBorder}" Visibility="{x:Bind ViewModel.FolderMissing, Mode=OneWay}">
-                                    <TextBlock Text="{loc:Str Key=Terminal_FolderMissing}" TextWrapping="Wrap" />
-                                </Border>
                             </StackPanel>
 
                             <!-- ───── 3. (필수) 대화를 선택해주세요 ───── -->
