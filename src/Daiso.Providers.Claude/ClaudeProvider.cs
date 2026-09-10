@@ -73,14 +73,6 @@ public sealed class ClaudeProvider : IProvider, IUsageReader
         return ClaudeModelList.From(json);
     }
 
-    /// <inheritdoc />
-    /// <remarks>
-    /// <c>/model [model]</c> — 이름을 주면 바로 바꾸고 <b>새 세션의 기본값으로도 저장</b>한다. 이름이 없으면 고르기 창을 연다
-    /// (공식 명령 참고 code.claude.com/docs/en/commands, 2.1.266 번들의 <c>argumentHint:"[model]"</c>, 2026-09-10 확인).
-    /// </remarks>
-    public string? ModelSwitchInput(string? modelId) =>
-        string.IsNullOrWhiteSpace(modelId) ? "/model" : $"/model {modelId.Trim()}";
-
     /// <summary>`~/.claude`.</summary>
     public string ConfigDirectory => _home.Combine(".claude");
 

@@ -134,26 +134,6 @@ public sealed class ModelListTests : IDisposable
         models.Should().BeEmpty();
     }
 
-    // ── 열린 세션에서 바꾸기 ──────────────────────────────────────────────
-
-    [Fact]
-    public void Claude_and_Antigravity_switch_by_name_and_Codex_only_opens_its_picker()
-    {
-        IProvider claude = new ClaudeProvider(new ProviderHome(_home), new FakeProcessProbe());
-        IProvider codex = new CodexProvider(new ProviderHome(_home));
-        IProvider antigravity = new AntigravityProvider(new ProviderHome(_home), new NoCredentials(), new FakeCommandRunner(null));
-
-        claude.ModelSwitchInput("opus").Should().Be("/model opus");
-        antigravity.ModelSwitchInput("gemini-3.8-flash-high").Should().Be("/model gemini-3.8-flash-high");
-        codex.ModelSwitchInput("gpt-5.5").Should().BeNull(
-            because: "Codex 의 /model 이 이름을 받는다는 근거가 없다. 붙여 보내면 AI 에게 가는 메시지가 될 수 있다");
-
-        foreach (var provider in new[] { claude, codex, antigravity })
-        {
-            provider.ModelSwitchInput(null).Should().Be("/model", because: "세 도구 모두 /model 만 치면 자기 고르기 창을 연다");
-        }
-    }
-
     private sealed class FakeCommandRunner(string? output) : ICommandRunner
     {
         public string? Arguments { get; private set; }

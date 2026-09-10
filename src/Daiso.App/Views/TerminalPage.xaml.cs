@@ -305,6 +305,21 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
         }
     }
 
+    /// <summary>
+    /// 모델 칸에서 고른 줄을 인자 칸에 반영한다.
+    /// <para>
+    /// 선택은 한 방향(<c>OneWay</c>)으로만 묶고 여기서 받는다. 탭을 바꾸면 콤보가 목록을 갈아 끼우며 선택을 비우는데,
+    /// 양방향으로 묶으면 그 빈 값이 새 탭의 모델을 지운다. 다른 탭의 줄이 오면 뷰모델이 알아보고 무시한다.
+    /// </para>
+    /// </summary>
+    private void OnModelPicked(object sender, SelectionChangedEventArgs e)
+    {
+        if (e.AddedItems.Count > 0 && e.AddedItems[0] is ModelChoiceViewModel choice)
+        {
+            ViewModel.SelectedTool.PickModel(choice);
+        }
+    }
+
     /// <summary>새 세션 카드의 "규칙 편집": 이 폴더를 내 규칙 화면에 넘기고 그 화면으로 간다.</summary>
     private void OnEditRulesClick(object sender, RoutedEventArgs e) => GoToRules(ViewModel.WorkingDirectory);
 
@@ -751,128 +766,6 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
             RoomPromptFlyout.Items.Add(new MenuFlyoutItem { Text = UiStrings.Get("Terminal_NoPrompts"), IsEnabled = false });
         }
     }
-
-    // ── 모델 바꾸기 ───────────────────────────────────────────────────────
-
-    /// <summary>도구별 모델 목록. 한 번 읽으면 앱이 떠 있는 동안 쓴다 — <c>agy models</c> 는 서버에 물어 몇 초 걸린다.</summary>
-    private readonly Dictionary<Daiso.Core.ToolKind, Task<IReadOnlyList<Daiso.Core.ModelOption>>> _models = new();
-
-    /// <summary>메뉴를 연 차례. 목록을 기다리는 사이 다시 열었으면 옛 차례는 메뉴를 건드리지 않는다.</summary>
-    private int _modelMenuGeneration;
-
-    private Task<IReadOnlyList<Daiso.Core.ModelOption>> ModelsFor(Daiso.Core.IProvider provider)
-    {
-        if (!_models.TryGetValue(provider.Kind, out var task) || task.IsFaulted || task.IsCanceled)
-        {
-            task = provider.ListModelsAsync(CancellationToken.None);
-            _models[provider.Kind] = task;
-        }
-
-        return task;
-    }
-
-    /// <summary>
-    /// 방의 "모델 바꾸기": 도구가 알려 준 모델 목록과, 도구 자신의 고르기 창 열기.
-    /// <para>
-    /// 무엇을 칠지는 도구가 정한다(<see cref="Daiso.Core.IProvider.ModelSwitchInput"/>). 이름으로 바로 못 바꾸는 도구(Codex)에는
-    /// 목록을 내밀지 않고 고르기 창만 준다 — 확인 안 된 모양으로 보내면 그 줄이 AI 에게 가는 메시지가 될 수 있다.
-    /// </para>
-    /// </summary>
-    private async void OnRoomModelFlyoutOpening(object? sender, object e)
-    {
-        var generation = ++_modelMenuGeneration;
-        RoomModelFlyout.Items.Clear();
-
-        if (_room is not TerminalRoomViewModel room
-            || App.Services.GetServices<Daiso.Core.IProvider>().FirstOrDefault(provider => provider.Kind == room.Tool) is not { } provider)
-        {
-            return;
-        }
-
-        var task = ModelsFor(provider);
-
-        if (!task.IsCompleted)
-        {
-            RoomModelFlyout.Items.Add(new MenuFlyoutItem { Text = UiStrings.Get("Room_ModelLoading"), IsEnabled = false });
-        }
-
-        IReadOnlyList<Daiso.Core.ModelOption> models;
-
-        try
-        {
-            models = await task;
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or OperationCanceledException)
-        {
-            models = [];
-        }
-
-        if (generation != _modelMenuGeneration || !ReferenceEquals(_room, room))
-        {
-            return;
-        }
-
-        RoomModelFlyout.Items.Clear();
-
-        var switchable = models
-            .Select(model => (Model: model, Input: provider.ModelSwitchInput(model.Id)))
-            .Where(entry => entry.Input is not null)
-            .ToList();
-
-        foreach (var (model, input) in switchable)
-        {
-            var text = string.Equals(model.Name, model.Id, StringComparison.OrdinalIgnoreCase) ? model.Name : $"{model.Name}  ·  {model.Id}";
-            AddModelItem(room, text, input!, model.Description);
-        }
-
-        if (models.Count == 0)
-        {
-            RoomModelFlyout.Items.Add(new MenuFlyoutItem { Text = UiStrings.Get("Room_ModelNone"), IsEnabled = false });
-        }
-        else if (switchable.Count == 0)
-        {
-            RoomModelFlyout.Items.Add(new MenuFlyoutItem { Text = UiStrings.Get("Room_ModelNoDirect"), IsEnabled = false });
-        }
-
-        if (provider.ModelSwitchInput(null) is { } picker)
-        {
-            RoomModelFlyout.Items.Add(new MenuFlyoutSeparator());
-            AddModelItem(room, UiStrings.Get("Room_ModelOpenPicker"), picker, description: null);
-        }
-    }
-
-    private void AddModelItem(TerminalRoomViewModel room, string text, string input, string? description)
-    {
-        var item = new MenuFlyoutItem { Text = text };
-        var tip = UiStrings.Format("Room_ModelSendTip", input);
-
-        ToolTipService.SetToolTip(item, string.IsNullOrWhiteSpace(description) ? tip : $"{tip}{Environment.NewLine}{description}");
-        item.Click += (_, _) => SendModelSwitch(room, input);
-        RoomModelFlyout.Items.Add(item);
-    }
-
-    /// <summary>
-    /// 입력 줄을 비우고 모델 명령을 친 뒤 Enter.
-    /// <para>
-    /// 비우는 까닭: 사람이 치던 글 뒤에 붙으면 엉뚱한 줄이 된다.
-    /// Enter 를 잠깐 뒤에 보내는 까닭: 글과 Enter 가 한 덩어리로 빠르게 들어오면 붙여넣기로 보고 Enter 를 줄바꿈으로 삼키는 CLI 가 있다.
-    /// </para>
-    /// </summary>
-    private async void SendModelSwitch(TerminalRoomViewModel room, string input)
-    {
-        if (!ReferenceEquals(_room, room))
-        {
-            return;
-        }
-
-        Embedded.ClearInput();
-        room.SendRaw(input);
-        await Task.Delay(ModelEnterDelay);
-        room.SendRaw("\r");
-        Embedded.FocusTerminal();
-    }
-
-    private static readonly TimeSpan ModelEnterDelay = TimeSpan.FromMilliseconds(150);
 
     // ── 끌어놓기 (IFileDropSink — 셸의 FileDropTarget 이 OLE 드롭을 받아 넘긴다) ───────────
 

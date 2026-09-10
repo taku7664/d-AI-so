@@ -17,6 +17,24 @@ public sealed record ArgumentPreset(string LabelKey, string Flag)
     public string Label => UiStrings.Get(LabelKey);
 }
 
+/// <summary>모델 칸 한 줄. <see cref="Option"/> 이 null 이면 "도구 설정대로" — <c>--model</c> 을 붙이지 않는다.</summary>
+public sealed class ModelChoiceViewModel
+{
+    public ModelChoiceViewModel(ModelOption? option) => Option = option;
+
+    public ModelOption? Option { get; }
+
+    /// <summary><c>--model</c> 뒤에 붙는 값. "도구 설정대로"는 null.</summary>
+    public string? Id => Option?.Id;
+
+    /// <summary>
+    /// 이름과 실제로 붙는 값을 함께 보인다. 같은 "Fable" 이라도 별칭(<c>fable</c>)과 계정 전용판(<c>claude-fable-5-1[1m]</c>)이 다르다.
+    /// </summary>
+    public string Name => Option is null
+        ? UiStrings.Get("Terminal_ModelDefault")
+        : string.Equals(Option.Name, Option.Id, StringComparison.OrdinalIgnoreCase) ? Option.Id : $"{Option.Name}  ·  {Option.Id}";
+}
+
 /// <summary>
 /// 터미널 화면의 도구 한 줄. 설치돼 있으면 `{도구} 열기`, 아니면 `{도구} 설치`가 된다. (REQUIREMENTS §4, ARCHITECTURE §5.3)
 /// 설치를 눌러 새 터미널에서 설치가 돌기 시작하면 `설치 중…`으로 잠기고, 실행 파일이 보이는 순간 `열기`로 돌아온다.
@@ -30,6 +48,7 @@ public sealed partial class ToolLaunchViewModel : ObservableObject
 
         Provider = provider;
         Presets = presets;
+        SelectedModel = ModelChoices[0];
     }
 
     public IProvider Provider { get; }
@@ -63,6 +82,91 @@ public sealed partial class ToolLaunchViewModel : ObservableObject
 
     /// <summary>UI 자동화 식별자.</summary>
     public string AutomationId => $"Launch{Kind}Button";
+
+    // ── 모델 ──────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// 모델 칸의 목록. 첫 줄은 늘 "도구 설정대로"(<c>--model</c> 을 붙이지 않음)이고, 뒤는 도구가 알려 준 모델이다.
+    /// <para>
+    /// "도구 설정대로" 줄은 도구마다 따로 만든다. 탭을 바꾸는 사이 콤보가 옛 탭의 줄을 알려 와도
+    /// <see cref="PickModel"/> 이 자기 목록에 없는 줄로 알아보고 무시하게 하려는 것이다.
+    /// </para>
+    /// </summary>
+    public System.Collections.ObjectModel.ObservableCollection<ModelChoiceViewModel> ModelChoices { get; } = [new ModelChoiceViewModel(null)];
+
+    /// <summary>인자 칸에 적힌 모델에 맞는 줄. 목록에 없는 모델을 직접 적었으면 null(칸이 비어 보인다 — 틀린 줄을 고른 것처럼 보이지 않게).</summary>
+    [ObservableProperty]
+    private ModelChoiceViewModel? selectedModel;
+
+    /// <summary>모델 목록을 읽고 있는가. <c>agy models</c> 는 서버에 물어 몇 초 걸린다.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ModelStatusText))]
+    [NotifyPropertyChangedFor(nameof(HasModelStatus))]
+    private bool isLoadingModels;
+
+    private bool _modelsLoaded;
+
+    /// <summary>모델 칸 밑 한 줄. 읽는 중이거나, 읽었는데 도구가 아무것도 안 줬을 때만.</summary>
+    public string ModelStatusText =>
+        IsLoadingModels ? UiStrings.Get("Terminal_ModelLoading")
+        : _modelsLoaded && ModelChoices.Count <= 1 ? UiStrings.Get("Terminal_ModelNone")
+        : string.Empty;
+
+    public bool HasModelStatus => ModelStatusText.Length > 0;
+
+    /// <summary>도구에게 모델 목록을 한 번 묻는다. 실패하면 다음 화면 열기에 다시 묻는다.</summary>
+    public async Task LoadModelsAsync(CancellationToken ct = default)
+    {
+        if (_modelsLoaded || IsLoadingModels)
+        {
+            return;
+        }
+
+        IsLoadingModels = true;
+
+        try
+        {
+            foreach (var model in await Provider.ListModelsAsync(ct).ConfigureAwait(true))
+            {
+                ModelChoices.Add(new ModelChoiceViewModel(model));
+            }
+
+            _modelsLoaded = true;
+        }
+        catch (Exception ex) when (ex is OperationCanceledException or IOException or UnauthorizedAccessException)
+        {
+            // 목록이 없어도 인자 칸에 직접 적을 수 있다
+        }
+        finally
+        {
+            IsLoadingModels = false;
+            SyncModelFromArguments();
+        }
+    }
+
+    /// <summary>
+    /// 사람이 모델 칸에서 고른 줄을 인자 칸에 반영한다. 칸이 곧 실행될 인자다 (<see cref="ModelArgument"/>).
+    /// 이미 그 모델이 적혀 있으면 손대지 않는다 — 콤보가 선택을 되돌려 알릴 때 사람이 적은 순서를 흩뜨리지 않게.
+    /// </summary>
+    public void PickModel(ModelChoiceViewModel? choice)
+    {
+        if (choice is null || !ModelChoices.Contains(choice)
+            || string.Equals(ModelArgument.Read(Arguments), choice.Id, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        Arguments = ModelArgument.Apply(Arguments, choice.Id);
+    }
+
+    partial void OnArgumentsChanged(string value) => SyncModelFromArguments();
+
+    private void SyncModelFromArguments()
+    {
+        var id = ModelArgument.Read(Arguments);
+
+        SelectedModel = ModelChoices.FirstOrDefault(choice => string.Equals(choice.Id, id, StringComparison.OrdinalIgnoreCase));
+    }
 
     /// <summary>실행 파일이 PATH에 있는가. 없으면 버튼이 설치로 바뀐다.</summary>
     [ObservableProperty]

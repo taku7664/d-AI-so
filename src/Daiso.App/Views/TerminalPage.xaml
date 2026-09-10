@@ -179,14 +179,6 @@
                         </Button.Flyout>
                     </Button>
 
-                    <!-- 모델 바꾸기: 도구가 알려 준 목록. 고르면 그 도구의 모델 명령을 입력 줄에 쳐서 열린 세션의 모델을 바꾼다 -->
-                    <Button x:Name="RoomModelButton" Style="{StaticResource ToolbarIconButton}" AutomationProperties.AutomationId="RoomModelButton" AutomationProperties.Name="{loc:Str Key=Room_Model}" ToolTipService.ToolTip="{loc:Str Key=Room_ModelTip}">
-                        <FontIcon Glyph="&#xE99A;" FontSize="{StaticResource BodyFontSize}" />
-                        <Button.Flyout>
-                            <MenuFlyout x:Name="RoomModelFlyout" Opening="OnRoomModelFlyoutOpening" Placement="BottomEdgeAlignedLeft" />
-                        </Button.Flyout>
-                    </Button>
-
                     <!-- 파일 첨부: 끌어놓기와 같은 길이지만, 눈에 보이는 길은 이것뿐이다 -->
                     <Button Style="{StaticResource ToolbarIconButton}" Click="OnRoomAttachClick" AutomationProperties.AutomationId="RoomAttachButton" AutomationProperties.Name="{loc:Str Key=Room_AttachFile}" ToolTipService.ToolTip="{loc:Str Key=Room_AttachFileTip}">
                         <FontIcon Glyph="&#xE723;" FontSize="{StaticResource BodyFontSize}" />
@@ -686,6 +678,21 @@
                                             <x:Double x:Key="ExpanderMinHeight">36</x:Double>
                                         </muxc:Expander.Resources>
                                         <StackPanel Spacing="{StaticResource GapMedium}">
+                                            <!-- 모델: 도구가 알려 준 목록. 고르면 아래 인자 칸의 모델 플래그를 고쳐 쓴다. 칸이 곧 실행될 인자다 -->
+                                            <ComboBox
+                                                HorizontalAlignment="Stretch"
+                                                AutomationProperties.AutomationId="ModelPicker"
+                                                Header="{loc:Str Key=Terminal_ModelHeader}"
+                                                ToolTipService.ToolTip="{loc:Str Key=Terminal_ModelTip}"
+                                                ItemsSource="{x:Bind ViewModel.SelectedTool.ModelChoices, Mode=OneWay}"
+                                                SelectedItem="{x:Bind ViewModel.SelectedTool.SelectedModel, Mode=OneWay}"
+                                                DisplayMemberPath="Name"
+                                                SelectionChanged="OnModelPicked" />
+                                            <TextBlock
+                                                Text="{x:Bind ViewModel.SelectedTool.ModelStatusText, Mode=OneWay}"
+                                                Visibility="{x:Bind ViewModel.SelectedTool.HasModelStatus, Mode=OneWay}"
+                                                Style="{StaticResource MutedText}"
+                                                TextWrapping="Wrap" />
                                             <TextBox
                                                 AutomationProperties.AutomationId="ArgumentsBox"
                                                 AutomationProperties.Name="{loc:Str Key=Terminal_OptionArgs}"

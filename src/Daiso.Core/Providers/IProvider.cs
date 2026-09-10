@@ -104,7 +104,7 @@ public interface IProvider
     bool LoginLivesInFiles => true;
 
     /// <summary>
-    /// 이 도구가 받는 모델. 열린 방 도구 줄의 "모델 바꾸기"가 쓴다 (<see cref="ModelSwitchInput"/>).
+    /// 이 도구가 받는 모델. 새 터미널 카드의 모델 칸이 쓰고, 고른 값은 <c>--model</c> 로 붙는다 (<see cref="ModelArgument"/>).
     ///
     /// <para>
     /// <b>얻는 길이 도구마다 다르다</b> — 공식 명령이 있는 도구(<c>agy models</c>), CLI 가 받아 둔 캐시 파일만 있는 도구(Codex),
@@ -118,17 +118,4 @@ public interface IProvider
     /// </summary>
     Task<IReadOnlyList<ModelOption>> ListModelsAsync(CancellationToken ct) =>
         Task.FromResult<IReadOnlyList<ModelOption>>([]);
-
-    /// <summary>
-    /// <b>이미 열린 세션</b>에서 모델을 바꾸려고 터미널 입력 줄에 칠 글(Enter 는 빼고).
-    /// <paramref name="modelId"/> 가 null 이면 도구 자신의 모델 고르기 창을 여는 입력이다.
-    ///
-    /// <para>
-    /// 이름으로 바로 바꾸지 못하는 도구는 이름을 받으면 null 을 준다 — 앱은 그 도구에 목록을 내밀지 않고 고르기 창만 연다.
-    /// 확인 안 된 모양으로 이름을 붙여 보내면 도구가 그 줄을 AI 에게 보내는 메시지로 읽을 수 있다.
-    /// </para>
-    ///
-    /// <para>기본값은 둘 다 null(모름). 도구가 확인된 만큼만 스스로 밝힌다.</para>
-    /// </summary>
-    string? ModelSwitchInput(string? modelId) => null;
 }
