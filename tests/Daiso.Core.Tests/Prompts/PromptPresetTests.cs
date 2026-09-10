@@ -29,6 +29,52 @@ public sealed class PromptPresetTests
         preset.Body.Should().StartWith("# 제목").And.EndWith("본문이다.");
     }
 
+    [Theory]
+    [InlineData("planning", PromptCategory.Planning)]
+    [InlineData("understanding", PromptCategory.Understanding)]
+    [InlineData("fixing", PromptCategory.Fixing)]
+    [InlineData("release", PromptCategory.Release)]
+    [InlineData("other", PromptCategory.Other)]
+    public void Parse_reads_every_category(string written, PromptCategory expected)
+    {
+        // `other` 는 2026-09-11 에 붙였다. 갈래 값은 파일에 글자로 적히므로 이름과 순서를 바꾸지 않는다
+        var text = Sample.Replace("category: fixing", "category: " + written, StringComparison.Ordinal);
+
+        PromptPresetSerializer.Parse("sample", text).Category.Should().Be(expected);
+    }
+
+    [Fact]
+    public void Every_category_has_a_label_key()
+    {
+        // 갈래를 늘려 놓고 문구를 안 넣으면 콤보에 빈 줄이 생긴다. StringResourceKeysTests 는
+        // 코드에 리터럴이 없어 이 조합을 못 본다 — 여기서 이름을 맞춰 둔다
+        var defined = System.Xml.Linq.XDocument.Parse(File.ReadAllText(StringsPath)).Root!
+            .Elements("data")
+            .Select(data => (string?)data.Attribute("name"))
+            .ToHashSet(StringComparer.Ordinal);
+
+        foreach (var category in Enum.GetValues<PromptCategory>())
+        {
+            defined.Should().Contain("PromptCategory_" + category, because: "갈래마다 화면 문구가 있어야 한다");
+        }
+    }
+
+    private static readonly string StringsPath = FindStringsPath();
+
+    private static string FindStringsPath()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "Daiso.sln")))
+        {
+            directory = directory.Parent;
+        }
+
+        var root = directory?.FullName ?? throw new InvalidOperationException("Daiso.sln 을 찾지 못했다");
+
+        return Path.Combine(root, "src", "Daiso.App", "Strings", "ko-KR", "Resources.resw");
+    }
+
     [Fact]
     public void Serialize_then_parse_gives_the_same_content()
     {

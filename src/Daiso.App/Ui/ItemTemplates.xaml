@@ -21,7 +21,8 @@
     <DataTemplate x:Key="PromptGalleryItemTemplate" x:DataType="vm:PromptGalleryItemViewModel">
         <StackPanel Spacing="{StaticResource GapTiny}" Margin="0,6,0,6" ToolTipService.ToolTip="{x:Bind Description}">
             <TextBlock Text="{x:Bind Badge}" Style="{StaticResource MutedText}" />
-            <TextBlock Text="{x:Bind Name}" Style="{ThemeResource BodyStrongTextBlockStyle}" TextTrimming="CharacterEllipsis" />
+            <!-- BodyStrong 스타일이 TextWrapping=Wrap 을 켜 둔다. 끄지 않으면 긴 제목이 두 줄로 접혀 줄 높이가 들쭉날쭉해진다 (2026-09-11 사람의 지적) -->
+            <TextBlock Text="{x:Bind Name}" Style="{ThemeResource BodyStrongTextBlockStyle}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
             <TextBlock
                 Text="{x:Bind Description}"
                 Style="{StaticResource MutedText}"
@@ -215,7 +216,7 @@
     <DataTemplate x:Key="PresetGalleryItemTemplate" x:DataType="vm:PresetGalleryItemViewModel">
         <StackPanel Spacing="{StaticResource GapTiny}" Margin="0,6,0,6" ToolTipService.ToolTip="{x:Bind Description}">
             <TextBlock Text="{x:Bind Badge}" Style="{StaticResource MutedText}" />
-            <TextBlock Text="{x:Bind Name}" Style="{ThemeResource BodyStrongTextBlockStyle}" TextTrimming="CharacterEllipsis" />
+            <TextBlock Text="{x:Bind Name}" Style="{ThemeResource BodyStrongTextBlockStyle}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
             <TextBlock
                 Text="{x:Bind Description}"
                 Style="{StaticResource MutedText}"

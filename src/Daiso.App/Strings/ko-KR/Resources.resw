@@ -1084,10 +1084,13 @@
     <value>새 세션의 첫 메시지로 붙이세요</value>
   </data>
   <data name="Prompts_BuiltIn" xml:space="preserve">
-    <value>기본 제공</value>
+    <value>기본 제공 프롬프트</value>
   </data>
   <data name="Prompts_Mine" xml:space="preserve">
-    <value>내 것</value>
+    <value>내 프롬프트</value>
+  </data>
+  <data name="Prompts_SourceFilter" xml:space="preserve">
+    <value>보기</value>
   </data>
   <data name="Prompts_Badge" xml:space="preserve">
     <value>{0} · {1}</value>
@@ -1136,6 +1139,9 @@
   </data>
   <data name="PromptCategory_Release" xml:space="preserve">
     <value>배포</value>
+  </data>
+  <data name="PromptCategory_Other" xml:space="preserve">
+    <value>기타</value>
   </data>
   <data name="Common_ToggleList" xml:space="preserve">
     <value>목록</value>

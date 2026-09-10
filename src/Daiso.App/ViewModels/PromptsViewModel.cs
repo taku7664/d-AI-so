@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Daiso.App.Services;
@@ -41,6 +41,10 @@ public sealed partial class PromptsViewModel : ObservableObject
     [ObservableProperty]
     private int categoryIndex;
 
+    /// <summary>0 = 전체, 1 = 내 프롬프트, 2 = 기본 제공. 바꾸면 목록을 다시 채운다.</summary>
+    [ObservableProperty]
+    private int sourceFilterIndex;
+
     /// <summary>프롬프트를 넣을 프로젝트 폴더.</summary>
     [ObservableProperty]
     private string? projectDirectory;
@@ -78,6 +82,18 @@ public sealed partial class PromptsViewModel : ObservableObject
         UiStrings.Get("PromptCategory_Understanding"),
         UiStrings.Get("PromptCategory_Fixing"),
         UiStrings.Get("PromptCategory_Release"),
+        UiStrings.Get("PromptCategory_Other"),
+    ];
+
+    /// <summary>
+    /// 목록 위 출처 거르개. 기본 제공이 열둘이라 내 것이 늘 그 아래에 파묻혔다 (2026-09-11 사람의 지적).
+    /// 순서는 <see cref="SourceFilterIndex"/> 가 정한다 — 전체 · 내 프롬프트 · 기본 제공 프롬프트.
+    /// </summary>
+    public IReadOnlyList<string> SourceFilters { get; } =
+    [
+        UiStrings.Get("Common_All"),
+        UiStrings.Get("Prompts_Mine"),
+        UiStrings.Get("Prompts_BuiltIn"),
     ];
 
     public bool HasSelection => SelectedItem is not null;
@@ -143,7 +159,10 @@ public sealed partial class PromptsViewModel : ObservableObject
             EditBody);
     }
 
-    /// <summary>목록을 다시 채운다. 선택은 유지한다.</summary>
+    /// <summary>
+    /// 목록을 다시 채운다. 선택은 유지한다.
+    /// <para>내 것이 앞, 기본 제공이 뒤다 — 내가 만든 것을 열둘 아래에서 찾게 두지 않는다.</para>
+    /// </summary>
     [RelayCommand]
     public void RefreshGallery()
     {
@@ -151,18 +170,27 @@ public sealed partial class PromptsViewModel : ObservableObject
 
         Gallery.Clear();
 
-        foreach (var prompt in BuiltInPrompts.List())
+        if (SourceFilterIndex != 2)
         {
-            Gallery.Add(new PromptGalleryItemViewModel(prompt, isMine: false));
+            foreach (var prompt in _library.List())
+            {
+                Gallery.Add(new PromptGalleryItemViewModel(prompt, isMine: true));
+            }
         }
 
-        foreach (var prompt in _library.List())
+        if (SourceFilterIndex != 1)
         {
-            Gallery.Add(new PromptGalleryItemViewModel(prompt, isMine: true));
+            foreach (var prompt in BuiltInPrompts.List())
+            {
+                Gallery.Add(new PromptGalleryItemViewModel(prompt, isMine: false));
+            }
         }
 
         SelectedItem = Gallery.FirstOrDefault(item => item.Key == keep);
     }
+
+    /// <summary>거르개를 바꾸면 목록만 다시 채운다. 편집 중인 내용은 건드리지 않는다.</summary>
+    partial void OnSourceFilterIndexChanged(int value) => RefreshGallery();
 
     /// <summary>빈 편집기로 시작한다.</summary>
     [RelayCommand]

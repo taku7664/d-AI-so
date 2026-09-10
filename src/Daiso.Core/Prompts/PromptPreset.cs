@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 
 namespace Daiso.Core;
 
@@ -16,6 +16,9 @@ public enum PromptCategory
 
     /// <summary>배포·점검 절차.</summary>
     Release,
+
+    /// <summary>넷 중 어디에도 안 들어가는 것. 맨 뒤에 붙인다 — 값이 파일에 글자로 적히므로 순서를 바꾸지 않는다.</summary>
+    Other,
 }
 
 /// <summary>
@@ -107,7 +110,7 @@ public static class PromptPresetSerializer
         if (!Enum.TryParse<PromptCategory>(category, ignoreCase: true, out var parsedCategory)
             || !Enum.IsDefined(parsedCategory))
         {
-            throw new FormatException($"category 가 planning, understanding, fixing, release 중 하나가 아니다: {category}");
+            throw new FormatException($"category 가 planning, understanding, fixing, release, other 중 하나가 아니다: {category}");
         }
 
         var body = string.Join('\n', lines.Skip(end + 1)).Trim('\n');
