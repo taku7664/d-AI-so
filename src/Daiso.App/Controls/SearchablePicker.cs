@@ -97,6 +97,8 @@ public sealed class SearchablePicker : Grid
         _search.KeyDown += OnSearchKeyDown;
 
         _list.ItemsSource = _shown;
+        // 높이를 여기서 미리 못 박는다. 열릴 때 처음 재면 이미 늦다 — 아래 설명(Opening) 참고
+        _list.MaxHeight = VisibleItemCount * RowHeight;
         _list.SelectionMode = ListViewSelectionMode.Single;
         _list.SelectionChanged += OnListSelectionChanged;
         _list.ItemContainerStyle = BuildRowStyle();
@@ -112,6 +114,8 @@ public sealed class SearchablePicker : Grid
         _flyout.Content = _popupRoot;
         _flyout.Placement = FlyoutPlacementMode.BottomEdgeAlignedLeft;
         _flyout.FlyoutPresenterStyle = BuildPresenterStyle();
+        // 크기는 Opening 에서 정한다. Opened 는 자리를 이미 잡은 뒤라 늦다 (아래 OnFlyoutOpening 참고)
+        _flyout.Opening += OnFlyoutOpening;
         _flyout.Opened += OnFlyoutOpened;
         _flyout.Closed += (_, _) => _closedAt = Environment.TickCount64;
 
@@ -236,7 +240,13 @@ public sealed class SearchablePicker : Grid
         FlyoutBase.ShowAttachedFlyout(_face);
     }
 
-    private void OnFlyoutOpened(object? sender, object e)
+    /// <summary>
+    /// 열기 <b>직전</b>에 크기를 정한다. <c>Opened</c> 에서 정하면 늦다 —
+    /// WinUI 는 그 전에 팝오버를 재어 <b>아래에 놓을지 위에 놓을지</b>를 이미 결정한다.
+    /// 높이를 안 정해 준 채로 재면 서른일곱 줄짜리 목록이 통째로 재어져 "아래에 안 들어간다"가 되고,
+    /// 팝오버가 칸 위로 뒤집혀 열렸다 (2026-09-11 사람의 지적. 짧은 목록만 아래로 열려서 더 헷갈렸다).
+    /// </summary>
+    private void OnFlyoutOpening(object? sender, object e)
     {
         // 팝오버는 무한 폭으로 재어진다. 칸 폭을 직접 넣어야 목록이 칸에 맞는다
         _popupRoot.Width = Math.Max(ActualWidth - 24, 200);
@@ -244,11 +254,12 @@ public sealed class SearchablePicker : Grid
 
         _search.Text = string.Empty;
         ApplyFilter();
+    }
 
+    private void OnFlyoutOpened(object? sender, object e) =>
         _search.DispatcherQueue?.TryEnqueue(
             Microsoft.UI.Dispatching.DispatcherQueuePriority.Low,
             () => _search.Focus(FocusState.Programmatic));
-    }
 
     private void OnSearchKeyDown(object sender, KeyRoutedEventArgs e)
     {
