@@ -1,10 +1,11 @@
-# d-AI-so 프로젝트 규칙
+﻿# d-AI-so 프로젝트 규칙
 
 ## 문서
 - 요구사항: `docs/REQUIREMENTS.md`
 - 아키텍처: `docs/ARCHITECTURE.md` (인터페이스·파싱 규칙의 정본. 코드가 이를 따른다)
 - 목표·완료 기준: `docs/GOAL.md`
 - 진행 중인 작업 계획: `docs/TERMINAL_CARD_PLAN.md` (새 터미널 카드 단계형 재설계, Stage 0~7)
+- 도구 플러그인 계획: `docs/PLUGIN_PLAN.md` (빌드된 앱에 도구를 더할 수 있게, Stage 0~7. 아직 시작 전)
 
 ## 빌드·실행 확인
 
