@@ -123,7 +123,12 @@
                     </StackPanel>
                 </muxc:DropDownButton.Content>
                 <muxc:DropDownButton.Flyout>
-                    <Flyout>
+                    <!--
+                        놓을 자리를 적어 준다. <c>FlyoutBase.Placement</c> 의 기본값은 <b>Top</b> 이라
+                        가만히 두면 단추 <b>위로</b> 열린다 — 이 줄의 다른 단추들은 MenuFlyout(기본 아래)이라
+                        이것 하나만 위로 열려 어긋나 보였다 (2026-09-11 사람의 지적)
+                    -->
+                    <Flyout Placement="BottomEdgeAlignedLeft">
                         <StackPanel Spacing="{StaticResource GapLarge}" MinWidth="240">
                             <NumberBox
                                 Header="{loc:Str Key=Sessions_MinSize}"
