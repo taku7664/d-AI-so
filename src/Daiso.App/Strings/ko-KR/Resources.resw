@@ -1478,8 +1478,17 @@
   <data name="Terminal_Advanced" xml:space="preserve">
     <value>자세한 설정</value>
   </data>
-  <data name="Terminal_PresetPermission" xml:space="preserve">
-    <value>파일 수정 권한</value>
+  <data name="Terminal_PresetAcceptEdits" xml:space="preserve">
+    <value>파일 수정은 묻지 않고 승인</value>
+  </data>
+  <data name="Terminal_PresetPlan" xml:space="preserve">
+    <value>계획만 세우기 (수정 안 함)</value>
+  </data>
+  <data name="Terminal_PresetReadOnly" xml:space="preserve">
+    <value>읽기만 허용</value>
+  </data>
+  <data name="Terminal_PresetWorkspaceWrite" xml:space="preserve">
+    <value>작업 폴더 안에서만 쓰기</value>
   </data>
   <data name="Terminal_ModelHeader" xml:space="preserve">
     <value>모델</value>

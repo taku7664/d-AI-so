@@ -149,16 +149,24 @@ public sealed partial class TerminalViewModel : ObservableObject
     /// <para>
     /// <c>--model</c> 도 넣지 않는다 — 모델 칸이 도구가 알려 준 목록으로 같은 일을 한다(<see cref="ToolLaunchViewModel.ModelChoices"/>).
     /// </para>
+    /// <para>
+    /// <b>값이 필요한 플래그는 값까지 담는다.</b> 예전에는 <c>--permission-mode </c> 처럼 플래그만 붙이고 값은 사람이 적게 했는데,
+    /// 일반인은 무엇을 적을지 모르고 그대로 열면 CLI 가 <c>argument missing</c> 으로 뜨지도 않는다. 되돌리기 어려운 값
+    /// (<c>bypassPermissions</c> · <c>danger-full-access</c>)은 넣지 않는다 — 필요한 사람은 인자 칸에 직접 적는다.
+    /// 값의 목록은 <c>claude --help</c> 2.1.266 · <c>codex --help</c> 0.153.4 로 확인했다(2026-09-10).
+    /// </para>
     /// </summary>
     private static IReadOnlyList<ArgumentPreset> PresetsFor(ToolKind kind) => kind switch
     {
         ToolKind.Claude =>
         [
-            new("Terminal_PresetPermission", "--permission-mode "),
+            new("Terminal_PresetAcceptEdits", "--permission-mode acceptEdits"),
+            new("Terminal_PresetPlan", "--permission-mode plan"),
         ],
         ToolKind.Codex =>
         [
-            new("Terminal_PresetSandbox", "--sandbox "),
+            new("Terminal_PresetReadOnly", "--sandbox read-only"),
+            new("Terminal_PresetWorkspaceWrite", "--sandbox workspace-write"),
         ],
         // `agy --help` (1.1.28) 로 확인한 플래그만 둔다. `--sandbox` 는 값이 없는 스위치라 뒤에 빈칸을 붙이지 않는다
         ToolKind.Antigravity =>

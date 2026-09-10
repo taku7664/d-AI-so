@@ -83,6 +83,37 @@ public sealed partial class TerminalCardTests
             because: "행 높이를 고정해야 목록 높이를 그 정수배로 맞출 수 있다");
     }
 
+    private static readonly string ViewModelPath =
+        Path.Combine(Root, "src", "Daiso.App", "ViewModels", "TerminalViewModel.cs");
+
+    [Fact]
+    public void 프리셋_플래그는_값까지_담는다()
+    {
+        // "--permission-mode " 처럼 플래그만 붙이면 사람이 값을 몰라 그대로 열고, CLI 는 "argument missing" 으로 뜨지도 않는다
+        // (2026-09-10 실제로 그랬다). 값 없는 스위치(agy 의 --sandbox)는 끝에 빈칸이 없어 걸리지 않는다
+        var offenders = PresetPattern().Matches(File.ReadAllText(ViewModelPath))
+            .Select(match => match.Groups["flag"].Value)
+            .Where(EndsWithoutValue)
+            .ToList();
+
+        offenders.Should().BeEmpty(because: "값이 필요한 플래그는 프리셋에 값까지 넣는다. 값을 사람에게 맡기면 도구가 안 뜬다");
+    }
+
+    [Theory]
+    [InlineData("--permission-mode ", true)]
+    [InlineData("--sandbox ", true)]
+    [InlineData("--permission-mode plan", false)]
+    [InlineData("--sandbox", false)]
+    public void 값_없는_프리셋_검사가_어긴_예를_잡는다(string flag, bool shouldFlag)
+    {
+        EndsWithoutValue(flag).Should().Be(shouldFlag);
+    }
+
+    private static bool EndsWithoutValue(string flag) => flag.EndsWith(' ');
+
+    [GeneratedRegex(@"new\(""Terminal_Preset\w+"",\s*""(?<flag>[^""]*)""\)", RegexOptions.CultureInvariant)]
+    private static partial Regex PresetPattern();
+
     [GeneratedRegex(@"(?<![\w-])--[a-z][a-z-]{2,}", RegexOptions.CultureInvariant)]
     private static partial Regex FlagPattern();
 
