@@ -1,4 +1,4 @@
-<Page
+﻿<Page
     x:Class="Daiso.App.Views.SessionsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -41,14 +41,18 @@
                     Command="{x:Bind ViewModel.SearchCommand}">
                     <FontIcon Glyph="&#xE721;" FontSize="{StaticResource BodyFontSize}" />
                 </Button>
+                <!-- 지울 것이 없는데 ✕ 가 떠 있으면 무엇을 지우는 단추인지 알 수 없다 -->
                 <Button
                     AutomationProperties.AutomationId="ClearSearchButton"
                     AutomationProperties.Name="{loc:Str Key=Sessions_ClearSearch}"
                     ToolTipService.ToolTip="{loc:Str Key=Sessions_ClearSearchTip}"
+                    Visibility="{x:Bind ViewModel.HasSearchQuery, Mode=OneWay}"
                     Command="{x:Bind ViewModel.ClearSearchCommand}">
                     <FontIcon Glyph="&#xE711;" FontSize="{StaticResource BodyFontSize}" />
                 </Button>
+                <!-- 새로고침은 검색과 다른 일이다. 같은 간격으로 붙여 두면 검색 단추 셋처럼 읽힌다 -->
                 <Button
+                    Margin="16,0,0,0"
                     AutomationProperties.AutomationId="ReloadButton"
                     AutomationProperties.Name="{loc:Str Key=Sessions_ReloadList}"
                     ToolTipService.ToolTip="{loc:Str Key=Sessions_ReloadListTip}"
@@ -73,31 +77,41 @@
             <muxc:SelectorBarItem Text="Antigravity" AutomationProperties.AutomationId="ToolTabAntigravity" />
         </muxc:SelectorBar>
 
+        <!--
+            라벨을 칸 위(Header)가 아니라 칸 왼쪽에 둔다. 위에 두면 줄 높이가 두 배가 되고,
+            라벨이 없는 `필터` 단추만 밑선이 어긋나 줄이 들쭉날쭉해진다 (2026-09-11 사람의 지적)
+        -->
         <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapLarge}">
             <!-- 잠긴 컨트롤은 마우스를 받지 않아 툴팁이 안 뜬다. 검색 중 잠기는 이유는 투명 테두리가 대신 말한다 -->
             <Border Background="Transparent" ToolTipService.ToolTip="{loc:Str Key=Sessions_SearchScopeHint}">
-                <ComboBox
-                    Header="{loc:Str Key=Sessions_ProjectFilter}"
-                    MinWidth="220"
-                    MaxWidth="300"
-                    IsEnabled="{x:Bind ViewModel.CanPickProject, Mode=OneWay}"
-                    AutomationProperties.AutomationId="ProjectCombo"
-                    ItemsSource="{x:Bind ViewModel.Projects}"
-                    SelectedItem="{x:Bind ViewModel.SelectedProject, Mode=TwoWay}"
-                    ItemTemplate="{StaticResource ProjectRowTemplate}">
-                </ComboBox>
+                <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
+                    <TextBlock Text="{loc:Str Key=Sessions_ProjectFilter}" VerticalAlignment="Center" />
+                    <ComboBox
+                        MinWidth="220"
+                        MaxWidth="300"
+                        IsEnabled="{x:Bind ViewModel.CanPickProject, Mode=OneWay}"
+                        AutomationProperties.AutomationId="ProjectCombo"
+                        AutomationProperties.Name="{loc:Str Key=Sessions_ProjectFilter}"
+                        ItemsSource="{x:Bind ViewModel.Projects}"
+                        SelectedItem="{x:Bind ViewModel.SelectedProject, Mode=TwoWay}"
+                        ItemTemplate="{StaticResource ProjectRowTemplate}">
+                    </ComboBox>
+                </StackPanel>
             </Border>
 
-            <ComboBox
-                Header="{loc:Str Key=Common_Period}"
-                Width="130"
-                AutomationProperties.AutomationId="PeriodFilterCombo"
-                ItemsSource="{x:Bind ViewModel.PeriodFilters}"
-                SelectedIndex="{x:Bind ViewModel.PeriodFilterIndex, Mode=TwoWay}" />
+            <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
+                <TextBlock Text="{loc:Str Key=Common_Period}" VerticalAlignment="Center" />
+                <ComboBox
+                    Width="130"
+                    AutomationProperties.AutomationId="PeriodFilterCombo"
+                    AutomationProperties.Name="{loc:Str Key=Common_Period}"
+                    ItemsSource="{x:Bind ViewModel.PeriodFilters}"
+                    SelectedIndex="{x:Bind ViewModel.PeriodFilterIndex, Mode=TwoWay}" />
+            </StackPanel>
 
             <!-- 자주 안 쓰는 필터는 팝오버로. 좁은 창에서 한 줄이 넘치지 않게 한다 -->
             <muxc:DropDownButton
-                VerticalAlignment="Bottom"
+                VerticalAlignment="Center"
                 AutomationProperties.AutomationId="MoreFiltersButton">
                 <muxc:DropDownButton.Content>
                     <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
@@ -138,8 +152,7 @@
             <muxc:ProgressRing
                 Width="18"
                 Height="18"
-                VerticalAlignment="Bottom"
-                Margin="0,0,0,6"
+                VerticalAlignment="Center"
                 IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}" />
         </StackPanel>
         </StackPanel>
@@ -163,7 +176,12 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <!-- 머리: 제목·건수 왼쪽, 체크 도구 오른쪽(전체 체크 · 골라 체크 · 선택 수 · 휴지통 · 영구 삭제). 아이콘만, 툴팁으로 설명 -->
+                    <!--
+                        머리: 제목·건수 왼쪽, 고르는 도구 오른쪽(전체 체크 · 골라 체크).
+                        지우기 둘은 <b>고른 것이 있을 때만 나온다</b> — 목록/상세 짝 화면에서 파괴 명령은 선택에 딸린 명령이다
+                        (learn.microsoft.com/windows/apps/design/controls/list-details). 잠긴 채로 늘 떠 있으면
+                        무엇을 지우는 단추인지 알 수 없고, 회색 휴지통 두 개가 머리의 절반을 먹는다 (2026-09-11 사람의 지적)
+                    -->
                     <Grid Grid.Row="0" Margin="12,10,12,6" ColumnSpacing="{StaticResource GapMedium}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -207,31 +225,37 @@
                                     </MenuFlyout>
                                 </muxc:DropDownButton.Flyout>
                             </muxc:DropDownButton>
-                            <Border Style="{StaticResource PillBorder}" VerticalAlignment="Center" Visibility="{x:Bind ViewModel.HasChecked, Mode=OneWay}">
-                                <TextBlock AutomationProperties.AutomationId="CheckedCountText" Text="{x:Bind ViewModel.CheckedText, Mode=OneWay}" FontSize="{StaticResource CaptionFontSize}" />
-                            </Border>
-                            <Button
-                                Padding="6"
-                                Background="Transparent"
-                                BorderThickness="0"
-                                AutomationProperties.AutomationId="RecycleButton"
-                                AutomationProperties.Name="{loc:Str Key=Sessions_SendToRecycleBin}"
-                                ToolTipService.ToolTip="{loc:Str Key=Sessions_SendToRecycleBin}"
-                                IsEnabled="{x:Bind ViewModel.HasChecked, Mode=OneWay}"
-                                Click="OnRecycleClick">
-                                <FontIcon Glyph="&#xE74D;" FontSize="{StaticResource BodyFontSize}" />
-                            </Button>
-                            <Button
-                                Padding="6"
-                                Background="Transparent"
-                                BorderThickness="0"
-                                AutomationProperties.AutomationId="PermanentButton"
-                                AutomationProperties.Name="{loc:Str Key=Common_PermanentDelete}"
-                                ToolTipService.ToolTip="{loc:Str Key=Sessions_PermanentDeleteTip}"
-                                IsEnabled="{x:Bind ViewModel.HasChecked, Mode=OneWay}"
-                                Click="OnPermanentClick">
-                                <FontIcon Glyph="&#xE107;" FontSize="{StaticResource BodyFontSize}" Foreground="{ThemeResource SystemFillColorCriticalBrush}" />
-                            </Button>
+                            <!-- 선택에 딸린 명령. 고른 것이 없으면 통째로 사라진다 -->
+                            <StackPanel
+                                Orientation="Horizontal"
+                                Spacing="{StaticResource GapTiny}"
+                                VerticalAlignment="Center"
+                                AutomationProperties.AutomationId="SelectionCommands"
+                                Visibility="{x:Bind ViewModel.HasChecked, Mode=OneWay}">
+                                <Border Style="{StaticResource PillBorder}" VerticalAlignment="Center">
+                                    <TextBlock AutomationProperties.AutomationId="CheckedCountText" Text="{x:Bind ViewModel.CheckedText, Mode=OneWay}" FontSize="{StaticResource CaptionFontSize}" />
+                                </Border>
+                                <Button
+                                    Padding="6"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    AutomationProperties.AutomationId="RecycleButton"
+                                    AutomationProperties.Name="{loc:Str Key=Sessions_SendToRecycleBin}"
+                                    ToolTipService.ToolTip="{loc:Str Key=Sessions_SendToRecycleBin}"
+                                    Click="OnRecycleClick">
+                                    <FontIcon Glyph="&#xE74D;" FontSize="{StaticResource BodyFontSize}" />
+                                </Button>
+                                <Button
+                                    Padding="6"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    AutomationProperties.AutomationId="PermanentButton"
+                                    AutomationProperties.Name="{loc:Str Key=Common_PermanentDelete}"
+                                    ToolTipService.ToolTip="{loc:Str Key=Sessions_PermanentDeleteTip}"
+                                    Click="OnPermanentClick">
+                                    <FontIcon Glyph="&#xE107;" FontSize="{StaticResource BodyFontSize}" Foreground="{ThemeResource SystemFillColorCriticalBrush}" />
+                                </Button>
+                            </StackPanel>
                         </StackPanel>
                     </Grid>
 
@@ -253,10 +277,12 @@
                             SelectionChanged="OnSessionSelectionChanged"
                             ItemTemplate="{StaticResource SessionRowTemplate}" />
 
+                        <!-- 빈 칸의 안내는 칸 한가운데. 왼쪽 위 쪽지는 목록 첫 줄처럼 읽힌다 -->
                         <Border
                             Style="{StaticResource NoticeBorder}"
                             Margin="16"
-                            VerticalAlignment="Top"
+                            VerticalAlignment="Center"
+                            HorizontalAlignment="Center"
                             Visibility="{x:Bind ViewModel.IsListEmpty, Mode=OneWay}">
                             <StackPanel Spacing="{StaticResource GapMedium}">
                                 <!-- 인덱싱 중이면 진행을 알려준다. 첫 실행에는 목록이 비어 있는 게 정상이다 -->
@@ -304,11 +330,18 @@
                                 <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
 
-                            <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
+                            <!--
+                                고른 세션이 있을 때만 도구 줄을 낸다. 잠긴 단추 두 개와 잠긴 체크가
+                                "왼쪽에서 세션을 고르세요" 위에 떠 있으면, 눌러야 할 것처럼 보이는데 눌리지 않는다 (2026-09-11 사람의 지적)
+                            -->
+                            <StackPanel
+                                Grid.Row="0"
+                                Orientation="Horizontal"
+                                Spacing="{StaticResource GapMedium}"
+                                Visibility="{x:Bind ViewModel.HasSelectedSession, Mode=OneWay}">
                                 <Button
                                     Style="{ThemeResource AccentButtonStyle}"
                                     AutomationProperties.AutomationId="ResumeButton"
-                                    IsEnabled="{x:Bind ViewModel.HasSelectedSession, Mode=OneWay}"
                                     Click="OnResumeClick">
                                     <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
                                         <FontIcon Glyph="&#xE768;" FontSize="{StaticResource BodyFontSize}" />
@@ -318,7 +351,6 @@
                                 <Button
                                     Content="{loc:Str Key=Sessions_ExportMarkdown}"
                                     AutomationProperties.AutomationId="ExportButton"
-                                    IsEnabled="{x:Bind ViewModel.HasSelectedSession, Mode=OneWay}"
                                     Click="OnExportClick" />
 
                             </StackPanel>
@@ -327,12 +359,14 @@
                                 Grid.Row="1"
                                 Content="{loc:Str Key=Sessions_ShowToolCalls}"
                                 AutomationProperties.AutomationId="ShowToolCallsCheck"
+                                Visibility="{x:Bind ViewModel.HasSelectedSession, Mode=OneWay}"
                                 IsChecked="{x:Bind ViewModel.ShowToolCalls, Mode=TwoWay}" />
 
                             <Border
                                 Grid.Row="2"
                                 Style="{StaticResource NoticeBorder}"
-                                VerticalAlignment="Top"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Center"
                                 Visibility="{x:Bind ViewModel.NoSelection, Mode=OneWay}">
                                 <TextBlock Text="{loc:Str Key=Sessions_PickHint}" Style="{StaticResource PageSubtitleText}" />
                             </Border>

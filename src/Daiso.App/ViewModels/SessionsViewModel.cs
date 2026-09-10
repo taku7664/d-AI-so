@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -64,7 +64,11 @@ public sealed partial class SessionsViewModel : ObservableObject
     private bool isTimelineTruncated;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSearchQuery))]
     private string? searchQuery;
+
+    /// <summary>검색칸에 글이 있는가. 지우기 단추는 지울 것이 있을 때만 낸다.</summary>
+    public bool HasSearchQuery => !string.IsNullOrEmpty(SearchQuery);
 
     [ObservableProperty]
     private ProjectGroupViewModel? selectedProject;
