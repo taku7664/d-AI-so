@@ -76,8 +76,10 @@
             </Grid.ColumnDefinitions>
 
             <Border Grid.Column="0" Style="{StaticResource CardBorder}" Padding="8">
+                <!-- 내 프롬프트 화면과 같은 골격: 거르개 → 목록(남는 높이) → 단추 -->
                 <Grid RowSpacing="{StaticResource GapMedium}">
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
@@ -110,7 +112,7 @@
 
                     <!-- 고르면 편집기에 실린다. 지금 편집 중인 것 뒤에 붙이고 싶을 때만 이 버튼 -->
                     <Button
-                        Grid.Row="1"
+                        Grid.Row="2"
                         Margin="4,0,4,0"
                         HorizontalAlignment="Stretch"
                         Content="{loc:Str Key=RuleMaker_GalleryMerge}"

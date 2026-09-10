@@ -1,4 +1,4 @@
-<Page
+﻿<Page
     x:Class="Daiso.App.Views.UsagePage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -11,14 +11,8 @@
     <controls:PageBody Layout="Reading">
         <controls:PageBody.Commands>
             <StackPanel Spacing="{StaticResource GapLarge}">
+                <!-- 기간 콤보(7일·30일·전체)는 걷어냈다. 기록은 통째로 읽고, 묶는 단위는 추이 카드에서 고른다 (2026-09-11 사람의 요청) -->
                 <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
-                    <ComboBox
-                        Width="{StaticResource FilterComboWidth}"
-                        AutomationProperties.AutomationId="UsagePeriodCombo"
-                        AutomationProperties.Name="{loc:Str Key=Common_Period}"
-                        ItemsSource="{x:Bind Usage.Periods}"
-                        SelectedIndex="{x:Bind Usage.PeriodIndex, Mode=TwoWay}" />
-
                     <Button
                         AutomationProperties.AutomationId="UsageReloadButton"
                         ToolTipService.ToolTip="{loc:Str Key=Common_ReloadTip}"
@@ -101,7 +95,22 @@
                     PointerCanceled="OnDayAreaLeft"
                     PointerCaptureLost="OnDayAreaLeft">
                     <StackPanel Spacing="{StaticResource GapMedium}">
-                        <TextBlock Text="{loc:Str Key=Usage_Daily}" Style="{StaticResource SectionTitleText}" />
+                        <!-- 묶는 단위는 이 카드만 바꾸므로 카드 머리에 둔다 -->
+                        <Grid ColumnSpacing="{StaticResource GapLarge}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{loc:Str Key=Usage_Trend}" Style="{StaticResource SectionTitleText}" VerticalAlignment="Center" />
+                            <ComboBox
+                                Grid.Column="1"
+                                MinWidth="110"
+                                AutomationProperties.AutomationId="UsageGranularityCombo"
+                                AutomationProperties.Name="{loc:Str Key=Usage_Trend}"
+                                ToolTipService.ToolTip="{loc:Str Key=Usage_TrendTip}"
+                                ItemsSource="{x:Bind Usage.Granularities}"
+                                SelectedIndex="{x:Bind Usage.GranularityIndex, Mode=TwoWay}" />
+                        </Grid>
 
                         <ItemsControl ItemsSource="{x:Bind Usage.Days}">
                             <ItemsControl.ItemTemplate>

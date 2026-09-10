@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Daiso.App.Services;
@@ -18,8 +18,9 @@ public sealed partial class UsageViewModel : ObservableObject
 
     private UsageSummary _summary = new([], new Dictionary<string, TokenUsage>(), new Dictionary<string, TokenUsage>());
 
+    /// <summary>0 = 일별, 1 = 주별, 2 = 월별. 기간 콤보(7일·30일·전체)를 대신한다.</summary>
     [ObservableProperty]
-    private int periodIndex;
+    private int granularityIndex;
 
     [ObservableProperty]
     private bool isBusy;
@@ -42,15 +43,22 @@ public sealed partial class UsageViewModel : ObservableObject
         _settings.Changed += (_, _) => Recalculate();
     }
 
-    /// <summary>기간 선택 항목.</summary>
-    public IReadOnlyList<string> Periods { get; } =
+    /// <summary>
+    /// 추이 그래프를 무엇으로 묶어 볼 것인가. 순서는 <see cref="GranularityIndex"/> 와 같다.
+    /// <para>
+    /// 예전에는 `7일 · 30일 · 전체` 기간 콤보였다. 기간을 고르는 것과 묶는 단위를 고르는 것이 섞여 있어서,
+    /// `전체`를 고르면 하루짜리 막대가 수백 줄로 늘어졌다 (2026-09-11 사람의 요청으로 갈랐다).
+    /// 지금은 기록을 다 읽고 묶는 단위만 고른다 — 일별 30칸 · 주별 12칸 · 월별 12칸.
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<string> Granularities { get; } =
     [
-        UiStrings.Get("Usage_Period7"),
-        UiStrings.Get("Usage_Period30"),
-        UiStrings.All,
+        UiStrings.Get("Usage_Daily"),
+        UiStrings.Get("Usage_Weekly"),
+        UiStrings.Get("Usage_Monthly"),
     ];
 
-    /// <summary>일별 막대.</summary>
+    /// <summary>추이 막대. 한 줄이 하루 · 한 주 · 한 달이다.</summary>
     public ObservableCollection<UsageDayViewModel> Days { get; } = [];
 
     /// <summary>프로젝트별 상위 10.</summary>
@@ -90,17 +98,11 @@ public sealed partial class UsageViewModel : ObservableObject
         try
         {
             var to = DateOnly.FromDateTime(DateTime.UtcNow);
-            var from = PeriodIndex switch
-            {
-                0 => to.AddDays(-6),
-                1 => to.AddDays(-29),
-                _ => new DateOnly(2000, 1, 1),
-            };
+            // 기록은 늘 통째로 읽는다. 얼마나 보여 줄지는 묶는 단위가 정한다(Recalculate)
+            var from = new DateOnly(2000, 1, 1);
 
             _summary = await _indexService.Index.GetUsageAsync(from, to, SelectedTool, ct).ConfigureAwait(true);
             Recalculate();
-
-            StatusText = UiStrings.Format("Usage_Range", from, to, Days.Count);
         }
         finally
         {
@@ -119,13 +121,18 @@ public sealed partial class UsageViewModel : ObservableObject
         TopProjects.Clear();
         ByModel.Clear();
 
-        var maxDayTotal = _summary.Days.Count > 0 ? _summary.Days.Max(day => day.Usage.Total) : 0;
+        var buckets = Bucket(_summary.Days);
+        var maxTotal = buckets.Count > 0 ? buckets.Max(bucket => bucket.Usage.Total) : 0;
 
-        foreach (var day in _summary.Days)
+        foreach (var (start, label, usage) in buckets)
         {
-            var width = maxDayTotal > 0 ? day.Usage.Total * BarMaxWidth / maxDayTotal : 0;
-            Days.Add(new UsageDayViewModel(day, width));
+            var width = maxTotal > 0 ? usage.Total * BarMaxWidth / maxTotal : 0;
+            Days.Add(new UsageDayViewModel(new UsageDay(start, usage), label, width));
         }
+
+        StatusText = buckets.Count > 0
+            ? UiStrings.Format("Usage_Range", buckets[0].Start, DateOnly.FromDateTime(DateTime.Today))
+            : string.Empty;
 
         var projectTotal = _summary.ByProject.Sum(entry => entry.Value.Total);
         var top = _summary.ByProject
@@ -180,7 +187,43 @@ public sealed partial class UsageViewModel : ObservableObject
             + (usage.CacheRead / Million * price.CacheReadPerMillion);
     }
 
-    partial void OnPeriodIndexChanged(int value) => UiCommands.Start(LoadCommand);
+    /// <summary>몇 칸까지 보여 줄 것인가. 일별은 한 달, 주별·월별은 열두 칸이면 흐름이 보인다.</summary>
+    private int BucketLimit => GranularityIndex switch { 0 => 30, _ => 12 };
+
+    /// <summary>
+    /// 하루짜리 기록을 고른 단위로 묶는다. 주는 월요일 시작, 달은 1일 시작이다.
+    /// 마지막 <see cref="BucketLimit"/> 칸만 남긴다 — 오래된 쪽을 버린다.
+    /// </summary>
+    private List<(DateOnly Start, string Label, TokenUsage Usage)> Bucket(IReadOnlyList<UsageDay> days)
+    {
+        var grouped = days
+            .GroupBy(StartOf)
+            .OrderBy(group => group.Key)
+            .Select(group => (
+                Start: group.Key,
+                Label: LabelOf(group.Key),
+                Usage: group.Aggregate(TokenUsage.Zero, (sum, day) => sum.Add(day.Usage))))
+            .ToList();
+
+        return grouped.Count > BucketLimit ? [.. grouped.Skip(grouped.Count - BucketLimit)] : grouped;
+    }
+
+    private DateOnly StartOf(UsageDay day) => GranularityIndex switch
+    {
+        1 => day.Date.AddDays(-((int)day.Date.DayOfWeek + 6) % 7),   // 월요일로 당긴다
+        2 => new DateOnly(day.Date.Year, day.Date.Month, 1),
+        _ => day.Date,
+    };
+
+    private string LabelOf(DateOnly start) => GranularityIndex switch
+    {
+        1 => start.ToString("MM-dd", System.Globalization.CultureInfo.CurrentCulture),
+        2 => start.ToString("yyyy-MM", System.Globalization.CultureInfo.CurrentCulture),
+        _ => start.ToString("MM-dd", System.Globalization.CultureInfo.CurrentCulture),
+    };
+
+    /// <summary>묶는 단위만 바꾸면 다시 읽을 것이 없다. 이미 읽어 둔 기록을 다시 묶기만 한다.</summary>
+    partial void OnGranularityIndexChanged(int value) => Recalculate();
 
     /// <summary>탭. 0은 전체, 그 뒤는 <see cref="Services.ToolLook.DisplayOrder"/> 순서의 도구 하나. (요약과 같은 규칙)</summary>
     [ObservableProperty]
@@ -196,12 +239,13 @@ public sealed partial class UsageViewModel : ObservableObject
     partial void OnSelectedTabIndexChanged(int value) => UiCommands.Start(LoadCommand);
 }
 
-/// <summary>일별 막대 한 줄.</summary>
+/// <summary>추이 막대 한 줄. 하루일 수도, 한 주일 수도, 한 달일 수도 있다.</summary>
 public sealed class UsageDayViewModel
 {
-    public UsageDayViewModel(UsageDay day, double barWidth)
+    public UsageDayViewModel(UsageDay day, string dateText, double barWidth)
     {
         Day = day;
+        DateText = dateText;
         BarWidth = barWidth;
     }
 
@@ -209,7 +253,8 @@ public sealed class UsageDayViewModel
 
     public double BarWidth { get; }
 
-    public string DateText => Day.Date.ToString("MM-dd");
+    /// <summary>줄 맨 앞의 글. 묶는 단위에 따라 `MM-dd` 이거나 `yyyy-MM` 이다.</summary>
+    public string DateText { get; }
 
     public string TotalText => Formats.Tokens(Day.Usage.Total);
 

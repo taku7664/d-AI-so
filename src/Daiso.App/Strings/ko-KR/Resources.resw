@@ -154,6 +154,18 @@
   <data name="Usage_Daily" xml:space="preserve">
     <value>일별</value>
   </data>
+  <data name="Usage_Weekly" xml:space="preserve">
+    <value>주별</value>
+  </data>
+  <data name="Usage_Monthly" xml:space="preserve">
+    <value>월별</value>
+  </data>
+  <data name="Usage_Trend" xml:space="preserve">
+    <value>사용량 추이</value>
+  </data>
+  <data name="Usage_TrendTip" xml:space="preserve">
+    <value>하루·한 주·한 달 단위로 묶어 봅니다. 일별은 최근 30칸, 주별·월별은 최근 12칸을 보여 줍니다</value>
+  </data>
   <data name="Usage_TopProjects" xml:space="preserve">
     <value>프로젝트별 상위 10</value>
   </data>
@@ -667,17 +679,11 @@
   </data>
 
   <!-- ── 사용량 ─────────────────────────────────────────────────────────── -->
-  <data name="Usage_Period7" xml:space="preserve">
-    <value>7일</value>
-  </data>
-  <data name="Usage_Period30" xml:space="preserve">
-    <value>30일</value>
-  </data>
   <data name="Usage_EstimatedCost" xml:space="preserve">
     <value>추정 비용 ${0:N2} (단가표 기반)</value>
   </data>
   <data name="Usage_Range" xml:space="preserve">
-    <value>{0:yyyy-MM-dd} ~ {1:yyyy-MM-dd} · {2}일</value>
+    <value>{0:yyyy-MM-dd} ~ {1:yyyy-MM-dd}</value>
   </data>
   <data name="Usage_DayBreakdown" xml:space="preserve">
     <value>in {0:N0} · out {1:N0} · cw {2:N0} · cr {3:N0}</value>
@@ -1450,7 +1456,7 @@
     <value>이어서 열기</value>
   </data>
   <data name="Terminal_NewSessionSub" xml:space="preserve">
-    <value>빈 화면에서 출발합니다</value>
+    <value>새로운 대화로 시작합니다</value>
   </data>
   <data name="Terminal_ResumeLabel" xml:space="preserve">
     <value>대화</value>
