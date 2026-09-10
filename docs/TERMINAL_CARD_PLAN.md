@@ -792,3 +792,15 @@ Stage 1(골격)만 되돌리면 그 위 단계가 다 무너지므로, Stage 1�
 `규칙 편집`은 `ProjectDirectory` 만 심고 넘어가서, **편집기에는 지난번에 열어 둔 것이 그대로** 떠 있었다.
 "이 폴더에 규칙 파일이 있습니다" 라고 해 놓고 그 위에 저장하면 남의 규칙을 이 프로젝트에 덮어쓴다.
 이제 `<폴더>\PROJECT_RULES.daiso` 가 있으면 열어서 간다.
+
+### 같은 날 — 옵션 인자 아래 추천 단추를 걷어냈다
+
+사람의 요청. `파일 수정은 묻지 않고` · `계획만 세우기 (수정 안 …` 처럼 **라벨이 칸 안에서 잘려** 무슨 말인지도 모르는
+단추 두 개가 칸 밑에 붙어 있었다. 적을 사람은 칸에 직접 적고, 모르는 사람은 비워 둔다.
+
+지운 것: XAML 의 `ItemsRepeater`, `OnPresetClick`, `TerminalViewModel.PresetsFor` · `AppendPresetCommand`,
+`ToolLaunchViewModel.Presets` · `AppendPreset`, `ArgumentPreset` 레코드, 문구 키 5개.
+`화면_문구에_날_플래그가_없다` 는 남는다 — resw 에 플래그가 새는 것은 여전히 막아야 한다.
+
+`docs/ARCHITECTURE.md` 의 새 터미널 항목도 지금 화면에 맞춰 다시 썼다(아코디언·접힘 요약·검색칸·무효화 문장은
+이미 없는 것들이었다).

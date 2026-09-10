@@ -1,4 +1,4 @@
-using Windows.ApplicationModel.DataTransfer;
+﻿using Windows.ApplicationModel.DataTransfer;
 using Daiso.App.Controls;
 using Daiso.App.Services;
 using Daiso.App.Strings;
@@ -354,14 +354,6 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
         if (sender is Button button)
         {
             ToolTipService.SetToolTip(button, UiStrings.Get("Common_Copied"));
-        }
-    }
-
-    private void OnPresetClick(object sender, RoutedEventArgs e)
-    {
-        if (sender is FrameworkElement { Tag: string preset })
-        {
-            ViewModel.AppendPresetCommand.Execute(preset);
         }
     }
 

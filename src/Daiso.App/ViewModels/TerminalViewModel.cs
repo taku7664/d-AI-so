@@ -77,7 +77,7 @@ public sealed partial class TerminalViewModel : ObservableObject
 
         Tools = new ObservableCollection<ToolLaunchViewModel>(
             ToolLook.InDisplayOrder(_providers, provider => provider.Kind)
-                .Select(provider => new ToolLaunchViewModel(provider, PresetsFor(provider.Kind))));
+                .Select(provider => new ToolLaunchViewModel(provider)));
 
         foreach (var tool in Tools)
         {
@@ -142,39 +142,6 @@ public sealed partial class TerminalViewModel : ObservableObject
             _ = tool.LoadModelsAsync(ct);
         }
     }
-
-    /// <summary>
-    /// 도구별 옵션 프리셋. <b>resume·continue 계열은 넣지 않는다</b> — 3단계 "하던 대화 이어서"가 같은 일을 하고,
-    /// 둘 다 있으면 어느 쪽이 이기는지 알 수 없다. (docs/TERMINAL_CARD_PLAN.md §2-B4)
-    /// <para>
-    /// <c>--model</c> 도 넣지 않는다 — 모델 칸이 도구가 알려 준 목록으로 같은 일을 한다(<see cref="ToolLaunchViewModel.ModelChoices"/>).
-    /// </para>
-    /// <para>
-    /// <b>값이 필요한 플래그는 값까지 담는다.</b> 예전에는 <c>--permission-mode </c> 처럼 플래그만 붙이고 값은 사람이 적게 했는데,
-    /// 일반인은 무엇을 적을지 모르고 그대로 열면 CLI 가 <c>argument missing</c> 으로 뜨지도 않는다. 되돌리기 어려운 값
-    /// (<c>bypassPermissions</c> · <c>danger-full-access</c>)은 넣지 않는다 — 필요한 사람은 인자 칸에 직접 적는다.
-    /// 값의 목록은 <c>claude --help</c> 2.1.266 · <c>codex --help</c> 0.153.4 로 확인했다(2026-09-10).
-    /// </para>
-    /// </summary>
-    private static IReadOnlyList<ArgumentPreset> PresetsFor(ToolKind kind) => kind switch
-    {
-        ToolKind.Claude =>
-        [
-            new("Terminal_PresetAcceptEdits", "--permission-mode acceptEdits"),
-            new("Terminal_PresetPlan", "--permission-mode plan"),
-        ],
-        ToolKind.Codex =>
-        [
-            new("Terminal_PresetReadOnly", "--sandbox read-only"),
-            new("Terminal_PresetWorkspaceWrite", "--sandbox workspace-write"),
-        ],
-        // `agy --help` (1.1.28) 로 확인한 플래그만 둔다. `--sandbox` 는 값이 없는 스위치라 뒤에 빈칸을 붙이지 않는다
-        ToolKind.Antigravity =>
-        [
-            new("Terminal_PresetSandbox", "--sandbox"),
-        ],
-        _ => [],
-    };
 
     // ── 프로젝트 폴더 ─────────────────────────────────────────────────────
 
@@ -884,10 +851,6 @@ public sealed partial class TerminalViewModel : ObservableObject
 
         return value;
     }
-
-    /// <summary>프리셋을 지금 탭의 인자 뒤에 붙인다.</summary>
-    [RelayCommand]
-    public void AppendPreset(string? preset) => SelectedTool.AppendPreset(preset ?? string.Empty);
 
     /// <summary>새 창(외부 터미널)으로 연다. 설치돼 있지 않으면 설치 명령을 돌린다.</summary>
     [RelayCommand]

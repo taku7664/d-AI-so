@@ -7,7 +7,7 @@ namespace Daiso.Core.Tests.Architecture;
 /// 새 터미널 카드가 지켜야 할 것을 XAML 에서 검사한다 (docs/TERMINAL_CARD_PLAN.md §6 Stage 7).
 /// <para>
 /// 이 카드의 대상은 <b>AI CLI 를 처음 써 보는 일반인</b>이다. 그 사람에게 <c>--sandbox</c> 는 글자일 뿐이라
-/// 기본 화면에 날 플래그를 내놓지 않는다. 플래그는 `자세한 설정` 안에서 한국어 라벨 뒤에만 붙는다.
+/// 화면 문구에 날 플래그를 내놓지 않는다. 플래그를 아는 사람은 `옵션 인자` 칸에 직접 적는다.
 /// </para>
 /// </summary>
 public sealed partial class TerminalCardTests
@@ -22,8 +22,7 @@ public sealed partial class TerminalCardTests
     [Fact]
     public void 화면_문구에_날_플래그가_없다()
     {
-        // 문구 값에 "--foo" 가 있으면 그 말이 그대로 화면에 나온다.
-        // 프리셋의 플래그는 문구가 아니라 코드(ArgumentPreset.Flag)로 들고 있어야 한다
+        // 문구 값에 "--foo" 가 있으면 그 말이 그대로 화면에 나온다
         var text = File.ReadAllText(StringsPath);
         var document = XDocument.Parse(text);
 
@@ -36,7 +35,7 @@ public sealed partial class TerminalCardTests
             .ToList();
 
         offenders.Should().BeEmpty(
-            because: "화면 문구는 사람 말이어야 한다. 플래그는 ArgumentPreset.Flag 로 코드에서 붙인다");
+            because: "화면 문구는 사람 말이어야 한다. 플래그를 쓸 사람은 옵션 인자 칸에 직접 적는다");
     }
 
     [Theory]
@@ -176,15 +175,14 @@ public sealed partial class TerminalCardTests
     }
 
     [Fact]
-    public void 프리셋_단추는_날_플래그를_찍지_않는다()
+    public void 옵션_인자_아래에_추천_단추를_두지_않는다()
     {
-        // `--sandbox` 는 이 카드가 대상으로 삼는 사람에게 글자일 뿐이다. 한국어 라벨만 보이고 플래그는 툴팁에 있다
+        // 2026-09-10 사람의 요청. 적을 사람은 적고, 모르는 사람은 비워 둔다.
+        // 잘린 라벨 두 개가 칸 밑에 붙어 있는 것이 도움이 된 적이 없다
         var text = File.ReadAllText(PagePath);
 
-        text.Should().NotContain(
-            "<TextBlock Text=\"{x:Bind Flag}\"",
-            because: "단추 얼굴에 플래그를 찍지 않는다");
-        text.Should().Contain("ToolTipService.ToolTip=\"{x:Bind Flag}\"", because: "확인할 사람은 툴팁에서 본다");
+        text.Should().NotContain("ArgumentPreset", because: "프리셋 표는 걷어냈다");
+        text.Should().NotContain("OnPresetClick", because: "누를 단추가 없다");
     }
 
     [Fact]
@@ -215,37 +213,6 @@ public sealed partial class TerminalCardTests
         @"<StackPanel(?=[^>]*AutomationId=""StepAdvancedBody"")(?=[^>]*Visibility=""\{x:Bind ViewModel\.AdvancedExpanded)[^>]*>",
         RegexOptions.CultureInvariant)]
     private static partial Regex AdvancedOpensWhenRequiredDone();
-
-    private static readonly string ViewModelPath =
-        Path.Combine(Root, "src", "Daiso.App", "ViewModels", "TerminalViewModel.cs");
-
-    [Fact]
-    public void 프리셋_플래그는_값까지_담는다()
-    {
-        // "--permission-mode " 처럼 플래그만 붙이면 사람이 값을 몰라 그대로 열고, CLI 는 "argument missing" 으로 뜨지도 않는다
-        // (2026-09-10 실제로 그랬다). 값 없는 스위치(agy 의 --sandbox)는 끝에 빈칸이 없어 걸리지 않는다
-        var offenders = PresetPattern().Matches(File.ReadAllText(ViewModelPath))
-            .Select(match => match.Groups["flag"].Value)
-            .Where(EndsWithoutValue)
-            .ToList();
-
-        offenders.Should().BeEmpty(because: "값이 필요한 플래그는 프리셋에 값까지 넣는다. 값을 사람에게 맡기면 도구가 안 뜬다");
-    }
-
-    [Theory]
-    [InlineData("--permission-mode ", true)]
-    [InlineData("--sandbox ", true)]
-    [InlineData("--permission-mode plan", false)]
-    [InlineData("--sandbox", false)]
-    public void 값_없는_프리셋_검사가_어긴_예를_잡는다(string flag, bool shouldFlag)
-    {
-        EndsWithoutValue(flag).Should().Be(shouldFlag);
-    }
-
-    private static bool EndsWithoutValue(string flag) => flag.EndsWith(' ');
-
-    [GeneratedRegex(@"new\(""Terminal_Preset\w+"",\s*""(?<flag>[^""]*)""\)", RegexOptions.CultureInvariant)]
-    private static partial Regex PresetPattern();
 
     [GeneratedRegex(@"(?<![\w-])--[a-z][a-z-]{2,}", RegexOptions.CultureInvariant)]
     private static partial Regex FlagPattern();

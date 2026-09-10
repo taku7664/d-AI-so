@@ -665,7 +665,7 @@
                                             TextWrapping="Wrap" />
                                     </StackPanel>
 
-                                    <!-- 옵션: 실행 파일 뒤에 그대로 붙는 인자. 프리셋 단추는 이 칸을 채우는 것이라 칸 바로 아래 둔다 -->
+                                    <!-- 옵션: 실행 파일 뒤에 그대로 붙는 인자. 추천 단추는 두지 않는다 — 적을 사람은 적고, 모르는 사람은 비워 둔다 -->
                                     <TextBlock Grid.Row="3" Grid.Column="0" Text="{loc:Str Key=Terminal_OptionArgs}" VerticalAlignment="Center" />
                                     <StackPanel Grid.Row="3" Grid.Column="1" Spacing="{StaticResource GapSmall}">
                                         <TextBox
@@ -674,17 +674,6 @@
                                             ToolTipService.ToolTip="{loc:Str Key=Terminal_ArgsTip}"
                                             Text="{x:Bind ViewModel.SelectedTool.Arguments, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                             PlaceholderText="{loc:Str Key=Terminal_ArgsPlaceholder}" />
-                                        <!-- 단추에 날 플래그를 찍지 않는다. 한국어 라벨만 보이고, 실제로 붙는 글자는 툴팁에 있다 -->
-                                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.SelectedTool.Presets, Mode=OneWay}">
-                                            <ItemsRepeater.Layout>
-                                                <UniformGridLayout MinItemWidth="160" MinRowSpacing="{StaticResource GapSmall}" MinColumnSpacing="{StaticResource GapSmall}" ItemsStretch="Fill" />
-                                            </ItemsRepeater.Layout>
-                                            <ItemsRepeater.ItemTemplate>
-                                                <DataTemplate x:DataType="vm:ArgumentPreset">
-                                                    <Button Tag="{x:Bind Flag}" Click="OnPresetClick" HorizontalAlignment="Stretch" Content="{x:Bind Label}" ToolTipService.ToolTip="{x:Bind Flag}" />
-                                                </DataTemplate>
-                                            </ItemsRepeater.ItemTemplate>
-                                        </ItemsRepeater>
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>

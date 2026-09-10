@@ -1,21 +1,9 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using Daiso.App.Services;
 using Daiso.App.Strings;
 using Daiso.Core;
 
 namespace Daiso.App.ViewModels;
-
-/// <summary>
-/// 옵션 인자 프리셋 하나. <paramref name="LabelKey"/>는 한국어 문구 키, <paramref name="Flag"/>는 실제로 붙는 플래그.
-/// <para>
-/// 날 플래그(<c>--sandbox</c>)만 보여 주면 일반인은 무슨 일이 일어나는지 모르고, 한국어만 보여 주면
-/// 아는 사람이 무엇이 붙는지 못 본다. 둘 다 보여 준다. (docs/TERMINAL_CARD_PLAN.md §4.8)
-/// </para>
-/// </summary>
-public sealed record ArgumentPreset(string LabelKey, string Flag)
-{
-    public string Label => UiStrings.Get(LabelKey);
-}
 
 /// <summary>모델 칸 한 줄. <see cref="Option"/> 이 null 이면 "도구 설정대로" — <c>--model</c> 을 붙이지 않는다.</summary>
 public sealed class ModelChoiceViewModel
@@ -41,13 +29,11 @@ public sealed class ModelChoiceViewModel
 /// </summary>
 public sealed partial class ToolLaunchViewModel : ObservableObject
 {
-    public ToolLaunchViewModel(IProvider provider, IReadOnlyList<ArgumentPreset> presets)
+    public ToolLaunchViewModel(IProvider provider)
     {
         ArgumentNullException.ThrowIfNull(provider);
-        ArgumentNullException.ThrowIfNull(presets);
 
         Provider = provider;
-        Presets = presets;
         SelectedModel = ModelChoices[0];
     }
 
@@ -70,13 +56,6 @@ public sealed partial class ToolLaunchViewModel : ObservableObject
 
     /// <summary>카드에 붙는 설치 상태 한 줄. 고르기 전에 알아야 헛걸음을 안 한다.</summary>
     public string InstallStateText => UiStrings.Get(IsInstalled ? "Terminal_ToolReady" : "Terminal_ToolMissing");
-
-    /// <summary>
-    /// 인자 프리셋. 단추 얼굴에는 한국어 라벨만 나오고 실제 플래그는 툴팁에 있다 —
-    /// <c>--sandbox</c> 는 이 화면이 대상으로 삼는 사람에게 글자일 뿐이다.
-    /// 묶음 제목("{도구} 프리셋")은 걷어냈다: 옵션 줄의 라벨 칸이 이미 그 자리를 말한다.
-    /// </summary>
-    public IReadOnlyList<ArgumentPreset> Presets { get; }
 
     /// <summary>UI 자동화 식별자.</summary>
     public string AutomationId => $"Launch{Kind}Button";
@@ -206,17 +185,6 @@ public sealed partial class ToolLaunchViewModel : ObservableObject
 
             return $"{Label}  ▸  {command}";
         }
-    }
-
-    /// <summary>프리셋을 인자 뒤에 붙인다.</summary>
-    public void AppendPreset(string preset)
-    {
-        if (string.IsNullOrEmpty(preset))
-        {
-            return;
-        }
-
-        Arguments = Arguments.Length == 0 ? preset : $"{Arguments.TrimEnd()} {preset}";
     }
 
     public string ButtonText => IsInstalling
