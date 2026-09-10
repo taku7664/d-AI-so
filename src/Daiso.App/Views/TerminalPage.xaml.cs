@@ -360,11 +360,20 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
     /// 양방향으로 묶으면 그 빈 값이 새 탭의 모델을 지운다. 다른 탭의 줄이 오면 뷰모델이 알아보고 무시한다.
     /// </para>
     /// </summary>
-    private void OnModelPicked(object sender, SelectionChangedEventArgs e)
+    private void OnModelPicked(object sender, object picked)
     {
-        if (e.AddedItems.Count > 0 && e.AddedItems[0] is ModelChoiceViewModel choice)
+        if (picked is ModelChoiceViewModel choice)
         {
             ViewModel.SelectedTool.PickModel(choice);
+        }
+    }
+
+    /// <summary>프롬프트를 골랐다. 값 밀어넣기는 OneWay 로 오고, 사람이 고른 것만 여기로 온다.</summary>
+    private void OnPromptPicked(object sender, object picked)
+    {
+        if (picked is PromptChoiceViewModel choice)
+        {
+            ViewModel.SelectedPrompt = choice;
         }
     }
 

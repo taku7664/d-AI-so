@@ -563,28 +563,30 @@
                                         무엇을 하는 칸인지는 툴팁에 있다
                                     -->
                                     <TextBlock Grid.Row="1" Grid.Column="0" Text="{loc:Str Key=Terminal_PromptLabel}" VerticalAlignment="Center" />
-                                    <ComboBox
+                                    <controls:SearchablePicker
                                         Grid.Row="1"
                                         Grid.Column="1"
                                         HorizontalAlignment="Stretch"
                                         AutomationProperties.AutomationId="StartPromptBox"
                                         AutomationProperties.Name="{loc:Str Key=Terminal_PromptLabel}"
                                         ToolTipService.ToolTip="{loc:Str Key=Terminal_PromptHint}"
+                                        SearchPlaceholder="{loc:Str Key=Terminal_PromptSearch}"
                                         ItemsSource="{x:Bind ViewModel.PromptChoices}"
-                                        SelectedItem="{x:Bind ViewModel.SelectedPrompt, Mode=TwoWay}"
-                                        DisplayMemberPath="Name" />
+                                        SelectedItem="{x:Bind ViewModel.SelectedPrompt, Mode=OneWay}"
+                                        SelectionChanged="OnPromptPicked" />
 
                                     <!-- 모델: 도구가 알려 준 목록. 고르면 아래 인자 칸의 모델 플래그를 고쳐 쓴다 -->
                                     <TextBlock Grid.Row="2" Grid.Column="0" Text="{loc:Str Key=Terminal_ModelHeader}" VerticalAlignment="Center" />
                                     <StackPanel Grid.Row="2" Grid.Column="1" Spacing="{StaticResource GapSmall}">
-                                        <ComboBox
+                                        <controls:SearchablePicker
                                             HorizontalAlignment="Stretch"
                                             AutomationProperties.AutomationId="ModelPicker"
                                             AutomationProperties.Name="{loc:Str Key=Terminal_ModelHeader}"
                                             ToolTipService.ToolTip="{loc:Str Key=Terminal_ModelTip}"
+                                            SearchPlaceholder="{loc:Str Key=Terminal_ModelSearch}"
+                                            PlaceholderText="{loc:Str Key=Terminal_ModelDefault}"
                                             ItemsSource="{x:Bind ViewModel.SelectedTool.ModelChoices, Mode=OneWay}"
                                             SelectedItem="{x:Bind ViewModel.SelectedTool.SelectedModel, Mode=OneWay}"
-                                            DisplayMemberPath="Name"
                                             SelectionChanged="OnModelPicked" />
                                         <!-- 설명이 아니라 상태다: 읽는 중이거나, 도구가 목록을 안 줬거나 -->
                                         <TextBlock

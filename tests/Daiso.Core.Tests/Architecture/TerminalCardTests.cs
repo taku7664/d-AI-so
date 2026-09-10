@@ -143,8 +143,9 @@ public sealed partial class TerminalCardTests
             because: "고를 수 있는 칸을 조건부로 숨기면 어디 갔는지 찾게 된다");
     }
 
+    // 칸이 ComboBox 였다가 SearchablePicker 가 됐다. 무엇으로 그리든 조건부로 숨기지 않는 것이 규칙이다
     [GeneratedRegex(
-        @"<ComboBox(?=[^>]*AutomationId=""StartPromptBox"")(?![^>]*Visibility=)[^>]*>",
+        @"<[\w:]+(?=[^>]*AutomationId=""StartPromptBox"")(?![^>]*Visibility=)[^>]*>",
         RegexOptions.CultureInvariant)]
     private static partial Regex PromptAlwaysVisible();
 

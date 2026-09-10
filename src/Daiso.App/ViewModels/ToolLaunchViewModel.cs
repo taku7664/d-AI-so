@@ -21,6 +21,9 @@ public sealed class ModelChoiceViewModel
     public string Name => Option is null
         ? UiStrings.Get("Terminal_ModelDefault")
         : string.Equals(Option.Name, Option.Id, StringComparison.OrdinalIgnoreCase) ? Option.Id : $"{Option.Name}  ·  {Option.Id}";
+
+    /// <summary>목록에 그리는 글이자 검색칸이 거르는 글 (SearchablePicker 규칙).</summary>
+    public override string ToString() => Name;
 }
 
 /// <summary>

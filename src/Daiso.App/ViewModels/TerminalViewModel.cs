@@ -967,4 +967,7 @@ public sealed class PromptChoiceViewModel
     public PromptPreset? Preset { get; }
 
     public string Name => Preset?.Name ?? UiStrings.Get("Terminal_PromptNone");
+
+    /// <summary>목록에 그리는 글이자 검색칸이 거르는 글 (SearchablePicker 규칙).</summary>
+    public override string ToString() => Name;
 }
