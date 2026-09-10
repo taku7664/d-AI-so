@@ -179,17 +179,6 @@
                         </Button.Flyout>
                     </Button>
 
-                    <!--
-                        슬래시 명령. 도구·폴더마다 있는 명령을 SlashCommandReader 가 이미 읽고 있었는데
-                        챗봇 방에서만 쓰고 있었다. 외우기 어려운 걸 대신 기억해 주는 게 이 앱이 할 일이다
-                    -->
-                    <Button x:Name="RoomSlashButton" Style="{StaticResource ToolbarIconButton}" AutomationProperties.AutomationId="RoomSlashButton" AutomationProperties.Name="{loc:Str Key=Room_SlashCommand}" ToolTipService.ToolTip="{loc:Str Key=Room_SlashCommandTip}">
-                        <TextBlock Text="/" FontFamily="Consolas" FontSize="{StaticResource SubtitleFontSize}" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        <Button.Flyout>
-                            <MenuFlyout x:Name="RoomSlashFlyout" Opening="OnRoomSlashFlyoutOpening" Placement="BottomEdgeAlignedLeft" />
-                        </Button.Flyout>
-                    </Button>
-
                     <!-- 파일 첨부: 끌어놓기와 같은 길이지만, 눈에 보이는 길은 이것뿐이다 -->
                     <Button Style="{StaticResource ToolbarIconButton}" Click="OnRoomAttachClick" AutomationProperties.AutomationId="RoomAttachButton" AutomationProperties.Name="{loc:Str Key=Room_AttachFile}" ToolTipService.ToolTip="{loc:Str Key=Room_AttachFileTip}">
                         <FontIcon Glyph="&#xE723;" FontSize="{StaticResource BodyFontSize}" />

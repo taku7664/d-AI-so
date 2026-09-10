@@ -1327,15 +1327,6 @@
   <data name="Room_FindPrev" xml:space="preserve">
     <value>이전 찾기</value>
   </data>
-  <data name="Room_SlashCommand" xml:space="preserve">
-    <value>슬래시 명령</value>
-  </data>
-  <data name="Room_SlashCommandTip" xml:space="preserve">
-    <value>이 도구·폴더에서 쓸 수 있는 / 명령을 골라 타이핑합니다. 실행은 Enter 로 직접 누르세요</value>
-  </data>
-  <data name="Room_NoSlashCommands" xml:space="preserve">
-    <value>쓸 수 있는 / 명령이 없습니다</value>
-  </data>
   <data name="Room_CopyScreen" xml:space="preserve">
     <value>화면 복사</value>
   </data>

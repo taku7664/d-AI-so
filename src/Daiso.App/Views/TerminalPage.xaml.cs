@@ -752,59 +752,6 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
         }
     }
 
-    /// <summary>
-    /// 슬래시 명령 목록. 도구·폴더마다 다르고 외우기 어려운 것이라 여기서 대신 기억한다.
-    /// 고르면 터미널에 <c>/이름</c> 을 타이핑한다 — 실행(Enter)은 사람이 누른다. 인자를 더 적을 수 있어야 하기 때문이다.
-    /// </summary>
-    private void OnRoomSlashFlyoutOpening(object? sender, object e)
-    {
-        RoomSlashFlyout.Items.Clear();
-
-        if (_room is not TerminalRoomViewModel room)
-        {
-            return;
-        }
-
-        var commands = App.Services.GetRequiredService<Daiso.Infrastructure.SlashCommandReader>()
-            .Read(room.Tool, room.ProjectDirectory);
-
-        foreach (var group in commands.GroupBy(command => command.Source))
-        {
-            if (RoomSlashFlyout.Items.Count > 0)
-            {
-                RoomSlashFlyout.Items.Add(new MenuFlyoutSeparator());
-            }
-
-            foreach (var command in group)
-            {
-                var item = new MenuFlyoutItem { Text = command.Invocation };
-
-                if (command.Description is { Length: > 0 } description)
-                {
-                    ToolTipService.SetToolTip(item, description);
-                }
-
-                var captured = command;
-                item.Click += (_, _) =>
-                {
-                    room.SendRaw(captured.Invocation);
-                    Embedded.FocusTerminal();
-                };
-
-                RoomSlashFlyout.Items.Add(item);
-            }
-        }
-
-        if (RoomSlashFlyout.Items.Count == 0)
-        {
-            RoomSlashFlyout.Items.Add(new MenuFlyoutItem
-            {
-                Text = UiStrings.Get("Room_NoSlashCommands"),
-                IsEnabled = false,
-            });
-        }
-    }
-
     // ── 끌어놓기 (IFileDropSink — 셸의 FileDropTarget 이 OLE 드롭을 받아 넘긴다) ───────────
 
     public bool CanAcceptFiles => TerminalPanel.Visibility == Visibility.Visible;
