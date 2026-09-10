@@ -191,6 +191,17 @@ public sealed partial class TerminalCardTests
     }
 
     [Fact]
+    public void 폴더는_고르는_것으로_답이_된다()
+    {
+        // 2026-09-11 사람의 요청. 마지막에 쓴 폴더를 미리 채워 두니 "채워진 것"과 "고른 것"이 같아 보였고,
+        // 그것을 가르려고 `이 폴더로` 확인 단추를 따로 둬야 했다. 이제 빈 칸으로 열린다
+        var text = File.ReadAllText(PagePath);
+
+        text.Should().NotContain("ConfirmFolderButton", because: "고르는 것 말고 확인하는 단계를 따로 두지 않는다");
+        text.Should().Contain("Key=Terminal_FolderPick", because: "빈 칸이 무엇을 기다리는지 자리표시자가 말한다");
+    }
+
+    [Fact]
     public void 옵션_인자_아래에_추천_단추를_두지_않는다()
     {
         // 2026-09-10 사람의 요청. 적을 사람은 적고, 모르는 사람은 비워 둔다.

@@ -94,7 +94,10 @@ public sealed partial class TerminalViewModel : ObservableObject
 
         RecentFolders = new ObservableCollection<string>(_settings.Current.RecentFolders);
         RebuildFolderChoices();
-        WorkingDirectory = RecentFolders.FirstOrDefault();
+
+        // 마지막에 쓴 폴더를 미리 채우지 않는다. 채워 두면 "고른 것"과 "채워진 것"이 같아 보여서
+        // 그것을 가르려고 확인 단추(`이 폴더로`)를 따로 둬야 했다 (2026-09-11 사람의 요청).
+        // 지금은 빈 칸으로 열리고, 목록에서 고르거나 찾아보기로 열면 그게 답이다
         RefreshPreviews();
         LoadPromptChoices();
     }
@@ -211,8 +214,6 @@ public sealed partial class TerminalViewModel : ObservableObject
             return;
         }
 
-        // 사람이 고른 것이다. 기억해 둔 기본값과 구분한다
-        FolderChosen = true;
         WorkingDirectory = path;
         Remember(path);
 
@@ -220,10 +221,6 @@ public sealed partial class TerminalViewModel : ObservableObject
         // 그때도 답한 것이므로 여기서 직접 넘긴다
         AdvanceFromFolder();
     }
-
-    /// <summary>미리 채워 둔 폴더를 그대로 쓰겠다고 확인한다.</summary>
-    [RelayCommand]
-    public void ConfirmFolder() => SetFolder(WorkingDirectory ?? string.Empty);
 
     /// <summary>폴더 답이 끝났으면 바로 아래 다음 단계를 연다. 폴더 단계는 접지 않는다.</summary>
     private void AdvanceFromFolder()
@@ -438,20 +435,13 @@ public sealed partial class TerminalViewModel : ObservableObject
     [ObservableProperty]
     private bool toolChosen;
 
-    /// <summary>
-    /// 사람이 폴더를 골랐는가. <see cref="WorkingDirectory"/>는 <b>마지막에 쓴 폴더로 미리 채워지므로</b>
-    /// "값이 있다"와 "사람이 답했다"가 다르다 — 그걸 구분하지 않아서, AI만 고르면 폴더 단계가
-    /// 답이 된 것처럼 통째로 건너뛰어졌다. <see cref="ToolChosen"/>과 같은 이유다.
-    /// </summary>
-    [ObservableProperty]
-    private bool folderChosen;
-
     public bool ToolDone => ToolChosen;
 
-    public bool FolderDone => ToolDone && FolderChosen && CanLaunch;
-
-    /// <summary>미리 채워 둔 폴더가 있는데 아직 확인받지 못했다. 그 자리에 확인 단추를 낸다.</summary>
-    public bool FolderNeedsConfirm => FolderExpanded && CanLaunch && !FolderChosen;
+    /// <summary>
+    /// 폴더 단계에 답했는가. 칸이 비어 열리고 <see cref="SetFolder"/> 로만 값이 들어오므로
+    /// "값이 있다"가 곧 "사람이 골랐다"이다 — 따로 <c>FolderChosen</c> 을 들고 있을 이유가 없다.
+    /// </summary>
+    public bool FolderDone => ToolDone && CanLaunch;
 
     public bool SessionDone => FolderDone && SelectedSession is not null;
 
@@ -622,7 +612,7 @@ public sealed partial class TerminalViewModel : ObservableObject
 
     private static readonly string[] StepDependentProperties =
     [
-        nameof(ToolDone), nameof(FolderDone), nameof(SessionDone), nameof(FolderNeedsConfirm),
+        nameof(ToolDone), nameof(FolderDone), nameof(SessionDone),
         nameof(ToolExpanded), nameof(FolderExpanded), nameof(SessionExpanded),
         nameof(FolderReachable), nameof(SessionReachable),
         nameof(ToolMarkCheck), nameof(ToolMarkCurrent), nameof(ToolMarkPending),
