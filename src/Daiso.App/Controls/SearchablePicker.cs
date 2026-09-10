@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using Microsoft.UI.Xaml;
@@ -181,6 +181,23 @@ public sealed class SearchablePicker : Grid
         set => SetValue(VisibleItemCountProperty, value);
     }
 
+    public static readonly DependencyProperty IsPickerEnabledProperty =
+        DependencyProperty.Register(nameof(IsPickerEnabled), typeof(bool), typeof(SearchablePicker), new PropertyMetadata(true, OnIsPickerEnabledChanged));
+
+    /// <summary>
+    /// 지금 고를 수 있는가. 거짓이면 칸이 잠긴 모양이 되고 목록도 열리지 않는다.
+    /// <para>
+    /// <c>IsEnabled</c> 가 아니라 따로 둔 이름이다 — 이 컨트롤은 <see cref="Grid"/> 라
+    /// <c>Control.IsEnabled</c> 를 물려받지 않는다. 같은 이름을 새로 만들면 XAML 에서 둘 중 어느 것이
+    /// 걸린 것인지 알 수 없어진다.
+    /// </para>
+    /// </summary>
+    public bool IsPickerEnabled
+    {
+        get => (bool)GetValue(IsPickerEnabledProperty);
+        set => SetValue(IsPickerEnabledProperty, value);
+    }
+
     public static readonly DependencyProperty AllowFreeTextProperty =
         DependencyProperty.Register(nameof(AllowFreeText), typeof(bool), typeof(SearchablePicker), new PropertyMetadata(false));
 
@@ -211,7 +228,7 @@ public sealed class SearchablePicker : Grid
     /// <summary>목록을 편다. 검색칸이 비워지고 거기로 포커스가 간다.</summary>
     public void Open()
     {
-        if (_flyout.IsOpen || Environment.TickCount64 - _closedAt < ReopenGuardMilliseconds)
+        if (!IsPickerEnabled || _flyout.IsOpen || Environment.TickCount64 - _closedAt < ReopenGuardMilliseconds)
         {
             return;
         }
@@ -392,6 +409,14 @@ public sealed class SearchablePicker : Grid
         if (element is SearchablePicker picker)
         {
             picker._search.PlaceholderText = picker.SearchPlaceholder;
+        }
+    }
+
+    private static void OnIsPickerEnabledChanged(DependencyObject element, DependencyPropertyChangedEventArgs e)
+    {
+        if (element is SearchablePicker picker)
+        {
+            picker._face.IsEnabled = picker.IsPickerEnabled;
         }
     }
 

@@ -163,6 +163,15 @@ public sealed partial class SessionsPage : Page, IPageHeaderSource
         }
     }
 
+    /// <summary>프로젝트를 골랐다. 값 밀어넣기는 OneWay 로 오고, 사람이 고른 것만 여기로 온다.</summary>
+    private void OnProjectPicked(object sender, object picked)
+    {
+        if (picked is ProjectGroupViewModel project)
+        {
+            ViewModel.SelectedProject = project;
+        }
+    }
+
     private async void OnSessionSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (ViewModel.SelectedSession is { } row)

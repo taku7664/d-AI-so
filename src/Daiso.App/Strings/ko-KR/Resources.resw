@@ -900,6 +900,9 @@
     <value>고른 줄 옆에 조건이 붙습니다. 묶으려면 감싸기를 쓰세요.</value>
   </data>
   <!-- Sessions 레이아웃 2열 -->
+  <data name="Sessions_ProjectSearch" xml:space="preserve">
+    <value>프로젝트 이름이나 경로로 찾기</value>
+  </data>
   <data name="Sessions_ProjectFilter" xml:space="preserve">
     <value>프로젝트</value>
   </data>

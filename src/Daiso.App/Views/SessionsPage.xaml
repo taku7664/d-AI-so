@@ -86,16 +86,19 @@
             <Border Background="Transparent" ToolTipService.ToolTip="{loc:Str Key=Sessions_SearchScopeHint}">
                 <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
                     <TextBlock Text="{loc:Str Key=Sessions_ProjectFilter}" VerticalAlignment="Center" />
-                    <ComboBox
+                    <!-- 프로젝트가 서른 넘게 온다. 훑어 고르는 것이 불가능해 검색칸이 붙은 칸으로 바꿨다 (2026-09-11) -->
+                    <controls:SearchablePicker
                         MinWidth="220"
                         MaxWidth="300"
-                        IsEnabled="{x:Bind ViewModel.CanPickProject, Mode=OneWay}"
+                        IsPickerEnabled="{x:Bind ViewModel.CanPickProject, Mode=OneWay}"
                         AutomationProperties.AutomationId="ProjectCombo"
                         AutomationProperties.Name="{loc:Str Key=Sessions_ProjectFilter}"
+                        SearchPlaceholder="{loc:Str Key=Sessions_ProjectSearch}"
+                        PlaceholderText="{loc:Str Key=Sessions_ProjectFilter}"
                         ItemsSource="{x:Bind ViewModel.Projects}"
-                        SelectedItem="{x:Bind ViewModel.SelectedProject, Mode=TwoWay}"
-                        ItemTemplate="{StaticResource ProjectRowTemplate}">
-                    </ComboBox>
+                        SelectedItem="{x:Bind ViewModel.SelectedProject, Mode=OneWay}"
+                        ItemTemplate="{StaticResource ProjectRowTemplate}"
+                        SelectionChanged="OnProjectPicked" />
                 </StackPanel>
             </Border>
 

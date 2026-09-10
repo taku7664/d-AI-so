@@ -783,6 +783,12 @@ public sealed class ProjectGroupViewModel
 
     /// <summary>드롭다운 한 줄. 이름과 건수를 함께 보여준다.</summary>
     public string ComboLabel => $"{DisplayName}  ·  {Summary}";
+
+    /// <summary>
+    /// 검색칸이 거르는 글 (SearchablePicker 규칙). <b>경로까지 넣는다</b> —
+    /// 이름이 같은 프로젝트가 여럿일 때 이름만으로는 못 가린다.
+    /// </summary>
+    public override string ToString() => $"{ComboLabel} {Path}";
 }
 
 /// <summary>세션 목록 한 줄. (REQUIREMENTS §5.1 열)</summary>
