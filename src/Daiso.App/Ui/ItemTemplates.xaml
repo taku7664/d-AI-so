@@ -454,7 +454,20 @@
                                     <Button
                                         Content="{loc:Str Key=AuthProfile_SaveCurrent}"
                                         AutomationProperties.AutomationId="SaveProfileButton"
+                                        Visibility="{x:Bind CanSaveProfile}"
                                         Command="{x:Bind SaveProfileCommand}" />
+
+                                    <!--
+                                        로그인이 파일이 아니라 자격 증명 관리자에 있는 도구. 복사해도 계정이 안 바뀌므로
+                                        보관 단추를 아예 내주지 않고 왜 없는지 적는다 (docs/REVIEW_BACKLOG.md L1)
+                                    -->
+                                    <Border Style="{StaticResource NoticeBorder}" Visibility="{x:Bind CannotSaveProfile}">
+                                        <TextBlock
+                                            AutomationProperties.AutomationId="ProfileNotSupportedNote"
+                                            Text="{loc:Str Key=AuthProfile_NotInFiles}"
+                                            Style="{StaticResource PageSubtitleText}"
+                                            TextWrapping="Wrap" />
+                                    </Border>
                                     <Border Style="{StaticResource NoticeBorder}" Visibility="{x:Bind HasNoProfiles, Mode=OneWay}">
                                         <TextBlock Text="{loc:Str Key=AuthProfile_Empty}" Style="{StaticResource PageSubtitleText}" />
                                     </Border>

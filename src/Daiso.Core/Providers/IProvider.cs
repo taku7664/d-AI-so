@@ -89,4 +89,17 @@ public interface IProvider
     /// 값은 읽지 않고 바이트로만 옮긴다.
     /// </summary>
     IReadOnlyList<AuthFile> AuthFiles { get; }
+
+    /// <summary>
+    /// 로그인이 <b>파일에</b> 들어 있는가. 계정 보관·전환(<c>IAuthProfileStore</c>)이 되는지를 가른다.
+    ///
+    /// <para>
+    /// 프로필은 <see cref="AuthFiles"/> 를 복사했다가 되돌리는 방식이다. 그러니 로그인이 파일이 아닌 곳
+    /// (예: Windows 자격 증명 관리자)에 있으면 <b>복사해도 계정이 바뀌지 않는다</b>.
+    /// 그런데도 저장이 되면 "보관해 뒀다"고 믿게 만들어 놓고 되돌리기가 아무 일도 안 한다 — 조용히 틀리는 쪽이다.
+    /// </para>
+    ///
+    /// <para>기본값은 true. 파일이 아닌 도구가 스스로 false 로 밝힌다.</para>
+    /// </summary>
+    bool LoginLivesInFiles => true;
 }

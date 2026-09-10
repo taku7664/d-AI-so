@@ -983,6 +983,10 @@
   <data name="AuthProfile_AccountsCount" xml:space="preserve">
     <value>계정 {0}</value>
   </data>
+  <data name="AuthProfile_NotInFiles" xml:space="preserve">
+    <value>이 도구는 로그인을 파일이 아니라 Windows 자격 증명 관리자에 둡니다. 앱은 그 값을 읽지 않으므로 계정을 보관하거나 전환할 수 없습니다. 계정을 바꾸려면 터미널에서 직접 다시 로그인하세요.</value>
+    <comment>Antigravity 처럼 로그인이 파일에 없는 도구의 계정 팝오버에 뜬다</comment>
+  </data>
   <data name="AuthProfile_Empty" xml:space="preserve">
     <value>저장한 프로필이 없습니다. 지금 로그인한 계정을 저장해 두세요.</value>
   </data>

@@ -173,6 +173,18 @@ public sealed class AntigravityProvider : IProvider, IUsageReader
     ];
 
     /// <inheritdoc />
+    /// <remarks>
+    /// <b>아니다.</b> `agy` 는 로그인을 Windows 자격 증명 관리자
+    /// (<see cref="AntigravityAuthReader.CredentialTarget"/>)에 두고 토큰을 파일에 남기지 않는다(2026-09-09 실측).
+    /// 위 <c>settings.json</c> 은 고른 모델·인증 방식일 뿐 계정이 아니다 —
+    /// 그것을 복사해 되돌려도 <b>로그인은 그대로다</b>.
+    /// <para>
+    /// 값을 읽어 옮기는 길은 일부러 열지 않는다. 이 앱은 자격 증명 값을 읽지 않는다 (ARCHITECTURE §7.1).
+    /// </para>
+    /// </remarks>
+    public bool LoginLivesInFiles => false;
+
+    /// <inheritdoc />
     public async Task<AuthStatus> GetAuthStatusAsync(CancellationToken ct)
     {
         var settings = await ReadTextOrNullAsync(Path.Combine(ConfigDirectory, "settings.json"), ct).ConfigureAwait(false);

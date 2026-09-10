@@ -75,12 +75,28 @@ public sealed class AuthProfileStore : IAuthProfileStore
         return [.. profiles.OrderByDescending(profile => profile.SavedAt)];
     }
 
+    /// <summary>
+    /// 로그인이 파일에 없는 도구는 여기서 막는다. 프로필은 파일을 복사했다 되돌리는 것이라,
+    /// 자격 증명 관리자에 있는 로그인은 <b>복사해도 계정이 바뀌지 않는다</b>.
+    /// 화면이 이미 단추를 감추지만, 계약을 아는 쪽에서 한 번 더 막는다 — 조용히 되는 척하는 것보다 낫다.
+    /// </summary>
+    private static void Refuse(IProvider provider)
+    {
+        if (!provider.LoginLivesInFiles)
+        {
+            throw new InvalidOperationException(
+                $"{provider.Kind} 는 로그인을 파일에 두지 않아 계정을 보관·전환할 수 없다");
+        }
+    }
+
     /// <inheritdoc />
     public AuthProfile Save(string name, IProvider provider, AuthStatus status)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentNullException.ThrowIfNull(provider);
         ArgumentNullException.ThrowIfNull(status);
+
+        Refuse(provider);
 
         var profile = new AuthProfile(
             name.Trim(),
@@ -137,6 +153,8 @@ public sealed class AuthProfileStore : IAuthProfileStore
     {
         ArgumentNullException.ThrowIfNull(profile);
         ArgumentNullException.ThrowIfNull(provider);
+
+        Refuse(provider);
 
         var directory = DirectoryFor(profile.Tool, profile.Name);
 

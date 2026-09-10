@@ -61,7 +61,10 @@ public sealed partial class DashboardViewModel : ObservableObject
 
         Tools = new ObservableCollection<ToolCardViewModel>(
             ToolLook.InDisplayOrder(_providers, provider => provider.Kind)
-                .Select(provider => new ToolCardViewModel(provider.Kind, this)));
+                .Select(provider => new ToolCardViewModel(provider.Kind, this)
+                {
+                    CanSaveProfile = provider.LoginLivesInFiles,
+                }));
         VisibleTools = new ObservableCollection<ToolCardViewModel>(Tools);
     }
 
@@ -467,6 +470,15 @@ public sealed partial class ToolCardViewModel : ObservableObject
 
     /// <summary>보관 중인 프로필이 없는가. 안내 문구를 띄운다.</summary>
     public bool HasNoProfiles => Profiles.Count == 0;
+
+    /// <summary>
+    /// 이 도구의 로그인을 이름 붙여 보관할 수 있는가.
+    /// 로그인이 파일이 아니라 자격 증명 관리자에 있으면 복사해도 계정이 안 바뀌므로 아예 내주지 않는다.
+    /// </summary>
+    public bool CanSaveProfile { get; init; } = true;
+
+    /// <summary>보관할 수 없는 도구라는 안내를 띄우는가.</summary>
+    public bool CannotSaveProfile => !CanSaveProfile;
 
     /// <summary>계정 버튼 글자. 보관 개수가 있으면 붙인다.</summary>
     public string AccountsButtonText => Profiles.Count == 0
