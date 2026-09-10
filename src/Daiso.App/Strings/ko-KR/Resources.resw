@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!--
     화면 문구의 정본. (ARCHITECTURE §6.1)
@@ -1546,6 +1546,9 @@
   </data>
   <data name="Terminal_PromptHint" xml:space="preserve">
     <value>고르면 프로젝트 docs/prompts에 넣고 첫 메시지로 실행 요청을 보냅니다</value>
+  </data>
+  <data name="Terminal_PromptResumeNote" xml:space="preserve">
+    <value>이어서 할 대화에는 첫 메시지를 보내지 않습니다. 프롬프트는 새로 시작할 때만 고릅니다</value>
   </data>
   <data name="Terminal_PromptNone" xml:space="preserve">
     <value>프롬프트 없음</value>

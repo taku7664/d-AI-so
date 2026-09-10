@@ -758,3 +758,12 @@ Stage 1(골격)만 되돌리면 그 위 단계가 다 무너지므로, Stage 1�
   옆에 맞출 줄이 없어져 72 폭 라벨 칸이 의미를 잃었다
 - **새로 시작을 고른 뒤에만 보인다**(`Visibility = ShowNewSessionOptions`). 이어서 할 대화에는 보낼 첫 메시지가 없다
 - `TerminalCardTests` 두 건이 자리와 조건을 잠근다
+
+### 같은 날 다섯 번째 — 세부 설정은 필수를 다 답해야 열린다
+
+- 4단계 몸의 조건을 `SessionExpanded`(3단계가 펼쳐졌나) → **`AdvancedExpanded = SessionDone`**(필수 1~3 단계에 답이 다 찼나)으로 바꿨다.
+  전에는 "이어서"를 고르고 **아직 대화를 안 골랐는데도** 모델·인자·프리셋이 먼저 나와, 무엇이 남았는지 흐려졌다
+- 머리 흐림도 `SessionHeaderOpacity` → `AdvancedHeaderOpacity` 로 갈랐다. 몸이 안 열리는 이유를 머리가 같이 말한다
+- 프롬프트가 "이어서"에서 **말없이 사라지던 것**에 `Terminal_PromptResumeNote` 한 줄을 붙였다 —
+  없는 칸을 찾게 두지 않는다
+- `TerminalCardTests` 가 셋 다 잠근다

@@ -85,12 +85,14 @@ public sealed partial class TerminalCardTests
     }
 
     [Fact]
-    public void 세부_설정은_3단계와_함께_열린다()
+    public void 세부_설정은_필수_세_단계를_다_답해야_열린다()
     {
+        // 2026-09-10: 3단계가 "펼쳐지기만" 하면 열던 때는, 이어서를 고르고 대화를 안 골랐는데도
+        // 모델·인자가 먼저 나와 무엇이 남았는지 흐려졌다. AdvancedExpanded 는 SessionDone 을 본다
         var text = File.ReadAllText(PagePath);
 
-        AdvancedOpensWithSession().IsMatch(text).Should().BeTrue(
-            because: "(선택) 세부 설정은 1~3 단계와 같은 단계이고, 3단계가 열릴 때 같이 열린다");
+        AdvancedOpensWhenRequiredDone().IsMatch(text).Should().BeTrue(
+            because: "(선택) 세부 설정은 필수 1~3 단계에 답이 다 채워진 뒤에 열린다");
         text.Should().NotContain("muxc:Expander", because: "세부 설정은 접는 상자가 아니라 단계다");
     }
 
@@ -139,6 +141,9 @@ public sealed partial class TerminalCardTests
 
         PromptOnlyForNewSession().IsMatch(text).Should().BeTrue(
             because: "이어서 할 대화에는 보낼 첫 메시지가 없다");
+        text.Should().Contain(
+            "Key=Terminal_PromptResumeNote",
+            because: "말없이 사라지면 \"프롬프트 어디 갔지\"가 된다 — 그 자리에서 없는 이유를 말한다");
     }
 
     [GeneratedRegex(
@@ -171,9 +176,9 @@ public sealed partial class TerminalCardTests
     private static partial Regex StepHeaderButton();
 
     [GeneratedRegex(
-        @"<StackPanel(?=[^>]*AutomationId=""StepAdvancedBody"")(?=[^>]*Visibility=""\{x:Bind ViewModel\.SessionExpanded)[^>]*>",
+        @"<StackPanel(?=[^>]*AutomationId=""StepAdvancedBody"")(?=[^>]*Visibility=""\{x:Bind ViewModel\.AdvancedExpanded)[^>]*>",
         RegexOptions.CultureInvariant)]
-    private static partial Regex AdvancedOpensWithSession();
+    private static partial Regex AdvancedOpensWhenRequiredDone();
 
     private static readonly string ViewModelPath =
         Path.Combine(Root, "src", "Daiso.App", "ViewModels", "TerminalViewModel.cs");

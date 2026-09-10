@@ -560,11 +560,18 @@ public sealed partial class TerminalViewModel : ObservableObject
 
     public bool SessionMarkPending => !SessionDone && !SessionExpanded;
 
-    // 4단계 (선택) 세부 설정: 답할 것이 없어 ✓ 가 없다. 3단계와 함께 열리면 ●, 그 전에는 ○.
-    // 시작 버튼(CanStart)은 이 단계를 보지 않는다 — 아무것도 안 골라도 열 수 있어야 한다
-    public bool AdvancedMarkCurrent => SessionExpanded;
+    /// <summary>
+    /// 4단계 (선택) 세부 설정의 몸이 열려 있는가. <b>필수 1~3 단계에 답이 다 채워진 뒤에만 연다</b>
+    /// (2026-09-10 사람의 요청). 3단계가 <i>펼쳐지자마자</i> 같이 열던 때는, "이어서"를 고르고
+    /// 아직 대화를 안 골랐는데도 모델·인자가 먼저 나와 무엇이 남았는지 흐려졌다.
+    /// </summary>
+    public bool AdvancedExpanded => SessionDone;
 
-    public bool AdvancedMarkPending => !SessionExpanded;
+    // 4단계 (선택) 세부 설정: 답할 것이 없어 ✓ 가 없다. 열리면 ●, 그 전에는 ○.
+    // 시작 버튼(CanStart)은 이 단계를 보지 않는다 — 아무것도 안 골라도 열 수 있어야 한다
+    public bool AdvancedMarkCurrent => AdvancedExpanded;
+
+    public bool AdvancedMarkPending => !AdvancedExpanded;
     /// <summary>라디오에 물리는 값. 아직 안 골랐으면 −1이라 아무것도 켜지지 않는다.</summary>
     public int SessionModeSelection => SessionModeChosen ? SessionModeIndex : -1;
 
@@ -582,6 +589,9 @@ public sealed partial class TerminalViewModel : ObservableObject
     public double FolderHeaderOpacity => FolderReachable ? 1.0 : 0.4;
 
     public double SessionHeaderOpacity => SessionReachable ? 1.0 : 0.4;
+
+    /// <summary>필수 3단계가 다 채워지기 전에는 세부 설정 머리도 흐리다 — 몸이 안 열리는 이유를 머리가 같이 말한다.</summary>
+    public double AdvancedHeaderOpacity => AdvancedExpanded ? 1.0 : 0.4;
 
     /// <summary>
     /// 기본 버튼 글. "새로 시작할지 이어서 할지 안 골랐어요"라고 해 놓고 버튼이 `터미널로 열기`면 말이 어긋난다.
@@ -727,6 +737,7 @@ public sealed partial class TerminalViewModel : ObservableObject
         nameof(ToolMarkCheck), nameof(ToolMarkCurrent), nameof(ToolMarkPending),
         nameof(FolderMarkCheck), nameof(FolderMarkCurrent), nameof(FolderMarkPending),
         nameof(SessionMarkCheck), nameof(SessionMarkCurrent), nameof(SessionMarkPending),
+        nameof(AdvancedExpanded), nameof(AdvancedHeaderOpacity),
         nameof(AdvancedMarkCurrent), nameof(AdvancedMarkPending),
         nameof(SessionModeSelection), nameof(ToolSelection),
         nameof(ShowNewSessionOptions), nameof(ShowResumeList),

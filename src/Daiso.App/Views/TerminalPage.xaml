@@ -581,11 +581,12 @@
 
                             <!--
                                 ───── 4. (선택) 세부 설정을 원하시나요? ─────
-                                1~3 단계와 같은 머리 + 몸이다. 3단계가 열릴 때 함께 열리고, 사람이 접고 펴지 않는다.
+                                1~3 단계와 같은 머리 + 몸이다. 필수 세 단계에 답이 다 채워지면 열리고, 사람이 접고 펴지 않는다.
+                                (2026-09-10 사람의 요청. 전에는 3단계가 펼쳐지기만 하면 열려서, "이어서"를 고르고 대화를 안 골랐는데도 모델·인자가 먼저 나왔다)
                                 답할 것이 없는 단계라 ✓ 가 없고, 시작 버튼을 막지 않는다(CanStart 는 1~3 단계만 본다).
                                 규칙 편집도 여기 둔다 — 폴더를 고르는 자리에서 규칙까지 들이밀면 필수 단계가 길어진다 (2026-09-10 사람의 요청)
                             -->
-                            <Grid Grid.Row="6" Style="{StaticResource StepHeader}" x:Name="StepAdvancedHeader" Opacity="{x:Bind ViewModel.SessionHeaderOpacity, Mode=OneWay}" AutomationProperties.AutomationId="StepAdvancedHeader">
+                            <Grid Grid.Row="6" Style="{StaticResource StepHeader}" x:Name="StepAdvancedHeader" Opacity="{x:Bind ViewModel.AdvancedHeaderOpacity, Mode=OneWay}" AutomationProperties.AutomationId="StepAdvancedHeader">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="20" />
                                     <ColumnDefinition Width="*" />
@@ -597,7 +598,7 @@
                                 <TextBlock Grid.Column="1" Text="{loc:Str Key=Terminal_Advanced}" Style="{StaticResource SectionTitleText}" VerticalAlignment="Center" />
                             </Grid>
 
-                            <StackPanel Grid.Row="7" Style="{StaticResource StepBody}" Visibility="{x:Bind ViewModel.SessionExpanded, Mode=OneWay}" AutomationProperties.AutomationId="StepAdvancedBody">
+                            <StackPanel Grid.Row="7" Style="{StaticResource StepBody}" Visibility="{x:Bind ViewModel.AdvancedExpanded, Mode=OneWay}" AutomationProperties.AutomationId="StepAdvancedBody">
                                 <!-- 규칙: 이 폴더의 규칙 파일이 있는지 + 편집. 폴더 단계에 있다가 여기로 옮겼다 -->
                                 <Grid ColumnSpacing="{StaticResource GapMedium}">
                                     <Grid.ColumnDefinitions>
@@ -637,6 +638,8 @@
                                     SelectedItem="{x:Bind ViewModel.SelectedPrompt, Mode=TwoWay}"
                                     DisplayMemberPath="Name" />
                                 <TextBlock Text="{loc:Str Key=Terminal_PromptHint}" Style="{StaticResource MutedText}" TextWrapping="Wrap" Visibility="{x:Bind ViewModel.ShowNewSessionOptions, Mode=OneWay}" />
+                                <!-- 이어서일 때 프롬프트 칸이 말없이 사라지면 "어디 갔지"가 된다. 그 자리에서 없는 이유를 말한다 -->
+                                <TextBlock Text="{loc:Str Key=Terminal_PromptResumeNote}" Style="{StaticResource MutedText}" TextWrapping="Wrap" Visibility="{x:Bind ViewModel.ShowResumeList, Mode=OneWay}" />
 
                                 <!-- 모델: 도구가 알려 준 목록. 고르면 아래 인자 칸의 모델 플래그를 고쳐 쓴다. 칸이 곧 실행될 인자다 -->
                                 <ComboBox
