@@ -678,21 +678,6 @@
                                             <x:Double x:Key="ExpanderMinHeight">36</x:Double>
                                         </muxc:Expander.Resources>
                                         <StackPanel Spacing="{StaticResource GapMedium}">
-                                            <!-- 모델: 도구가 알려 준 목록. 고르면 아래 인자 칸의 모델 플래그를 고쳐 쓴다. 칸이 곧 실행될 인자다 -->
-                                            <ComboBox
-                                                HorizontalAlignment="Stretch"
-                                                AutomationProperties.AutomationId="ModelPicker"
-                                                Header="{loc:Str Key=Terminal_ModelHeader}"
-                                                ToolTipService.ToolTip="{loc:Str Key=Terminal_ModelTip}"
-                                                ItemsSource="{x:Bind ViewModel.SelectedTool.ModelChoices, Mode=OneWay}"
-                                                SelectedItem="{x:Bind ViewModel.SelectedTool.SelectedModel, Mode=OneWay}"
-                                                DisplayMemberPath="Name"
-                                                SelectionChanged="OnModelPicked" />
-                                            <TextBlock
-                                                Text="{x:Bind ViewModel.SelectedTool.ModelStatusText, Mode=OneWay}"
-                                                Visibility="{x:Bind ViewModel.SelectedTool.HasModelStatus, Mode=OneWay}"
-                                                Style="{StaticResource MutedText}"
-                                                TextWrapping="Wrap" />
                                             <TextBox
                                                 AutomationProperties.AutomationId="ArgumentsBox"
                                                 AutomationProperties.Name="{loc:Str Key=Terminal_OptionArgs}"
@@ -794,7 +779,35 @@
                                                 <TextBlock Text="{loc:Str Key=Terminal_OpenExternal}" />
                                             </StackPanel>
                                         </Button>
+
+                                        <!--
+                                            모델: 도구가 알려 준 목록. 고르면 인자 칸의 모델 지정을 고쳐 쓴다(칸이 곧 실행될 인자다).
+                                            처음에는 자세한 설정 안에 뒀는데 접힌 채로 시작해 있는 줄 모른다. 자주 바꾸는 값이라 버튼 옆 빈자리에 둔다 — 세로를 더 쓰지 않는다
+                                        -->
+                                        <Grid Grid.Column="2" ColumnSpacing="{StaticResource GapMedium}" Visibility="{x:Bind ViewModel.SelectedTool.IsInstalled, Mode=OneWay}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{loc:Str Key=Terminal_ModelHeader}" Style="{StaticResource MutedText}" VerticalAlignment="Center" />
+                                            <ComboBox
+                                                Grid.Column="1"
+                                                HorizontalAlignment="Stretch"
+                                                AutomationProperties.AutomationId="ModelPicker"
+                                                AutomationProperties.Name="{loc:Str Key=Terminal_ModelHeader}"
+                                                ToolTipService.ToolTip="{loc:Str Key=Terminal_ModelTip}"
+                                                ItemsSource="{x:Bind ViewModel.SelectedTool.ModelChoices, Mode=OneWay}"
+                                                SelectedItem="{x:Bind ViewModel.SelectedTool.SelectedModel, Mode=OneWay}"
+                                                DisplayMemberPath="Name"
+                                                SelectionChanged="OnModelPicked" />
+                                        </Grid>
                                     </Grid>
+
+                                    <TextBlock
+                                        Text="{x:Bind ViewModel.SelectedTool.ModelStatusText, Mode=OneWay}"
+                                        Visibility="{x:Bind ViewModel.SelectedTool.HasModelStatus, Mode=OneWay}"
+                                        Style="{StaticResource MutedText}"
+                                        TextWrapping="Wrap" />
 
                                     <TextBlock
                                         Text="{x:Bind ViewModel.SelectedTool.Hint, Mode=OneWay}"
