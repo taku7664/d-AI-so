@@ -258,12 +258,12 @@ public sealed partial class TerminalViewModel : ObservableObject
     [RelayCommand]
     public void ConfirmFolder() => SetFolder(WorkingDirectory ?? string.Empty);
 
-    /// <summary>폴더 답이 끝났으면 다음 단계로 연다.</summary>
+    /// <summary>폴더 답이 끝났으면 바로 아래 다음 단계를 연다. 폴더 단계는 접지 않는다.</summary>
     private void AdvanceFromFolder()
     {
-        if (FolderDone && CurrentStep == TerminalStep.Folder)
+        if (FolderDone && FolderExpanded)
         {
-            CurrentStep = TerminalStep.Session;
+            OpenStep(TerminalStep.Session);
         }
 
         RefreshSteps();
@@ -523,15 +523,30 @@ public sealed partial class TerminalViewModel : ObservableObject
 
     public string RulesStatusText => UiStrings.Get(HasRules ? "Terminal_RulesPresent" : "Terminal_RulesAbsent");
 
-    // ── 단계(아코디언) ────────────────────────────────────────────────────
+    // ── 단계 ──────────────────────────────────────────────────────────────
     //
     // 이 화면에서 사람이 정하는 것은 셋뿐이다: 어떤 AI로 · 어느 폴더에서 · 새로/이어서.
-    // 한 번에 한 단계만 펼치고, 끝난 단계는 한 줄로 접는다. 필수 답이 채워지면 다음이 저절로 열린다.
-    // 높이가 거의 안 변해서, 상태가 바뀔 때 화면이 흔들리지 않는다. (docs/TERMINAL_CARD_PLAN.md §4)
+    // 답한 단계는 펼친 채로 둔다. 필수 답이 채워지면 바로 아래 다음 단계가 열리고, 화면이 그 단계로 부드럽게 굴러가 포커스가 옮겨 간다.
+    // 머리를 누르면 그 단계만 접고 편다. 다른 단계는 건드리지 않는다.
+    // (2026-09-10 사람의 요청으로 "한 번에 한 단계만 펼치는" 아코디언을 걷어냈다 — docs/TERMINAL_CARD_PLAN.md 끝)
 
-    /// <summary>지금 펼쳐진 단계. <see cref="TerminalStep.None"/>이면 셋 다 접혀 있다.</summary>
+    /// <summary>1단계(어떤 AI로)가 펼쳐져 있는가. 처음에는 이것만 열려 있다.</summary>
     [ObservableProperty]
-    private TerminalStep currentStep = TerminalStep.Tool;
+    private bool toolOpen = true;
+
+    /// <summary>2단계(어느 폴더에서)가 펼쳐져 있는가.</summary>
+    [ObservableProperty]
+    private bool folderOpen;
+
+    /// <summary>3단계(무엇부터)가 펼쳐져 있는가.</summary>
+    [ObservableProperty]
+    private bool sessionOpen;
+
+    /// <summary>
+    /// 단계 하나가 열렸으니 그 자리로 굴려 달라. 화면이 받아 부드럽게 굴리고 그 단계 머리에 포커스를 둔다.
+    /// 뷰모델은 스크롤을 모른다 — 무엇이 열렸는지만 알린다.
+    /// </summary>
+    public event EventHandler<TerminalStep>? StepRevealRequested;
 
     /// <summary>사람이 AI를 골랐는가. 처음에는 아무것도 안 고른 상태로 연다.</summary>
     [ObservableProperty]
@@ -564,29 +579,43 @@ public sealed partial class TerminalViewModel : ObservableObject
 
     public bool SessionDone => FolderDone && SessionModeChosen && (IsNewSession || SelectedResume is not null);
 
-    public bool ToolExpanded => CurrentStep == TerminalStep.Tool;
+    public bool ToolExpanded => ToolOpen;
 
-    public bool FolderExpanded => CurrentStep == TerminalStep.Folder;
+    public bool FolderExpanded => FolderOpen;
 
-    public bool SessionExpanded => CurrentStep == TerminalStep.Session;
+    public bool SessionExpanded => SessionOpen;
 
     /// <summary>아직 오지 않은 단계는 흐리게 두고 누를 수 없게 한다. 숨기지는 않는다 — 몇 개 남았는지 보여야 안심한다.</summary>
     public bool FolderReachable => ToolDone;
 
     public bool SessionReachable => FolderDone;
 
-    // 머리에 그리는 표시. 셋 중 하나만 참이다: 끝남(✓ + 요약 + 변경) · 지금(●) · 아직(○)
-    public bool ToolMarkDone => ToolDone && !ToolExpanded;
+    // 머리 왼쪽 동그라미. 셋 중 하나만 참이다: 끝남(✓) · 지금 답하는 중(●) · 아직(○).
+    // 답한 단계도 펼친 채로 두므로 "끝남"은 펼침과 상관없이 답이 됐는가만 본다
+    public bool ToolMarkCheck => ToolDone;
+
+    public bool ToolMarkCurrent => !ToolDone && ToolExpanded;
 
     public bool ToolMarkPending => !ToolDone && !ToolExpanded;
 
-    public bool FolderMarkDone => FolderDone && !FolderExpanded;
+    public bool FolderMarkCheck => FolderDone;
+
+    public bool FolderMarkCurrent => !FolderDone && FolderExpanded;
 
     public bool FolderMarkPending => !FolderDone && !FolderExpanded;
 
-    public bool SessionMarkDone => SessionDone && !SessionExpanded;
+    public bool SessionMarkCheck => SessionDone;
+
+    public bool SessionMarkCurrent => !SessionDone && SessionExpanded;
 
     public bool SessionMarkPending => !SessionDone && !SessionExpanded;
+
+    // 머리 오른쪽 요약 + "변경"은 답했고 접혀 있을 때만. 펼쳐져 있으면 몸이 이미 그 답을 보여 준다
+    public bool ToolMarkDone => ToolDone && !ToolExpanded;
+
+    public bool FolderMarkDone => FolderDone && !FolderExpanded;
+
+    public bool SessionMarkDone => SessionDone && !SessionExpanded;
 
     /// <summary>라디오에 물리는 값. 아직 안 골랐으면 −1이라 아무것도 켜지지 않는다.</summary>
     public int SessionModeSelection => SessionModeChosen ? SessionModeIndex : -1;
@@ -718,25 +747,65 @@ public sealed partial class TerminalViewModel : ObservableObject
             InvalidateSession("Terminal_StepInvalidByTool");
         }
 
-        CurrentStep = FolderDone ? TerminalStep.Session : TerminalStep.Folder;
+        // 1단계는 접지 않는다. 폴더가 이미 답해져 있으면 그다음 단계로 바로 간다
+        OpenStep(FolderDone ? TerminalStep.Session : TerminalStep.Folder);
         RefreshSteps();
     }
 
-    /// <summary>새로 시작 / 이어서를 고른다.</summary>
+    /// <summary>새로 시작 / 이어서를 고른다. 아래에 프롬프트나 지난 대화 목록이 열리므로 3단계로 다시 굴린다.</summary>
     public void ChooseSessionMode(int mode)
     {
         SessionModeIndex = mode;
         SessionModeChosen = true;
         InvalidationNotice = null;
-        CurrentStep = TerminalStep.Session;
+        OpenStep(TerminalStep.Session);
         RefreshSteps();
     }
 
-    /// <summary>머리를 눌러 그 단계로 간다. 펼쳐진 단계를 다시 누르면 접는다.</summary>
+    /// <summary>머리를 눌러 그 단계만 접거나 편다. 다른 단계는 그대로다. 펼 때는 그 자리로 굴린다.</summary>
     public void GoToStep(TerminalStep step)
     {
-        CurrentStep = CurrentStep == step ? TerminalStep.None : step;
+        switch (step)
+        {
+            case TerminalStep.Tool when ToolOpen:
+                ToolOpen = false;
+                break;
+            case TerminalStep.Folder when FolderOpen:
+                FolderOpen = false;
+                break;
+            case TerminalStep.Session when SessionOpen:
+                SessionOpen = false;
+                break;
+            default:
+                OpenStep(step);
+                break;
+        }
+
         RefreshSteps();
+    }
+
+    /// <summary>
+    /// 단계를 열고, 화면에 그 자리로 굴려 달라고 알린다.
+    /// 이미 열려 있어도 알린다 — 앞 답을 바꿔 다음 단계를 다시 봐야 할 때가 있다.
+    /// </summary>
+    private void OpenStep(TerminalStep step)
+    {
+        switch (step)
+        {
+            case TerminalStep.Tool:
+                ToolOpen = true;
+                break;
+            case TerminalStep.Folder:
+                FolderOpen = true;
+                break;
+            case TerminalStep.Session:
+                SessionOpen = true;
+                break;
+            default:
+                return;
+        }
+
+        StepRevealRequested?.Invoke(this, step);
     }
 
     /// <summary>앞 단계가 바뀌어 세션 선택이 못 쓰게 됐다. 이유를 남기고 그 단계를 다시 연다.</summary>
@@ -766,9 +835,9 @@ public sealed partial class TerminalViewModel : ObservableObject
         nameof(ToolDone), nameof(FolderDone), nameof(SessionDone), nameof(FolderNeedsConfirm),
         nameof(ToolExpanded), nameof(FolderExpanded), nameof(SessionExpanded),
         nameof(FolderReachable), nameof(SessionReachable),
-        nameof(ToolMarkDone), nameof(ToolMarkPending),
-        nameof(FolderMarkDone), nameof(FolderMarkPending),
-        nameof(SessionMarkDone), nameof(SessionMarkPending),
+        nameof(ToolMarkCheck), nameof(ToolMarkCurrent), nameof(ToolMarkPending), nameof(ToolMarkDone),
+        nameof(FolderMarkCheck), nameof(FolderMarkCurrent), nameof(FolderMarkPending), nameof(FolderMarkDone),
+        nameof(SessionMarkCheck), nameof(SessionMarkCurrent), nameof(SessionMarkPending), nameof(SessionMarkDone),
         nameof(SessionModeSelection), nameof(ToolSelection),
         nameof(ShowNewSessionOptions), nameof(ShowResumeList),
         nameof(FolderHeaderOpacity), nameof(SessionHeaderOpacity),
@@ -780,7 +849,11 @@ public sealed partial class TerminalViewModel : ObservableObject
         nameof(FolderMissing),
     ];
 
-    partial void OnCurrentStepChanged(TerminalStep value) => RefreshSteps();
+    partial void OnToolOpenChanged(bool value) => RefreshSteps();
+
+    partial void OnFolderOpenChanged(bool value) => RefreshSteps();
+
+    partial void OnSessionOpenChanged(bool value) => RefreshSteps();
 
     partial void OnToolChosenChanged(bool value) => RefreshSteps();
 
@@ -903,11 +976,13 @@ public sealed partial class TerminalViewModel : ObservableObject
         _autoOpen = autoOpen;
         _autoOpenTool = tool;
 
-        // 세 단계가 이미 채워진 채로 도착한다. 훑는 연출 없이 접힌 상태로 뜨고, 마지막 단계만 열어 둔다
+        // 세 단계가 이미 채워진 채로 도착한다. 훑는 연출 없이 앞 두 단계는 접고, 마지막 단계만 열어 둔다
         ToolChosen = true;
         SessionModeChosen = true;
         InvalidationNotice = null;
-        CurrentStep = TerminalStep.Session;
+        ToolOpen = false;
+        FolderOpen = false;
+        SessionOpen = true;
 
         OnPropertyChanged(nameof(Preview));
         RefreshSteps();

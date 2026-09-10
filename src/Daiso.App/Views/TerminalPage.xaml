@@ -283,17 +283,15 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
                         <!--
-                            아코디언 세 단계 + 실행 줄. 한 번에 한 단계만 펼친다.
-                            접힌 머리는 높이가 고정이라, 새 세션 ↔ 이어서를 오가도 카드가 흔들리지 않는다.
-                            필수 답이 채워지면 다음 단계가 저절로 열린다 — "다음" 버튼을 두지 않는다.
-                            (docs/TERMINAL_CARD_PLAN.md §4 · §7.1)
+                            세 단계 + 자세한 설정 + (카드 바닥의) 실행 줄.
+                            답한 단계는 펼친 채로 두고, 필수 답이 채워지면 바로 아래 다음 단계가 열린다 — "다음" 버튼은 두지 않는다.
+                            열리면 그 단계 머리로 부드럽게 굴러가고 포커스가 옮겨 간다(OnStepRevealRequested). 머리를 누르면 그 단계만 접고 편다.
+                            (2026-09-10 사람의 요청으로 "한 번에 한 단계만" 아코디언을 걷어냈다. docs/TERMINAL_CARD_PLAN.md 끝)
 
-                            단계들은 Grid 이고 3단계 몸이 * 줄이다. 스크롤 안에 그냥 두면 지난 대화 목록이 무한 높이로 재어져
-                            카드 바닥에서 반 줄이 잘렸고(§2-C4), 목록의 MaxHeight 를 어떻게 잡아도 창 높이와 어긋났다.
-                            Grid 높이는 코드가 "보이는 높이와 최소 높이 중 큰 쪽"으로 맞춘다(OnStepsScrollSizeChanged) —
-                            창이 넉넉하면 목록이 남은 높이를 다 쓰고 제 안에서 스크롤하고, 창이 낮으면(최소 700) 바깥이 스크롤되어 목록에 닿는다
+                            단계가 쌓이므로 카드에 "남은 높이"가 없다. 줄은 모두 Auto 이고,
+                            지난 대화 목록만 한 화면에 들어오는 줄 수로 자른다(OnStepsScrollSizeChanged)
                         -->
-                        <ScrollViewer x:Name="StepsScroll" Grid.Row="0" VerticalScrollBarVisibility="Auto" SizeChanged="OnStepsScrollSizeChanged">
+                        <ScrollViewer x:Name="StepsScroll" Grid.Row="0" VerticalScrollBarVisibility="Auto" SizeChanged="OnStepsScrollSizeChanged" ViewChanged="OnStepsScrollViewChanged">
                         <Grid x:Name="StepsGrid" Padding="20,4,20,8">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
@@ -301,11 +299,12 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
-                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
                             <!-- ───── 1. 어떤 AI로 시작할까요? ───── -->
-                            <Button Grid.Row="0" Style="{StaticResource StepHeader}" Click="OnStepToolClick" AutomationProperties.AutomationId="StepToolHeader">
+                            <Button Grid.Row="0" Style="{StaticResource StepHeader}" x:Name="StepToolHeader" Click="OnStepToolClick" AutomationProperties.AutomationId="StepToolHeader">
                                 <Grid ColumnSpacing="{StaticResource GapMedium}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="20" />
@@ -314,8 +313,8 @@
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <Grid Grid.Column="0" VerticalAlignment="Center" Height="20">
-                                        <FontIcon Glyph="&#xE73E;" FontSize="{StaticResource BodyFontSize}" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Visibility="{x:Bind ViewModel.ToolMarkDone, Mode=OneWay}" />
-                                        <Ellipse Width="{StaticResource StatusDotSize}" Height="{StaticResource StatusDotSize}" Fill="{ThemeResource AccentFillColorDefaultBrush}" Visibility="{x:Bind ViewModel.ToolExpanded, Mode=OneWay}" />
+                                        <FontIcon Glyph="&#xE73E;" FontSize="{StaticResource BodyFontSize}" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Visibility="{x:Bind ViewModel.ToolMarkCheck, Mode=OneWay}" />
+                                        <Ellipse Width="{StaticResource StatusDotSize}" Height="{StaticResource StatusDotSize}" Fill="{ThemeResource AccentFillColorDefaultBrush}" Visibility="{x:Bind ViewModel.ToolMarkCurrent, Mode=OneWay}" />
                                         <Ellipse Width="{StaticResource StatusDotSize}" Height="{StaticResource StatusDotSize}" StrokeThickness="1" Stroke="{ThemeResource TextFillColorTertiaryBrush}" Visibility="{x:Bind ViewModel.ToolMarkPending, Mode=OneWay}" />
                                     </Grid>
                                     <TextBlock Grid.Column="1" Text="{loc:Str Key=Terminal_StepTool}" Style="{StaticResource SectionTitleText}" VerticalAlignment="Center" />
@@ -393,7 +392,7 @@
                             </StackPanel>
 
                             <!-- ───── 2. 어느 폴더에서 일할까요? ───── -->
-                            <Button Grid.Row="2" Style="{StaticResource StepHeader}" Click="OnStepFolderClick" Opacity="{x:Bind ViewModel.FolderHeaderOpacity, Mode=OneWay}" IsHitTestVisible="{x:Bind ViewModel.FolderReachable, Mode=OneWay}" AutomationProperties.AutomationId="StepFolderHeader">
+                            <Button Grid.Row="2" Style="{StaticResource StepHeader}" x:Name="StepFolderHeader" Click="OnStepFolderClick" Opacity="{x:Bind ViewModel.FolderHeaderOpacity, Mode=OneWay}" IsHitTestVisible="{x:Bind ViewModel.FolderReachable, Mode=OneWay}" AutomationProperties.AutomationId="StepFolderHeader">
                                 <Grid ColumnSpacing="{StaticResource GapMedium}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="20" />
@@ -402,8 +401,8 @@
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <Grid Grid.Column="0" VerticalAlignment="Center" Height="20">
-                                        <FontIcon Glyph="&#xE73E;" FontSize="{StaticResource BodyFontSize}" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Visibility="{x:Bind ViewModel.FolderMarkDone, Mode=OneWay}" />
-                                        <Ellipse Width="{StaticResource StatusDotSize}" Height="{StaticResource StatusDotSize}" Fill="{ThemeResource AccentFillColorDefaultBrush}" Visibility="{x:Bind ViewModel.FolderExpanded, Mode=OneWay}" />
+                                        <FontIcon Glyph="&#xE73E;" FontSize="{StaticResource BodyFontSize}" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Visibility="{x:Bind ViewModel.FolderMarkCheck, Mode=OneWay}" />
+                                        <Ellipse Width="{StaticResource StatusDotSize}" Height="{StaticResource StatusDotSize}" Fill="{ThemeResource AccentFillColorDefaultBrush}" Visibility="{x:Bind ViewModel.FolderMarkCurrent, Mode=OneWay}" />
                                         <Ellipse Width="{StaticResource StatusDotSize}" Height="{StaticResource StatusDotSize}" StrokeThickness="1" Stroke="{ThemeResource TextFillColorTertiaryBrush}" Visibility="{x:Bind ViewModel.FolderMarkPending, Mode=OneWay}" />
                                     </Grid>
                                     <TextBlock Grid.Column="1" Text="{loc:Str Key=Terminal_WorkFolder}" Style="{StaticResource SectionTitleText}" VerticalAlignment="Center" />
@@ -485,7 +484,7 @@
                             </StackPanel>
 
                             <!-- ───── 3. 무엇부터 할까요? ───── -->
-                            <Button Grid.Row="4" Style="{StaticResource StepHeader}" Click="OnStepSessionClick" Opacity="{x:Bind ViewModel.SessionHeaderOpacity, Mode=OneWay}" IsHitTestVisible="{x:Bind ViewModel.SessionReachable, Mode=OneWay}" AutomationProperties.AutomationId="StepSessionHeader">
+                            <Button Grid.Row="4" Style="{StaticResource StepHeader}" x:Name="StepSessionHeader" Click="OnStepSessionClick" Opacity="{x:Bind ViewModel.SessionHeaderOpacity, Mode=OneWay}" IsHitTestVisible="{x:Bind ViewModel.SessionReachable, Mode=OneWay}" AutomationProperties.AutomationId="StepSessionHeader">
                                 <Grid ColumnSpacing="{StaticResource GapMedium}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="20" />
@@ -494,8 +493,8 @@
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <Grid Grid.Column="0" VerticalAlignment="Center" Height="20">
-                                        <FontIcon Glyph="&#xE73E;" FontSize="{StaticResource BodyFontSize}" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Visibility="{x:Bind ViewModel.SessionMarkDone, Mode=OneWay}" />
-                                        <Ellipse Width="{StaticResource StatusDotSize}" Height="{StaticResource StatusDotSize}" Fill="{ThemeResource AccentFillColorDefaultBrush}" Visibility="{x:Bind ViewModel.SessionExpanded, Mode=OneWay}" />
+                                        <FontIcon Glyph="&#xE73E;" FontSize="{StaticResource BodyFontSize}" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Visibility="{x:Bind ViewModel.SessionMarkCheck, Mode=OneWay}" />
+                                        <Ellipse Width="{StaticResource StatusDotSize}" Height="{StaticResource StatusDotSize}" Fill="{ThemeResource AccentFillColorDefaultBrush}" Visibility="{x:Bind ViewModel.SessionMarkCurrent, Mode=OneWay}" />
                                         <Ellipse Width="{StaticResource StatusDotSize}" Height="{StaticResource StatusDotSize}" StrokeThickness="1" Stroke="{ThemeResource TextFillColorTertiaryBrush}" Visibility="{x:Bind ViewModel.SessionMarkPending, Mode=OneWay}" />
                                     </Grid>
                                     <TextBlock Grid.Column="1" Text="{loc:Str Key=Terminal_Session}" Style="{StaticResource SectionTitleText}" VerticalAlignment="Center" />
@@ -504,14 +503,14 @@
                                 </Grid>
                             </Button>
 
-                            <!-- 3단계 몸은 * 줄이라 Grid 다. StepBody(StackPanel) 와 같은 여백·간격을 손으로 적는다 -->
+                            <!-- 3단계 몸. StepBody(StackPanel) 와 같은 여백·간격을 손으로 적는다 -->
                             <Grid Grid.Row="5" RowSpacing="{StaticResource GapMedium}" Margin="30,2,0,14" Visibility="{x:Bind ViewModel.SessionExpanded, Mode=OneWay}">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
                                 <!-- 앞 단계를 바꿔 이 답이 무효가 됐다. 조용히 지우면 "왜 없어졌지"가 된다 (§4.9) -->
                                 <Border Grid.Row="0" Style="{StaticResource NoticeBorder}" Visibility="{x:Bind ViewModel.HasInvalidationNotice, Mode=OneWay}">
@@ -602,11 +601,11 @@
                                 </Grid>
                                 <TextBlock Grid.Row="3" Text="{loc:Str Key=Terminal_PromptHint}" Style="{StaticResource MutedText}" TextWrapping="Wrap" Visibility="{x:Bind ViewModel.ShowNewSessionOptions, Mode=OneWay}" />
 
-                                <!-- 이어서: 이 폴더·도구의 지난 대화. 목록이 남은 높이를 다 쓴다 -->
-                                <Grid x:Name="ResumeArea" Grid.Row="4" RowSpacing="{StaticResource GapSmall}" Visibility="{x:Bind ViewModel.ShowResumeList, Mode=OneWay}" SizeChanged="OnResumeAreaSizeChanged">
+                                <!-- 이어서: 이 폴더·도구의 지난 대화. 목록은 한 화면에 들어오는 줄 수에서 멈춘다 -->
+                                <Grid x:Name="ResumeArea" Grid.Row="4" RowSpacing="{StaticResource GapSmall}" Visibility="{x:Bind ViewModel.ShowResumeList, Mode=OneWay}">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
                                         <RowDefinition Height="Auto" />
                                     </Grid.RowDefinitions>
                                     <!-- 검색칸. 세션이 늘면 눈으로 찾는 것이 불가능해진다 (§2-E6) -->
@@ -618,9 +617,9 @@
                                         PlaceholderText="{loc:Str Key=Terminal_ResumeSearch}"
                                         Text="{x:Bind ViewModel.ResumeSearch, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                     <!--
-                                        행과 날짜 머리를 모두 40 으로 고정한다. 높이는 * 줄이 준 만큼 — 대화가 적으면 내용만큼(Top),
-                                        많으면 남은 높이를 쓰고 제 안에서 스크롤한다. 단, 남은 높이를 40 의 배수로 잘라(OnResumeAreaSizeChanged)
-                                        마지막 줄이 반만 보이는 일이 없게 한다. 고정 MaxHeight 는 창 높이와 늘 어긋났다 (§2-C4)
+                                        행과 날짜 머리를 모두 40 으로 고정한다. 대화가 적으면 내용만큼, 많으면 한 화면에 들어오는 줄 수에서 멈추고
+                                        제 안에서 스크롤한다. 그 높이는 창 높이에서 40 의 배수로 잘라(OnStepsScrollSizeChanged)
+                                        마지막 줄이 반만 보이는 일이 없게 한다 (§2-C4)
                                     -->
                                     <ListView
                                         x:Name="ResumeList"
@@ -662,61 +661,67 @@
                                         Visibility="{x:Bind ViewModel.HasNoResumeCandidates, Mode=OneWay}" />
                                 </Grid>
                             </Grid>
+
+                            <!--
+                                자세한 설정: 3단계 바로 아래, 흐름의 마지막 칸이다. 세 단계를 답하며 굴러 내려오면 거기 있다.
+                                예전에는 카드 바닥 띠에 붙였다 — 지난 대화 목록이 남은 높이를 다 먹어 스크롤 영역 안에서는 손이 안 닿았다.
+                                지금은 목록을 한 화면 줄 수로 자르므로 목록 밑에 둬도 닿는다 (2026-09-10 사람의 요청)
+                            -->
+                            <muxc:Expander
+                                Grid.Row="6"
+                                HorizontalAlignment="Stretch"
+                                AutomationProperties.AutomationId="AdvancedExpander"
+                                Header="{loc:Str Key=Terminal_Advanced}">
+                                <muxc:Expander.Resources>
+                                    <x:Double x:Key="ExpanderMinHeight">36</x:Double>
+                                </muxc:Expander.Resources>
+                                <StackPanel Spacing="{StaticResource GapMedium}">
+                                    <!-- 모델: 도구가 알려 준 목록. 고르면 아래 인자 칸의 모델 플래그를 고쳐 쓴다. 칸이 곧 실행될 인자다 -->
+                                    <ComboBox
+                                        HorizontalAlignment="Stretch"
+                                        AutomationProperties.AutomationId="ModelPicker"
+                                        Header="{loc:Str Key=Terminal_ModelHeader}"
+                                        ToolTipService.ToolTip="{loc:Str Key=Terminal_ModelTip}"
+                                        ItemsSource="{x:Bind ViewModel.SelectedTool.ModelChoices, Mode=OneWay}"
+                                        SelectedItem="{x:Bind ViewModel.SelectedTool.SelectedModel, Mode=OneWay}"
+                                        DisplayMemberPath="Name"
+                                        SelectionChanged="OnModelPicked" />
+                                    <TextBlock
+                                        Text="{x:Bind ViewModel.SelectedTool.ModelStatusText, Mode=OneWay}"
+                                        Visibility="{x:Bind ViewModel.SelectedTool.HasModelStatus, Mode=OneWay}"
+                                        Style="{StaticResource MutedText}"
+                                        TextWrapping="Wrap" />
+                                    <TextBox
+                                        AutomationProperties.AutomationId="ArgumentsBox"
+                                        AutomationProperties.Name="{loc:Str Key=Terminal_OptionArgs}"
+                                        ToolTipService.ToolTip="{loc:Str Key=Terminal_ArgsTip}"
+                                        Text="{x:Bind ViewModel.SelectedTool.Arguments, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        PlaceholderText="{loc:Str Key=Terminal_ArgsPlaceholder}" />
+                                    <TextBlock Text="{x:Bind ViewModel.SelectedTool.PresetsTitle, Mode=OneWay}" Style="{StaticResource MutedText}" Visibility="{x:Bind ViewModel.SelectedTool.HasPresets, Mode=OneWay}" />
+                                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.SelectedTool.Presets, Mode=OneWay}">
+                                        <ItemsRepeater.Layout>
+                                            <UniformGridLayout MinItemWidth="160" MinRowSpacing="{StaticResource GapMedium}" MinColumnSpacing="{StaticResource GapMedium}" ItemsStretch="Fill" />
+                                        </ItemsRepeater.Layout>
+                                        <ItemsRepeater.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:ArgumentPreset">
+                                                <Button Tag="{x:Bind Flag}" Click="OnPresetClick" HorizontalAlignment="Stretch" ToolTipService.ToolTip="{loc:Str Key=Terminal_PresetTip}">
+                                                    <StackPanel Spacing="{StaticResource GapHair}" Padding="2">
+                                                        <TextBlock Text="{x:Bind Label}" />
+                                                        <TextBlock Text="{x:Bind Flag}" Style="{StaticResource MutedText}" FontSize="{StaticResource CaptionFontSize}" />
+                                                    </StackPanel>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsRepeater.ItemTemplate>
+                                    </ItemsRepeater>
+                                </StackPanel>
+                            </muxc:Expander>
                         </Grid>
                         </ScrollViewer>
 
                             <!-- ───── 실행 줄: 남은 것 한 문장 + 사람 말 + 명령 + 버튼. 카드 바닥에 붙는다 ───── -->
-                            <!-- 바닥 띠는 세로로 아낀다(여백 12, 줄 사이 8, 접힘 머리 36). 여기서 아낀 픽셀이 위 지난 대화 목록의 줄 수가 된다 -->
+                            <!-- 바닥 띠는 세로로 아낀다(여백 12, 줄 사이 8). 여기서 아낀 픽셀이 위 지난 대화 목록의 줄 수가 된다 -->
                             <Border Grid.Row="1" BorderThickness="0,1,0,0" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" Padding="20,12,20,12">
                                 <StackPanel Spacing="{StaticResource GapMedium}">
-                                    <!-- 자세한 설정: 접힌 채로 바닥 띠에 붙는다. 단계가 길어져도 손이 닿는다 (§4.6) -->
-                                    <muxc:Expander
-                                        HorizontalAlignment="Stretch"
-                                        AutomationProperties.AutomationId="AdvancedExpander"
-                                        Header="{loc:Str Key=Terminal_Advanced}">
-                                        <muxc:Expander.Resources>
-                                            <x:Double x:Key="ExpanderMinHeight">36</x:Double>
-                                        </muxc:Expander.Resources>
-                                        <StackPanel Spacing="{StaticResource GapMedium}">
-                                            <!-- 모델: 도구가 알려 준 목록. 고르면 아래 인자 칸의 모델 플래그를 고쳐 쓴다. 칸이 곧 실행될 인자다 -->
-                                            <ComboBox
-                                                HorizontalAlignment="Stretch"
-                                                AutomationProperties.AutomationId="ModelPicker"
-                                                Header="{loc:Str Key=Terminal_ModelHeader}"
-                                                ToolTipService.ToolTip="{loc:Str Key=Terminal_ModelTip}"
-                                                ItemsSource="{x:Bind ViewModel.SelectedTool.ModelChoices, Mode=OneWay}"
-                                                SelectedItem="{x:Bind ViewModel.SelectedTool.SelectedModel, Mode=OneWay}"
-                                                DisplayMemberPath="Name"
-                                                SelectionChanged="OnModelPicked" />
-                                            <TextBlock
-                                                Text="{x:Bind ViewModel.SelectedTool.ModelStatusText, Mode=OneWay}"
-                                                Visibility="{x:Bind ViewModel.SelectedTool.HasModelStatus, Mode=OneWay}"
-                                                Style="{StaticResource MutedText}"
-                                                TextWrapping="Wrap" />
-                                            <TextBox
-                                                AutomationProperties.AutomationId="ArgumentsBox"
-                                                AutomationProperties.Name="{loc:Str Key=Terminal_OptionArgs}"
-                                                ToolTipService.ToolTip="{loc:Str Key=Terminal_ArgsTip}"
-                                                Text="{x:Bind ViewModel.SelectedTool.Arguments, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                PlaceholderText="{loc:Str Key=Terminal_ArgsPlaceholder}" />
-                                            <TextBlock Text="{x:Bind ViewModel.SelectedTool.PresetsTitle, Mode=OneWay}" Style="{StaticResource MutedText}" Visibility="{x:Bind ViewModel.SelectedTool.HasPresets, Mode=OneWay}" />
-                                            <ItemsRepeater ItemsSource="{x:Bind ViewModel.SelectedTool.Presets, Mode=OneWay}">
-                                                <ItemsRepeater.Layout>
-                                                    <UniformGridLayout MinItemWidth="160" MinRowSpacing="{StaticResource GapMedium}" MinColumnSpacing="{StaticResource GapMedium}" ItemsStretch="Fill" />
-                                                </ItemsRepeater.Layout>
-                                                <ItemsRepeater.ItemTemplate>
-                                                    <DataTemplate x:DataType="vm:ArgumentPreset">
-                                                        <Button Tag="{x:Bind Flag}" Click="OnPresetClick" HorizontalAlignment="Stretch" ToolTipService.ToolTip="{loc:Str Key=Terminal_PresetTip}">
-                                                            <StackPanel Spacing="{StaticResource GapHair}" Padding="2">
-                                                                <TextBlock Text="{x:Bind Label}" />
-                                                                <TextBlock Text="{x:Bind Flag}" Style="{StaticResource MutedText}" FontSize="{StaticResource CaptionFontSize}" />
-                                                            </StackPanel>
-                                                        </Button>
-                                                    </DataTemplate>
-                                                </ItemsRepeater.ItemTemplate>
-                                            </ItemsRepeater>
-                                        </StackPanel>
-                                    </muxc:Expander>
 
                                     <TextBlock
                                         AutomationProperties.AutomationId="RemainingHint"
