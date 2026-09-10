@@ -45,16 +45,21 @@
             <StackPanel Spacing="{StaticResource GapXLarge}">
                 <TextBlock Text="{loc:Str Key=Dashboard_ToolStatus}" Style="{StaticResource SectionTitleText}" />
 
-                <!-- 도구 카드: 도구 수만큼. 넓으면 한 줄에 셋, 좁으면 줄을 바꾼다 -->
+                <!--
+                    도구 카드: 도구 수만큼. 넓으면 한 줄에 셋, 좁으면 줄을 바꾼다.
+                    폭은 카드가 정한다(ItemsStretch=None). Fill 이던 때는 셋이 창 폭(최대 1280)을 나눠 가져
+                    카드 하나가 400 을 넘었다 — 안에 든 것은 아이콘·이름·계정 몇 줄뿐이라 가로가 남아돌았다
+                    (2026-09-11 사람의 요청으로 3분의 2로). 줄 바꿈은 그대로 UniformGridLayout 이 한다
+                -->
                 <ItemsRepeater ItemsSource="{x:Bind ViewModel.VisibleTools}"
                 ItemTemplate="{StaticResource ToolCardTemplate}">
                     <ItemsRepeater.Layout>
                         <UniformGridLayout
-                            MinItemWidth="330"
+                            MinItemWidth="280"
                             MaximumRowsOrColumns="3"
                             MinRowSpacing="{StaticResource GapXLarge}"
                             MinColumnSpacing="{StaticResource GapXLarge}"
-                            ItemsStretch="Fill" />
+                            ItemsStretch="None" />
                     </ItemsRepeater.Layout>
 
                 </ItemsRepeater>
