@@ -63,6 +63,12 @@
       if (term.hasSelection()) post({ type: 'copy', text: term.getSelection() });
       return false;
     }
+    // 글자 크기: Ctrl + / - / 0. 앱이 설정을 바꿔 테마로 되돌려 준다(그래야 다음에도 그 크기다)
+    if (ctrl && (e.key === '=' || e.key === '+' || e.key === '-' || e.key === '_' || e.key === '0')) {
+      e.preventDefault();
+      post({ type: 'zoom', step: e.key === '0' ? 0 : ((e.key === '-' || e.key === '_') ? -1 : 1) });
+      return false;
+    }
     // 찾기: WebView2 가 포커스를 잡고 있어 앱의 단축키가 안 닿는다. 여기서 먹어서 앱에 알린다
     if (ctrl && (e.key === 'f' || e.key === 'F')) {
       e.preventDefault();
@@ -75,6 +81,13 @@
     }
     return true;
   });
+
+  // Ctrl+휠: 글자 크기. 터미널에서 가장 자주 하는 조절이라 단축키와 휠 둘 다 받는다
+  document.addEventListener('wheel', function (e) {
+    if (!e.ctrlKey) return;
+    e.preventDefault();
+    post({ type: 'zoom', step: e.deltaY < 0 ? 1 : -1 });
+  }, { passive: false });
 
   // 오른쪽 클릭: 선택이 있으면 복사, 없으면 붙이기
   document.addEventListener('contextmenu', function (e) {
@@ -107,6 +120,23 @@
     return bytes;
   }
 
+  // 스크롤백까지 포함한 화면 글자. 오른쪽 빈칸은 지운다
+  function dumpText() {
+    try {
+      var buf = term.buffer.active;
+      var lines = [];
+      for (var i = 0; i < buf.length; i++) {
+        var line = buf.getLine(i);
+        lines.push(line ? line.translateToString(true) : '');
+      }
+      while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
+      return lines.join('
+');
+    } catch (err) {
+      return '';
+    }
+  }
+
   function applyTheme(t) {
     document.documentElement.style.setProperty('--bg', t.background);
     term.options.theme = t;
@@ -137,6 +167,8 @@
         case 'reset': term.reset(); break;
         case 'find': try { if (m.dir === 'prev') search.findPrevious(m.query || '', searchOptions); else search.findNext(m.query || '', searchOptions); } catch (err) {} break;
         case 'find-clear': try { search.clearDecorations(); } catch (err) {} break;
+        // 화면 그대로 내놓기. ANSI 코드가 아니라 xterm 이 그린 글자를 준다 — 붙여넣어 물어보기에 그편이 낫다
+        case 'dump': post({ type: 'dump-result', text: dumpText() }); break;
       }
     });
   }

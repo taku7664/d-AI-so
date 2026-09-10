@@ -1323,6 +1323,36 @@
   <data name="Room_FindPrev" xml:space="preserve">
     <value>이전 찾기</value>
   </data>
+  <data name="Room_SlashCommand" xml:space="preserve">
+    <value>슬래시 명령</value>
+  </data>
+  <data name="Room_SlashCommandTip" xml:space="preserve">
+    <value>이 도구·폴더에서 쓸 수 있는 / 명령을 골라 타이핑합니다. 실행은 Enter 로 직접 누르세요</value>
+  </data>
+  <data name="Room_NoSlashCommands" xml:space="preserve">
+    <value>쓸 수 있는 / 명령이 없습니다</value>
+  </data>
+  <data name="Room_CopyScreen" xml:space="preserve">
+    <value>화면 복사</value>
+  </data>
+  <data name="Room_CopyScreenTip" xml:space="preserve">
+    <value>보이는 글자를 스크롤백까지 클립보드에 담습니다. 색 코드는 빼고 글자만 갑니다</value>
+  </data>
+  <data name="Room_SaveScreen" xml:space="preserve">
+    <value>화면 저장…</value>
+  </data>
+  <data name="Room_SaveScreenTip" xml:space="preserve">
+    <value>보이는 글자를 스크롤백까지 텍스트 파일로 저장합니다</value>
+  </data>
+  <data name="Room_ScreenEmpty" xml:space="preserve">
+    <value>가져올 화면 글자가 없습니다</value>
+  </data>
+  <data name="Room_ScreenCopied" xml:space="preserve">
+    <value>화면 {0}줄을 복사했습니다</value>
+  </data>
+  <data name="Room_ScreenSaved" xml:space="preserve">
+    <value>화면을 저장했습니다: {0}</value>
+  </data>
   <data name="Room_More" xml:space="preserve">
     <value>더보기</value>
     <comment>도구 줄에 늘 둘 만큼 자주 쓰지는 않는 것들</comment>

@@ -135,6 +135,9 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
         }
     }
 
+    /// <summary>좌측 하단 알림 줄. 클립보드처럼 눈에 안 보이는 일의 결과를 여기 적는다 (docs/REVIEW_BACKLOG.md B3)</summary>
+    private ShellViewModel Shell { get; } = App.Services.GetRequiredService<ShellViewModel>();
+
     public TerminalViewModel ViewModel { get; }
 
     /// <summary>셸이 NavigationView.Header 에 그리는 대제목·부제.</summary>
@@ -749,6 +752,59 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
         }
     }
 
+    /// <summary>
+    /// 슬래시 명령 목록. 도구·폴더마다 다르고 외우기 어려운 것이라 여기서 대신 기억한다.
+    /// 고르면 터미널에 <c>/이름</c> 을 타이핑한다 — 실행(Enter)은 사람이 누른다. 인자를 더 적을 수 있어야 하기 때문이다.
+    /// </summary>
+    private void OnRoomSlashFlyoutOpening(object? sender, object e)
+    {
+        RoomSlashFlyout.Items.Clear();
+
+        if (_room is not TerminalRoomViewModel room)
+        {
+            return;
+        }
+
+        var commands = App.Services.GetRequiredService<Daiso.Infrastructure.SlashCommandReader>()
+            .Read(room.Tool, room.ProjectDirectory);
+
+        foreach (var group in commands.GroupBy(command => command.Source))
+        {
+            if (RoomSlashFlyout.Items.Count > 0)
+            {
+                RoomSlashFlyout.Items.Add(new MenuFlyoutSeparator());
+            }
+
+            foreach (var command in group)
+            {
+                var item = new MenuFlyoutItem { Text = command.Invocation };
+
+                if (command.Description is { Length: > 0 } description)
+                {
+                    ToolTipService.SetToolTip(item, description);
+                }
+
+                var captured = command;
+                item.Click += (_, _) =>
+                {
+                    room.SendRaw(captured.Invocation);
+                    Embedded.FocusTerminal();
+                };
+
+                RoomSlashFlyout.Items.Add(item);
+            }
+        }
+
+        if (RoomSlashFlyout.Items.Count == 0)
+        {
+            RoomSlashFlyout.Items.Add(new MenuFlyoutItem
+            {
+                Text = UiStrings.Get("Room_NoSlashCommands"),
+                IsEnabled = false,
+            });
+        }
+    }
+
     // ── 끌어놓기 (IFileDropSink — 셸의 FileDropTarget 이 OLE 드롭을 받아 넘긴다) ───────────
 
     public bool CanAcceptFiles => TerminalPanel.Visibility == Visibility.Visible;
@@ -774,6 +830,81 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
 
         Embedded.FocusTerminal();
         await Embedded.AttachFilesAsync(paths);
+    }
+
+    /// <summary>
+    /// 화면 글자를 클립보드에 담는다. 색 코드가 아니라 xterm 이 그린 글자라 그대로 붙여넣을 수 있다.
+    /// 결과는 좌측 하단 알림 줄에 적는다 — 클립보드는 눈에 보이지 않아 됐는지 알 길이 없다.
+    /// </summary>
+    private async void OnRoomCopyScreenClick(object sender, RoutedEventArgs e)
+    {
+        var text = await Embedded.ReadScreenTextAsync();
+
+        if (text.Length == 0)
+        {
+            Shell.Report(UiStrings.Get("Room_ScreenEmpty"));
+            return;
+        }
+
+        try
+        {
+            var package = new Windows.ApplicationModel.DataTransfer.DataPackage();
+            package.SetText(text);
+            Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(package);
+
+            Shell.Report(UiStrings.Format("Room_ScreenCopied", text.Count(c => c == '\n') + 1));
+        }
+        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or UnauthorizedAccessException)
+        {
+            // 다른 앱이 클립보드를 잡고 있다. 한 번의 복사가 안 된 것뿐이다
+            Shell.Report(ex.Message);
+        }
+    }
+
+    /// <summary>화면 글자를 텍스트 파일로 저장한다.</summary>
+    private async void OnRoomSaveScreenClick(object sender, RoutedEventArgs e)
+    {
+        if (_room is not TerminalRoomViewModel room)
+        {
+            return;
+        }
+
+        var text = await Embedded.ReadScreenTextAsync();
+
+        if (text.Length == 0)
+        {
+            Shell.Report(UiStrings.Get("Room_ScreenEmpty"));
+            return;
+        }
+
+        var picker = new Windows.Storage.Pickers.FileSavePicker
+        {
+            SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary,
+            SuggestedFileName = $"{Formats.FolderName(room.ProjectDirectory)}-{DateTime.Now:yyyyMMdd-HHmmss}",
+        };
+        picker.FileTypeChoices.Add("Text", [".txt"]);
+
+        // unpackaged 앱은 피커에 창 핸들을 직접 붙여야 한다.
+        if (App.MainWindow is { } window)
+        {
+            var handle = WinRT.Interop.WindowNative.GetWindowHandle(window);
+            WinRT.Interop.InitializeWithWindow.Initialize(picker, handle);
+        }
+
+        if (await picker.PickSaveFileAsync() is not { } file)
+        {
+            return;
+        }
+
+        try
+        {
+            await File.WriteAllTextAsync(file.Path, text, new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+            Shell.Report(UiStrings.Format("Room_ScreenSaved", file.Path));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Shell.Report(ex.Message);
+        }
     }
 
     /// <summary>파일을 골라 CLI 에 준다. 여러 개 고를 수 있다. 그림은 첨부, 나머지는 경로 (AttachFilesAsync).</summary>

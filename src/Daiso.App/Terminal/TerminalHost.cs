@@ -263,6 +263,59 @@ public sealed class TerminalHost : UserControl
         }
     }
 
+    /// <summary>화면 내놓기를 기다리는 자리. 왕복 한 번에 하나만 둔다.</summary>
+    private TaskCompletionSource<string>? _dump;
+
+    /// <summary>화면 글자를 돌려받는 데 기다릴 시간. 페이지가 죽어 답이 없으면 여기서 끊는다.</summary>
+    private static readonly TimeSpan DumpTimeout = TimeSpan.FromSeconds(3);
+
+    /// <summary>
+    /// 지금 터미널에 보이는 글자를 스크롤백까지 돌려준다. ANSI 코드가 아니라 xterm 이 그린 글자다.
+    /// 페이지가 아직 안 떴거나 답이 없으면 빈 문자열.
+    /// </summary>
+    public async Task<string> ReadScreenTextAsync()
+    {
+        if (!_ready)
+        {
+            return string.Empty;
+        }
+
+        var pending = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        _dump = pending;
+        Post(new { type = "dump" });
+
+        var done = await Task.WhenAny(pending.Task, Task.Delay(DumpTimeout)).ConfigureAwait(true);
+        _dump = null;
+
+        return done == pending.Task ? await pending.Task.ConfigureAwait(true) : string.Empty;
+    }
+
+    /// <summary>기본 글자 크기. <c>Ctrl+0</c> 이 여기로 되돌린다.</summary>
+    private const int DefaultFontSize = 14;
+
+    /// <summary>
+    /// 글자 크기를 한 칸 키우거나 줄인다. <paramref name="step"/> 이 0 이면 기본값으로 되돌린다.
+    /// <para>
+    /// 설정에 저장하고 테마로 되돌려 보낸다 — 그래야 다음에 방을 열어도 그 크기다.
+    /// xterm 쪽은 <c>applyTheme</c> 이 크기를 바꾸고 바로 다시 맞춘다(doFit).
+    /// </para>
+    /// </summary>
+    private void Zoom(int step)
+    {
+        _settings ??= App.Services.GetRequiredService<ISettingsStore>();
+
+        var current = _settings.Current.TerminalFontSize;
+        var next = Math.Clamp(step == 0 ? DefaultFontSize : current + step, 8, 28);
+
+        if (next == current)
+        {
+            return;
+        }
+
+        _settings.Current.TerminalFontSize = next;
+        _settings.Save();   // Save 가 Changed 를 쏘고, OnSettingsChanged 가 PostTheme 을 부른다
+    }
+
     private void OnSettingsChanged(object? sender, EventArgs e) => PostTheme();
 
     private void PostTheme()
@@ -343,6 +396,14 @@ public sealed class TerminalHost : UserControl
 
             case "find":
                 FindRequested?.Invoke(this, EventArgs.Empty);
+                break;
+
+            case "zoom":
+                Zoom(root.TryGetProperty("step", out var step) ? step.GetInt32() : 0);
+                break;
+
+            case "dump-result":
+                _dump?.TrySetResult(root.TryGetProperty("text", out var dumped) ? dumped.GetString() ?? string.Empty : string.Empty);
                 break;
 
             case "in":

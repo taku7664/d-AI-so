@@ -179,6 +179,17 @@
                         </Button.Flyout>
                     </Button>
 
+                    <!--
+                        슬래시 명령. 도구·폴더마다 있는 명령을 SlashCommandReader 가 이미 읽고 있었는데
+                        챗봇 방에서만 쓰고 있었다. 외우기 어려운 걸 대신 기억해 주는 게 이 앱이 할 일이다
+                    -->
+                    <Button x:Name="RoomSlashButton" Style="{StaticResource ToolbarIconButton}" AutomationProperties.AutomationId="RoomSlashButton" AutomationProperties.Name="{loc:Str Key=Room_SlashCommand}" ToolTipService.ToolTip="{loc:Str Key=Room_SlashCommandTip}">
+                        <TextBlock Text="/" FontFamily="Consolas" FontSize="{StaticResource SubtitleFontSize}" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Button.Flyout>
+                            <MenuFlyout x:Name="RoomSlashFlyout" Opening="OnRoomSlashFlyoutOpening" Placement="BottomEdgeAlignedLeft" />
+                        </Button.Flyout>
+                    </Button>
+
                     <!-- 파일 첨부: 끌어놓기와 같은 길이지만, 눈에 보이는 길은 이것뿐이다 -->
                     <Button Style="{StaticResource ToolbarIconButton}" Click="OnRoomAttachClick" AutomationProperties.AutomationId="RoomAttachButton" AutomationProperties.Name="{loc:Str Key=Room_AttachFile}" ToolTipService.ToolTip="{loc:Str Key=Room_AttachFileTip}">
                         <FontIcon Glyph="&#xE723;" FontSize="{StaticResource BodyFontSize}" />
@@ -205,6 +216,19 @@
                                         <FontIcon Glyph="&#xE8A9;" />
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
+                                <MenuFlyoutSeparator />
+                                <!-- 화면에 보이는 글자 그대로. 오류를 어디 붙여넣어 물어볼 때 쓴다 -->
+                                <MenuFlyoutItem AutomationProperties.AutomationId="RoomCopyScreenButton" Text="{loc:Str Key=Room_CopyScreen}" ToolTipService.ToolTip="{loc:Str Key=Room_CopyScreenTip}" Click="OnRoomCopyScreenClick">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE8C8;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem AutomationProperties.AutomationId="RoomSaveScreenButton" Text="{loc:Str Key=Room_SaveScreen}" ToolTipService.ToolTip="{loc:Str Key=Room_SaveScreenTip}" Click="OnRoomSaveScreenClick">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE74E;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+
                                 <MenuFlyoutSeparator />
                                 <!-- 이 방에 하는 일이 아니라 다른 화면으로 나가는 것이라 아래에 따로 둔다 -->
                                 <MenuFlyoutItem AutomationProperties.AutomationId="RoomRulesButton" Text="{loc:Str Key=Terminal_EditRules}" ToolTipService.ToolTip="{loc:Str Key=Room_EditRulesHint}" Click="OnRoomRulesClick">
