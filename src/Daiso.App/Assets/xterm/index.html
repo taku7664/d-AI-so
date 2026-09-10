@@ -82,12 +82,13 @@
     return true;
   });
 
-  // Ctrl+휠: 글자 크기. 터미널에서 가장 자주 하는 조절이라 단축키와 휠 둘 다 받는다
-  document.addEventListener('wheel', function (e) {
-    if (!e.ctrlKey) return;
-    e.preventDefault();
+  // Ctrl+휠: 글자 크기. 키 핸들러와 짝인 정식 훅이라 xterm 이 스크롤로 쓰기 전에 먼저 온다.
+  // document 에 걸면 오지 않는다 — 뷰포트가 휠을 먼저 먹기 때문이다(2026-09-10 실측).
+  term.attachCustomWheelEventHandler(function (e) {
+    if (!e.ctrlKey) return true;
     post({ type: 'zoom', step: e.deltaY < 0 ? 1 : -1 });
-  }, { passive: false });
+    return false;
+  });
 
   // 오른쪽 클릭: 선택이 있으면 복사, 없으면 붙이기
   document.addEventListener('contextmenu', function (e) {
