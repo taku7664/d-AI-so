@@ -71,14 +71,12 @@ public sealed partial class ToolLaunchViewModel : ObservableObject
     /// <summary>카드에 붙는 설치 상태 한 줄. 고르기 전에 알아야 헛걸음을 안 한다.</summary>
     public string InstallStateText => UiStrings.Get(IsInstalled ? "Terminal_ToolReady" : "Terminal_ToolMissing");
 
-    /// <summary>인자 프리셋. 한국어 라벨이 앞, 실제 플래그가 뒤에 회색으로 붙는다.</summary>
+    /// <summary>
+    /// 인자 프리셋. 단추 얼굴에는 한국어 라벨만 나오고 실제 플래그는 툴팁에 있다 —
+    /// <c>--sandbox</c> 는 이 화면이 대상으로 삼는 사람에게 글자일 뿐이다.
+    /// 묶음 제목("{도구} 프리셋")은 걷어냈다: 옵션 줄의 라벨 칸이 이미 그 자리를 말한다.
+    /// </summary>
     public IReadOnlyList<ArgumentPreset> Presets { get; }
-
-    /// <summary>프리셋 묶음 제목.</summary>
-    public string PresetsTitle => UiStrings.Format("Terminal_PresetsFor", Label);
-
-    /// <summary>프리셋 버튼이 하나라도 있는가. 없으면 제목("{도구} 프리셋")도 감춘다 — 제목만 뜬 빈 칸은 고장으로 읽힌다.</summary>
-    public bool HasPresets => Presets.Count > 0;
 
     /// <summary>UI 자동화 식별자.</summary>
     public string AutomationId => $"Launch{Kind}Button";

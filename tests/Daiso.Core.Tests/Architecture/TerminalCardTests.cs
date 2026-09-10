@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
 namespace Daiso.Core.Tests.Architecture;
@@ -134,22 +134,58 @@ public sealed partial class TerminalCardTests
     }
 
     [Fact]
-    public void 프롬프트는_새로_시작을_고른_뒤에만_보인다()
+    public void 프롬프트는_새로_시작이든_이어서든_보인다()
     {
-        // 4단계로 옮겼다고 늘 보이면, "이어서"를 고른 사람에게 첫 메시지를 묻는 셈이다
+        // 2026-09-10: 새로 시작에만 걸어 뒀더니 이어서를 고르면 칸이 말없이 사라졌다.
+        // 세 도구 다 이어서에 첫 메시지를 붙일 수 있다 — claude --resume ID "..." · codex resume ID "..." · agy --conversation ID -i "..."
         var text = File.ReadAllText(PagePath);
 
-        PromptOnlyForNewSession().IsMatch(text).Should().BeTrue(
-            because: "이어서 할 대화에는 보낼 첫 메시지가 없다");
-        text.Should().Contain(
-            "Key=Terminal_PromptResumeNote",
-            because: "말없이 사라지면 \"프롬프트 어디 갔지\"가 된다 — 그 자리에서 없는 이유를 말한다");
+        PromptAlwaysVisible().IsMatch(text).Should().BeTrue(
+            because: "고를 수 있는 칸을 조건부로 숨기면 어디 갔는지 찾게 된다");
     }
 
     [GeneratedRegex(
-        @"<ComboBox(?=[^>]*AutomationId=""StartPromptBox"")(?=[^>]*Visibility=""\{x:Bind ViewModel\.ShowNewSessionOptions)[^>]*>",
-        RegexOptions.Singleline | RegexOptions.CultureInvariant)]
-    private static partial Regex PromptOnlyForNewSession();
+        @"<ComboBox(?=[^>]*AutomationId=""StartPromptBox"")(?![^>]*Visibility=)[^>]*>",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex PromptAlwaysVisible();
+
+    [Fact]
+    public void 무효화_안내문은_두지_않는다()
+    {
+        // 앞 단계를 바꿔 답이 풀리면 3단계가 다시 비어 열린다. 그것으로 이미 보이는데
+        // "다시 골라야 해요" 한 줄을 더 얹으면 화면이 사람을 훈계한다 (2026-09-10 사람의 지적)
+        var text = File.ReadAllText(PagePath);
+
+        text.Should().NotContain("InvalidationNotice", because: "빈 단계가 스스로 말한다");
+    }
+
+    [Fact]
+    public void 세부_설정은_라벨_칸을_맞춘_한_격자다()
+    {
+        // Header 와 회색 설명줄이 번갈아 쌓이면 어디까지가 한 항목인지 보이지 않는다.
+        // 1~3 단계의 "대화" 줄과 같은 72 폭 라벨 칸을 쓴다
+        var text = File.ReadAllText(PagePath);
+        var body = text[text.IndexOf("AutomationId=\"StepAdvancedBody\"", StringComparison.Ordinal)..];
+
+        foreach (var key in new[] { "Terminal_RulesLabel", "Terminal_PromptLabel", "Terminal_ModelHeader", "Terminal_OptionArgs" })
+        {
+            body.Should().Contain($"Text=\"{{loc:Str Key={key}}}\"", because: "네 줄 다 같은 라벨 칸에서 시작한다");
+        }
+
+        body.Should().NotContain("Header=\"{loc:Str", because: "라벨은 칸 위가 아니라 왼쪽 칸에 둔다 — 한 세로선을 따라 읽힌다");
+    }
+
+    [Fact]
+    public void 프리셋_단추는_날_플래그를_찍지_않는다()
+    {
+        // `--sandbox` 는 이 카드가 대상으로 삼는 사람에게 글자일 뿐이다. 한국어 라벨만 보이고 플래그는 툴팁에 있다
+        var text = File.ReadAllText(PagePath);
+
+        text.Should().NotContain(
+            "<TextBlock Text=\"{x:Bind Flag}\"",
+            because: "단추 얼굴에 플래그를 찍지 않는다");
+        text.Should().Contain("ToolTipService.ToolTip=\"{x:Bind Flag}\"", because: "확인할 사람은 툴팁에서 본다");
+    }
 
     [Fact]
     public void 새_터미널_단추는_탭_높이의_정사각형이다()

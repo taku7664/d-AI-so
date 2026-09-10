@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Daiso.App.Services;
@@ -275,7 +275,7 @@ public sealed partial class TerminalViewModel : ObservableObject
         _ = LoadResumeCandidatesAsync();
 
         // 폴더가 바뀌면 그 폴더의 세션 목록이 통째로 달라진다. 고른 세션은 못 쓴다
-        InvalidateSession("Terminal_StepInvalidByFolder");
+        InvalidateSession();
 
         AdvanceFromFolder();
     }
@@ -514,12 +514,6 @@ public sealed partial class TerminalViewModel : ObservableObject
     [ObservableProperty]
     private bool sessionModeChosen;
 
-    /// <summary>앞 단계를 바꿔 뒷 단계 답이 무효가 된 이유. 조용히 지우면 "왜 없어졌지"가 된다.</summary>
-    [ObservableProperty]
-    private string? invalidationNotice;
-
-    public bool HasInvalidationNotice => !string.IsNullOrEmpty(InvalidationNotice);
-
     public bool ToolDone => ToolChosen;
 
     public bool FolderDone => ToolDone && FolderChosen && CanLaunch;
@@ -578,10 +572,7 @@ public sealed partial class TerminalViewModel : ObservableObject
     /// <summary>AI 카드 목록에 물리는 값. 아직 안 골랐으면 −1이라 아무 카드도 켜지지 않는다.</summary>
     public int ToolSelection => ToolChosen ? SelectedToolIndex : -1;
 
-    // 라디오가 아무것도 안 켜져 있는데 "새로 시작"의 하위 내용(프롬프트)이 보이면,
-    // 고르지도 않은 것의 속을 미리 펼쳐 놓은 셈이라 모순이다. 고른 뒤에만 보인다
-    public bool ShowNewSessionOptions => SessionModeChosen && IsNewSession;
-
+    /// <summary>지난 대화 콤보를 보일 때. 프롬프트는 새로/이어서 둘 다에 붙으므로 이 갈래를 타지 않는다.</summary>
     public bool ShowResumeList => SessionModeChosen && IsResume;
 
     // 아직 못 가는 단계는 흐리게 + 누를 수 없게 한다. IsEnabled 를 쓰면 WinUI 가 비활성 배경을 칠해
@@ -666,7 +657,7 @@ public sealed partial class TerminalViewModel : ObservableObject
 
         if (changed)
         {
-            InvalidateSession("Terminal_StepInvalidByTool");
+            InvalidateSession();
         }
 
         // 1단계는 접지 않는다. 폴더가 이미 답해져 있으면 그다음 단계로 바로 간다
@@ -679,7 +670,6 @@ public sealed partial class TerminalViewModel : ObservableObject
     {
         SessionModeIndex = mode;
         SessionModeChosen = true;
-        InvalidationNotice = null;
         RefreshSteps();
     }
 
@@ -707,17 +697,11 @@ public sealed partial class TerminalViewModel : ObservableObject
         StepRevealRequested?.Invoke(this, step);
     }
 
-    /// <summary>앞 단계가 바뀌어 세션 선택이 못 쓰게 됐다. 이유를 남기고 그 단계를 다시 연다.</summary>
-    private void InvalidateSession(string reasonKey)
+    /// <summary>앞 단계가 바뀌어 세션 선택이 못 쓰게 됐다. 답만 지운다 — 3단계가 다시 열리는 것으로 이미 보인다.</summary>
+    private void InvalidateSession()
     {
-        if (!SessionModeChosen && SelectedResume is null)
-        {
-            return;
-        }
-
         SessionModeChosen = false;
         SelectedResume = null;
-        InvalidationNotice = UiStrings.Get(reasonKey);
     }
 
     /// <summary>단계에서 나오는 값들을 한꺼번에 다시 읽게 한다. 갈래가 많아 개별 특성으로 엮지 않는다.</summary>
@@ -740,12 +724,12 @@ public sealed partial class TerminalViewModel : ObservableObject
         nameof(AdvancedExpanded), nameof(AdvancedHeaderOpacity),
         nameof(AdvancedMarkCurrent), nameof(AdvancedMarkPending),
         nameof(SessionModeSelection), nameof(ToolSelection),
-        nameof(ShowNewSessionOptions), nameof(ShowResumeList),
+        nameof(ShowResumeList),
         nameof(FolderHeaderOpacity), nameof(SessionHeaderOpacity),
         nameof(ShowPreview), nameof(StartButtonText),
         nameof(Preview), nameof(PreviewSentence), nameof(HasPreviewSentence),
         nameof(RemainingHint), nameof(HasRemainingHint), nameof(CanStart),
-        nameof(HasInvalidationNotice), nameof(HasRules), nameof(HasNoRules), nameof(RulesStatusText),
+        nameof(HasRules), nameof(HasNoRules), nameof(RulesStatusText),
         nameof(FolderMissing),
     ];
 
@@ -758,8 +742,6 @@ public sealed partial class TerminalViewModel : ObservableObject
     partial void OnToolChosenChanged(bool value) => RefreshSteps();
 
     partial void OnSessionModeChosenChanged(bool value) => RefreshSteps();
-
-    partial void OnInvalidationNoticeChanged(string? value) => OnPropertyChanged(nameof(HasInvalidationNotice));
 
     // ── 실행 ──────────────────────────────────────────────────────────────
 
@@ -837,7 +819,7 @@ public sealed partial class TerminalViewModel : ObservableObject
             parts.Add(user);
         }
 
-        if (IsNewSession && SelectedPrompt?.Preset is { } preset && CanLaunch)
+        if (SelectedPrompt?.Preset is { } preset && CanLaunch)
         {
             if (writePrompt)
             {
@@ -880,7 +862,6 @@ public sealed partial class TerminalViewModel : ObservableObject
         // 앞 두 단계를 접어 두면 거기로 돌아갈 길이 없다
         ToolChosen = true;
         SessionModeChosen = true;
-        InvalidationNotice = null;
         ToolOpen = true;
         FolderOpen = true;
         OpenStep(TerminalStep.Session);

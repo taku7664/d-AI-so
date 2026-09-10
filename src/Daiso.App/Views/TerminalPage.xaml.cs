@@ -3,6 +3,7 @@ using Daiso.App.Controls;
 using Daiso.App.Services;
 using Daiso.App.Strings;
 using Daiso.App.ViewModels;
+using Daiso.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -382,11 +383,24 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
     /// <summary>새 세션 카드의 "규칙 편집": 이 폴더를 내 규칙 화면에 넘기고 그 화면으로 간다.</summary>
     private void OnEditRulesClick(object sender, RoutedEventArgs e) => GoToRules(ViewModel.WorkingDirectory);
 
+    /// <summary>
+    /// 규칙 화면으로 간다. <b>그 폴더에 규칙 파일이 있으면 열어서 간다</b> — 폴더만 심고 넘기면
+    /// "이 폴더에 규칙 파일이 있습니다"라고 해 놓고 편집기에는 지난번 것이 그대로 떠 있어,
+    /// 그 위에 저장하면 남의 규칙을 프로젝트에 덮어쓴다 (2026-09-10 사람의 지적).
+    /// </summary>
     private static void GoToRules(string? directory)
     {
         if (!string.IsNullOrWhiteSpace(directory))
         {
-            App.Services.GetRequiredService<RuleMakerViewModel>().ProjectDirectory = directory;
+            var rules = App.Services.GetRequiredService<RuleMakerViewModel>();
+            rules.ProjectDirectory = directory;
+
+            var path = Path.Combine(directory, InstructionTemplate.DefaultRulesFileName);
+
+            if (File.Exists(path))
+            {
+                rules.Open(path);
+            }
         }
 
         (App.MainWindow as ShellWindow)?.NavigateTo("RuleMaker");
