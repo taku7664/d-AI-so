@@ -804,3 +804,18 @@ Stage 1(골격)만 되돌리면 그 위 단계가 다 무너지므로, Stage 1�
 
 `docs/ARCHITECTURE.md` 의 새 터미널 항목도 지금 화면에 맞춰 다시 썼다(아코디언·접힘 요약·검색칸·무효화 문장은
 이미 없는 것들이었다).
+
+### 같은 날 — 3단계를 콤보 하나로
+
+사람의 요청. 카드 2장(`새로 시작` / `하던 대화 이어서`)을 걷어내고 **목록 첫 줄을 `새로 시작`으로** 만들었다.
+
+- 카드로 갈래를 먼저 고르게 하면 지난 대화를 열 때 **두 번** 눌러야 했고, 카드와 그 아래 콤보가 같은 것을 두 번 물었다
+- `SessionModeIndex` · `SessionModeChosen` · `IsNewSession/IsResume`(인덱스 기반) · `ShowResumeList` ·
+  `HasAnyResume` · `ResumeCountText` · `HasNoResumeCandidates` · `ChooseSessionMode` 를 지우고
+  **`SessionChoices` + `SelectedSession`** 하나로 합쳤다. `SessionDone = FolderDone && SelectedSession is not null`
+- `ResumeCandidateViewModel` 이 "새로 시작" 줄을 겸한다(`Session == null`, `IsNew`). 정적 `NewSession` 하나를 목록 맨 앞에 둔다
+- 죽은 문구 키 6개 삭제(`Terminal_ResumeCount` · `Terminal_NoSessionsHere` · `Terminal_StepNeedMode` ·
+  `Terminal_NewSessionTip` · `Terminal_ResumeSessionTip` · `Terminal_ResumeSession`)
+
+**콤보가 칸을 넘던 것**: 펼친 목록은 무한 폭으로 재므로 `TextTrimming` 만으로는 안 줄어든다.
+제목 TextBlock 에 `MaxWidth` 를 줘야 팝업이 콤보 폭 안에 머문다. `TerminalCardTests` 가 잠근다.

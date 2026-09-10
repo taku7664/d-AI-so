@@ -206,6 +206,36 @@ public sealed partial class TerminalCardTests
         text.Should().NotContain("ResumeSessionList", because: "목록은 쌓인 단계 사이에서 카드 높이를 먹는다");
     }
 
+    [Fact]
+    public void 새로_시작도_같은_콤보에서_고른다()
+    {
+        // 2026-09-10: 카드 2장(새로 시작 / 하던 대화 이어서)으로 갈래를 먼저 묻고 그 아래에 대화 칸이 또 있었다.
+        // 지난 대화를 고르려면 두 번 눌러야 했고, 카드와 콤보가 같은 것을 두 번 물었다.
+        // 이제 목록 첫 줄이 "새로 시작"이다 (ResumeCandidateViewModel.NewSession)
+        var text = File.ReadAllText(PagePath);
+
+        text.Should().NotContain("NewSessionRadio", because: "새로 시작은 카드가 아니라 목록의 첫 줄이다");
+        text.Should().NotContain("ResumeSessionRadio", because: "이어서도 카드가 아니라 목록의 나머지 줄이다");
+        text.Should().Contain("ViewModel.SessionChoices", because: "새로 시작 + 지난 대화가 한 목록이다");
+    }
+
+    [Fact]
+    public void 지난_대화_한_줄은_콤보_칸을_넘지_않는다()
+    {
+        // 펼친 목록은 무한 폭으로 재므로 TextTrimming 만으로는 안 줄어든다. 제목에 MaxWidth 가 있어야
+        // 긴 첫 프롬프트 하나가 팝업을 카드 밖으로 밀어내지 않는다 (2026-09-10 사람의 지적)
+        var templates = File.ReadAllText(Path.Combine(Root, "src", "Daiso.App", "Ui", "ItemTemplates.xaml"));
+        var template = templates[templates.IndexOf("ResumeCandidateTemplate", StringComparison.Ordinal)..];
+
+        SummaryHasMaxWidth().IsMatch(template).Should().BeTrue(
+            because: "제목이 길어도 목록이 콤보 칸 밖으로 나가지 않아야 한다");
+    }
+
+    [GeneratedRegex(
+        @"<TextBlock(?=[^>]*x:Bind Summary)(?=[^>]*MaxWidth=)(?=[^>]*TextTrimming=""CharacterEllipsis"")[^>]*>",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex SummaryHasMaxWidth();
+
     [GeneratedRegex(@"<Button[^>]*Style=""\{StaticResource StepHeader\}""", RegexOptions.CultureInvariant)]
     private static partial Regex StepHeaderButton();
 

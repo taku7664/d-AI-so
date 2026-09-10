@@ -1,4 +1,4 @@
-<!--
+﻿<!--
     목록 한 줄의 생김새. 페이지에서 빼내 여기에 모았다 (docs/REVIEW_BACKLOG.md A3).
 
     왜 사전인가: 이 파일은 x:Class 를 가진 ResourceDictionary 라 {x:Bind} 컴파일 바인딩이 그대로 산다.
@@ -241,7 +241,11 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0" Text="{x:Bind When}" Style="{StaticResource MutedText}" VerticalAlignment="Center" MinWidth="72" />
-            <TextBlock Grid.Column="1" Text="{x:Bind Summary}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+            <!--
+                MaxWidth 가 없으면 펼친 목록이 가장 긴 제목만큼 넓어져 콤보 칸 밖으로 삐져나간다
+                (팝업은 무한 폭으로 재므로 TextTrimming 만으로는 안 줄어든다)
+            -->
+            <TextBlock Grid.Column="1" Text="{x:Bind Summary}" MaxWidth="520" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" HorizontalAlignment="Left" VerticalAlignment="Center" />
             <TextBlock
                 Grid.Column="2"
                 Text="{x:Bind Counts}"

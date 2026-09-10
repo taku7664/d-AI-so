@@ -287,7 +287,7 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
         {
             TerminalStep.Tool => ToolCards,
             TerminalStep.Folder => FolderBox,
-            _ => SessionModeRadios,
+            _ => ResumeBox,
         };
 
         DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () => RevealStep(header, answer));
@@ -323,17 +323,6 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
         {
             _pendingStepFocus = null;
             answer.Focus(FocusState.Programmatic);
-        }
-    }
-
-    /// <summary>새로 시작 / 이어서를 고른다. 안 고른 상태는 SelectedIndex = -1 이라 여기로 안 온다.</summary>
-    private void OnSessionModeChanged(object sender, SelectionChangedEventArgs e)
-    {
-        PaintCards();
-
-        if (sender is ListView { SelectedIndex: >= 0 } cards)
-        {
-            ViewModel.ChooseSessionMode(cards.SelectedIndex);
         }
     }
 
@@ -539,7 +528,6 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
         {
             ViewModel.SelectTool(room.Tool);
             ViewModel.SetFolder(room.ProjectDirectory);
-            ViewModel.SessionModeIndex = 0;
             ShowNewSession();
         }
     }

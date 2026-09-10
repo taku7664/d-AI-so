@@ -280,43 +280,27 @@ public sealed partial class TerminalViewModel : ObservableObject
 
     // ── 세션: 새 세션 / 기존 세션 이어서 ────────────────────────────────────
 
-    /// <summary>0 = 새 세션, 1 = 기존 세션 이어서. RadioButtons가 이 값에 바로 묶인다.</summary>
+    /// <summary>
+    /// 3단계 콤보의 목록. <b>첫 줄은 늘 "새로 시작"</b>이고 뒤는 이 폴더·도구의 지난 대화(최근 30개).
+    /// <para>
+    /// 예전에는 카드 2장(새로 시작 / 하던 대화 이어서)으로 갈래를 먼저 고르고 그 아래에 대화 칸이 또 나왔다.
+    /// 지난 대화를 고르려면 두 번 눌러야 했고, 카드 두 장과 콤보가 같은 것을 두 번 묻고 있었다
+    /// (2026-09-10 사람의 요청). 이제 한 칸에서 끝난다.
+    /// </para>
+    /// </summary>
+    public ObservableCollection<ResumeCandidateViewModel> SessionChoices { get; } = [ResumeCandidateViewModel.NewSession];
+
+    /// <summary>고른 줄. null 이면 아직 3단계에 답하지 않았다.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsNewSession))]
     [NotifyPropertyChangedFor(nameof(IsResume))]
     [NotifyPropertyChangedFor(nameof(StartButtonText))]
     [NotifyPropertyChangedFor(nameof(Preview))]
-    private int sessionModeIndex;
+    private ResumeCandidateViewModel? selectedSession;
 
-    public bool IsNewSession => SessionModeIndex == 0;
+    public bool IsNewSession => SelectedSession is { IsNew: true };
 
-    public bool IsResume => SessionModeIndex == 1;
-
-    /// <summary>
-    /// 이 폴더·도구의 지난 세션. 최근 것이 앞. "하던 대화 이어서"를 골랐을 때 대화 칸(콤보박스)에 보인다.
-    /// <para>
-    /// 예전에는 검색칸 + 날짜로 묶은 목록이었다. 답한 단계가 펼친 채로 쌓이게 되면서 목록이 카드 높이를 먹었고,
-    /// 폴더 칸처럼 콤보박스 하나로 바꿨다(2026-09-10 사람의 요청). 최근 30개만 담으므로 검색 없이 훑을 수 있다.
-    /// </para>
-    /// </summary>
-    public ObservableCollection<ResumeCandidateViewModel> ResumeCandidates { get; } = [];
-
-    /// <summary>"이 폴더의 대화 N개". 세어 봤다는 것을 보여 주면 앱이 내 폴더를 안다는 신호가 된다.</summary>
-    public string ResumeCountText => UiStrings.Format("Terminal_ResumeCount", ResumeCandidates.Count);
-
-    /// <summary>이 폴더에 이어서 열 대화가 하나라도 있는가. 없으면 "하던 대화 이어서" 카드를 잠근다.</summary>
-    public bool HasAnyResume => ResumeCandidates.Count > 0;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(Preview))]
-    private ResumeCandidateViewModel? selectedResume;
-
-    /// <summary>목록이 비었는가(안내 문구).</summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(NoResumeCandidatesText))]
-    private bool hasNoResumeCandidates;
-
-    public string NoResumeCandidatesText => UiStrings.Format("Terminal_NoSessionsHere", SelectedTool.Label);
+    public bool IsResume => SelectedSession is { IsNew: false };
 
     /// <summary>세션·요약 "이어서 열기"가 넘긴 resume 인자. 목록에서 같은 세션을 찾으면 그것을 고르고, 못 찾아도 이 인자로 연다.</summary>
     private string? _preparedResumeArguments;
@@ -330,16 +314,10 @@ public sealed partial class TerminalViewModel : ObservableObject
         var tool = SelectedTool;
         var directory = WorkingDirectory;
 
-        ResumeCandidates.Clear();
-        SelectedResume = null;
-        HasNoResumeCandidates = false;
-        OnPropertyChanged(nameof(NoResumeCandidatesText));
-        OnPropertyChanged(nameof(ResumeCountText));
-        OnPropertyChanged(nameof(HasAnyResume));
+        ResetSessionChoices();
 
         if (string.IsNullOrWhiteSpace(directory))
         {
-            HasNoResumeCandidates = true;
             return;
         }
 
@@ -363,24 +341,25 @@ public sealed partial class TerminalViewModel : ObservableObject
 
         foreach (var session in sessions.OrderByDescending(session => session.ModifiedAt).Take(30))
         {
-            ResumeCandidates.Add(new ResumeCandidateViewModel(session, tool.Provider.BuildResumeArguments(session)));
+            SessionChoices.Add(new ResumeCandidateViewModel(session, tool.Provider.BuildResumeArguments(session)));
         }
 
-        HasNoResumeCandidates = ResumeCandidates.Count == 0;
-        OnPropertyChanged(nameof(ResumeCountText));
-        OnPropertyChanged(nameof(HasAnyResume));
-
+        // 세션 화면에서 "이어서 열기"로 넘어왔으면 그 대화를 목록에서 찾아 골라 둔다
         if (_preparedResumeArguments is { } prepared)
         {
-            SelectedResume = ResumeCandidates.FirstOrDefault(candidate => candidate.ResumeArguments == prepared);
-        }
-        else if (IsResume)
-        {
-            SelectedResume = ResumeCandidates.FirstOrDefault();
+            SelectedSession = SessionChoices.FirstOrDefault(candidate => candidate.ResumeArguments == prepared);
         }
     }
 
-    partial void OnSelectedResumeChanged(ResumeCandidateViewModel? value)
+    /// <summary>목록을 "새로 시작" 한 줄로 되돌리고 답을 지운다. 폴더·도구가 바뀌면 지난 대화가 통째로 달라진다.</summary>
+    private void ResetSessionChoices()
+    {
+        SessionChoices.Clear();
+        SessionChoices.Add(ResumeCandidateViewModel.NewSession);
+        SelectedSession = null;
+    }
+
+    partial void OnSelectedSessionChanged(ResumeCandidateViewModel? value)
     {
         if (value is not null)
         {
@@ -390,18 +369,8 @@ public sealed partial class TerminalViewModel : ObservableObject
         RefreshSteps();
     }
 
-    partial void OnSessionModeIndexChanged(int value)
-    {
-        if (value == 1 && SelectedResume is null)
-        {
-            SelectedResume = ResumeCandidates.FirstOrDefault();
-        }
-    }
-
-    /// <summary>이어서 열 때 붙는 인자. 새 세션이면 빈 문자열.</summary>
-    private string ResumeArguments => IsResume
-        ? (SelectedResume?.ResumeArguments ?? _preparedResumeArguments ?? string.Empty)
-        : string.Empty;
+    /// <summary>이어서 열 때 붙는 인자. 새로 시작이면 빈 문자열.</summary>
+    private string ResumeArguments => SelectedSession?.ResumeArguments ?? string.Empty;
 
     // ── 시작할 때: 프롬프트·규칙 (새 세션) ───────────────────────────────────
 
@@ -472,14 +441,10 @@ public sealed partial class TerminalViewModel : ObservableObject
     /// <summary>
     /// 사람이 폴더를 골랐는가. <see cref="WorkingDirectory"/>는 <b>마지막에 쓴 폴더로 미리 채워지므로</b>
     /// "값이 있다"와 "사람이 답했다"가 다르다 — 그걸 구분하지 않아서, AI만 고르면 폴더 단계가
-    /// 답이 된 것처럼 통째로 건너뛰어졌다. <see cref="ToolChosen"/>·<see cref="SessionModeChosen"/>과 같은 이유다.
+    /// 답이 된 것처럼 통째로 건너뛰어졌다. <see cref="ToolChosen"/>과 같은 이유다.
     /// </summary>
     [ObservableProperty]
     private bool folderChosen;
-
-    /// <summary>사람이 새로/이어서를 골랐는가. <see cref="SessionModeIndex"/>는 기본값이 있어 이것과 따로 본다.</summary>
-    [ObservableProperty]
-    private bool sessionModeChosen;
 
     public bool ToolDone => ToolChosen;
 
@@ -488,7 +453,7 @@ public sealed partial class TerminalViewModel : ObservableObject
     /// <summary>미리 채워 둔 폴더가 있는데 아직 확인받지 못했다. 그 자리에 확인 단추를 낸다.</summary>
     public bool FolderNeedsConfirm => FolderExpanded && CanLaunch && !FolderChosen;
 
-    public bool SessionDone => FolderDone && SessionModeChosen && (IsNewSession || SelectedResume is not null);
+    public bool SessionDone => FolderDone && SelectedSession is not null;
 
     public bool ToolExpanded => ToolOpen;
 
@@ -533,14 +498,8 @@ public sealed partial class TerminalViewModel : ObservableObject
     public bool AdvancedMarkCurrent => AdvancedExpanded;
 
     public bool AdvancedMarkPending => !AdvancedExpanded;
-    /// <summary>라디오에 물리는 값. 아직 안 골랐으면 −1이라 아무것도 켜지지 않는다.</summary>
-    public int SessionModeSelection => SessionModeChosen ? SessionModeIndex : -1;
-
     /// <summary>AI 카드 목록에 물리는 값. 아직 안 골랐으면 −1이라 아무 카드도 켜지지 않는다.</summary>
     public int ToolSelection => ToolChosen ? SelectedToolIndex : -1;
-
-    /// <summary>지난 대화 콤보를 보일 때. 프롬프트는 새로/이어서 둘 다에 붙으므로 이 갈래를 타지 않는다.</summary>
-    public bool ShowResumeList => SessionModeChosen && IsResume;
 
     // 아직 못 가는 단계는 흐리게 + 누를 수 없게 한다. IsEnabled 를 쓰면 WinUI 가 비활성 배경을 칠해
     // "흐린 줄"이 아니라 "회색 덩어리"가 되어 오히려 눈에 띈다
@@ -566,9 +525,7 @@ public sealed partial class TerminalViewModel : ObservableObject
                 return tool.EmbeddedButtonText;
             }
 
-            // 무효화로 선택이 풀려도 SessionModeIndex 는 1로 남는다. "안 골랐다"고 하면서 버튼이
-            // `이어서 열기`면 또 말이 어긋난다 — 고른 적이 있을 때만 이어서로 부른다
-            return UiStrings.Get(ShowResumeList ? "Terminal_ResumeHere" : "Terminal_StartHere");
+            return UiStrings.Get(IsResume ? "Terminal_ResumeHere" : "Terminal_StartHere");
         }
     }
 
@@ -595,11 +552,6 @@ public sealed partial class TerminalViewModel : ObservableObject
             if (!FolderDone)
             {
                 return UiStrings.Get("Terminal_StepNeedFolder");
-            }
-
-            if (!SessionModeChosen)
-            {
-                return UiStrings.Get("Terminal_StepNeedMode");
             }
 
             return SessionDone ? string.Empty : UiStrings.Get("Terminal_StepNeedSession");
@@ -632,14 +584,6 @@ public sealed partial class TerminalViewModel : ObservableObject
         RefreshSteps();
     }
 
-    /// <summary>새로 시작 / 이어서를 고른다. 3단계는 이미 열려 있고, 몸이 한 줄(프롬프트·대화 칸)만 늘어서 굴리지 않는다.</summary>
-    public void ChooseSessionMode(int mode)
-    {
-        SessionModeIndex = mode;
-        SessionModeChosen = true;
-        RefreshSteps();
-    }
-
     /// <summary>
     /// 단계를 열고, 화면에 그 자리로 굴려 달라고 알린다.
     /// 이미 열려 있어도 알린다 — 앞 답을 바꿔 다음 단계를 다시 봐야 할 때가 있다.
@@ -665,11 +609,7 @@ public sealed partial class TerminalViewModel : ObservableObject
     }
 
     /// <summary>앞 단계가 바뀌어 세션 선택이 못 쓰게 됐다. 답만 지운다 — 3단계가 다시 열리는 것으로 이미 보인다.</summary>
-    private void InvalidateSession()
-    {
-        SessionModeChosen = false;
-        SelectedResume = null;
-    }
+    private void InvalidateSession() => SelectedSession = null;
 
     /// <summary>단계에서 나오는 값들을 한꺼번에 다시 읽게 한다. 갈래가 많아 개별 특성으로 엮지 않는다.</summary>
     private void RefreshSteps()
@@ -690,8 +630,7 @@ public sealed partial class TerminalViewModel : ObservableObject
         nameof(SessionMarkCheck), nameof(SessionMarkCurrent), nameof(SessionMarkPending),
         nameof(AdvancedExpanded), nameof(AdvancedHeaderOpacity),
         nameof(AdvancedMarkCurrent), nameof(AdvancedMarkPending),
-        nameof(SessionModeSelection), nameof(ToolSelection),
-        nameof(ShowResumeList),
+        nameof(ToolSelection),
         nameof(FolderHeaderOpacity), nameof(SessionHeaderOpacity),
         nameof(ShowPreview), nameof(StartButtonText),
         nameof(Preview), nameof(PreviewSentence), nameof(HasPreviewSentence),
@@ -707,8 +646,6 @@ public sealed partial class TerminalViewModel : ObservableObject
     partial void OnSessionOpenChanged(bool value) => RefreshSteps();
 
     partial void OnToolChosenChanged(bool value) => RefreshSteps();
-
-    partial void OnSessionModeChosenChanged(bool value) => RefreshSteps();
 
     // ── 실행 ──────────────────────────────────────────────────────────────
 
@@ -761,7 +698,7 @@ public sealed partial class TerminalViewModel : ObservableObject
             var folder = Path.GetFileName((WorkingDirectory ?? string.Empty).TrimEnd(Path.DirectorySeparatorChar));
 
             return IsResume
-                ? UiStrings.Format("Terminal_SentenceResume", tool.Label, folder, SelectedResume!.When)
+                ? UiStrings.Format("Terminal_SentenceResume", tool.Label, folder, SelectedSession!.When)
                 : UiStrings.Format("Terminal_SentenceNew", tool.Label, folder);
         }
     }
@@ -821,14 +758,12 @@ public sealed partial class TerminalViewModel : ObservableObject
         _preparedResumeArguments = resumeArguments;
         SelectTool(tool);
         SetFolder(workingDir);
-        SessionModeIndex = 1;
         _autoOpen = autoOpen;
         _autoOpenTool = tool;
 
         // 세 단계가 이미 채워진 채로 도착한다. 단계는 사람이 접고 펴지 않으므로 셋 다 열어 두고 3단계로 굴린다 —
         // 앞 두 단계를 접어 두면 거기로 돌아갈 길이 없다
         ToolChosen = true;
-        SessionModeChosen = true;
         ToolOpen = true;
         FolderOpen = true;
         OpenStep(TerminalStep.Session);
@@ -846,7 +781,6 @@ public sealed partial class TerminalViewModel : ObservableObject
         if (value && _autoOpenTool is { } tool)
         {
             SelectTool(tool);
-            SessionModeIndex = 1;
         }
 
         return value;
@@ -952,7 +886,16 @@ public sealed class ResumeCandidateViewModel
         ResumeArguments = resumeArguments;
     }
 
-    public SessionInfo Session { get; }
+    private ResumeCandidateViewModel() => ResumeArguments = string.Empty;
+
+    /// <summary>목록 맨 앞에 늘 있는 "새로 시작" 줄. 지난 대화와 같은 칸에서 고른다.</summary>
+    public static ResumeCandidateViewModel NewSession { get; } = new();
+
+    /// <summary>이어서 열 지난 대화. "새로 시작" 줄이면 null.</summary>
+    public SessionInfo? Session { get; }
+
+    /// <summary>"새로 시작" 줄인가.</summary>
+    public bool IsNew => Session is null;
 
     /// <summary>이 세션을 이어서 열 때 붙는 인자(예: --resume id).</summary>
     public string ResumeArguments { get; }
@@ -965,6 +908,11 @@ public sealed class ResumeCandidateViewModel
     {
         get
         {
+            if (Session is null)
+            {
+                return UiStrings.Get("Terminal_NewSession");
+            }
+
             var local = Session.ModifiedAt.ToLocalTime();
             var moment = SessionMoment.Of(local, DateTimeOffset.Now);
 
@@ -987,6 +935,11 @@ public sealed class ResumeCandidateViewModel
     {
         get
         {
+            if (Session is null)
+            {
+                return UiStrings.Get("Terminal_NewSessionSub");
+            }
+
             var cleaned = SessionTitle.Clean(Session.FirstPrompt);
 
             if (cleaned.Length == 0)
@@ -998,15 +951,14 @@ public sealed class ResumeCandidateViewModel
         }
     }
 
-    /// <summary>주고받은 횟수 합. 내역은 <see cref="CountsTip"/>에 둔다.</summary>
-    public string Counts => UiStrings.Format(
-        "Terminal_SessionCounts",
-        Session.UserMessageCount + Session.AssistantMessageCount);
+    /// <summary>주고받은 횟수 합. 내역은 <see cref="CountsTip"/>에 둔다. "새로 시작" 줄에는 셀 것이 없다.</summary>
+    public string Counts => Session is null
+        ? string.Empty
+        : UiStrings.Format("Terminal_SessionCounts", Session.UserMessageCount + Session.AssistantMessageCount);
 
-    public string CountsTip => UiStrings.Format(
-        "Terminal_SessionCountsTip",
-        Session.UserMessageCount,
-        Session.AssistantMessageCount);
+    public string CountsTip => Session is null
+        ? string.Empty
+        : UiStrings.Format("Terminal_SessionCountsTip", Session.UserMessageCount, Session.AssistantMessageCount);
 
     private static string Format(DateTimeOffset value, string pattern) =>
         value.ToString(pattern, System.Globalization.CultureInfo.CurrentCulture);
