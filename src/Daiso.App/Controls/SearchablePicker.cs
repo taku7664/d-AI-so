@@ -100,6 +100,9 @@ public sealed class SearchablePicker : Grid
         // 높이를 여기서 미리 못 박는다. 열릴 때 처음 재면 이미 늦다 — 아래 설명(Opening) 참고
         _list.MaxHeight = VisibleItemCount * RowHeight;
         _list.SelectionMode = ListViewSelectionMode.Single;
+        // 줄 수를 넘으면 여기서 스크롤한다. 물려받은 값에 맡기지 않고 못 박는다
+        ScrollViewer.SetVerticalScrollMode(_list, ScrollMode.Enabled);
+        ScrollViewer.SetVerticalScrollBarVisibility(_list, ScrollBarVisibility.Auto);
         _list.SelectionChanged += OnListSelectionChanged;
         _list.ItemContainerStyle = BuildRowStyle();
 
@@ -119,7 +122,6 @@ public sealed class SearchablePicker : Grid
         _flyout.Opened += OnFlyoutOpened;
         _flyout.Closed += (_, _) => _closedAt = Environment.TickCount64;
 
-        FlyoutBase.SetAttachedFlyout(_face, _flyout);
         Children.Add(_face);
     }
 
@@ -237,7 +239,25 @@ public sealed class SearchablePicker : Grid
             return;
         }
 
-        FlyoutBase.ShowAttachedFlyout(_face);
+        // 크기를 먼저 정하고 연다. 열어 놓고 재면 WinUI 가 이미 자리를 정한 뒤다
+        Resize();
+
+        // 놓을 자리를 <b>열 때 직접 준다</b>. FlyoutBase.Placement 는 기본값이 Top 이고,
+        // 미리 걸어 둔 값이 상황에 따라 무시된다 — 세션 화면의 프로젝트 칸이 혼자 위로 열렸다
+        // (2026-09-11 사람의 지적). ShowAt 의 옵션은 그때그때 그대로 쓰인다
+        _flyout.ShowAt(_face, new FlyoutShowOptions
+        {
+            Placement = FlyoutPlacementMode.BottomEdgeAlignedLeft,
+            ShowMode = FlyoutShowMode.Standard,
+        });
+    }
+
+    /// <summary>팝오버의 폭과 목록 높이를 지금 칸에 맞춘다.</summary>
+    private void Resize()
+    {
+        // 팝오버는 무한 폭으로 재어진다. 칸 폭을 직접 넣어야 목록이 칸에 맞는다
+        _popupRoot.Width = Math.Max(ActualWidth - 24, 200);
+        _list.MaxHeight = Math.Max(VisibleItemCount, 1) * RowHeight;
     }
 
     /// <summary>
@@ -248,10 +268,7 @@ public sealed class SearchablePicker : Grid
     /// </summary>
     private void OnFlyoutOpening(object? sender, object e)
     {
-        // 팝오버는 무한 폭으로 재어진다. 칸 폭을 직접 넣어야 목록이 칸에 맞는다
-        _popupRoot.Width = Math.Max(ActualWidth - 24, 200);
-        _list.MaxHeight = Math.Max(VisibleItemCount, 1) * RowHeight;
-
+        Resize();
         _search.Text = string.Empty;
         ApplyFilter();
     }
@@ -356,13 +373,18 @@ public sealed class SearchablePicker : Grid
         return style;
     }
 
+    /// <summary>
+    /// 팝오버 껍데기. <b><c>ScrollViewer.*</c> 는 절대 여기 걸지 않는다.</b>
+    /// 그 붙임 속성들은 <b>물려 내려가는</b> 것이라, 껍데기에 "스크롤 끄기"를 걸면 안쪽 목록의 스크롤까지 꺼진다.
+    /// 그러면 목록이 <see cref="RowHeight"/>×줄 수로 줄어들지 못하고 서른일곱 줄이 통째로 재어져,
+    /// WinUI 가 "아래에 안 들어간다"고 보고 팝오버를 칸 <b>위로</b> 뒤집어 열었다
+    /// (2026-09-11. 높이 계산 시점·놓을 자리를 두 번 고쳤는데 진짜 원인은 이것이었다).
+    /// </summary>
     private static Style BuildPresenterStyle()
     {
         var style = new Style(typeof(FlyoutPresenter));
         style.Setters.Add(new Setter(PaddingProperty, new Thickness(8)));
         style.Setters.Add(new Setter(MaxWidthProperty, double.PositiveInfinity));
-        style.Setters.Add(new Setter(ScrollViewer.VerticalScrollModeProperty, ScrollMode.Disabled));
-        style.Setters.Add(new Setter(ScrollViewer.VerticalScrollBarVisibilityProperty, ScrollBarVisibility.Disabled));
         return style;
     }
 
