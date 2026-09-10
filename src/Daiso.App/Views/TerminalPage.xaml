@@ -69,10 +69,17 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!-- 새 터미널 탭. 방이 하나도 선택되지 않았을 때 켜진다 -->
+            <!--
+                새 터미널 탭. 방이 하나도 선택되지 않았을 때 켜진다.
+                방 탭과 같은 높이(40)의 정사각형이다 — 내용 크기대로 두면 탭 줄에서 혼자 작고 가운데 떠 보였다
+            -->
             <ToggleButton
                 x:Name="NewTab"
                 Grid.Column="0"
+                Width="40"
+                Height="40"
+                Padding="0"
+                CornerRadius="{StaticResource RadiusSmall}"
                 IsChecked="True"
                 Click="OnNewTabClick"
                 AutomationProperties.AutomationId="NewTerminalButton"
@@ -100,6 +107,9 @@
                     <Style TargetType="ListViewItem">
                         <Setter Property="Padding" Value="4" />
                         <Setter Property="MinWidth" Value="0" />
+                        <!-- 새 터미널(+) 단추와 같은 높이. 둘이 한 줄의 탭이다 -->
+                        <Setter Property="Height" Value="40" />
+                        <Setter Property="MinHeight" Value="40" />
                     </Style>
                 </ListView.ItemContainerStyle>
                 <ListView.ItemTemplate>
@@ -295,6 +305,7 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
                             <!-- ───── 1. 어떤 AI로 시작할까요? ───── -->
@@ -441,31 +452,9 @@
                                 <Border Style="{StaticResource NoticeBorder}" Visibility="{x:Bind ViewModel.FolderMissing, Mode=OneWay}">
                                     <TextBlock Text="{loc:Str Key=Terminal_FolderMissing}" TextWrapping="Wrap" />
                                 </Border>
-                                <Grid ColumnSpacing="{StaticResource GapMedium}">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <Button Grid.Column="0" Click="OnEditRulesClick" AutomationProperties.AutomationId="EditRulesButton" ToolTipService.ToolTip="{loc:Str Key=Room_EditRulesHint}">
-                                        <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapSmall}">
-                                            <FontIcon Glyph="&#xE8A1;" FontSize="{StaticResource BodyFontSize}" />
-                                            <TextBlock Text="{loc:Str Key=Terminal_EditRules}" />
-                                        </StackPanel>
-                                    </Button>
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{StaticResource GapSmall}" VerticalAlignment="Center">
-                                        <!-- 있음/없음이 회색 본문 한 줄이면 한눈에 안 갈린다 (§2-E3) -->
-                                        <FontIcon Glyph="&#xE73E;" FontSize="{StaticResource BodyFontSize}" Foreground="{ThemeResource SystemFillColorSuccessBrush}" Visibility="{x:Bind ViewModel.HasRules, Mode=OneWay}" />
-                                        <FontIcon Glyph="&#xE738;" FontSize="{StaticResource BodyFontSize}" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Visibility="{x:Bind ViewModel.HasNoRules, Mode=OneWay}" />
-                                        <TextBlock
-                                            Text="{x:Bind ViewModel.RulesStatusText, Mode=OneWay}"
-                                            ToolTipService.ToolTip="{x:Bind ViewModel.RulesStatusText, Mode=OneWay}"
-                                            Style="{StaticResource MutedText}"
-                                            VerticalAlignment="Center" />
-                                    </StackPanel>
-                                </Grid>
                             </StackPanel>
 
-                            <!-- ───── 3. 무엇부터 할까요? ───── -->
+                            <!-- ───── 3. (필수) 대화를 선택해주세요 ───── -->
                             <Grid Grid.Row="4" Style="{StaticResource StepHeader}" x:Name="StepSessionHeader" Opacity="{x:Bind ViewModel.SessionHeaderOpacity, Mode=OneWay}" AutomationProperties.AutomationId="StepSessionHeader">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="20" />
@@ -479,24 +468,19 @@
                                     <TextBlock Grid.Column="1" Text="{loc:Str Key=Terminal_Session}" Style="{StaticResource SectionTitleText}" VerticalAlignment="Center" />
                             </Grid>
 
-                            <!-- 3단계 몸. StepBody(StackPanel) 와 같은 여백·간격을 손으로 적는다 -->
-                            <Grid Grid.Row="5" RowSpacing="{StaticResource GapMedium}" Margin="30,2,0,14" Visibility="{x:Bind ViewModel.SessionExpanded, Mode=OneWay}">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
+                            <!--
+                                3단계 몸. 다른 단계와 같은 StepBody(StackPanel) 다.
+                                예전에는 Grid + RowSpacing 이었는데, Grid 는 접힌 줄에도 간격을 붙여서 "이어서"를 고르면
+                                숨은 프롬프트 두 줄 몫의 간격이 남아 "대화" 칸만 아래로 밀렸다. StackPanel 은 숨은 것에 간격을 주지 않는다
+                            -->
+                            <StackPanel Grid.Row="5" Style="{StaticResource StepBody}" Visibility="{x:Bind ViewModel.SessionExpanded, Mode=OneWay}">
                                 <!-- 앞 단계를 바꿔 이 답이 무효가 됐다. 조용히 지우면 "왜 없어졌지"가 된다 (§4.9) -->
-                                <Border Grid.Row="0" Style="{StaticResource NoticeBorder}" Visibility="{x:Bind ViewModel.HasInvalidationNotice, Mode=OneWay}">
+                                <Border Style="{StaticResource NoticeBorder}" Visibility="{x:Bind ViewModel.HasInvalidationNotice, Mode=OneWay}">
                                     <TextBlock Text="{x:Bind ViewModel.InvalidationNotice, Mode=OneWay}" TextWrapping="Wrap" />
                                 </Border>
 
                                 <!-- 카드 2장. 각 카드에 부연 한 줄을 붙여 고르기 전에 무엇이 기다리는지 알려 준다 (§4.5) -->
                                 <ListView
-                                    Grid.Row="1"
                                     x:Name="SessionModeRadios"
                                     AutomationProperties.AutomationId="SessionModeRadios"
                                     SelectedIndex="{x:Bind ViewModel.SessionModeSelection, Mode=OneWay}"
@@ -561,12 +545,13 @@
                                 </ListView>
 
                                 <!-- 새로 시작: 시작 프롬프트는 선택 사항이라 이 단계를 접지 않는다 (§4.6) -->
-                                <Grid Grid.Row="2" ColumnSpacing="{StaticResource GapLarge}" Visibility="{x:Bind ViewModel.ShowNewSessionOptions, Mode=OneWay}">
+                                <!-- 라벨 칸 폭은 "대화" 줄과 같은 72 로 고정한다. 글자 폭대로 두면 두 줄의 콤보가 서로 다른 곳에서 시작한다 -->
+                                <Grid ColumnSpacing="{StaticResource GapLarge}" Visibility="{x:Bind ViewModel.ShowNewSessionOptions, Mode=OneWay}">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="72" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="{loc:Str Key=Terminal_PromptLabel}" VerticalAlignment="Center" MinWidth="56" />
+                                    <TextBlock Grid.Column="0" Text="{loc:Str Key=Terminal_PromptLabel}" VerticalAlignment="Center" />
                                     <ComboBox
                                         Grid.Column="1"
                                         HorizontalAlignment="Stretch"
@@ -576,18 +561,18 @@
                                         SelectedItem="{x:Bind ViewModel.SelectedPrompt, Mode=TwoWay}"
                                         DisplayMemberPath="Name" />
                                 </Grid>
-                                <TextBlock Grid.Row="3" Text="{loc:Str Key=Terminal_PromptHint}" Style="{StaticResource MutedText}" TextWrapping="Wrap" Visibility="{x:Bind ViewModel.ShowNewSessionOptions, Mode=OneWay}" />
+                                <TextBlock Text="{loc:Str Key=Terminal_PromptHint}" Style="{StaticResource MutedText}" TextWrapping="Wrap" Visibility="{x:Bind ViewModel.ShowNewSessionOptions, Mode=OneWay}" />
 
                                 <!--
                                     이어서: 이 폴더·도구의 지난 대화. 폴더 칸처럼 콤보박스 하나로 고른다 — 목록이 카드 높이를 먹지 않는다.
                                     예전의 검색칸 + 날짜 묶음 목록은 답한 단계가 쌓이면서 걷어냈다(최근 30개라 훑어 고를 수 있다)
                                 -->
-                                <Grid Grid.Row="4" ColumnSpacing="{StaticResource GapLarge}" Visibility="{x:Bind ViewModel.ShowResumeList, Mode=OneWay}">
+                                <Grid ColumnSpacing="{StaticResource GapLarge}" Visibility="{x:Bind ViewModel.ShowResumeList, Mode=OneWay}">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="72" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="{loc:Str Key=Terminal_ResumeLabel}" VerticalAlignment="Center" MinWidth="56" />
+                                    <TextBlock Grid.Column="0" Text="{loc:Str Key=Terminal_ResumeLabel}" VerticalAlignment="Center" />
                                     <ComboBox
                                         x:Name="ResumeBox"
                                         Grid.Column="1"
@@ -606,29 +591,56 @@
                                     </ComboBox>
                                 </Grid>
                                 <TextBlock
-                                    Grid.Row="5"
                                     Text="{x:Bind ViewModel.NoResumeCandidatesText, Mode=OneWay}"
                                     Style="{StaticResource MutedText}"
                                     Visibility="{x:Bind ViewModel.HasNoResumeCandidates, Mode=OneWay}" />
-                            </Grid>
+                            </StackPanel>
 
                             <!--
-                                자세한 설정: 3단계 바로 아래, 흐름의 마지막 칸이다. 3단계가 열릴 때 함께 나타난다.
-                                예전에는 카드 바닥 띠에 붙였다 — 지난 대화 목록이 남은 높이를 다 먹어 스크롤 영역 안에서는 손이 안 닿았다.
-                                지금은 지난 대화가 콤보박스 하나라 바로 밑에 둬도 닿는다 (2026-09-10 사람의 요청)
+                                ───── 4. (선택) 세부 설정을 원하시나요? ─────
+                                1~3 단계와 같은 머리 + 몸이다. 3단계가 열릴 때 함께 열리고, 사람이 접고 펴지 않는다.
+                                답할 것이 없는 단계라 ✓ 가 없고, 시작 버튼을 막지 않는다(CanStart 는 1~3 단계만 본다).
+                                규칙 편집도 여기 둔다 — 폴더를 고르는 자리에서 규칙까지 들이밀면 필수 단계가 길어진다 (2026-09-10 사람의 요청)
                             -->
-                            <muxc:Expander
-                                Grid.Row="6"
-                                Visibility="{x:Bind ViewModel.SessionExpanded, Mode=OneWay}"
-                                HorizontalAlignment="Stretch"
-                                AutomationProperties.AutomationId="AdvancedExpander"
-                                Header="{loc:Str Key=Terminal_Advanced}">
-                                <muxc:Expander.Resources>
-                                    <x:Double x:Key="ExpanderMinHeight">36</x:Double>
-                                </muxc:Expander.Resources>
-                                <StackPanel Spacing="{StaticResource GapMedium}">
-                                    <!-- 모델: 도구가 알려 준 목록. 고르면 아래 인자 칸의 모델 플래그를 고쳐 쓴다. 칸이 곧 실행될 인자다 -->
-                                    <ComboBox
+                            <Grid Grid.Row="6" Style="{StaticResource StepHeader}" x:Name="StepAdvancedHeader" Opacity="{x:Bind ViewModel.SessionHeaderOpacity, Mode=OneWay}" AutomationProperties.AutomationId="StepAdvancedHeader">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="20" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid Grid.Column="0" VerticalAlignment="Center" Height="20">
+                                    <Ellipse Width="{StaticResource StatusDotSize}" Height="{StaticResource StatusDotSize}" Fill="{ThemeResource AccentFillColorDefaultBrush}" Visibility="{x:Bind ViewModel.AdvancedMarkCurrent, Mode=OneWay}" />
+                                    <Ellipse Width="{StaticResource StatusDotSize}" Height="{StaticResource StatusDotSize}" StrokeThickness="1" Stroke="{ThemeResource TextFillColorTertiaryBrush}" Visibility="{x:Bind ViewModel.AdvancedMarkPending, Mode=OneWay}" />
+                                </Grid>
+                                <TextBlock Grid.Column="1" Text="{loc:Str Key=Terminal_Advanced}" Style="{StaticResource SectionTitleText}" VerticalAlignment="Center" />
+                            </Grid>
+
+                            <StackPanel Grid.Row="7" Style="{StaticResource StepBody}" Visibility="{x:Bind ViewModel.SessionExpanded, Mode=OneWay}" AutomationProperties.AutomationId="StepAdvancedBody">
+                                <!-- 규칙: 이 폴더의 규칙 파일이 있는지 + 편집. 폴더 단계에 있다가 여기로 옮겼다 -->
+                                <Grid ColumnSpacing="{StaticResource GapMedium}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Button Grid.Column="0" Click="OnEditRulesClick" AutomationProperties.AutomationId="EditRulesButton" ToolTipService.ToolTip="{loc:Str Key=Room_EditRulesHint}">
+                                        <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapSmall}">
+                                            <FontIcon Glyph="&#xE8A1;" FontSize="{StaticResource BodyFontSize}" />
+                                            <TextBlock Text="{loc:Str Key=Terminal_EditRules}" />
+                                        </StackPanel>
+                                    </Button>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{StaticResource GapSmall}" VerticalAlignment="Center">
+                                        <!-- 있음/없음이 회색 본문 한 줄이면 한눈에 안 갈린다 (§2-E3) -->
+                                        <FontIcon Glyph="&#xE73E;" FontSize="{StaticResource BodyFontSize}" Foreground="{ThemeResource SystemFillColorSuccessBrush}" Visibility="{x:Bind ViewModel.HasRules, Mode=OneWay}" />
+                                        <FontIcon Glyph="&#xE738;" FontSize="{StaticResource BodyFontSize}" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Visibility="{x:Bind ViewModel.HasNoRules, Mode=OneWay}" />
+                                        <TextBlock
+                                            Text="{x:Bind ViewModel.RulesStatusText, Mode=OneWay}"
+                                            ToolTipService.ToolTip="{x:Bind ViewModel.RulesStatusText, Mode=OneWay}"
+                                            Style="{StaticResource MutedText}"
+                                            VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- 모델: 도구가 알려 준 목록. 고르면 아래 인자 칸의 모델 플래그를 고쳐 쓴다. 칸이 곧 실행될 인자다 -->
+                                <ComboBox
                                         HorizontalAlignment="Stretch"
                                         AutomationProperties.AutomationId="ModelPicker"
                                         Header="{loc:Str Key=Terminal_ModelHeader}"
@@ -664,8 +676,7 @@
                                             </DataTemplate>
                                         </ItemsRepeater.ItemTemplate>
                                     </ItemsRepeater>
-                                </StackPanel>
-                            </muxc:Expander>
+                            </StackPanel>
                         </Grid>
                         </ScrollViewer>
 

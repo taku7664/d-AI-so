@@ -559,6 +559,12 @@ public sealed partial class TerminalViewModel : ObservableObject
     public bool SessionMarkCurrent => !SessionDone && SessionExpanded;
 
     public bool SessionMarkPending => !SessionDone && !SessionExpanded;
+
+    // 4단계 (선택) 세부 설정: 답할 것이 없어 ✓ 가 없다. 3단계와 함께 열리면 ●, 그 전에는 ○.
+    // 시작 버튼(CanStart)은 이 단계를 보지 않는다 — 아무것도 안 골라도 열 수 있어야 한다
+    public bool AdvancedMarkCurrent => SessionExpanded;
+
+    public bool AdvancedMarkPending => !SessionExpanded;
     /// <summary>라디오에 물리는 값. 아직 안 골랐으면 −1이라 아무것도 켜지지 않는다.</summary>
     public int SessionModeSelection => SessionModeChosen ? SessionModeIndex : -1;
 
@@ -721,6 +727,7 @@ public sealed partial class TerminalViewModel : ObservableObject
         nameof(ToolMarkCheck), nameof(ToolMarkCurrent), nameof(ToolMarkPending),
         nameof(FolderMarkCheck), nameof(FolderMarkCurrent), nameof(FolderMarkPending),
         nameof(SessionMarkCheck), nameof(SessionMarkCurrent), nameof(SessionMarkPending),
+        nameof(AdvancedMarkCurrent), nameof(AdvancedMarkPending),
         nameof(SessionModeSelection), nameof(ToolSelection),
         nameof(ShowNewSessionOptions), nameof(ShowResumeList),
         nameof(FolderHeaderOpacity), nameof(SessionHeaderOpacity),

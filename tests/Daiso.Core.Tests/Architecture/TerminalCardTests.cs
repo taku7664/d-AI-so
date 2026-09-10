@@ -85,13 +85,52 @@ public sealed partial class TerminalCardTests
     }
 
     [Fact]
-    public void 자세한_설정은_3단계와_함께_열린다()
+    public void 세부_설정은_3단계와_함께_열린다()
     {
         var text = File.ReadAllText(PagePath);
 
         AdvancedOpensWithSession().IsMatch(text).Should().BeTrue(
-            because: "자세한 설정은 3단계가 열릴 때 같이 보인다. 바닥 띠에 늘 붙어 있거나 따로 놀면 안 된다");
+            because: "(선택) 세부 설정은 1~3 단계와 같은 단계이고, 3단계가 열릴 때 같이 열린다");
+        text.Should().NotContain("muxc:Expander", because: "세부 설정은 접는 상자가 아니라 단계다");
     }
+
+    [Theory]
+    [InlineData("Terminal_StepTool", "(필수) ")]
+    [InlineData("Terminal_WorkFolder", "(필수) ")]
+    [InlineData("Terminal_Session", "(필수) ")]
+    [InlineData("Terminal_Advanced", "(선택) ")]
+    public void 단계_머리말은_필수인지_선택인지_밝힌다(string key, string prefix)
+    {
+        var value = XDocument.Parse(File.ReadAllText(StringsPath)).Root!
+            .Elements("data")
+            .Single(data => (string?)data.Attribute("name") == key)
+            .Element("value")!.Value;
+
+        value.Should().StartWith(prefix);
+    }
+
+    [Fact]
+    public void 규칙_편집은_세부_설정_단계에_있다()
+    {
+        var text = File.ReadAllText(PagePath);
+        var advanced = text.IndexOf("x:Name=\"StepAdvancedHeader\"", StringComparison.Ordinal);
+        var rules = text.IndexOf("AutomationProperties.AutomationId=\"EditRulesButton\"", StringComparison.Ordinal);
+
+        advanced.Should().BePositive();
+        rules.Should().BeGreaterThan(advanced, because: "규칙 편집은 폴더 단계가 아니라 (선택) 세부 설정 안에 둔다");
+    }
+
+    [Fact]
+    public void 새_터미널_단추는_탭_높이의_정사각형이다()
+    {
+        var text = File.ReadAllText(PagePath);
+
+        NewTabSquare().IsMatch(text).Should().BeTrue(because: "+ 단추가 방 탭(높이 40)과 같은 줄에서 혼자 작으면 어긋나 보인다");
+        text.Should().Contain("<Setter Property=\"Height\" Value=\"40\" />", because: "방 탭 높이도 40 으로 고정해야 둘이 맞는다");
+    }
+
+    [GeneratedRegex(@"<ToggleButton(?=[^>]*x:Name=""NewTab"")(?=[^>]*Width=""40"")(?=[^>]*Height=""40"")[^>]*>", RegexOptions.CultureInvariant)]
+    private static partial Regex NewTabSquare();
 
     [Fact]
     public void 이어서_할_대화는_콤보박스로_고른다()
@@ -106,7 +145,7 @@ public sealed partial class TerminalCardTests
     private static partial Regex StepHeaderButton();
 
     [GeneratedRegex(
-        @"<muxc:Expander(?=[^>]*AutomationId=""AdvancedExpander"")(?=[^>]*Visibility=""\{x:Bind ViewModel\.SessionExpanded)[^>]*>",
+        @"<StackPanel(?=[^>]*AutomationId=""StepAdvancedBody"")(?=[^>]*Visibility=""\{x:Bind ViewModel\.SessionExpanded)[^>]*>",
         RegexOptions.CultureInvariant)]
     private static partial Regex AdvancedOpensWithSession();
 
