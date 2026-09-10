@@ -325,71 +325,20 @@ public sealed partial class TerminalViewModel : ObservableObject
 
     public bool IsResume => SessionModeIndex == 1;
 
-    /// <summary>이 폴더·도구의 지난 세션. 최근 것이 앞. 기존 세션 이어서를 골랐을 때 목록에 보인다.</summary>
+    /// <summary>
+    /// 이 폴더·도구의 지난 세션. 최근 것이 앞. "하던 대화 이어서"를 골랐을 때 대화 칸(콤보박스)에 보인다.
+    /// <para>
+    /// 예전에는 검색칸 + 날짜로 묶은 목록이었다. 답한 단계가 펼친 채로 쌓이게 되면서 목록이 카드 높이를 먹었고,
+    /// 폴더 칸처럼 콤보박스 하나로 바꿨다(2026-09-10 사람의 요청). 최근 30개만 담으므로 검색 없이 훑을 수 있다.
+    /// </para>
+    /// </summary>
     public ObservableCollection<ResumeCandidateViewModel> ResumeCandidates { get; } = [];
 
-    /// <summary>인덱스에서 읽어 둔 원본. 검색어를 바꿀 때마다 다시 읽지 않으려고 들고 있는다.</summary>
-    private readonly List<ResumeCandidateViewModel> _allCandidates = [];
-
-    /// <summary>날짜로 묶은 목록(오늘·어제·이번 주·그 이전). 목록이 서른 줄이면 경계가 안 보인다.</summary>
-    public ObservableCollection<ResumeGroupViewModel> ResumeGroups { get; } = [];
-
-    /// <summary>목록 위 검색칸. 세션이 늘면 눈으로 찾는 것이 불가능해진다 (§2-E6).</summary>
-    [ObservableProperty]
-    private string resumeSearch = string.Empty;
-
-    partial void OnResumeSearchChanged(string value) => ApplyResumeFilter();
-
     /// <summary>"이 폴더의 대화 N개". 세어 봤다는 것을 보여 주면 앱이 내 폴더를 안다는 신호가 된다.</summary>
-    public string ResumeCountText => UiStrings.Format("Terminal_ResumeCount", _allCandidates.Count);
+    public string ResumeCountText => UiStrings.Format("Terminal_ResumeCount", ResumeCandidates.Count);
 
     /// <summary>이 폴더에 이어서 열 대화가 하나라도 있는가. 없으면 "하던 대화 이어서" 카드를 잠근다.</summary>
-    public bool HasAnyResume => _allCandidates.Count > 0;
-
-    /// <summary>검색어로 목록을 거른다. 제목·시각 어느 쪽이 맞아도 남긴다.</summary>
-    private void ApplyResumeFilter()
-    {
-        var query = ResumeSearch?.Trim() ?? string.Empty;
-
-        ResumeCandidates.Clear();
-
-        foreach (var candidate in _allCandidates)
-        {
-            if (query.Length == 0
-                || candidate.Summary.Contains(query, StringComparison.OrdinalIgnoreCase)
-                || candidate.When.Contains(query, StringComparison.OrdinalIgnoreCase))
-            {
-                ResumeCandidates.Add(candidate);
-            }
-        }
-
-        RebuildResumeGroups();
-
-        HasNoResumeCandidates = ResumeCandidates.Count == 0;
-        OnPropertyChanged(nameof(ResumeCountText));
-        OnPropertyChanged(nameof(HasAnyResume));
-    }
-
-    /// <summary>걸러진 목록을 날짜 묶음으로 다시 담는다. 순서는 최근이 앞이라 묶음 순서도 그대로다.</summary>
-    private void RebuildResumeGroups()
-    {
-        ResumeGroups.Clear();
-
-        ResumeGroupViewModel? current = null;
-
-        foreach (var candidate in ResumeCandidates)
-        {
-            var group = SessionDay.Of(candidate.Session.ModifiedAt.ToLocalTime(), DateTimeOffset.Now);
-
-            if (current is null || current.Group != group)
-            {
-                current = new ResumeGroupViewModel(group);
-                ResumeGroups.Add(current);
-            }
-
-            current.Add(candidate);
-        }
-    }
+    public bool HasAnyResume => ResumeCandidates.Count > 0;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(Preview))]
@@ -414,7 +363,6 @@ public sealed partial class TerminalViewModel : ObservableObject
         var tool = SelectedTool;
         var directory = WorkingDirectory;
 
-        _allCandidates.Clear();
         ResumeCandidates.Clear();
         SelectedResume = null;
         HasNoResumeCandidates = false;
@@ -448,10 +396,12 @@ public sealed partial class TerminalViewModel : ObservableObject
 
         foreach (var session in sessions.OrderByDescending(session => session.ModifiedAt).Take(30))
         {
-            _allCandidates.Add(new ResumeCandidateViewModel(session, tool.Provider.BuildResumeArguments(session)));
+            ResumeCandidates.Add(new ResumeCandidateViewModel(session, tool.Provider.BuildResumeArguments(session)));
         }
 
-        ApplyResumeFilter();
+        HasNoResumeCandidates = ResumeCandidates.Count == 0;
+        OnPropertyChanged(nameof(ResumeCountText));
+        OnPropertyChanged(nameof(HasAnyResume));
 
         if (_preparedResumeArguments is { } prepared)
         {
@@ -526,8 +476,8 @@ public sealed partial class TerminalViewModel : ObservableObject
     // ── 단계 ──────────────────────────────────────────────────────────────
     //
     // 이 화면에서 사람이 정하는 것은 셋뿐이다: 어떤 AI로 · 어느 폴더에서 · 새로/이어서.
-    // 답한 단계는 펼친 채로 둔다. 필수 답이 채워지면 바로 아래 다음 단계가 열리고, 화면이 그 단계로 부드럽게 굴러가 포커스가 옮겨 간다.
-    // 머리를 누르면 그 단계만 접고 편다. 다른 단계는 건드리지 않는다.
+    // 단계는 답을 따라서만 열린다. 필수 답이 채워지면 바로 아래 다음 단계가 열리고, 화면이 그 단계로 부드럽게 굴러가 답할 칸에 포커스가 옮겨 간다.
+    // 한 번 열린 단계는 닫히지 않는다. 사람이 머리를 눌러 접거나 펴지 않는다 — 답한 단계가 사라지면 흐름을 잃는다.
     // (2026-09-10 사람의 요청으로 "한 번에 한 단계만 펼치는" 아코디언을 걷어냈다 — docs/TERMINAL_CARD_PLAN.md 끝)
 
     /// <summary>1단계(어떤 AI로)가 펼쳐져 있는가. 처음에는 이것만 열려 있다.</summary>
@@ -609,14 +559,6 @@ public sealed partial class TerminalViewModel : ObservableObject
     public bool SessionMarkCurrent => !SessionDone && SessionExpanded;
 
     public bool SessionMarkPending => !SessionDone && !SessionExpanded;
-
-    // 머리 오른쪽 요약 + "변경"은 답했고 접혀 있을 때만. 펼쳐져 있으면 몸이 이미 그 답을 보여 준다
-    public bool ToolMarkDone => ToolDone && !ToolExpanded;
-
-    public bool FolderMarkDone => FolderDone && !FolderExpanded;
-
-    public bool SessionMarkDone => SessionDone && !SessionExpanded;
-
     /// <summary>라디오에 물리는 값. 아직 안 골랐으면 −1이라 아무것도 켜지지 않는다.</summary>
     public int SessionModeSelection => SessionModeChosen ? SessionModeIndex : -1;
 
@@ -658,42 +600,6 @@ public sealed partial class TerminalViewModel : ObservableObject
 
     /// <summary>실행될 명령을 보여도 되는가. 도구를 고르기 전에는 남의 명령을 보여 주는 셈이라 감춘다.</summary>
     public bool ShowPreview => ToolDone;
-
-    /// <summary>접혔을 때 머리에 남는 한 줄. "내가 뭘 골랐더라"를 여기서 확인한다.</summary>
-    public string ToolSummary => ToolDone
-        ? (SelectedTool.IsInstalled ? SelectedTool.Label : UiStrings.Format("Terminal_StepToolNeedsInstall", SelectedTool.Label))
-        : string.Empty;
-
-    public string FolderSummary
-    {
-        get
-        {
-            if (!FolderDone)
-            {
-                return string.Empty;
-            }
-
-            var name = Path.GetFileName(WorkingDirectory!.TrimEnd(Path.DirectorySeparatorChar));
-            var rules = UiStrings.Get(HasRules ? "Terminal_StepRulesPresent" : "Terminal_StepRulesAbsent");
-
-            return $"{(name.Length > 0 ? name : WorkingDirectory)}  ·  {rules}";
-        }
-    }
-
-    public string SessionSummary
-    {
-        get
-        {
-            if (!SessionDone)
-            {
-                return string.Empty;
-            }
-
-            return IsNewSession
-                ? UiStrings.Get("Terminal_NewSession")
-                : UiStrings.Format("Terminal_StepResumeSummary", SelectedResume!.When);
-        }
-    }
 
     /// <summary>실행 줄에 띄우는 "무엇이 남았나" 한 문장. 다 채워졌으면 빈 문자열.</summary>
     public string RemainingHint
@@ -752,35 +658,12 @@ public sealed partial class TerminalViewModel : ObservableObject
         RefreshSteps();
     }
 
-    /// <summary>새로 시작 / 이어서를 고른다. 아래에 프롬프트나 지난 대화 목록이 열리므로 3단계로 다시 굴린다.</summary>
+    /// <summary>새로 시작 / 이어서를 고른다. 3단계는 이미 열려 있고, 몸이 한 줄(프롬프트·대화 칸)만 늘어서 굴리지 않는다.</summary>
     public void ChooseSessionMode(int mode)
     {
         SessionModeIndex = mode;
         SessionModeChosen = true;
         InvalidationNotice = null;
-        OpenStep(TerminalStep.Session);
-        RefreshSteps();
-    }
-
-    /// <summary>머리를 눌러 그 단계만 접거나 편다. 다른 단계는 그대로다. 펼 때는 그 자리로 굴린다.</summary>
-    public void GoToStep(TerminalStep step)
-    {
-        switch (step)
-        {
-            case TerminalStep.Tool when ToolOpen:
-                ToolOpen = false;
-                break;
-            case TerminalStep.Folder when FolderOpen:
-                FolderOpen = false;
-                break;
-            case TerminalStep.Session when SessionOpen:
-                SessionOpen = false;
-                break;
-            default:
-                OpenStep(step);
-                break;
-        }
-
         RefreshSteps();
     }
 
@@ -835,15 +718,14 @@ public sealed partial class TerminalViewModel : ObservableObject
         nameof(ToolDone), nameof(FolderDone), nameof(SessionDone), nameof(FolderNeedsConfirm),
         nameof(ToolExpanded), nameof(FolderExpanded), nameof(SessionExpanded),
         nameof(FolderReachable), nameof(SessionReachable),
-        nameof(ToolMarkCheck), nameof(ToolMarkCurrent), nameof(ToolMarkPending), nameof(ToolMarkDone),
-        nameof(FolderMarkCheck), nameof(FolderMarkCurrent), nameof(FolderMarkPending), nameof(FolderMarkDone),
-        nameof(SessionMarkCheck), nameof(SessionMarkCurrent), nameof(SessionMarkPending), nameof(SessionMarkDone),
+        nameof(ToolMarkCheck), nameof(ToolMarkCurrent), nameof(ToolMarkPending),
+        nameof(FolderMarkCheck), nameof(FolderMarkCurrent), nameof(FolderMarkPending),
+        nameof(SessionMarkCheck), nameof(SessionMarkCurrent), nameof(SessionMarkPending),
         nameof(SessionModeSelection), nameof(ToolSelection),
         nameof(ShowNewSessionOptions), nameof(ShowResumeList),
         nameof(FolderHeaderOpacity), nameof(SessionHeaderOpacity),
         nameof(ShowPreview), nameof(StartButtonText),
         nameof(Preview), nameof(PreviewSentence), nameof(HasPreviewSentence),
-        nameof(ToolSummary), nameof(FolderSummary), nameof(SessionSummary),
         nameof(RemainingHint), nameof(HasRemainingHint), nameof(CanStart),
         nameof(HasInvalidationNotice), nameof(HasRules), nameof(HasNoRules), nameof(RulesStatusText),
         nameof(FolderMissing),
@@ -976,13 +858,14 @@ public sealed partial class TerminalViewModel : ObservableObject
         _autoOpen = autoOpen;
         _autoOpenTool = tool;
 
-        // 세 단계가 이미 채워진 채로 도착한다. 훑는 연출 없이 앞 두 단계는 접고, 마지막 단계만 열어 둔다
+        // 세 단계가 이미 채워진 채로 도착한다. 단계는 사람이 접고 펴지 않으므로 셋 다 열어 두고 3단계로 굴린다 —
+        // 앞 두 단계를 접어 두면 거기로 돌아갈 길이 없다
         ToolChosen = true;
         SessionModeChosen = true;
         InvalidationNotice = null;
-        ToolOpen = false;
-        FolderOpen = false;
-        SessionOpen = true;
+        ToolOpen = true;
+        FolderOpen = true;
+        OpenStep(TerminalStep.Session);
 
         OnPropertyChanged(nameof(Preview));
         RefreshSteps();
@@ -1165,25 +1048,6 @@ public sealed class ResumeCandidateViewModel
 
     private static string Format(DateTimeOffset value, string pattern) =>
         value.ToString(pattern, System.Globalization.CultureInfo.CurrentCulture);
-}
-
-/// <summary>
-/// 날짜 묶음 하나. <c>CollectionViewSource</c> 가 그룹 머리를 그리려면 묶음 자체가 목록이어야 한다.
-/// </summary>
-public sealed class ResumeGroupViewModel : System.Collections.ObjectModel.ObservableCollection<ResumeCandidateViewModel>
-{
-    public ResumeGroupViewModel(SessionDayGroup group) => Group = group;
-
-    public SessionDayGroup Group { get; }
-
-    /// <summary>머리에 쓰는 말. 문구는 Core 가 아니라 여기서 붙인다.</summary>
-    public string Title => UiStrings.Get(Group switch
-    {
-        SessionDayGroup.Today => "Time_GroupToday",
-        SessionDayGroup.Yesterday => "Time_GroupYesterday",
-        SessionDayGroup.ThisWeek => "Time_GroupThisWeek",
-        _ => "Time_GroupOlder",
-    });
 }
 
 /// <summary>프롬프트 선택 한 줄. <see cref="Preset"/>이 null이면 "프롬프트 없음".</summary>

@@ -251,10 +251,6 @@
         </Grid>
     </DataTemplate>
 
-    <DataTemplate x:Key="ResumeGroupTemplate" x:DataType="vm:ResumeGroupViewModel">
-        <TextBlock Text="{x:Bind Title}" Style="{StaticResource MutedText}" VerticalAlignment="Center" />
-    </DataTemplate>
-
     <DataTemplate x:Key="ChatBubbleTemplate" x:DataType="vm:ChatBubbleViewModel">
         <Grid>
             <Border Visibility="{x:Bind UserVisibility}" HorizontalAlignment="Right" MaxWidth="640"

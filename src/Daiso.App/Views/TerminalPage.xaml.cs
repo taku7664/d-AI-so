@@ -89,9 +89,6 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
             }
         };
         FolderBox.Loaded += (_, _) => SyncFolderBox();
-
-        // 그룹 머리를 그리려면 CollectionViewSource 에 묶음 목록을 물려야 한다(x:Bind 로는 못 준다)
-        ResumeGroupsSource.Source = ViewModel.ResumeGroups;
     }
 
     /// <summary>뷰모델의 폴더를 콤보박스 글에 맞춘다(아는 프로젝트·이어서 열기·최근 목록 갱신 뒤).</summary>
@@ -260,38 +257,42 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
         card.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(color);
     }
 
-    // ── 단계 머리 ─────────────────────────────────────────────────────────
-    // 누르면 그 단계만 접고 편다. 아직 못 가는 단계는 머리 자체가 비활성이다
-
-    private void OnStepToolClick(object sender, RoutedEventArgs e) => ViewModel.GoToStep(TerminalStep.Tool);
-
-    private void OnStepFolderClick(object sender, RoutedEventArgs e) => ViewModel.GoToStep(TerminalStep.Folder);
-
-    private void OnStepSessionClick(object sender, RoutedEventArgs e) => ViewModel.GoToStep(TerminalStep.Session);
+    // ── 단계 굴리기 ───────────────────────────────────────────────────────
+    // 단계 머리는 누르는 곳이 아니다. 단계는 답을 따라서만 열리고, 한 번 열리면 닫히지 않는다
 
     /// <summary>열린 단계 머리를 맨 위에서 이만큼 띄워 둔다. 딱 붙으면 위 단계와의 경계가 안 보인다.</summary>
     private const double StepRevealGap = 8;
 
     /// <summary>
-    /// 굴림이 끝나면 포커스를 줄 머리. 굴리는 도중에 포커스를 주면 WinUI 가 그 자리로 곧장 튀어 부드러움이 깨지므로
+    /// 굴림이 끝나면 포커스를 줄 칸. 굴리는 도중에 포커스를 주면 WinUI 가 그 자리로 곧장 튀어 부드러움이 깨지므로
     /// 굴림이 멈춘 뒤(<see cref="OnStepsScrollViewChanged"/>)에 준다.
     /// </summary>
     private Control? _pendingStepFocus;
 
-    /// <summary>뷰모델이 단계를 열었다. 방금 보이게 된 몸이 배치된 뒤에 목표 위치를 재야 맞으므로 한 박자 늦춰 굴린다.</summary>
+    /// <summary>
+    /// 뷰모델이 단계를 열었다. 그 단계 머리를 맨 위로 부드럽게 굴리고, 멈추면 <b>그 단계에서 답할 칸</b>에 포커스를 둔다.
+    /// 방금 보이게 된 몸이 배치된 뒤에 목표 위치를 재야 맞으므로 한 박자 늦춘다.
+    /// </summary>
     private void OnStepRevealRequested(object? sender, TerminalStep step)
     {
-        Control header = step switch
+        FrameworkElement header = step switch
         {
             TerminalStep.Tool => StepToolHeader,
             TerminalStep.Folder => StepFolderHeader,
             _ => StepSessionHeader,
         };
 
-        DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () => RevealStep(header));
+        Control answer = step switch
+        {
+            TerminalStep.Tool => ToolCards,
+            TerminalStep.Folder => FolderBox,
+            _ => SessionModeRadios,
+        };
+
+        DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () => RevealStep(header, answer));
     }
 
-    private void RevealStep(Control header)
+    private void RevealStep(FrameworkElement header, Control answer)
     {
         if (!header.IsLoaded || NewSessionPanel.Visibility != Visibility.Visible)
         {
@@ -307,20 +308,20 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
         if (Math.Abs(target - StepsScroll.VerticalOffset) < 1)
         {
             _pendingStepFocus = null;
-            header.Focus(FocusState.Programmatic);
+            answer.Focus(FocusState.Programmatic);
             return;
         }
 
-        _pendingStepFocus = header;
+        _pendingStepFocus = answer;
         StepsScroll.ChangeView(null, target, null, disableAnimation: false);
     }
 
     private void OnStepsScrollViewChanged(object? sender, ScrollViewerViewChangedEventArgs e)
     {
-        if (!e.IsIntermediate && _pendingStepFocus is { } header)
+        if (!e.IsIntermediate && _pendingStepFocus is { } answer)
         {
             _pendingStepFocus = null;
-            header.Focus(FocusState.Programmatic);
+            answer.Focus(FocusState.Programmatic);
         }
     }
 
@@ -411,29 +412,6 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
     }
 
     /// <summary>새 터미널 탭을 누르면 새 세션 카드. 열린 방은 그대로 살아 있다.</summary>
-    /// <summary>지난 대화 목록의 줄·날짜 머리 높이. XAML 의 ItemContainerStyle · HeaderContainerStyle 과 같은 값이다.</summary>
-    private const double ResumeRowHeight = 40;
-
-    /// <summary>3단계 머리를 맨 위로 굴렸을 때 목록 위에 오는 것들의 높이: 머리 · 새로/이어서 카드 · 검색칸 · 여백.</summary>
-    private const double ResumeChromeHeight = 220;
-
-    /// <summary>창이 아무리 낮아도 이만큼은 보여 준다. 그보다 낮으면 바깥이 굴러 목록에 닿는다.</summary>
-    private const int ResumeMinRows = 3;
-
-    /// <summary>
-    /// 지난 대화 목록 높이를 "머리 하나 + 줄 n개 + 테두리 2" 로 자른다 — 마지막 줄이 반만 보이면 더 있는지 끝인지 모른다 (TERMINAL_CARD_PLAN §2-C4).
-    /// <para>
-    /// 예전에는 목록이 카드의 남은 높이를 다 썼다. 이제 답한 단계가 펼친 채로 쌓이므로 "남은 높이"라는 게 없다.
-    /// 3단계 머리를 맨 위로 굴렸을 때 한 화면에 들어오는 줄 수로 잡는다 — 그 밑의 자세한 설정까지 굴러서 닿는다.
-    /// </para>
-    /// </summary>
-    private void OnStepsScrollSizeChanged(object sender, SizeChangedEventArgs e)
-    {
-        var rows = Math.Max(ResumeMinRows, Math.Floor((e.NewSize.Height - ResumeChromeHeight - ResumeRowHeight - 2) / ResumeRowHeight));
-
-        ResumeList.MaxHeight = ResumeRowHeight * (rows + 1) + 2;
-    }
-
     private void OnNewTabClick(object sender, RoutedEventArgs e) => ShowNewSession();
 
     private void ShowNewSession()

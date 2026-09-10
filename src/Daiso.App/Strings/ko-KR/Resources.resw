@@ -1454,8 +1454,11 @@
   <data name="Terminal_ResumeCount" xml:space="preserve">
     <value>이 폴더의 대화 {0}개</value>
   </data>
-  <data name="Terminal_ResumeSearch" xml:space="preserve">
-    <value>대화 검색</value>
+  <data name="Terminal_ResumeLabel" xml:space="preserve">
+    <value>대화</value>
+  </data>
+  <data name="Terminal_ResumePick" xml:space="preserve">
+    <value>이어서 할 대화를 고르세요</value>
   </data>
   <data name="Terminal_SentenceNew" xml:space="preserve">
     <value>{0} 를 {1} 폴더에서 새로 시작합니다</value>
@@ -1519,21 +1522,6 @@
   </data>
   <data name="Terminal_ToolMissing" xml:space="preserve">
     <value>설치 안 됨</value>
-  </data>
-  <data name="Terminal_StepChange" xml:space="preserve">
-    <value>변경</value>
-  </data>
-  <data name="Terminal_StepToolNeedsInstall" xml:space="preserve">
-    <value>{0} · 설치 필요</value>
-  </data>
-  <data name="Terminal_StepRulesPresent" xml:space="preserve">
-    <value>규칙 있음</value>
-  </data>
-  <data name="Terminal_StepRulesAbsent" xml:space="preserve">
-    <value>규칙 없음</value>
-  </data>
-  <data name="Terminal_StepResumeSummary" xml:space="preserve">
-    <value>{0} 대화 이어서</value>
   </data>
   <data name="Terminal_StepNeedTool" xml:space="preserve">
     <value>아직 AI를 안 골랐어요</value>
@@ -1648,18 +1636,6 @@
   </data>
   <data name="Time_Yesterday" xml:space="preserve">
     <value>어제 {0}</value>
-  </data>
-  <data name="Time_GroupToday" xml:space="preserve">
-    <value>오늘</value>
-  </data>
-  <data name="Time_GroupYesterday" xml:space="preserve">
-    <value>어제</value>
-  </data>
-  <data name="Time_GroupThisWeek" xml:space="preserve">
-    <value>이번 주</value>
-  </data>
-  <data name="Time_GroupOlder" xml:space="preserve">
-    <value>그 이전</value>
   </data>
   <data name="Sessions_CheckAll" xml:space="preserve">
     <value>전체 체크</value>

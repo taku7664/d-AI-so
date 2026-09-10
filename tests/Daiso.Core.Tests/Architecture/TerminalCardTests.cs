@@ -72,16 +72,43 @@ public sealed partial class TerminalCardTests
         text.Should().Contain("OnCopyPreviewClick", because: "명령이 잘려도 전문을 가져갈 수 있어야 한다");
     }
 
+    // ── 2026-09-10 사람이 정한 단계 흐름. 여러 번 어긋나게 만들었던 것이라 여기서 잠근다 ──────────
+
     [Fact]
-    public void 세션_목록의_행_높이가_고정이다()
+    public void 단계_머리는_누르는_곳이_아니다()
     {
-        // 높이가 유동이면 목록 끝에서 행이 반쯤 잘려 "더 있는지 끝인지" 알 수 없다 (§2-C4)
+        // 단계는 답을 따라서만 열리고 닫히지 않는다. 사람이 머리를 눌러 접고 펴게 두면 답한 단계가 사라져 흐름을 잃는다
         var text = File.ReadAllText(PagePath);
 
-        text.Should().Contain(
-            "<Setter Property=\"Height\" Value=\"40\" />",
-            because: "행 높이를 고정해야 목록 높이를 그 정수배로 맞출 수 있다");
+        text.Should().NotContain("Click=\"OnStep", because: "단계 머리에 클릭 처리기를 두지 않는다");
+        StepHeaderButton().IsMatch(text).Should().BeFalse(because: "머리가 버튼이면 눌러질 것처럼 보인다");
     }
+
+    [Fact]
+    public void 자세한_설정은_3단계와_함께_열린다()
+    {
+        var text = File.ReadAllText(PagePath);
+
+        AdvancedOpensWithSession().IsMatch(text).Should().BeTrue(
+            because: "자세한 설정은 3단계가 열릴 때 같이 보인다. 바닥 띠에 늘 붙어 있거나 따로 놀면 안 된다");
+    }
+
+    [Fact]
+    public void 이어서_할_대화는_콤보박스로_고른다()
+    {
+        var text = File.ReadAllText(PagePath);
+
+        text.Should().Contain("AutomationProperties.AutomationId=\"ResumeSessionBox\"", because: "폴더 칸처럼 콤보박스 하나로 고른다");
+        text.Should().NotContain("ResumeSessionList", because: "목록은 쌓인 단계 사이에서 카드 높이를 먹는다");
+    }
+
+    [GeneratedRegex(@"<Button[^>]*Style=""\{StaticResource StepHeader\}""", RegexOptions.CultureInvariant)]
+    private static partial Regex StepHeaderButton();
+
+    [GeneratedRegex(
+        @"<muxc:Expander(?=[^>]*AutomationId=""AdvancedExpander"")(?=[^>]*Visibility=""\{x:Bind ViewModel\.SessionExpanded)[^>]*>",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex AdvancedOpensWithSession();
 
     private static readonly string ViewModelPath =
         Path.Combine(Root, "src", "Daiso.App", "ViewModels", "TerminalViewModel.cs");
