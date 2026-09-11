@@ -23,3 +23,14 @@ artifacts/
 *.db
 *.db-shm
 *.db-wal
+
+# Claude Code 로컬 상태
+# settings.local.json 은 이 기계의 권한 허용 목록이고, worktrees 는 에이전트가 만든 임시 체크아웃이다.
+# 전에는 전역 gitignore 에만 걸려 있어 다른 기계에서는 그대로 올라갈 수 있었다
+.claude/settings.local.json
+.claude/worktrees/
+
+# 앱이 이 저장소에 써 넣는 것
+# `프롬프트 → 프로젝트에 넣기` 가 고른 프롬프트를 여기에 쓴다.
+# 정본은 src/Daiso.Core/Resources/Prompts (내장 자원) 이고 여기 있는 것은 그 복사본이다
+docs/prompts/
