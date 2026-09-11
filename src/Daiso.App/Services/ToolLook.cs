@@ -1,4 +1,4 @@
-﻿using Daiso.Core;
+using Daiso.Core;
 using Microsoft.UI;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -6,18 +6,55 @@ using Windows.UI;
 
 namespace Daiso.App.Services;
 
-/// <summary>도구별 표시 규칙 한 곳. 이름·한 글자·색. 도구가 늘면 여기만 늘린다. (ARCHITECTURE §6.2)</summary>
+/// <summary>
+/// 도구를 화면에 그리는 창구. 이름·한 글자·색·로고를 여기서 묻는다. (ARCHITECTURE §6.2)
+/// <para>
+/// <b>값을 들고 있지 않는다.</b> 예전에는 도구별 <c>switch</c> 스무 곳이 여기 있었고, 그래서는 빌드된 앱에
+/// 도구를 더할 수 없었다. 지금은 <see cref="IProvider.Display"/> 가 정본이고 이 클래스는 그것을 찾아
+/// WinUI 타입(<see cref="Color"/> · <see cref="Brush"/> · <see cref="PathIcon"/>)으로 바꿔 줄 뿐이다
+/// (docs/PLUGIN_PLAN.md Stage 2).
+/// </para>
+/// <para>
+/// 앱이 뜰 때 <see cref="Register"/> 를 한 번 부른다. 부르기 전이나 모르는 도구를 물으면
+/// <see cref="ToolDisplay.Unknown"/> 이 답한다 — 예외 대신 id 가 그대로 보인다.
+/// </para>
+/// </summary>
 public static class ToolLook
 {
+    private static IReadOnlyDictionary<ToolKind, ToolDisplay> _displays =
+        new Dictionary<ToolKind, ToolDisplay>();
+
+    private static IReadOnlyList<ToolKind> _order = [];
+
+    /// <summary>
+    /// 앱이 아는 도구를 등록한다. 앱이 뜰 때 한 번(<c>App.OnLaunched</c>), 플러그인을 다시 읽을 때 또 한 번.
+    /// <para>
+    /// 정적 상태인 이유: 도구 표시를 묻는 곳이 XAML 템플릿 · 값 변환 · 뷰모델에 흩어져 있어
+    /// 전부에 목록을 들려 보내려면 배선이 화면 코드를 다 훑는다. 앱 수명 동안 한 벌인 설정이라 <see cref="UiStrings"/> 와 같은 꼴로 둔다.
+    /// </para>
+    /// </summary>
+    public static void Register(IEnumerable<IProvider> providers)
+    {
+        ArgumentNullException.ThrowIfNull(providers);
+
+        var list = providers.ToList();
+
+        _displays = list.ToDictionary(provider => provider.Kind, provider => provider.Display);
+        _order = [.. list
+            .OrderBy(provider => provider.Display.Order)
+            .ThenBy(provider => provider.Kind.Id, StringComparer.Ordinal)
+            .Select(provider => provider.Kind)];
+    }
+
     /// <summary>화면에 도구를 늘어놓는 순서. 탭·카드·필터가 모두 이 순서를 따른다.</summary>
-    public static readonly IReadOnlyList<ToolKind> DisplayOrder = [ToolKind.Codex, ToolKind.Claude, ToolKind.Antigravity];
+    public static IReadOnlyList<ToolKind> DisplayOrder => _order;
 
     /// <summary>표시 순서상 위치. 모르는 도구는 맨 뒤.</summary>
     public static int Rank(ToolKind kind)
     {
-        for (var i = 0; i < DisplayOrder.Count; i++)
+        for (var i = 0; i < _order.Count; i++)
         {
-            if (DisplayOrder[i] == kind)
+            if (_order[i] == kind)
             {
                 return i;
             }
@@ -30,86 +67,78 @@ public static class ToolLook
     public static IEnumerable<T> InDisplayOrder<T>(IEnumerable<T> items, Func<T, ToolKind> kindOf) =>
         items.OrderBy(item => Rank(kindOf(item)));
 
-    /// <summary>카드 제목에 쓰는 정식 이름.</summary>
-    public static string Title(ToolKind kind) => kind.Id switch
-    {
-        "claude" => "Claude Code",
-        "codex" => "Codex CLI",
-        "antigravity" => "Antigravity CLI",
-        _ => kind.ToString(),
-    };
+    /// <summary>그 도구의 표시 규칙. 모르는 도구면 id 를 그대로 보여 주는 기본값.</summary>
+    public static ToolDisplay Of(ToolKind kind) =>
+        _displays.TryGetValue(kind, out var display) ? display : ToolDisplay.Unknown(kind);
 
-    /// <summary>
-    /// 만든 곳. AI CLI를 처음 보는 사람에게 "Codex·Claude·Antigravity"는 이름일 뿐이라,
-    /// 아는 회사 이름이 붙어야 무엇을 고르는지 감이 온다. (docs/TERMINAL_CARD_PLAN.md §4.3)
-    /// </summary>
-    public static string Vendor(ToolKind kind) => kind.Id switch
-    {
-        "claude" => "Anthropic",
-        "codex" => "OpenAI",
-        "antigravity" => "Google",
-        _ => string.Empty,
-    };
+    /// <summary>카드 제목에 쓰는 정식 이름.</summary>
+    public static string Title(ToolKind kind) => Of(kind).Title;
+
+    /// <summary>만든 곳.</summary>
+    public static string Vendor(ToolKind kind) => Of(kind).Vendor;
 
     /// <summary>버튼·미리보기에 쓰는 짧은 이름.</summary>
-    public static string Short(ToolKind kind) => kind.Id switch
-    {
-        "claude" => "Claude",
-        "codex" => "Codex",
-        "antigravity" => "Antigravity",
-        _ => kind.ToString(),
-    };
+    public static string Short(ToolKind kind) => Of(kind).Short;
 
     /// <summary>동그란 배지 안 한 글자.</summary>
-    public static string Initial(ToolKind kind) => kind.Id switch
-    {
-        "claude" => "C",
-        "codex" => "X",
-        "antigravity" => "A",
-        _ => "?",
-    };
+    public static string Initial(ToolKind kind) => Of(kind).Initial;
 
-    /// <summary>배지 색. 제작사 브랜드 색을 따른다: Claude 주황(#D97757), OpenAI 초록(#10A37F), Google 파랑→보라 그라데이션.</summary>
-    public static Color Color(ToolKind kind) => kind.Id switch
-    {
-        "claude" => Windows.UI.Color.FromArgb(255, 217, 119, 87),
-        "codex" => Windows.UI.Color.FromArgb(255, 16, 163, 127),
-        "antigravity" => Windows.UI.Color.FromArgb(255, 78, 134, 247),
-        _ => Colors.Gray,
-    };
+    /// <summary>배지 색. 그라데이션이면 첫 색.</summary>
+    public static Color Color(ToolKind kind) => Parse(Of(kind).ColorStops.FirstOrDefault());
 
-    /// <summary>원형 배지의 채움. Antigravity만 Google 그라데이션(파랑→보라→분홍), 나머지는 단색.</summary>
+    /// <summary>
+    /// 원형 배지의 채움. 색이 하나면 단색, 둘 이상이면 왼쪽 위 → 오른쪽 아래 그라데이션이다.
+    /// 도구마다 어느 쪽인지 묻지 않는다 — 색 개수가 곧 답이다.
+    /// </summary>
     public static Brush Brush(ToolKind kind)
     {
-        if (kind != ToolKind.Antigravity)
+        var stops = Of(kind).ColorStops;
+
+        if (stops.Count <= 1)
         {
-            return new SolidColorBrush(Color(kind));
+            return new SolidColorBrush(Parse(stops.FirstOrDefault()));
         }
 
-        var gradient = new LinearGradientBrush { StartPoint = new Windows.Foundation.Point(0, 0), EndPoint = new Windows.Foundation.Point(1, 1) };
-        gradient.GradientStops.Add(new GradientStop { Color = Windows.UI.Color.FromArgb(255, 66, 133, 244), Offset = 0 });
-        gradient.GradientStops.Add(new GradientStop { Color = Windows.UI.Color.FromArgb(255, 155, 114, 203), Offset = 0.55 });
-        gradient.GradientStops.Add(new GradientStop { Color = Windows.UI.Color.FromArgb(255, 217, 101, 112), Offset = 1 });
+        var gradient = new LinearGradientBrush
+        {
+            StartPoint = new Windows.Foundation.Point(0, 0),
+            EndPoint = new Windows.Foundation.Point(1, 1),
+        };
+
+        for (var i = 0; i < stops.Count; i++)
+        {
+            gradient.GradientStops.Add(new GradientStop
+            {
+                Color = Parse(stops[i]),
+                Offset = stops.Count == 1 ? 0 : (double)i / (stops.Count - 1),
+            });
+        }
+
         return gradient;
     }
 
-    /// <summary>
-    /// 제작사 로고의 SVG 경로(24×24). Claude·Codex는 simple-icons(CC0).
-    /// <para>
-    /// Antigravity 는 <b>대체 마크</b>다. 자체 로고가 있으나 simple-icons 에 없고(2026-09 확인) 쓸 수 있는 라이선스로
-    /// 구하지 못했다. Gemini 스파크를 그대로 두면 다른 제품의 상표를 잘못 붙이는 것이라, 이름대로 위로 향하는
-    /// 기하 마크(＾)를 쓴다. 공식 마크를 구하면 이 한 줄만 바꾼다.
-    /// </para>
-    /// </summary>
-    public static string LogoPath(ToolKind kind) => kind.Id switch
-    {
-        "claude" => "m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z",
-        "codex" => "M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z",
-        "antigravity" => "M12 3.6 2.4 20.4h4.2L12 10.8l5.4 9.6h4.2L12 3.6Z",
-        _ => "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z",
-    };
+    /// <summary>제작사 로고의 SVG 경로(24×24). 없으면 채운 동그라미.</summary>
+    public static string LogoPath(ToolKind kind) =>
+        Of(kind).LogoPath is { Length: > 0 } path ? path : FallbackLogo;
 
     /// <summary>탭·메뉴에 쓰는 단색 로고 아이콘. 앞색을 따른다.</summary>
     public static PathIcon LogoIcon(ToolKind kind) =>
         new() { Data = (Geometry)Microsoft.UI.Xaml.Markup.XamlBindingHelper.ConvertValue(typeof(Geometry), LogoPath(kind)) };
+
+    /// <summary>로고를 못 구한 도구. 글자가 아니라 도형이라 어느 나라 말에서도 같게 보인다.</summary>
+    private const string FallbackLogo = "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z";
+
+    /// <summary><c>#RRGGBB</c> 를 색으로. 꼴이 틀리면 회색이다 — 플러그인 매니페스트가 틀려도 화면은 떠야 한다.</summary>
+    private static Color Parse(string? hex)
+    {
+        if (hex is null || hex.Length != 7 || hex[0] != '#'
+            || !byte.TryParse(hex.AsSpan(1, 2), System.Globalization.NumberStyles.HexNumber, null, out var r)
+            || !byte.TryParse(hex.AsSpan(3, 2), System.Globalization.NumberStyles.HexNumber, null, out var g)
+            || !byte.TryParse(hex.AsSpan(5, 2), System.Globalization.NumberStyles.HexNumber, null, out var b))
+        {
+            return Colors.Gray;
+        }
+
+        return Windows.UI.Color.FromArgb(255, r, g, b);
+    }
 }

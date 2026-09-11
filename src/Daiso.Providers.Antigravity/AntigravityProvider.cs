@@ -1,4 +1,4 @@
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Text;
 using Daiso.Core;
 using Daiso.Providers.Common;
@@ -69,6 +69,24 @@ public sealed class AntigravityProvider : IProvider, IUsageReader
 
     /// <inheritdoc />
     public ToolKind Kind => ToolKind.Antigravity;
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// 색은 Google 그라데이션(파랑→보라→분홍)이다. 색이 여럿이면 화면이 그라데이션으로 칠한다.
+    /// <para>
+    /// 로고는 <b>대체 마크</b>다. 자체 로고가 있으나 simple-icons 에 없고(2026-09 확인) 쓸 수 있는 라이선스로
+    /// 구하지 못했다. Gemini 스파크를 그대로 두면 다른 제품의 상표를 잘못 붙이는 것이라, 이름대로 위로 향하는
+    /// 기하 마크(＾)를 쓴다. 공식 마크를 구하면 이 한 줄만 바꾼다.
+    /// </para>
+    /// </remarks>
+    public ToolDisplay Display { get; } = new(
+        Title: "Antigravity CLI",
+        Vendor: "Google",
+        Short: "Antigravity",
+        Initial: "A",
+        ColorStops: ["#4285F4", "#9B72CB", "#D96570"],
+        LogoPath: "M12 3.6 2.4 20.4h4.2L12 10.8l5.4 9.6h4.2L12 3.6Z",
+        Order: 2);
 
     /// <inheritdoc />
     public string ExecutableName => "agy";

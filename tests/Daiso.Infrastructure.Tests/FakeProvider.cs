@@ -15,6 +15,7 @@ internal sealed class FakeProvider : IProvider, IUsageReader
     internal FakeProvider(ToolKind? kind = null, bool usageIsAdditive = true)
     {
         Kind = kind ?? ToolKind.Claude;
+        Display = new ToolDisplay(Kind.Id, "Test", Kind.Id, "T", ["#808080"], string.Empty, ToolDisplay.DefaultOrder);
         UsageIsAdditive = usageIsAdditive;
     }
 
@@ -32,6 +33,8 @@ internal sealed class FakeProvider : IProvider, IUsageReader
 
     /// <inheritdoc />
     public ToolKind Kind { get; }
+
+    public ToolDisplay Display { get; }
 
     /// <inheritdoc />
     public string SessionsRoot { get; set; } = Path.GetTempPath();

@@ -1,4 +1,4 @@
-using Daiso.App.Services;
+﻿using Daiso.App.Services;
 using Daiso.App.ViewModels;
 using Daiso.Core;
 using Daiso.Infrastructure;
@@ -27,6 +27,10 @@ public partial class App : Application
 
         InitializeComponent();
         Services = BuildServices();
+
+        // 도구의 표시 규칙(이름·색·로고)은 도구가 들고 있다. 화면이 묻는 창구에 한 번 심어 둔다
+        // (docs/PLUGIN_PLAN.md Stage 2). 플러그인을 다시 읽으면 여기를 다시 부른다
+        Services.GetRequiredService<ToolRegistry>().Refresh();
 
         _crashReporter = new CrashReporter(Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread());
         _crashReporter.Hook(this);
@@ -101,6 +105,9 @@ public partial class App : Application
             new CodexProvider(provider.GetRequiredService<ProviderHome>()));
         services.AddSingleton<IProvider>(provider =>
             new AntigravityProvider(provider.GetRequiredService<ProviderHome>()));
+
+        // 도구 목록을 세는 곳. 표시 규칙을 화면 창구에 심는 일도 여기서 한다 (docs/PLUGIN_PLAN.md Stage 2)
+        services.AddSingleton<Services.ToolRegistry>();
 
         // Infrastructure
         services.AddSingleton<IRuleFileService, RuleFileService>();

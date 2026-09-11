@@ -7,6 +7,12 @@ public interface IProvider
 {
     ToolKind Kind { get; }
 
+    /// <summary>
+    /// 이 도구를 화면에 어떻게 보일 것인가. <b>기본값을 두지 않는다</b> — 도구를 하나 더하면
+    /// 컴파일러가 이름·색·로고를 묻는다. 빠뜨리면 회색 원에 물음표로 조용히 뜬다 (docs/PLUGIN_PLAN.md Stage 2).
+    /// </summary>
+    ToolDisplay Display { get; }
+
     /// <summary>이 도구가 세션 파일을 두는 뿌리 폴더. 방이 활성 세션 파일을 찾을 때 훑는다.</summary>
     string SessionsRoot { get; }
 
