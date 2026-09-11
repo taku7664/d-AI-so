@@ -722,10 +722,9 @@ public sealed partial class TerminalViewModel : ObservableObject
 
             var message = PromptPresetSerializer.StarterMessage(preset).Replace('"', '\'');
 
-            // Antigravity 는 `-i`(= `--prompt-interactive`): 첫 프롬프트를 던지고 <b>대화를 이어 간다</b>.
-            // `-p`(= `--print`)로 착각하기 쉬운데 그것은 한 번 답하고 끝나는 비대화 모드라, 방을 열어 두는 이 화면과 맞지 않는다.
-            // `agy --help` (1.1.28) 로 확인했다
-            parts.Add(tool.Kind == ToolKind.Antigravity ? $"-i \"{message}\"" : $"\"{message}\"");
+            // 깃발이 필요한지는 도구가 안다(Antigravity 의 `-i`). 화면이 도구 이름을 보고 고르지 않는다
+            var flag = tool.Provider.FirstPromptFlag;
+            parts.Add(string.IsNullOrEmpty(flag) ? $"\"{message}\"" : $"{flag} \"{message}\"");
         }
 
         return string.Join(' ', parts);

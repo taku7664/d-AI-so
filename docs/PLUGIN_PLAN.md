@@ -175,6 +175,8 @@ context:
   - "{USERPROFILE}/.mycli/MYCLI.md"
 
 resume: "--resume {id}"
+loginArguments: "login"          # 로그인 절차를 띄우는 인자. 비우면 도구를 그냥 띄운다
+firstPromptFlag: ""              # 첫 프롬프트 앞 깃발. Antigravity 의 `-i` 같은 것. 비우면 메시지만 넘긴다
 imagePasteKeys: ""               # Ctrl+V
 
 auth:

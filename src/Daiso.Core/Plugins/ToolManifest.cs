@@ -1,4 +1,4 @@
-namespace Daiso.Core.Plugins;
+﻿namespace Daiso.Core.Plugins;
 
 /// <summary>
 /// 플러그인 도구 하나를 적은 파일의 내용. <c>%USERPROFILE%\.daiso\tools\*.yaml</c> (docs/PLUGIN_PLAN.md §7).
@@ -19,6 +19,8 @@ namespace Daiso.Core.Plugins;
 /// <param name="SupportsInstructionImports"><c>@경로</c> import 를 읽을 수 있는가. 확인된 것만 참이다.</param>
 /// <param name="ContextPatterns">컨텍스트로 읽히는 파일 경로. 자리 채우기 전의 글이다.</param>
 /// <param name="ResumeFormat">이어서 열 때 붙는 인자. <c>{id}</c> 자리에 세션 id 가 들어간다.</param>
+/// <param name="LoginArguments">로그인 절차를 띄울 때 붙는 인자. 비어 있으면 도구를 그냥 띄운다.</param>
+/// <param name="FirstPromptFlag">첫 프롬프트 앞에 붙는 깃발. 비어 있으면 메시지만 위치 인자로 넘긴다.</param>
 /// <param name="ImagePasteKeys">CLI 에 그림을 붙여 넣게 하는 키 입력.</param>
 /// <param name="LoginLivesInFiles">로그인이 파일에 들어 있는가. 아니면 계정 보관·전환을 내주지 않는다.</param>
 /// <param name="AuthFiles">로그인을 이루는 파일. 자리 채우기 전의 글이다.</param>
@@ -40,6 +42,8 @@ public sealed record ToolManifest(
     bool SupportsInstructionImports,
     IReadOnlyList<string> ContextPatterns,
     string ResumeFormat,
+    string LoginArguments,
+    string FirstPromptFlag,
     string ImagePasteKeys,
     bool LoginLivesInFiles,
     IReadOnlyList<ManifestAuthFile> AuthFiles,

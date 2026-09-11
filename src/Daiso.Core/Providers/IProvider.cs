@@ -44,6 +44,16 @@ public interface IProvider
     /// </summary>
     string LoginArguments => string.Empty;
 
+    /// <summary>
+    /// 첫 프롬프트를 인자로 넘길 때 메시지 앞에 붙이는 깃발. 비어 있으면 메시지만 위치 인자로 넘긴다.
+    /// <para>
+    /// 예: Antigravity 의 <c>-i</c>. 예전에는 터미널 화면이 <c>Kind == Antigravity</c> 를 직접 보고 붙였는데,
+    /// 그러면 같은 꼴을 쓰는 플러그인 도구에 프롬프트가 잘못 넘어간다 — 도구의 사정은 도구가 안다
+    /// (<see cref="LoginArguments"/> 와 같은 이유, 2026-09-11).
+    /// </para>
+    /// </summary>
+    string FirstPromptFlag => string.Empty;
+
     /// <summary>실행 파일이 없을 때 새 터미널에서 돌릴 설치 명령 한 줄. 예: <c>npm install -g @openai/codex</c>.</summary>
     string InstallCommand { get; }
 

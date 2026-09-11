@@ -1,4 +1,4 @@
-using Daiso.Core;
+﻿using Daiso.Core;
 using Daiso.Providers.Antigravity;
 using Daiso.Providers.Common;
 using Daiso.Providers.Claude;
@@ -93,5 +93,22 @@ public sealed class LoginLocationTests
 
         claude.LoginArguments.Should().Be("auth login");
         codex.LoginArguments.Should().Be("login");
+    }
+
+    /// <summary>
+    /// 첫 프롬프트 깃발은 <b>도구가</b> 안다. 예전에는 터미널 화면이 <c>Kind == Antigravity</c> 를 보고 붙였는데,
+    /// 그러면 같은 꼴을 쓰는 플러그인 도구에 프롬프트가 잘못 넘어간다 (2026-09-11 회귀).
+    /// </summary>
+    [Fact]
+    public void Only_Antigravity_needs_a_flag_before_the_first_prompt()
+    {
+        IProvider claude = new ClaudeProvider(Home, new FakeProcessProbe());
+        IProvider codex = new CodexProvider(Home);
+        IProvider antigravity = new AntigravityProvider(Home);
+
+        claude.FirstPromptFlag.Should().BeEmpty();
+        codex.FirstPromptFlag.Should().BeEmpty();
+        antigravity.FirstPromptFlag.Should().Be("-i",
+            because: "`-i`(--prompt-interactive) 는 첫 프롬프트를 던지고 대화를 이어 간다");
     }
 }

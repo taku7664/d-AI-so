@@ -1,4 +1,4 @@
-using YamlDotNet.RepresentationModel;
+﻿using YamlDotNet.RepresentationModel;
 
 namespace Daiso.Core.Plugins;
 
@@ -139,6 +139,8 @@ public static class ToolManifestParser
             SupportsInstructionImports: Bool(rules, "supportsImports") ?? false,
             ContextPatterns: List(root, "context"),
             ResumeFormat: Text(root, "resume") ?? string.Empty,
+            LoginArguments: Text(root, "loginArguments") ?? string.Empty,
+            FirstPromptFlag: Text(root, "firstPromptFlag") ?? string.Empty,
             ImagePasteKeys: Text(root, "imagePasteKeys") ?? "\x16",
             LoginLivesInFiles: Bool(auth, "livesInFiles") ?? true,
             AuthFiles: AuthFiles(auth),

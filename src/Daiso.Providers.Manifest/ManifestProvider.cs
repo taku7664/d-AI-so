@@ -70,6 +70,12 @@ public sealed class ManifestProvider : IProvider, IDisposable
     public string InstallCommand => _manifest.InstallCommand;
 
     /// <inheritdoc />
+    public string LoginArguments => _manifest.LoginArguments;
+
+    /// <inheritdoc />
+    public string FirstPromptFlag => _manifest.FirstPromptFlag;
+
+    /// <inheritdoc />
     public string? InstallUri => _manifest.InstallUri;
 
     /// <inheritdoc />

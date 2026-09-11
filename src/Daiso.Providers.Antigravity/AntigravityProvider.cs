@@ -93,6 +93,14 @@ public sealed class AntigravityProvider : IProvider, IUsageReader
 
     /// <inheritdoc />
     /// <remarks>
+    /// <c>-i</c> 는 <c>--prompt-interactive</c>: 첫 프롬프트를 던지고 <b>대화를 이어 간다</b>.
+    /// <c>-p</c>(= <c>--print</c>)로 착각하기 쉬운데 그것은 한 번 답하고 끝나는 비대화 모드라,
+    /// 방을 열어 두는 터미널 화면과 맞지 않는다. <c>agy --help</c> (1.1.28) 로 확인했다.
+    /// </remarks>
+    public string FirstPromptFlag => "-i";
+
+    /// <inheritdoc />
+    /// <remarks>
     /// npm 패키지가 아니다. Go 로 만든 단일 실행 파일이라 공식 설치 스크립트를 받아 돌린다.
     /// 설치되는 곳은 `%LOCALAPPDATA%\agy\bin` 이고 설치 스크립트가 PATH 에 넣는다.
     /// <para>
