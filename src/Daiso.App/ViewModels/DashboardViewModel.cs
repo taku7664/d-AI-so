@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -276,10 +276,10 @@ public sealed partial class DashboardViewModel : ObservableObject
             return;
         }
 
-        var arguments = provider.Kind == ToolKind.Codex ? "login" : string.Empty;
+        // 어떤 인자로 로그인 흐름이 뜨는지는 제공자가 안다. 이미 로그인돼 있어도 새 계정으로 바꾸는 길이 이것이다
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
-        await _launcher.LaunchAsync(home, provider.LaunchTarget, arguments).ConfigureAwait(true);
+        await _launcher.LaunchAsync(home, provider.LaunchTarget, provider.LoginArguments).ConfigureAwait(true);
     }
 
 
@@ -597,8 +597,15 @@ public sealed partial class ToolCardViewModel : ObservableObject
     public string LoginLabel =>
         UiStrings.Get(State == AuthState.Missing ? "Dashboard_Login" : "Auth_ReLogin");
 
-    /// <summary>로그인이 필요한 상태인지. 버튼 강조에 쓴다.</summary>
+    /// <summary>로그인이 필요한 상태인지. 버튼 문구·강조에 쓴다.</summary>
     public bool NeedsLogin => State is AuthState.Missing or AuthState.Expired or AuthState.ExpiringSoon;
+
+    /// <summary>
+    /// 로그인 단추를 보이는가. 설치돼 있으면 <b>로그인 상태와 상관없이</b> 보인다 —
+    /// 로그인돼 있어도 다른 계정으로 바꿀 수 있어야 하기 때문이다 (2026-09-11 사람의 지적).
+    /// 예전에는 <see cref="NeedsLogin"/> 일 때만 보여 로그인된 도구는 계정을 바꿀 길이 없었다.
+    /// </summary>
+    public bool ShowLogin => IsInstalled;
 
     internal void Apply(bool installed, AuthStatus status)
     {
@@ -627,6 +634,7 @@ public sealed partial class ToolCardViewModel : ObservableObject
         OnPropertyChanged(nameof(InstalledText));
         OnPropertyChanged(nameof(ExpiresText));
         OnPropertyChanged(nameof(NeedsLogin));
+        OnPropertyChanged(nameof(ShowLogin));
         OnPropertyChanged(nameof(HasExtras));
         OnPropertyChanged(nameof(LoginLabel));
     }

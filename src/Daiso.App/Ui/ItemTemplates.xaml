@@ -1,4 +1,4 @@
-﻿<!--
+<!--
     목록 한 줄의 생김새. 페이지에서 빼내 여기에 모았다 (docs/REVIEW_BACKLOG.md A3).
 
     왜 사전인가: 이 파일은 x:Class 를 가진 ResourceDictionary 라 {x:Bind} 컴파일 바인딩이 그대로 산다.
@@ -472,7 +472,7 @@
                 <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
                     <Button
                         Content="{x:Bind LoginLabel, Mode=OneWay}"
-                        Visibility="{x:Bind NeedsLogin, Mode=OneWay}"
+                        Visibility="{x:Bind ShowLogin, Mode=OneWay}"
                         Command="{x:Bind LoginCommand}" />
                     <!-- 계정 저장·전환은 그 도구 카드 안에서 한다 (ARCHITECTURE §6.1) -->
                     <muxc:DropDownButton

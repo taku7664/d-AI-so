@@ -79,4 +79,19 @@ public sealed class LoginLocationTests
         [new CodexProvider(Home)],
         [new AntigravityProvider(Home)],
     ];
+
+    /// <summary>
+    /// 로그인 단추는 로그인돼 있어도 보인다 — 다른 계정으로 바꾸는 길이기 때문이다.
+    /// 그러니 로그인 인자는 <b>이미 로그인된 채로도</b> 새 로그인 흐름을 여는 것이어야 한다.
+    /// 빈 인자로 도구를 그냥 띄우면 로그인된 Claude 는 물음 없이 대화로 들어간다 (2026-09-11 사람의 지적).
+    /// </summary>
+    [Fact]
+    public void Claude_and_Codex_open_a_fresh_login_flow_even_when_logged_in()
+    {
+        IProvider claude = new ClaudeProvider(Home, new FakeProcessProbe());
+        IProvider codex = new CodexProvider(Home);
+
+        claude.LoginArguments.Should().Be("auth login");
+        codex.LoginArguments.Should().Be("login");
+    }
 }

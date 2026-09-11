@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using Daiso.Core;
@@ -52,6 +52,10 @@ public sealed class ClaudeProvider : IProvider, IUsageReader
     /// <inheritdoc />
     /// <remarks>PowerShell 이 <c>.ps1</c> 을 고르지 않게 <c>.cmd</c> 절대 경로를 준다 (<see cref="ExecutableLocator.NpmLaunchTarget"/>).</remarks>
     public string LaunchTarget => ExecutableLocator.NpmLaunchTarget(ExecutableName);
+
+    /// <inheritdoc />
+    /// <remarks>이미 로그인돼 있어도 새 계정 로그인 흐름이 뜬다 (Claude Code 의 <c>claude auth login</c>, 2026-09-11 확인).</remarks>
+    public string LoginArguments => "auth login";
 
     /// <inheritdoc />
     public string InstallCommand => "npm install -g @anthropic-ai/claude-code";

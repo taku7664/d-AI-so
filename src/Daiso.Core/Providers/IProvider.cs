@@ -33,6 +33,17 @@ public interface IProvider
     /// </summary>
     string LaunchTarget => ExecutableName;
 
+    /// <summary>
+    /// 로그인 절차를 띄울 때 <see cref="LaunchTarget"/> 뒤에 붙일 인자. 예: Codex 의 <c>login</c>, Claude 의 <c>auth login</c>.
+    /// <para>
+    /// 비어 있으면 도구를 그냥 띄운다 — 로그인이 도구 안에서 이뤄지는 경우다.
+    /// <b>이미 로그인돼 있어도</b> 이 인자로 띄우면 새 계정으로 로그인하는 흐름이 시작돼야 한다.
+    /// 예전에는 요약 화면이 Codex 만 <c>login</c> 을 알고 나머지는 빈 인자로 띄웠는데,
+    /// 로그인된 Claude 를 그냥 띄우면 로그인 물음이 나오지 않아 다른 계정으로 바꿀 길이 없었다 (2026-09-11 사람의 지적).
+    /// </para>
+    /// </summary>
+    string LoginArguments => string.Empty;
+
     /// <summary>실행 파일이 없을 때 새 터미널에서 돌릴 설치 명령 한 줄. 예: <c>npm install -g @openai/codex</c>.</summary>
     string InstallCommand { get; }
 
