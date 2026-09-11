@@ -772,6 +772,12 @@ Apply(projectDir, direction, dryRun)
 
 ### 6.2 화면 공통 규칙
 
+**화면은 떠날 때 건 것을 뗀다.** 뷰모델·셸은 싱글턴이고 화면은 `NavigationCacheMode` 를 켜지 않는 한 올 때마다 새로 만들어진다.
+- 코드로 건 처리기(`무엇.사건 +=`)는 `Unloaded` 에서 뗀다. `PageSubscriptionTests` 가 강제한다
+- **XAML 로 건 것도 뗀다.** `ItemsSource="{x:Bind ViewModel.어떤컬렉션}"` 은 싱글턴 컬렉션이 그 컨트롤을 붙들게 만든다. 떠난 화면이 살아남고, 다음에 뷰모델이 그 컬렉션을 비울 때 **죽은 컨트롤**을 불러 `COMException 0x80004005` 로 터진다. 요약 화면이 이래서 터졌다: 내 규칙에 갔다 돌아오면 두 번째 방문부터 매번 (2026-09-12 재현·수정). `Unloaded` 에서 `ItemsSource = null` 과 `Bindings.StopTracking()` 을 한다
+- 다른 화면도 같은 꼴로 묶지만 방문할 때 컬렉션을 비우지 않아 아직 터지지 않는다. 터지면 같은 식으로 뗀다
+- **창이 닫힌 뒤에 오는 사건을 조심한다.** `Activated` 는 닫는 길에도 한 번 더 오는데 그때 서비스 그릇은 이미 닫혀 있다(`ObjectDisposedException`). 셸은 `_shuttingDown` 으로 막는다
+
 **골격 (2026-09-09, UI_REFACTOR_PLAN §6) — 문서가 아니라 `Daiso.Core.Tests`의 `PageSkeletonTests`가 강제한다.**
 MUST 넷을 어긴 페이지를 만들면 테스트가 빨개진다. 규칙을 문서에만 적어 두고 요약·내 규칙에서 빠뜨린 일이 있어서 이렇게 한다.
 

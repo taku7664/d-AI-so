@@ -55,6 +55,13 @@ public sealed partial class DashboardPage : Page, IPageHeaderSource
         ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
         ViewModel.VisibleTools.CollectionChanged -= OnVisibleToolsChanged;
         Unloaded -= OnPageUnloaded;
+
+        // 목록도 뗀다. XAML 이 건 것은 처리기를 떼도 남는다 — 싱글턴 컬렉션이 떠난 화면의 컨트롤을
+        // 계속 붙들고 있다가, 다음에 이 화면이 목록을 비울 때 <b>죽은 컨트롤</b>을 부르며 터졌다.
+        // 규칙 화면에 갔다가 요약으로 돌아오면 매번 한 번씩 (2026-09-12 재현)
+        ToolCards.ItemsSource = null;
+        RecentSessionList.ItemsSource = null;
+        Bindings.StopTracking();
     }
 
     /// <summary>뒤로/앞으로가 뷰모델의 탭을 바꾸면 탭 띠도 따라간다.</summary>

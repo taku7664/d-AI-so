@@ -139,6 +139,7 @@
                             SelectionMode=None 에서는 칠이 보이지 않았다 (2026-09-11)
                         -->
                         <ItemsControl
+                            x:Name="RecentSessionList"
                             AutomationProperties.AutomationId="RecentSessionList"
                             ItemsSource="{x:Bind ViewModel.RecentSessions}"
                             ItemTemplate="{StaticResource RecentSessionTemplate}" />

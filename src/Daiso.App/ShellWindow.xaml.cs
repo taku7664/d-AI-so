@@ -49,6 +49,13 @@ public sealed partial class ShellWindow : Window
         _fileDrop = new FileDropTarget(() => ContentFrame.Content as IFileDropSink);
         Activated += (_, args) =>
         {
+            // 닫는 길에도 한 번 더 온다. 그때는 서비스 그릇이 이미 닫혀 있어 무엇을 꺼내도 던진다
+            // (2026-09-12 종료 기록에서 확인)
+            if (_shuttingDown)
+            {
+                return;
+            }
+
             RegisterFileDrop();
 
             // 창이 뒤로 가면 보고 있는 방이 없다 — 그래야 자리를 비운 사이 끝난 일에 점이 켜진다
@@ -489,8 +496,12 @@ public sealed partial class ShellWindow : Window
         }
     }
 
+    /// <summary>닫는 중인가. 닫힌 뒤에 오는 창 사건이 이미 닫힌 서비스를 건드리지 않게 한다.</summary>
+    private bool _shuttingDown;
+
     private void OnClosed(object sender, WindowEventArgs args)
     {
+        _shuttingDown = true;
         _doneNotifier.Dispose();
         App.Rooms.DisposeAll();
         _settings.Current.WindowWidth = AppWindow.Size.Width;
