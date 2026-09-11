@@ -24,6 +24,8 @@
 
   <ItemGroup>
     <Content Include="..\fixtures\**\*" LinkBase="fixtures" CopyToOutputDirectory="PreserveNewest" />
+    <!-- 특성화 스냅샷. 없으면 테스트가 지금 값을 적어 두고 실패한다 (docs/PLUGIN_PLAN.md Stage 0) -->
+    <Content Include="Common\Snapshots\**\*" LinkBase="snapshots" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

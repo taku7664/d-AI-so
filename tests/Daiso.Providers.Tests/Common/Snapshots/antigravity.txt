@@ -1,0 +1,25 @@
+﻿tool=Antigravity
+appendOnly=False
+sessions=2
+
+── session-2026-09-01T01-00-7a1b2c3d.jsonl ──
+enumerated: id=7a1b2c3d-1111-2222-3333-444455556666 project=C:\fixture\project started=2026-09-01T01:00:00Z user=0 assistant=0 usage=0/0/0/0 model=<none> version=<none> archived=False firstPrompt=<none>
+scanned: id=7a1b2c3d-1111-2222-3333-444455556666 project=C:\fixture\project started=2026-09-01T01:00:00Z user=2 assistant=2 usage=305/110/0/20 model=gemini-2.5-pro version=<none> archived=False firstPrompt=더미 질문 1
+resume=--conversation 7a1b2c3d-1111-2222-3333-444455556666
+  msg 2026-09-01T01:00:05Z User 더미 질문 1
+  msg 2026-09-01T01:00:09Z Assistant 더미 답변 1
+  msg 2026-09-01T01:00:09Z Tool read_file {"path":"README.md"} [success]
+  msg 2026-09-01T01:02:00Z System 컨텍스트 요약됨
+  msg 2026-09-02T01:03:00Z User 더미 질문 2
+  msg 2026-09-02T01:03:30Z Assistant 더미 답변 2
+
+── session-2026-09-01T01-00-7a1b2c3d.jsonl ──
+enumerated: id=7a1b2c3d-1111-2222-3333-444455556666 project=C:\fixture\project started=2026-09-01T01:00:00Z user=0 assistant=0 usage=0/0/0/0 model=<none> version=<none> archived=False firstPrompt=<none>
+scanned: id=7a1b2c3d-1111-2222-3333-444455556666 project=C:\fixture\project started=2026-09-01T01:00:00Z user=2 assistant=2 usage=305/110/0/20 model=gemini-2.5-pro version=<none> archived=False firstPrompt=더미 질문 1
+resume=--conversation 7a1b2c3d-1111-2222-3333-444455556666
+  msg 2026-09-01T01:00:05Z User 더미 질문 1
+  msg 2026-09-01T01:00:09Z Assistant 더미 답변 1
+  msg 2026-09-01T01:00:09Z Tool read_file {"path":"README.md"} [success]
+  msg 2026-09-01T01:02:00Z System 컨텍스트 요약됨
+  msg 2026-09-02T01:03:00Z User 더미 질문 2
+  msg 2026-09-02T01:03:30Z Assistant 더미 답변 2

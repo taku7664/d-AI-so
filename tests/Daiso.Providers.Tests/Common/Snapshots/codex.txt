@@ -1,0 +1,31 @@
+﻿tool=Codex
+appendOnly=True
+sessions=3
+
+── rollout-2026-08-31T00-00-00-01a00000-1111-2222-3333-444444444444.jsonl ──
+enumerated: id=01a00000-1111-2222-3333-444444444444 project=C:\Fixture\Project started=2026-09-01T00:00:00Z user=0 assistant=0 usage=0/0/0/0 model=<none> version=0.147.0 archived=True firstPrompt=<none>
+scanned: id=01a00000-1111-2222-3333-444444444444 project=C:\Fixture\Project started=2026-09-01T00:00:00Z user=2 assistant=1 usage=200/40/10/60 model=gpt-5-codex version=0.147.0 archived=True firstPrompt=더미 질문 1
+resume=resume 01a00000-1111-2222-3333-444444444444
+  msg 2026-09-01T00:01:00Z User 더미 질문 1
+  msg 2026-09-01T00:02:00Z Assistant 더미 응답 1
+  msg 2026-09-01T00:02:00Z System 더미 개발자 지시문
+  msg 2026-09-01T00:02:00Z System 더미 시스템 주입 목록
+  msg 2026-09-01T00:07:00Z User 더미 질문 2
+
+── rollout-2026-09-01T00-00-00-01a00000-1111-2222-3333-444444444444.jsonl ──
+enumerated: id=01a00000-1111-2222-3333-444444444444 project=C:\Fixture\Project started=2026-09-01T00:00:00Z user=0 assistant=0 usage=0/0/0/0 model=<none> version=0.147.0 archived=False firstPrompt=<none>
+scanned: id=01a00000-1111-2222-3333-444444444444 project=C:\Fixture\Project started=2026-09-01T00:00:00Z user=2 assistant=1 usage=200/40/10/60 model=gpt-5-codex version=0.147.0 archived=False firstPrompt=더미 질문 1
+resume=resume 01a00000-1111-2222-3333-444444444444
+  msg 2026-09-01T00:01:00Z User 더미 질문 1
+  msg 2026-09-01T00:02:00Z Assistant 더미 응답 1
+  msg 2026-09-01T00:02:00Z System 더미 개발자 지시문
+  msg 2026-09-01T00:02:00Z System 더미 시스템 주입 목록
+  msg 2026-09-01T00:07:00Z User 더미 질문 2
+
+── rollout-2026-09-01T00-10-00-01a99999-8888-7777-6666-555555555555.jsonl ──
+enumerated: id=01a99999-8888-7777-6666-555555555555 project=C:\Fixture\Project started=2026-09-01T00:00:00Z user=0 assistant=0 usage=0/0/0/0 model=<none> version=0.153.0 archived=False firstPrompt=<none>
+scanned: id=01a99999-8888-7777-6666-555555555555 project=C:\Fixture\Project started=2026-09-01T00:00:00Z user=2 assistant=1 usage=300/60/15/90 model=gpt-5.1-codex version=0.153.0 archived=False firstPrompt=더미 질문 1
+resume=resume 01a99999-8888-7777-6666-555555555555
+  msg 2026-09-01T00:01:00Z User 더미 질문 1
+  msg 2026-09-01T00:02:00Z Assistant 더미 응답 1
+  msg 2026-09-01T00:06:00Z User 더미 질문 2

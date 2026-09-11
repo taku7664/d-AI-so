@@ -1,0 +1,26 @@
+﻿tool=Claude
+appendOnly=True
+sessions=2
+
+── session-basic.jsonl ──
+enumerated: id=11111111-2222-3333-4444-555555555555 project=C:\Fixture\Project started=2026-09-01T00:00:00Z user=0 assistant=0 usage=0/0/0/0 model=<none> version=2.0.0 archived=False firstPrompt=<none>
+scanned: id=11111111-2222-3333-4444-555555555555 project=C:\Fixture\Project started=2026-09-01T00:00:00Z user=2 assistant=2 usage=117/25/5/51 model=claude-opus-5 version=2.0.0 archived=False firstPrompt=더미 질문 1
+resume=--resume 11111111-2222-3333-4444-555555555555
+  msg 2026-09-01T00:00:00Z User 더미 질문 1
+  msg 2026-09-01T00:01:00Z Assistant 더미 응답 1
+  msg 2026-09-01T00:02:00Z Tool Read {"file_path": "C:\\Fixture\\Project\\a.txt"}
+  msg 2026-09-01T00:03:00Z Tool {"stdout": "더미 도구 결과"}
+  msg 2026-09-01T00:04:00Z User 더미 질문 2
+  msg 2026-09-01T00:06:00Z User [sidechain] 더미 질문 3
+  msg 2026-09-01T00:07:00Z Assistant [sidechain] 더미 응답 2
+  msg 2026-09-01T00:08:00Z Assistant 더미 응답 3
+  msg 2026-09-01T00:09:00Z System 더미 컴팩션 요약
+
+── session-offsets.jsonl ──
+enumerated: id=11111111-2222-3333-4444-555555555555 project=C:\Fixture\Project started=2026-09-01T00:00:00Z user=0 assistant=0 usage=0/0/0/0 model=<none> version=2.0.0 archived=False firstPrompt=<none>
+scanned: id=11111111-2222-3333-4444-555555555555 project=C:\Fixture\Project started=2026-09-01T00:00:00Z user=2 assistant=2 usage=2/2/0/0 model=claude-opus-5 version=2.0.0 archived=False firstPrompt=더미 질문 1
+resume=--resume 11111111-2222-3333-4444-555555555555
+  msg 2026-09-01T00:00:00Z User 더미 질문 1
+  msg 2026-09-01T00:01:00Z Assistant 더미 응답 1
+  msg 2026-09-01T00:02:00Z User 더미 질문 2
+  msg 2026-09-01T00:03:00Z Assistant 더미 응답 2
