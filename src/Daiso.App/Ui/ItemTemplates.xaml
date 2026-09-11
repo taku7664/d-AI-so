@@ -492,11 +492,26 @@
                                     <TextBlock
                                         Text="{loc:Str Key=AuthProfile_Hint}"
                                         Style="{StaticResource PageSubtitleText}" />
-                                    <Button
-                                        Content="{loc:Str Key=AuthProfile_SaveCurrent}"
-                                        AutomationProperties.AutomationId="SaveProfileButton"
-                                        Visibility="{x:Bind CanSaveProfile}"
-                                        Command="{x:Bind SaveProfileCommand}" />
+                                    <!--
+                                        이름을 여기서 받는다. 대화상자로 물으면 그것이 뜨는 순간 이 팝오버가 닫혀
+                                        아래 상태 줄("저장했습니다")을 사람이 볼 수 없었다 (2026-09-11 확인)
+                                    -->
+                                    <Grid ColumnSpacing="{StaticResource GapMedium}" Visibility="{x:Bind CanSaveProfile}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox
+                                            Grid.Column="0"
+                                            AutomationProperties.AutomationId="ProfileNameBox"
+                                            PlaceholderText="{loc:Str Key=AuthProfile_NamePlaceholder}"
+                                            Text="{x:Bind ProfileName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                        <Button
+                                            Grid.Column="1"
+                                            Content="{loc:Str Key=AuthProfile_SaveCurrent}"
+                                            AutomationProperties.AutomationId="SaveProfileButton"
+                                            Command="{x:Bind SaveProfileCommand}" />
+                                    </Grid>
 
                                     <!--
                                         로그인이 파일이 아니라 자격 증명 관리자에 있는 도구. 복사해도 계정이 안 바뀌므로

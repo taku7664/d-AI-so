@@ -1090,6 +1090,12 @@
   <data name="AuthProfile_SaveCurrent" xml:space="preserve">
     <value>지금 로그인 저장</value>
   </data>
+  <data name="AuthProfile_NameRequired" xml:space="preserve">
+    <value>보관할 이름을 적어 주세요</value>
+  </data>
+  <data name="AuthProfile_SaveFailedWhy" xml:space="preserve">
+    <value>저장하지 못했습니다. 이유: {0}</value>
+  </data>
   <data name="AuthProfile_NamePlaceholder" xml:space="preserve">
     <value>프로필 이름 (예: 회사 계정)</value>
   </data>
@@ -1108,9 +1114,6 @@
   <data name="AuthProfile_Removed" xml:space="preserve">
     <value>‘{0}’을(를) 지웠습니다</value>
   </data>
-  <data name="AuthProfile_SaveFailed" xml:space="preserve">
-    <value>저장할 수 없음</value>
-  </data>
   <data name="AuthProfile_ApplyFailed" xml:space="preserve">
     <value>바꿀 수 없음</value>
   </data>
@@ -1119,12 +1122,6 @@
   </data>
   <data name="AuthProfile_ConfirmRemoveBody" xml:space="preserve">
     <value>저장해 둔 로그인 정보가 사라집니다. 지금 로그인한 계정은 그대로입니다.</value>
-  </data>
-  <data name="AuthProfile_SaveTitle" xml:space="preserve">
-    <value>지금 로그인 저장</value>
-  </data>
-  <data name="AuthProfile_SaveBodyFor" xml:space="preserve">
-    <value>{0}의 지금 로그인을 이 이름으로 저장합니다</value>
   </data>
   <data name="Nav_Prompts" xml:space="preserve">
     <value>내 프롬프트</value>

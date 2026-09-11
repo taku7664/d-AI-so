@@ -309,30 +309,36 @@ public sealed partial class DashboardViewModel : ObservableObject
         }
     }
 
-    /// <summary>지금 로그인 상태를 이름 붙여 저장한다. 누른 카드의 도구로 저장하니 이름만 받는다.</summary>
+    /// <summary>
+    /// 지금 로그인 상태를 이름 붙여 저장한다. 이름은 <b>팝오버 안의 칸</b>에서 온다.
+    ///
+    /// <para>
+    /// 예전에는 이름을 대화상자로 물었다. 그런데 대화상자가 뜨는 순간 팝오버가 닫혀,
+    /// 팝오버 안에만 적히는 "저장했습니다"를 사람이 볼 수 없었다 — 누르고 나면 아무 일도 없어 보였다
+    /// (2026-09-11 확인). 물음을 팝오버 안으로 들이면 결과도 같은 자리에서 보인다.
+    /// </para>
+    /// </summary>
     public async Task SaveProfileAsync(ToolCardViewModel card)
     {
         ArgumentNullException.ThrowIfNull(card);
 
-        var name = await _dialogs.AskTextAsync(
-            UiStrings.Get("AuthProfile_SaveTitle"),
-            UiStrings.Format("AuthProfile_SaveBodyFor", card.Title),
-            UiStrings.Get("AuthProfile_NamePlaceholder"),
-            UiStrings.Get("Common_Save")).ConfigureAwait(true);
+        var name = card.ProfileName?.Trim();
 
-        if (name is null)
+        if (string.IsNullOrWhiteSpace(name))
         {
+            card.ProfileStatus = UiStrings.Get("AuthProfile_NameRequired");
             return;
         }
 
         try
         {
             _profiles.Save(card.Kind, name, await ReadAuthStatusAsync(card.Kind).ConfigureAwait(true));
+            card.ProfileName = null;
             ReportProfile(card.Kind);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
         {
-            await _dialogs.NoticeAsync(UiStrings.Get("AuthProfile_SaveFailed"), ex.Message).ConfigureAwait(true);
+            card.ProfileStatus = UiStrings.Format("AuthProfile_SaveFailedWhy", ex.Message);
         }
     }
 
@@ -532,6 +538,10 @@ public sealed partial class ToolCardViewModel : ObservableObject
     /// <summary>프로필 저장·전환·삭제 결과 한 줄.</summary>
     [ObservableProperty]
     private string? profileStatus;
+
+    /// <summary>보관할 이름. 팝오버 안의 칸이 채운다. 저장하면 비운다.</summary>
+    [ObservableProperty]
+    private string? profileName;
 
     /// <summary>이 도구의 프로필만 골라 다시 채운다.</summary>
     public void SetProfiles(IEnumerable<AuthProfileRowViewModel> rows)

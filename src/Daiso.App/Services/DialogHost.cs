@@ -1,4 +1,4 @@
-using Daiso.App.Strings;
+﻿using Daiso.App.Strings;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
@@ -27,16 +27,11 @@ public interface IDialogHost
     /// <summary>예/아니오. 사람이 확인 단추를 눌렀으면 true.</summary>
     Task<bool> ConfirmAsync(string title, string body, string confirmText);
 
-    /// <summary>한 줄을 받아 온다. 취소했거나 빈 줄이면 null.</summary>
-    Task<string?> AskTextAsync(string title, string header, string placeholder, string confirmText);
 }
 
 /// <inheritdoc cref="IDialogHost" />
 public sealed class DialogHost : IDialogHost
 {
-    /// <summary>입력 대화상자의 폭. 제목보다 길어야 헤더가 접히지 않는다.</summary>
-    private const double InputWidth = 360;
-
     private Func<XamlRoot?>? _rootSource;
 
     /// <summary>
@@ -100,32 +95,6 @@ public sealed class DialogHost : IDialogHost
         }).ConfigureAwait(true);
 
         return result == ContentDialogResult.Primary;
-    }
-
-    /// <inheritdoc />
-    public async Task<string?> AskTextAsync(string title, string header, string placeholder, string confirmText)
-    {
-        if (Root is null)
-        {
-            return null;
-        }
-
-        var box = new TextBox { Header = header, PlaceholderText = placeholder };
-        var panel = new StackPanel { Width = InputWidth };
-        panel.Children.Add(box);
-
-        var result = await Show(new ContentDialog
-        {
-            Title = title,
-            Content = panel,
-            PrimaryButtonText = confirmText,
-            CloseButtonText = UiStrings.Get("Common_Cancel"),
-            DefaultButton = ContentDialogButton.Primary,
-        }).ConfigureAwait(true);
-
-        return result == ContentDialogResult.Primary && !string.IsNullOrWhiteSpace(box.Text)
-            ? box.Text
-            : null;
     }
 
     private async Task<ContentDialogResult> Show(ContentDialog dialog)
