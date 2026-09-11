@@ -129,6 +129,16 @@ public sealed class DoneNotifier : IDisposable
         _dispatcher.TryEnqueue(() => _goToRoom(id));
     }
 
+    /// <summary>
+    /// 듣기를 그만둔다.
+    ///
+    /// <para>
+    /// <b><see cref="AppNotificationManager.Unregister"/> 는 부르지 않는다.</b> 창이 닫히는 길에서 이것이 던졌고,
+    /// 그 예외가 충돌 보고기로 돌아가 끝없이 되돌았다 — 창 없는 프로세스가 죽지 않고 남았다 (2026-09-11 재현).
+    /// 등록은 이 PC 에 남아 있어야 하는 것이기도 하다: 앱이 꺼진 뒤에 누른 알림도 앱을 찾아올 수 있어야 한다.
+    /// 지우는 것은 앱을 지울 때 할 일이지 창을 닫을 때 할 일이 아니다.
+    /// </para>
+    /// </summary>
     public void Dispose()
     {
         if (!_registered)
@@ -139,11 +149,10 @@ public sealed class DoneNotifier : IDisposable
         try
         {
             AppNotificationManager.Default.NotificationInvoked -= OnInvoked;
-            AppNotificationManager.Default.Unregister();
         }
         catch (Exception ex) when (ex is InvalidOperationException or System.Runtime.InteropServices.COMException)
         {
-            // 종료 중이다. 등록은 프로세스와 함께 사라진다
+            // 종료 중이다. 더 할 일이 없다
         }
 
         _registered = false;

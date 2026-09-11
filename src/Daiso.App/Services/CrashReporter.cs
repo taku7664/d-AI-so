@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
 using Daiso.Infrastructure;
@@ -32,8 +32,22 @@ public sealed class CrashReporter
         "d-AI-so",
         "logs");
 
+    /// <summary>
+    /// 창이 닫혔는가. 닫힌 뒤에는 알리지 않는다.
+    /// <c>Window.Content</c> 는 닫힌 창에서 <b>null 이 아니라 예외</b>를 내고(COMException),
+    /// 그 예외가 다시 이 통로로 돌아와 끝없이 되돌았다 — 초당 기록 하나씩 쌓이고
+    /// 창이 없는 프로세스가 죽지 않고 남았다 (2026-09-11 재현).
+    /// </summary>
+    private bool _closed;
+
     /// <summary>대화상자를 띄울 창. 창이 생긴 뒤에 붙인다.</summary>
-    public void Attach(Window window) => _window = window;
+    public void Attach(Window window)
+    {
+        ArgumentNullException.ThrowIfNull(window);
+
+        _window = window;
+        window.Closed += (_, _) => _closed = true;
+    }
 
     /// <summary>앱 전역 예외 통로를 모두 잇는다.</summary>
     public void Hook(Application application)
@@ -61,9 +75,17 @@ public sealed class CrashReporter
     {
         var path = Write(source, exception);
 
+        if (_closed)
+        {
+            return;
+        }
+
         _dispatcher.TryEnqueue(async () =>
         {
-            if (_window?.Content?.XamlRoot is not { } xamlRoot)
+            // 여기서 새는 예외는 다시 이 통로로 돌아온다. 무엇이 터지든 이 안에서 끝낸다
+            try
+            {
+            if (_closed || _window?.Content?.XamlRoot is not { } xamlRoot)
             {
                 return;
             }
@@ -87,6 +109,11 @@ public sealed class CrashReporter
             catch (Exception ex) when (ex is InvalidOperationException or COMException)
             {
                 // 이미 다른 대화상자가 떠 있으면 조용히 넘어간다. 로그는 이미 남았다.
+            }
+            }
+            catch (Exception ex) when (ex is COMException or InvalidOperationException or ObjectDisposedException)
+            {
+                // 창이 닫히는 중이라 물어볼 자리가 없다. 로그는 이미 남았다
             }
         });
     }
