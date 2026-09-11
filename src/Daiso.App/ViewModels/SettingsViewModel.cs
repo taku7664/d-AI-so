@@ -13,6 +13,7 @@ public sealed partial class SettingsViewModel : ObservableObject
 {
     private readonly ISettingsStore _settings;
     private readonly IndexService _indexService;
+    private readonly IndexLocation _indexLocation;
 
     [ObservableProperty]
     private string? sessionHomeOverride;
@@ -44,15 +45,21 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     private readonly Services.ToolPluginCatalog _plugins;
 
-    public SettingsViewModel(ISettingsStore settings, IndexService indexService, Services.ToolPluginCatalog plugins)
+    public SettingsViewModel(
+        ISettingsStore settings,
+        IndexService indexService,
+        Services.ToolPluginCatalog plugins,
+        IndexLocation indexLocation)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(indexService);
         ArgumentNullException.ThrowIfNull(plugins);
+        ArgumentNullException.ThrowIfNull(indexLocation);
 
         _settings = settings;
         _indexService = indexService;
         _plugins = plugins;
+        _indexLocation = indexLocation;
 
         Load();
         RefreshPlugins();
@@ -121,6 +128,17 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     /// <summary>인덱스 경로를 비웠을 때 쓰이는 기본값.</summary>
     public string DefaultIndexDatabasePath => SqliteSessionIndex.DefaultDatabasePath;
+
+    /// <summary>
+    /// 설정한 인덱스 경로를 못 써서 기본 경로로 열었을 때의 사정. 없으면 null.
+    /// 조용히 다른 곳을 쓰면 사람은 인덱스가 왜 비었는지 알 길이 없다.
+    /// </summary>
+    public string? IndexFallbackNotice => _indexLocation.Failure is { } failure
+        ? UiStrings.Format("Settings_IndexFallback", _indexLocation.Requested ?? string.Empty, failure)
+        : null;
+
+    /// <summary>물러선 안내를 띄우는가.</summary>
+    public bool HasIndexFallback => IndexFallbackNotice is not null;
 
     /// <summary>설정 파일 위치.</summary>
     public string SettingsFilePath =>
@@ -194,6 +212,14 @@ public sealed partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     public void Save()
     {
+        // 쓸 수 없는 인덱스 경로는 저장하지 않는다. 저장해 두면 다음 시작에서 기본 경로로 물러서게 되는데,
+        // 고칠 수 있는 지금 말해 주는 편이 낫다 (2026-09-11 없는 드라이브로 앱이 죽던 것의 앞단)
+        if (Blank(IndexDatabasePath) is { } wanted && IndexLocation.Probe(wanted) is { } failure)
+        {
+            StatusText = UiStrings.Format("Settings_IndexPathUnusable", failure);
+            return;
+        }
+
         var current = _settings.Current;
 
         current.SessionHomeOverride = Blank(SessionHomeOverride);

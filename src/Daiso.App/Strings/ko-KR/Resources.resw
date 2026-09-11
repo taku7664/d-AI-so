@@ -652,6 +652,12 @@
   <data name="Settings_SessionHome" xml:space="preserve">
     <value>세션 루트 재정의 (비우면 기본값)</value>
   </data>
+  <data name="Settings_IndexFallback" xml:space="preserve">
+    <value>설정한 인덱스 경로({0})를 쓸 수 없어 기본 경로로 열었습니다. 이유: {1}</value>
+  </data>
+  <data name="Settings_IndexPathUnusable" xml:space="preserve">
+    <value>인덱스 경로를 쓸 수 없어 저장하지 않았습니다. 이유: {0}</value>
+  </data>
   <data name="Settings_IndexPath" xml:space="preserve">
     <value>인덱스 DB 경로 (비우면 기본값)</value>
   </data>

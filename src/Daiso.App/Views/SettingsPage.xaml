@@ -83,6 +83,15 @@
                                 <Run Text="{loc:Str Key=Common_DefaultPrefix}" />
                                 <Run FontFamily="Consolas" Text="{x:Bind ViewModel.DefaultIndexDatabasePath}" />
                             </TextBlock>
+
+                            <!-- 설정한 경로를 못 써서 기본값으로 열었으면 그 사실을 말한다. 조용히 다른 곳을 쓰지 않는다 -->
+                            <Border Style="{StaticResource NoticeBorder}" Visibility="{x:Bind ViewModel.HasIndexFallback}">
+                                <TextBlock
+                                    AutomationProperties.AutomationId="IndexFallbackNote"
+                                    Text="{x:Bind ViewModel.IndexFallbackNotice}"
+                                    Style="{StaticResource PageSubtitleText}"
+                                    TextWrapping="Wrap" />
+                            </Border>
                         </StackPanel>
                     </StackPanel>
                 </Border>

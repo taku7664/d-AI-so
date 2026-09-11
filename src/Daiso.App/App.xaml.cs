@@ -144,11 +144,13 @@ public partial class App : Application
         services.AddSingleton(provider => new SlashCommandReader(provider.GetRequiredService<ProviderHome>()));
         services.AddSingleton<ISessionExporter>(provider =>
             new MarkdownSessionExporter(provider.GetRequiredService<IEnumerable<IProvider>>()));
+        // 설정에 적힌 인덱스 경로를 쓸 수 없으면 기본 경로로 물러선다. 여기서 던지면 창이 뜨기 전에 죽는다
+        services.AddSingleton(provider =>
+            IndexLocation.Resolve(provider.GetRequiredService<ISettingsStore>().Current.IndexDatabasePath));
         services.AddSingleton<ISessionIndex>(provider =>
             new SqliteSessionIndex(
                 provider.GetRequiredService<IEnumerable<IProvider>>(),
-                provider.GetRequiredService<ISettingsStore>().Current.IndexDatabasePath
-                    ?? SqliteSessionIndex.DefaultDatabasePath));
+                provider.GetRequiredService<IndexLocation>().Path));
 
         // App
         services.AddSingleton<ISettingsStore, SettingsStore>();

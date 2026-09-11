@@ -542,7 +542,8 @@ RefreshAsync
   → messages 삽입(트리거가 FTS 따라감), usage_daily 갱신, last_offset = **다 읽은 뒤**의 파일 크기
      · 이 셋은 **한 트랜잭션**이다. 본문만 커밋하고 나오면, 그 사이에 죽었을 때 오프셋이 옛 값으로 남아 같은 자리를 다시 담는다
 ```
-- SQLite: `%LOCALAPPDATA%\d-AI-so\index.db`
+- SQLite: `%LOCALAPPDATA%\d-AI-so\index.db`. 설정으로 바꿀 수 있다
+- **설정한 경로를 쓸 수 없으면 기본 경로로 물러선다**(`IndexLocation.Resolve`). 여기서 던지면 DI 를 짜는 도중이라 **창이 뜨기 전에 앱이 죽고**, 설정 화면을 열 수 없어 손으로 `settings.json` 을 고쳐야만 살아났다 (2026-09-11 없는 드라이브로 재현). 물러선 이유는 설정 화면에 적는다 — 조용히 다른 곳을 쓰는 것도 거짓말이다. 저장할 때도 `IndexLocation.Probe` 로 미리 막는다
 - **읽기와 쓰기는 연결을 나눈다.** 목록·검색·사용량은 호출마다 새 연결을 열고, 갱신·재구축은 전용 연결 + 세마포어로 직렬화한다.
   하나의 연결을 화면과 배경 갱신이 같이 쓰면 리더가 겹쳐 `IndexOutOfRange`로 깨진다 (WAL이라 읽기는 쓰기를 기다리지 않는다)
 - **본문은 `messages`, 색인은 `messages_fts`(external content).** FTS5, **`tokenize='trigram'`**. 3글자 미만 검색어는 `LIKE` 폴백
