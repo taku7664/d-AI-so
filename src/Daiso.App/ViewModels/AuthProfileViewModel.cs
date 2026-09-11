@@ -79,7 +79,12 @@ public sealed partial class AuthProfileViewModel : ObservableObject
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentNullException.ThrowIfNull(status);
 
-        var provider = _providers.First(item => item.Kind == tool);
+        if (_providers.For(tool) is not { } provider)
+        {
+            StatusText = UiStrings.Format("AuthProfile_UnknownTool", tool.Id);
+            return;
+        }
+
         var saved = _store.Save(name, provider, status);
 
         Reload();
@@ -92,7 +97,12 @@ public sealed partial class AuthProfileViewModel : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(row);
 
-        var provider = _providers.First(item => item.Kind == row.Profile.Tool);
+        if (_providers.For(row.Profile.Tool) is not { } provider)
+        {
+            StatusText = UiStrings.Format("AuthProfile_UnknownTool", row.Profile.Tool.Id);
+            return;
+        }
+
         _store.Apply(row.Profile, provider, current);
 
         Reload();

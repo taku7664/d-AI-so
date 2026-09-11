@@ -515,7 +515,13 @@ public sealed partial class SessionsViewModel : ObservableObject
             return;
         }
 
-        var provider = _providers.First(p => p.Kind == row.Session.Tool);
+        // 모르는 도구(플러그인을 지웠다)면 열 수 없다. 던지는 대신 이유를 적는다
+        if (_providers.For(row.Session.Tool) is not { } provider)
+        {
+            StatusText = UiStrings.Format("Sessions_UnknownTool", row.Session.Tool.Id);
+            return;
+        }
+
         var directory = row.Session.ProjectPath is { Length: > 0 } path && Directory.Exists(path)
             ? path
             : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);

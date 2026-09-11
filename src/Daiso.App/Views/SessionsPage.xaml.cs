@@ -1,4 +1,5 @@
 ﻿using Daiso.App;
+using Daiso.Core;
 using Daiso.App.Controls;
 using Daiso.App.Services;
 using Daiso.App.ViewModels;
@@ -209,7 +210,13 @@ public sealed partial class SessionsPage : Page, IPageHeaderSource
         if (Terminal.TerminalHost.IsRuntimeAvailable())
         {
             var provider = App.Services.GetRequiredService<IEnumerable<Daiso.Core.IProvider>>()
-                .First(p => p.Kind == row.Session.Tool);
+                .For(row.Session.Tool);
+
+            if (provider is null)
+            {
+                return;
+            }
+
             var directory = row.Session.ProjectPath is { Length: > 0 } path && Directory.Exists(path)
                 ? path
                 : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);

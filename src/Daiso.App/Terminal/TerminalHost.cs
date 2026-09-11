@@ -1,3 +1,4 @@
+using Daiso.Core;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Daiso.App.Services;
@@ -89,7 +90,13 @@ public sealed class TerminalHost : UserControl
             PastePaths(others);
         }
 
-        var provider = App.Services.GetRequiredService<IEnumerable<Daiso.Core.IProvider>>().First(candidate => candidate.Kind == room.Tool);
+        var provider = App.Services.GetRequiredService<IEnumerable<Daiso.Core.IProvider>>().For(room.Tool);
+
+        if (provider is null)
+        {
+            return;
+        }
+
         foreach (var image in images)
         {
             if (await ClipboardImage.PutFileAsync(image))
@@ -494,8 +501,10 @@ public sealed class TerminalHost : UserControl
         if (content.Contains(StandardDataFormats.Bitmap) && _room is { } room)
         {
             // 그림은 CLI 가 스스로 클립보드에서 읽는다. 그 키는 도구마다 달라 IProvider 가 안다 (ToolKind 로 분기하지 않는다, ARCHITECTURE §6.2)
-            var provider = App.Services.GetRequiredService<IEnumerable<Daiso.Core.IProvider>>().First(candidate => candidate.Kind == room.Tool);
-            room.SendRaw(provider.ImagePasteKeys);
+            if (App.Services.GetRequiredService<IEnumerable<Daiso.Core.IProvider>>().For(room.Tool) is { } provider)
+            {
+                room.SendRaw(provider.ImagePasteKeys);
+            }
         }
     }
 

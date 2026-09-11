@@ -189,16 +189,23 @@ public sealed partial class DashboardViewModel : ObservableObject
     /// <summary>사용량 카드 제목.</summary>
     public string UsageHeaderText => UiStrings.Format("Dashboard_StatTokens", UsageDayCount);
 
-    /// <summary>지금 로그인 상태를 다시 읽는다. 프로필 저장에 쓴다.</summary>
+    /// <summary>지금 로그인 상태를 다시 읽는다. 프로필 저장에 쓴다. 모르는 도구면 "정보 없음".</summary>
     public Task<AuthStatus> ReadAuthStatusAsync(ToolKind tool, CancellationToken ct = default) =>
-        _providers.First(provider => provider.Kind == tool).GetAuthStatusAsync(ct);
+        _providers.For(tool) is { } provider
+            ? provider.GetAuthStatusAsync(ct)
+            : Task.FromResult(AuthStatus.Missing(tool));
 
     /// <summary>최근 세션을 Terminal 화면에 채워 둔다. 실행은 사람이 누른다.</summary>
     public void PrepareResume(SessionInfo session)
     {
         ArgumentNullException.ThrowIfNull(session);
 
-        var provider = _providers.First(item => item.Kind == session.Tool);
+        // 플러그인을 지운 뒤에도 그 도구의 세션은 목록에 남는다. 열 수 없을 뿐이다
+        if (_providers.For(session.Tool) is not { } provider)
+        {
+            return;
+        }
+
         var terminal = App.Services.GetRequiredService<TerminalViewModel>();
         var embedded = Daiso.App.Terminal.TerminalHost.IsRuntimeAvailable();
 
@@ -229,7 +236,11 @@ public sealed partial class DashboardViewModel : ObservableObject
         {
             foreach (var provider in _providers)
             {
-                var card = Tools.First(tool => tool.Kind == provider.Kind);
+                if (Tools.FirstOrDefault(tool => tool.Kind == provider.Kind) is not { } card)
+                {
+                    continue;
+                }
+
                 card.Apply(
                     await provider.IsInstalledAsync(ct).ConfigureAwait(true),
                     await provider.GetAuthStatusAsync(ct).ConfigureAwait(true));
@@ -260,7 +271,11 @@ public sealed partial class DashboardViewModel : ObservableObject
             return;
         }
 
-        var provider = _providers.First(p => p.Kind == card.Kind);
+        if (_providers.For(card.Kind) is not { } provider)
+        {
+            return;
+        }
+
         var arguments = provider.Kind == ToolKind.Codex ? "login" : string.Empty;
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
