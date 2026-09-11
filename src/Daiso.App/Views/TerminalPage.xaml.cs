@@ -427,7 +427,6 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
 
     private void ShowNewSession()
     {
-        _room?.MarkInactive();
         _room = null;
         App.Rooms.ActiveRoom = null;
         RoomTabs.SelectedItem = null;
@@ -452,9 +451,9 @@ public sealed partial class TerminalPage : Page, IPageHeaderSource, IFileDropSin
             previousChat.Bubbles.CollectionChanged -= OnBubblesChanged;
         }
 
-        _room?.MarkInactive();
         _room = room;
-        room.MarkActive();
+
+        // 본 것으로 칠지는 RoomManager 가 정한다 — 창이 앞에 있고 이 화면이 열려 있어야 한다
         App.Rooms.ActiveRoom = room;
 
         if (room is StreamingRoomViewModel chat)

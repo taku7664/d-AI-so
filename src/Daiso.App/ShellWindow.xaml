@@ -121,7 +121,7 @@
                     </muxc:NavigationViewItem.Icon>
                     <!-- 어느 방이든 안 본 답이 있으면 빨간 점 -->
                     <muxc:NavigationViewItem.InfoBadge>
-                        <muxc:InfoBadge Style="{ThemeResource CriticalDotInfoBadgeStyle}" Visibility="{x:Bind Rooms.UnseenVisibility, Mode=OneWay}" />
+                        <muxc:InfoBadge Style="{ThemeResource SuccessDotInfoBadgeStyle}" Visibility="{x:Bind Rooms.UnseenVisibility, Mode=OneWay}" />
                     </muxc:NavigationViewItem.InfoBadge>
                 </muxc:NavigationViewItem>
                 <muxc:NavigationViewItem Content="{loc:Str Key=Nav_Sessions}" Tag="Sessions" AutomationProperties.AutomationId="NavSessions">

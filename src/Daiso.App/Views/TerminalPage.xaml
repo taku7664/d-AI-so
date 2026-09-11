@@ -122,7 +122,7 @@
                             </Grid.ColumnDefinitions>
                             <Grid Grid.Column="0" Width="22" Height="22" VerticalAlignment="Center">
                                 <controls:ToolIcon Kind="{x:Bind Tool}" Size="22" />
-                                <!-- 안 본 새 답: 빨간 점이 퍼진다 -->
+                                <!-- 일이 끝나 답이 와 있다: 초록 점이 퍼진다 -->
                                 <controls:PulseDot HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-6,-6,0" Visibility="{x:Bind UnseenVisibility, Mode=OneWay}" />
                             </Grid>
                             <TextBlock Grid.Column="1" Text="{x:Bind ShortTitle}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="140" />

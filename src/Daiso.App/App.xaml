@@ -195,7 +195,11 @@
             <SolidColorBrush x:Key="AuthOkBrush" Color="#FF10893E" />
             <SolidColorBrush x:Key="AuthWarnBrush" Color="#FFBF7A00" />
             <SolidColorBrush x:Key="AuthErrorBrush" Color="#FFC42B1C" />
-            <SolidColorBrush x:Key="PulseDotBrush" Color="#FFE5484D" />
+            <!--
+                일이 끝나 답이 와 있다는 점. <b>초록</b>이다 — 실패가 아니라 "가서 보면 된다"는 뜻이라
+                빨강은 거짓으로 급했다 (2026-09-11 사람의 요청). 로그인 정상 점과 같은 초록을 쓴다
+            -->
+            <SolidColorBrush x:Key="PulseDotBrush" Color="#FF10893E" />
 
             <!--
                 ── 코드가 입히는 스타일 ──────────────────────────────────────────
