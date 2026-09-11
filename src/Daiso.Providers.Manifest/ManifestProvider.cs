@@ -1,4 +1,4 @@
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using Daiso.Core;
 using Daiso.Core.Plugins;
 using Daiso.Providers.Common;
@@ -16,11 +16,14 @@ namespace Daiso.Providers.Manifest;
 /// Core 는 환경변수를 모르기 때문에 채우기가 이쪽에 있다.
 /// </para>
 /// </summary>
-public sealed class ManifestProvider : IProvider
+public sealed class ManifestProvider : IProvider, IDisposable
 {
     private readonly ToolManifest _manifest;
     private readonly string _manifestDirectory;
     private readonly string _home;
+
+    /// <summary>세션 기록을 읽어 주는 바깥 프로세스. 매니페스트에 어댑터가 없으면 null 이다.</summary>
+    private readonly AdapterChannel? _adapter;
 
     /// <param name="manifest">읽어 낸 매니페스트.</param>
     /// <param name="manifestDirectory"><c>{HERE}</c> 가 가리키는 곳 — 매니페스트가 놓인 폴더.</param>
@@ -33,7 +36,17 @@ public sealed class ManifestProvider : IProvider
         _manifest = manifest;
         _manifestDirectory = manifestDirectory;
         _home = home.Directory;
+
+        _adapter = manifest.AdapterCommand is { Length: > 0 } command
+            ? new AdapterChannel(Fill(command), manifestDirectory)
+            : null;
     }
+
+    /// <summary>어댑터가 어긋난 이유. 없거나 멀쩡하면 null. 설정 화면이 보여 준다 (Stage 6).</summary>
+    public string? AdapterError => _adapter?.LastError;
+
+    /// <summary>세션 기록을 읽을 수 있는가. 어댑터가 없으면 못 읽는다.</summary>
+    public bool HasAdapter => _adapter is not null;
 
     /// <summary>읽어 낸 매니페스트 원본. 설정 화면이 무엇을 돌리는지 보여 줄 때 쓴다 (Stage 6).</summary>
     public ToolManifest Manifest => _manifest;
@@ -66,7 +79,8 @@ public sealed class ManifestProvider : IProvider
     public bool SupportsInstructionImports => _manifest.SupportsInstructionImports;
 
     /// <inheritdoc />
-    public bool AppendOnlySessions => _manifest.AppendOnlySessions;
+    /// <remarks>어댑터가 <c>hello</c> 에서 답한 값이 있으면 그것이 이긴다 — 로그 모양은 어댑터가 더 잘 안다.</remarks>
+    public bool AppendOnlySessions => _adapter?.AppendOnly ?? _manifest.AppendOnlySessions;
 
     /// <inheritdoc />
     public string ImagePasteKeys => _manifest.ImagePasteKeys;
@@ -103,16 +117,46 @@ public sealed class ManifestProvider : IProvider
     }
 
     /// <inheritdoc />
-    /// <remarks>어댑터가 붙기 전에는 빈 목록이다. 화면은 "이 폴더의 대화 0개"로 뜬다.</remarks>
+    /// <remarks>어댑터가 없으면 빈 목록이다. 화면은 "이 폴더의 대화 0개"로 뜬다 — 오류가 아니다.</remarks>
     public async IAsyncEnumerable<SessionInfo> EnumerateSessionsAsync([EnumeratorCancellation] CancellationToken ct)
     {
-        await Task.CompletedTask.ConfigureAwait(false);
-        yield break;
+        if (_adapter is null)
+        {
+            yield break;
+        }
+
+        var request = new AdapterRequest(AdapterProtocol.Version, "sessions", Root: SessionsRoot);
+
+        await foreach (var line in _adapter.SendAsync(request, ct).ConfigureAwait(false))
+        {
+            if (line.Session is { } session)
+            {
+                yield return ToSessionInfo(session);
+            }
+        }
     }
 
     /// <inheritdoc />
-    public Task<SessionInfo> ReadSessionInfoAsync(string filePath, CancellationToken ct) =>
-        throw new NotSupportedException($"`{Kind.Id}` 는 세션 기록을 읽는 어댑터가 없다");
+    public async Task<SessionInfo> ReadSessionInfoAsync(string filePath, CancellationToken ct)
+    {
+        if (_adapter is null)
+        {
+            throw new NotSupportedException($"`{Kind.Id}` 에는 세션 기록을 읽는 어댑터가 없다");
+        }
+
+        var request = new AdapterRequest(AdapterProtocol.Version, "session", FilePath: filePath);
+
+        await foreach (var line in _adapter.SendAsync(request, ct).ConfigureAwait(false))
+        {
+            if (line.Session is { } session)
+            {
+                return ToSessionInfo(session);
+            }
+        }
+
+        throw new InvalidOperationException(
+            _adapter.LastError ?? $"어댑터가 세션을 돌려주지 않았다: {filePath}");
+    }
 
     /// <inheritdoc />
     public async IAsyncEnumerable<SessionMessage> ReadMessagesAsync(
@@ -120,9 +164,60 @@ public sealed class ManifestProvider : IProvider
         long fromByteOffset,
         [EnumeratorCancellation] CancellationToken ct)
     {
-        await Task.CompletedTask.ConfigureAwait(false);
-        yield break;
+        if (_adapter is null)
+        {
+            yield break;
+        }
+
+        // 뒤에만 붙는 로그가 아니면 오프셋을 주지 않는다 — 어댑터가 처음부터 다시 읽어야 한다
+        var request = new AdapterRequest(
+            AdapterProtocol.Version,
+            "messages",
+            FilePath: filePath,
+            FromByteOffset: AppendOnlySessions ? fromByteOffset : 0);
+
+        await foreach (var line in _adapter.SendAsync(request, ct).ConfigureAwait(false))
+        {
+            if (line.Message is { } message)
+            {
+                yield return new SessionMessage(message.At, ParseRole(message.Role), message.Text, message.IsSidechain);
+            }
+        }
     }
+
+    /// <summary>어댑터가 보낸 줄을 앱의 모양으로. 빠진 값은 안전한 쪽으로 채운다.</summary>
+    private SessionInfo ToSessionInfo(AdapterSession session) => new(
+        Kind,
+        session.Id,
+        session.FilePath,
+        session.ProjectPath,
+        session.StartedAt ?? default,
+        session.ModifiedAt ?? session.StartedAt ?? default,
+        session.SizeBytes,
+        session.UserCount,
+        session.AssistantCount,
+        session.FirstPrompt,
+        session.Usage is { } usage
+            ? new TokenUsage(usage.Input, usage.Output, usage.CacheCreate, usage.CacheRead, usage.Model)
+            : TokenUsage.Zero,
+        session.ToolVersion,
+        session.IsArchived,
+        session.IsActive);
+
+    /// <summary>모르는 역할은 <c>system</c> 으로 본다 — 화면에서 조용히 사라지는 것보다 낫다.</summary>
+    private static MessageRole ParseRole(string? role) => role?.ToLowerInvariant() switch
+    {
+        "user" => MessageRole.User,
+        "assistant" => MessageRole.Assistant,
+        "tool" => MessageRole.Tool,
+        _ => MessageRole.System,
+    };
+
+    /// <summary>말이 통하는지 한 번 물어본다. 어댑터가 없으면 참이다(쓸 일이 없다).</summary>
+    public Task<bool> HandshakeAsync(CancellationToken ct) =>
+        _adapter?.HandshakeAsync(ct) ?? Task.FromResult(true);
+
+    public void Dispose() => _adapter?.Dispose();
 
     /// <inheritdoc />
     public string BuildResumeArguments(SessionInfo session)

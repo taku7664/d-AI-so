@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Daiso.Adapter.Claude</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Daiso.Core\Daiso.Core.csproj" />
+    <ProjectReference Include="..\..\..\src\Daiso.Providers.Claude\Daiso.Providers.Claude.csproj" />
+    <ProjectReference Include="..\..\..\src\Daiso.Providers.Common\Daiso.Providers.Common.csproj" />
+    <ProjectReference Include="..\..\..\src\Daiso.Providers.Manifest\Daiso.Providers.Manifest.csproj" />
+  </ItemGroup>
+
+</Project>

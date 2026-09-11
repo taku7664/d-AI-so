@@ -21,6 +21,7 @@
     <ProjectReference Include="..\..\src\Daiso.Providers.Codex\Daiso.Providers.Codex.csproj" />
     <ProjectReference Include="..\..\src\Daiso.Providers.Antigravity\Daiso.Providers.Antigravity.csproj" />
     <ProjectReference Include="..\..\src\Daiso.Providers.Manifest\Daiso.Providers.Manifest.csproj" />
+    <ProjectReference Include="..\..\tools\adapters\Daiso.Adapter.Claude\Daiso.Adapter.Claude.csproj" />
   </ItemGroup>
 
   <ItemGroup>
