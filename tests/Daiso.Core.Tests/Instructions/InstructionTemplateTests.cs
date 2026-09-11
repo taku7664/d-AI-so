@@ -1,4 +1,4 @@
-namespace Daiso.Core.Tests.Instructions;
+﻿namespace Daiso.Core.Tests.Instructions;
 
 /// <summary>REQUIREMENTS §6.5 도구별 지시문.</summary>
 public sealed class InstructionTemplateTests
@@ -23,12 +23,13 @@ public sealed class InstructionTemplateTests
         body.Should().NotContain("@PROJECT_RULES.daiso");
     }
 
+    // ToolKind 가 enum 이 아니게 되어 InlineData 에 못 넣는다(상수가 아니다). id 로 넘기고 여기서 되돌린다
     [Theory]
-    [InlineData(ToolKind.Claude)]
-    [InlineData(ToolKind.Codex)]
-    public void The_rules_file_name_is_honoured(ToolKind tool)
+    [InlineData("claude")]
+    [InlineData("codex")]
+    public void The_rules_file_name_is_honoured(string toolId)
     {
-        _template.For(tool, "OTHER_RULES.daiso").Should().Contain("OTHER_RULES.daiso");
+        _template.For(ToolKind.Of(toolId), "OTHER_RULES.daiso").Should().Contain("OTHER_RULES.daiso");
     }
 
     [Fact]

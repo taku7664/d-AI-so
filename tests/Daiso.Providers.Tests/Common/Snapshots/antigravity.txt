@@ -1,4 +1,4 @@
-﻿tool=Antigravity
+﻿tool=antigravity
 appendOnly=False
 sessions=2
 

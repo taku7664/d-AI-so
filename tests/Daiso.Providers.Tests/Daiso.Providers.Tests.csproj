@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -25,7 +25,11 @@
   <ItemGroup>
     <Content Include="..\fixtures\**\*" LinkBase="fixtures" CopyToOutputDirectory="PreserveNewest" />
     <!-- 특성화 스냅샷. 없으면 테스트가 지금 값을 적어 두고 실패한다 (docs/PLUGIN_PLAN.md Stage 0) -->
-    <Content Include="Common\Snapshots\**\*" LinkBase="snapshots" CopyToOutputDirectory="PreserveNewest" />
+    <!--
+      LinkBase 를 쓰지 않는다. 프로젝트 안에 있는 파일은 LinkBase 를 무시하고 프로젝트 기준 상대 경로 그대로
+      출력에 놓인다(Common/Snapshots). 테스트가 그 경로를 그대로 본다
+    -->
+    <Content Include="Common\Snapshots\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

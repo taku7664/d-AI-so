@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
 namespace Daiso.Core.Tests.Architecture;
 
@@ -27,7 +27,9 @@ public sealed partial class ToolLookTests
 
     private static readonly string Source = File.ReadAllText(ToolLookPath);
 
-    private static readonly string[] Kinds = Enum.GetNames<ToolKind>();
+    // ToolKind 가 enum 이 아니게 됐다(플러그인). 앱에 묻어 있는 도구 셋이 검사 대상이다 —
+    // 플러그인 도구는 ToolLook 이 아니라 매니페스트가 표시 정보를 낸다
+    private static readonly string[] Kinds = [.. ToolKind.BuiltIn.Select(kind => kind.Id)];
 
     /// <summary>도구마다 답이 있어야 하는 물음들. 이름은 <c>ToolLook</c> 의 멤버 이름이다.</summary>
     public static IEnumerable<object[]> SwitchMembers() =>
@@ -39,7 +41,7 @@ public sealed partial class ToolLookTests
     public void Every_tool_has_its_own_answer(string member)
     {
         var body = SwitchBody(member);
-        var missing = Kinds.Where(kind => !body.Contains($"ToolKind.{kind} =>", StringComparison.Ordinal)).ToList();
+        var missing = Kinds.Where(kind => !body.Contains($"\"{kind}\" =>", StringComparison.Ordinal)).ToList();
 
         missing.Should().BeEmpty(
             because: $"ToolLook.{member} 이 답하지 않는 도구는 화면에서 폴백(회색 원 · '?')으로 보인다. 조용히 틀리는 쪽이라 여기서 잡는다");
@@ -49,7 +51,7 @@ public sealed partial class ToolLookTests
     public void Display_order_lists_every_tool()
     {
         var line = Line("DisplayOrder");
-        var missing = Kinds.Where(kind => !line.Contains($"ToolKind.{kind}", StringComparison.Ordinal)).ToList();
+        var missing = Kinds.Where(kind => !line.Contains(kind, StringComparison.OrdinalIgnoreCase)).ToList();
 
         missing.Should().BeEmpty(
             because: "DisplayOrder 에 없는 도구는 Rank 가 int.MaxValue 라 목록 맨 뒤로 밀리고, 탭 인덱스 계산에서 빠진다");
@@ -59,7 +61,7 @@ public sealed partial class ToolLookTests
     public void Display_order_does_not_repeat_a_tool()
     {
         var line = Line("DisplayOrder");
-        var listed = Kinds.Where(kind => line.Contains($"ToolKind.{kind}", StringComparison.Ordinal)).ToList();
+        var listed = Kinds.Where(kind => line.Contains(kind, StringComparison.OrdinalIgnoreCase)).ToList();
 
         listed.Should().HaveCount(Kinds.Length, because: "탭 인덱스가 DisplayOrder 위치로 계산된다. 중복되면 탭과 도구가 어긋난다");
     }
@@ -69,9 +71,9 @@ public sealed partial class ToolLookTests
     [Fact]
     public void A_switch_that_forgets_a_tool_is_caught()
     {
-        const string Incomplete = "ToolKind.Claude => \"a\", _ => \"?\",";
+        const string Incomplete = "\"claude\" => \"a\", _ => \"?\",";
 
-        Kinds.Where(kind => !Incomplete.Contains($"ToolKind.{kind} =>", StringComparison.Ordinal))
+        Kinds.Where(kind => !Incomplete.Contains($"\"{kind}\" =>", StringComparison.Ordinal))
             .Should().NotBeEmpty(because: "폴백만 있고 도구가 빠진 switch 는 걸려야 한다");
     }
 

@@ -270,7 +270,9 @@ public sealed class AuthProfileStore : IAuthProfileStore
         {
             var row = JsonSerializer.Deserialize<MetaRow>(File.ReadAllText(path, Encoding.UTF8));
 
-            if (row is null || !Enum.TryParse<ToolKind>(row.Tool, out var tool))
+            // 옛 meta.json 에는 enum 이름("Claude")이 적혀 있다. TryParse 가 대소문자를 안 가려 그대로 읽힌다.
+            // 폴더 이름도 "Claude" 인데 Windows 파일 이름은 대소문자를 안 가려 "claude" 로 찾아도 같은 폴더다
+            if (row is null || !ToolKind.TryParse(row.Tool, out var tool))
             {
                 return null;
             }

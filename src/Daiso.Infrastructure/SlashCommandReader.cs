@@ -1,4 +1,4 @@
-using Daiso.Core;
+﻿using Daiso.Core;
 using Daiso.Core.Prompts;
 using Daiso.Providers.Common;
 
@@ -28,19 +28,21 @@ public sealed class SlashCommandReader
     {
         var result = new List<SlashCommand>(BuiltInSlashCommands.For(tool));
 
-        switch (tool)
+        // ToolKind 는 id 를 감싼 값이라 case 상수로 못 쓴다 (docs/PLUGIN_PLAN.md Stage 1).
+        // 플러그인 도구는 어디에도 안 걸려 내장 명령만 갖는다
+        switch (tool.Id)
         {
-            case ToolKind.Claude:
+            case "claude":
                 AddMarkdown(result, _home.Combine(".claude", "commands"), SlashCommandSource.User);
                 AddMarkdown(result, ProjectDir(projectDirectory, ".claude", "commands"), SlashCommandSource.Project);
                 AddSkills(result, _home.Combine(".claude", "skills"));
                 break;
 
-            case ToolKind.Codex:
+            case "codex":
                 AddMarkdown(result, _home.Combine(".codex", "prompts"), SlashCommandSource.User);
                 break;
 
-            case ToolKind.Antigravity:
+            case "antigravity":
                 AddToml(result, _home.Combine(".gemini", "commands"), SlashCommandSource.User);
                 AddToml(result, ProjectDir(projectDirectory, ".gemini", "commands"), SlashCommandSource.Project);
                 break;

@@ -73,11 +73,12 @@ public static class BuiltInSlashCommands
     /// <summary>그 도구의 내장 명령들.</summary>
     public static IReadOnlyList<SlashCommand> For(ToolKind tool)
     {
-        var table = tool switch
+        // 내장 명령 표는 앱이 아는 도구에만 있다. 플러그인 도구는 빈 표다 — 그 도구의 명령을 앱이 알 길이 없다
+        var table = tool.Id switch
         {
-            ToolKind.Claude => Claude,
-            ToolKind.Codex => Codex,
-            ToolKind.Antigravity => Antigravity,
+            "claude" => Claude,
+            "codex" => Codex,
+            "antigravity" => Antigravity,
             _ => [],
         };
 

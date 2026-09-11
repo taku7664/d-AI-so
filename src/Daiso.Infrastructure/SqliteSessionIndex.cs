@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Daiso.Core;
 using Microsoft.Data.Sqlite;
 
@@ -657,8 +657,9 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
     /// 2: Gemini 기록을 리플레이 방식으로 읽기 시작.
     /// 3: Gemini 프로젝트 경로를 디스크의 실제 대소문자로 저장.
     /// 4: `ToolKind.Gemini` → `ToolKind.Antigravity`. tool 열에 도구 이름이 문자열로 들어가므로 옛 행("Gemini")은 Enum.Parse 가 못 읽는다.
+    /// 5: ToolKind 가 enum → 문자열 id. tool 열이 "Claude" 에서 "claude" 가 된다 (docs/PLUGIN_PLAN.md Stage 1).
     /// </summary>
-    private const int IndexFormatVersion = 4;
+    private const int IndexFormatVersion = 5;
 
     private void CreateSchema()
     {
@@ -761,7 +762,9 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
     }
 
     private static SessionInfo ReadSession(SqliteDataReader reader) => new(
-        Enum.Parse<ToolKind>(reader.GetString(0)),
+        // 모르는 도구 id 를 만나도 던지지 않는다. 플러그인을 지우면 그 도구의 행이 남는 것이 정상이다 —
+        // 옛 Enum.Parse 는 여기서 예외를 던져 목록 전체를 무너뜨렸다 (docs/PLUGIN_PLAN.md Stage 1)
+        ToolKind.TryParse(reader.GetString(0), out var tool) ? tool : default,
         reader.GetString(1),
         reader.GetString(2),
         reader.IsDBNull(3) ? null : reader.GetString(3),

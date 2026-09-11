@@ -1,4 +1,4 @@
-﻿tool=Claude
+﻿tool=claude
 appendOnly=True
 sessions=2
 

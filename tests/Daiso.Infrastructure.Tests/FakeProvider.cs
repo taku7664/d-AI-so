@@ -1,4 +1,4 @@
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using Daiso.Core;
 
 namespace Daiso.Infrastructure.Tests;
@@ -11,9 +11,10 @@ internal sealed class FakeProvider : IProvider, IUsageReader
     private readonly Dictionary<string, List<SessionMessage>> _messages = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, List<UsageDay>> _usage = new(StringComparer.OrdinalIgnoreCase);
 
-    internal FakeProvider(ToolKind kind = ToolKind.Claude, bool usageIsAdditive = true)
+    // ToolKind 는 상수가 아니라 기본 매개변수로 못 쓴다. null 이면 Claude 다
+    internal FakeProvider(ToolKind? kind = null, bool usageIsAdditive = true)
     {
-        Kind = kind;
+        Kind = kind ?? ToolKind.Claude;
         UsageIsAdditive = usageIsAdditive;
     }
 

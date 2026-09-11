@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using Daiso.Core;
 using Daiso.Providers.Antigravity;
@@ -155,5 +155,5 @@ public sealed class SessionShapeTests : IDisposable
     private static string Normalize(string text) => text.ReplaceLineEndings("\n").TrimEnd('\n');
 
     private static string SnapshotPath(string name) =>
-        Path.Combine(AppContext.BaseDirectory, "snapshots", name + ".txt");
+        Path.Combine(AppContext.BaseDirectory, "Common", "Snapshots", name + ".txt");
 }

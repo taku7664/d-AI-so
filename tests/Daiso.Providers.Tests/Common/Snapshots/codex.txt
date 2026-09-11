@@ -1,4 +1,4 @@
-﻿tool=Codex
+﻿tool=codex
 appendOnly=True
 sessions=3
 
