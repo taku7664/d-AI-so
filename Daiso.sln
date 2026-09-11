@@ -31,6 +31,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Daiso.App", "src\Daiso.App\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Daiso.Providers.Antigravity", "src\Daiso.Providers.Antigravity\Daiso.Providers.Antigravity.csproj", "{40317DAA-4E2A-4881-BA54-61840A8819CE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Daiso.Providers.Manifest", "src\Daiso.Providers.Manifest\Daiso.Providers.Manifest.csproj", "{4A9755A3-CA07-41DB-9BB3-3E2DFE5A7C51}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -173,6 +175,18 @@ Global
 		{40317DAA-4E2A-4881-BA54-61840A8819CE}.Release|x64.Build.0 = Release|Any CPU
 		{40317DAA-4E2A-4881-BA54-61840A8819CE}.Release|x86.ActiveCfg = Release|Any CPU
 		{40317DAA-4E2A-4881-BA54-61840A8819CE}.Release|x86.Build.0 = Release|Any CPU
+		{4A9755A3-CA07-41DB-9BB3-3E2DFE5A7C51}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4A9755A3-CA07-41DB-9BB3-3E2DFE5A7C51}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4A9755A3-CA07-41DB-9BB3-3E2DFE5A7C51}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4A9755A3-CA07-41DB-9BB3-3E2DFE5A7C51}.Debug|x64.Build.0 = Debug|Any CPU
+		{4A9755A3-CA07-41DB-9BB3-3E2DFE5A7C51}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4A9755A3-CA07-41DB-9BB3-3E2DFE5A7C51}.Debug|x86.Build.0 = Debug|Any CPU
+		{4A9755A3-CA07-41DB-9BB3-3E2DFE5A7C51}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4A9755A3-CA07-41DB-9BB3-3E2DFE5A7C51}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4A9755A3-CA07-41DB-9BB3-3E2DFE5A7C51}.Release|x64.ActiveCfg = Release|Any CPU
+		{4A9755A3-CA07-41DB-9BB3-3E2DFE5A7C51}.Release|x64.Build.0 = Release|Any CPU
+		{4A9755A3-CA07-41DB-9BB3-3E2DFE5A7C51}.Release|x86.ActiveCfg = Release|Any CPU
+		{4A9755A3-CA07-41DB-9BB3-3E2DFE5A7C51}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -189,5 +203,6 @@ Global
 		{1CBF4ED1-49B9-4465-8BEA-8C6D590DD214} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{42EDB77B-4072-4220-B87D-B94B50065638} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{40317DAA-4E2A-4881-BA54-61840A8819CE} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{4A9755A3-CA07-41DB-9BB3-3E2DFE5A7C51} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal

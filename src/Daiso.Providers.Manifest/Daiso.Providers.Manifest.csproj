@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Daiso.Providers.Manifest</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Daiso.Core\Daiso.Core.csproj" />
+    <ProjectReference Include="..\Daiso.Providers.Common\Daiso.Providers.Common.csproj" />
+  </ItemGroup>
+
+</Project>

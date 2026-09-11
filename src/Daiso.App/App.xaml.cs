@@ -6,6 +6,7 @@ using Daiso.Providers.Claude;
 using Daiso.Providers.Codex;
 using Daiso.Providers.Antigravity;
 using Daiso.Providers.Common;
+using Daiso.Providers.Manifest;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 
@@ -106,8 +107,21 @@ public partial class App : Application
         services.AddSingleton<IProvider>(provider =>
             new AntigravityProvider(provider.GetRequiredService<ProviderHome>()));
 
+        // 플러그인 도구. %USERPROFILE%\.daiso	ools\*.yaml 를 읽는다 (docs/PLUGIN_PLAN.md Stage 4).
+        //
+        // 컨테이너를 만들기 전에 읽는다. `IEnumerable<IProvider>` 를 직접 등록해 합치려 하면
+        // 그 팩터리 안의 GetServices<IProvider>() 가 자기 자신을 다시 불러 끝없이 돈다.
+        // 여기서 읽어 하나씩 IProvider 로 등록하면 컨테이너의 기본 동작(등록된 것 전부)이 그대로 산다
+        var plugins = LoadPlugins();
+        services.AddSingleton(plugins);
+
+        foreach (var tool in plugins.Tools)
+        {
+            services.AddSingleton<IProvider>(tool);
+        }
+
         // 도구 목록을 세는 곳. 표시 규칙을 화면 창구에 심는 일도 여기서 한다 (docs/PLUGIN_PLAN.md Stage 2)
-        services.AddSingleton<Services.ToolRegistry>();
+        services.AddSingleton<ToolRegistry>();
 
         // Infrastructure
         services.AddSingleton<IRuleFileService, RuleFileService>();
@@ -159,5 +173,30 @@ public partial class App : Application
         services.AddSingleton<ShellWindow>();
 
         return services.BuildServiceProvider();
+    }
+
+    /// <summary>
+    /// 플러그인 폴더를 읽는다. 컨테이너가 서기 전이라 설정은 직접 만들어 본다 —
+    /// <see cref="SettingsStore"/> 는 의존성이 없다.
+    /// <para>
+    /// <b>여기서 던지지 않는다.</b> 플러그인이 앱을 못 뜨게 하면 고칠 길이 없다.
+    /// 무엇이 틀렸는지는 <see cref="ToolPluginCatalog"/> 가 들고 있다가 설정 화면이 보여 준다(Stage 6).
+    /// </para>
+    /// </summary>
+    private static ToolPluginCatalog LoadPlugins()
+    {
+        try
+        {
+            var overridden = new SettingsStore().Current.SessionHomeOverride;
+            var home = string.IsNullOrWhiteSpace(overridden)
+                ? ProviderHome.FromUserProfile()
+                : new ProviderHome(overridden);
+
+            return new ToolPluginCatalog(new ToolPluginLoader(ToolPluginLoader.DefaultDirectory, home));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return ToolPluginCatalog.Empty(ex.Message);
+        }
     }
 }
