@@ -20,20 +20,38 @@ public sealed partial class UsagePage : Page, IPageHeaderSource
         Usage = App.Services.GetRequiredService<UsageViewModel>();
         Header = new PageHeader("Usage_Title", UiStrings.Get("Usage_Subtitle"));
 
-        // 뒤로/앞으로가 뷰모델의 탭을 바꾸면 탭 띠도 따라간다
-        Usage.PropertyChanged += (_, e) =>
-        {
-            if (e.PropertyName == nameof(UsageViewModel.SelectedTabIndex))
-            {
-                SelectorBarVisuals.Select(ToolTabs, Usage.SelectedTabIndex);
-            }
-        };
+        Usage.PropertyChanged += OnUsagePropertyChanged;
+        Unloaded += OnPageUnloaded;
 
         Loaded += async (_, _) =>
         {
             SelectorBarVisuals.Select(ToolTabs, Usage.SelectedTabIndex);
             await UiCommands.RunAsync(Usage.LoadCommand);
         };
+    }
+
+
+    /// <summary>
+    /// 화면을 떠나면 <b>싱글턴에 걸어 둔 것을 뗀다</b>.
+    /// <para>
+    /// 이 화면은 캐시되지 않아 올 때마다 새로 만들어지는데, 뷰모델·셸은 하나뿐이다.
+    /// 떼지 않으면 다녀온 횟수만큼 처리기가 쌓여 같은 일을 여러 번 하고, 떠난 화면도 살아남는다
+    /// (2026-09-11 점검).
+    /// </para>
+    /// </summary>
+    private void OnPageUnloaded(object sender, RoutedEventArgs e)
+    {
+        Usage.PropertyChanged -= OnUsagePropertyChanged;
+        Unloaded -= OnPageUnloaded;
+    }
+
+    /// <summary>뒤로/앞으로가 뷰모델의 탭을 바꾸면 탭 띠도 따라간다.</summary>
+    private void OnUsagePropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(UsageViewModel.SelectedTabIndex))
+        {
+            SelectorBarVisuals.Select(ToolTabs, Usage.SelectedTabIndex);
+        }
     }
 
     public UsageViewModel Usage { get; }

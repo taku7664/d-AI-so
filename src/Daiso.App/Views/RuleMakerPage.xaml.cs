@@ -19,6 +19,7 @@ public sealed partial class RuleMakerPage : Page, IPageHeaderSource
         ViewModel = App.Services.GetRequiredService<RuleMakerViewModel>();
         Header = new PageHeader("RuleMaker_Title", UiStrings.Get("RuleMaker_Subtitle"));
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+        Unloaded += OnPageUnloaded;
 
         Loaded += (_, _) =>
         {
@@ -31,6 +32,17 @@ public sealed partial class RuleMakerPage : Page, IPageHeaderSource
             ViewModel.RefreshGalleryCommand.Execute(null);
             BuildRecentFlyout();
         };
+    }
+
+
+    /// <summary>
+    /// 화면을 떠나면 싱글턴 뷰모델에 걸어 둔 것을 뗀다. 이 화면은 캐시되지 않아
+    /// 올 때마다 새로 만들어진다 — 떼지 않으면 다녀온 횟수만큼 처리기가 쌓인다 (2026-09-11 점검).
+    /// </summary>
+    private void OnPageUnloaded(object sender, RoutedEventArgs e)
+    {
+        ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        Unloaded -= OnPageUnloaded;
     }
 
     public RuleMakerViewModel ViewModel { get; }

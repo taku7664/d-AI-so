@@ -28,19 +28,9 @@ public sealed partial class DashboardPage : Page, IPageHeaderSource
         ViewModel = App.Services.GetRequiredService<DashboardViewModel>();
         Header = new PageHeader("Dashboard_Title", UiStrings.Get("Dashboard_ToolStatusHint"));
         Shell.PropertyChanged += OnShellPropertyChanged;
-
-        // 뒤로/앞으로가 뷰모델의 탭을 바꾸면 탭 띠도 따라간다
-        ViewModel.PropertyChanged += (_, e) =>
-        {
-            if (e.PropertyName == nameof(DashboardViewModel.SelectedTabIndex))
-            {
-                SelectorBarVisuals.Select(ToolTabs, ViewModel.SelectedTabIndex);
-            }
-        };
-
-        // 탭으로 거르면 카드 수가 바뀌어 넘치는 양도 바뀐다. 화살표가 그대로 남으면 못 누르는 단추가 된다
-        ViewModel.VisibleTools.CollectionChanged += (_, _) =>
-            DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, SyncArrows);
+        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+        ViewModel.VisibleTools.CollectionChanged += OnVisibleToolsChanged;
+        Unloaded += OnPageUnloaded;
 
         Loaded += async (_, _) =>
         {
@@ -49,6 +39,36 @@ public sealed partial class DashboardPage : Page, IPageHeaderSource
             ViewModel.SyncProfiles();
         };
     }
+
+
+    /// <summary>
+    /// 화면을 떠나면 <b>싱글턴에 걸어 둔 것을 뗀다</b>.
+    /// <para>
+    /// 이 화면은 캐시되지 않아 올 때마다 새로 만들어지는데, 뷰모델·셸은 하나뿐이다.
+    /// 떼지 않으면 다녀온 횟수만큼 처리기가 쌓여 같은 일을 여러 번 하고, 떠난 화면도 살아남는다
+    /// (2026-09-11 점검).
+    /// </para>
+    /// </summary>
+    private void OnPageUnloaded(object sender, RoutedEventArgs e)
+    {
+        Shell.PropertyChanged -= OnShellPropertyChanged;
+        ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        ViewModel.VisibleTools.CollectionChanged -= OnVisibleToolsChanged;
+        Unloaded -= OnPageUnloaded;
+    }
+
+    /// <summary>뒤로/앞으로가 뷰모델의 탭을 바꾸면 탭 띠도 따라간다.</summary>
+    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(DashboardViewModel.SelectedTabIndex))
+        {
+            SelectorBarVisuals.Select(ToolTabs, ViewModel.SelectedTabIndex);
+        }
+    }
+
+    /// <summary>탭으로 거르면 카드 수가 바뀌어 넘치는 양도 바뀐다. 화살표가 그대로 남으면 못 누르는 단추가 된다.</summary>
+    private void OnVisibleToolsChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e) =>
+        DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, SyncArrows);
 
     public DashboardViewModel ViewModel { get; }
 
