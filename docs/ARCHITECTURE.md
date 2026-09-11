@@ -536,15 +536,31 @@ RefreshAsync
   → sessions 테이블의 (size, mtime, last_offset) 와 비교
      · 신규          → offset 0부터 ReadMessagesAsync
      · size 증가     → last_offset부터 이어 읽기 (IProvider.AppendOnlySessions 인 도구만. Antigravity는 처음부터)
-     · 파서 형식 버전(PRAGMA user_version) 이 코드의 상수와 다르면 → 표를 비우고 전부 처음부터. 파서를 고치면 상수를 올린다
+     · 파서 형식 버전(PRAGMA user_version) 이 코드의 상수와 다르면 → 표를 **버리고** 다시 만든 뒤 VACUUM, 전부 처음부터. 파서를 고치면 상수를 올린다
      · size 감소/변경 → offset 0부터 재파싱 (재작성된 경우)
      · 동일          → 건너뜀
-  → messages_fts 삽입, usage_daily 갱신, last_offset = 파일 끝
+  → messages 삽입(트리거가 FTS 따라감), usage_daily 갱신, last_offset = 열거 때 본 파일 크기
+     · 이 셋은 **한 트랜잭션**이다. 본문만 커밋하고 나오면, 그 사이에 죽었을 때 오프셋이 옛 값으로 남아 같은 자리를 다시 담는다
 ```
 - SQLite: `%LOCALAPPDATA%\d-AI-so\index.db`
 - **읽기와 쓰기는 연결을 나눈다.** 목록·검색·사용량은 호출마다 새 연결을 열고, 갱신·재구축은 전용 연결 + 세마포어로 직렬화한다.
   하나의 연결을 화면과 배경 갱신이 같이 쓰면 리더가 겹쳐 `IndexOutOfRange`로 깨진다 (WAL이라 읽기는 쓰기를 기다리지 않는다)
-- `messages_fts`: FTS5, **`tokenize='trigram'`**. 3글자 미만 검색어는 `LIKE` 폴백
+- **본문은 `messages`, 색인은 `messages_fts`(external content).** FTS5, **`tokenize='trigram'`**. 3글자 미만 검색어는 `LIKE` 폴백
+  - `messages(id, file_path, at, role, hash, text)` + `ix_messages_file` + `ux_messages_key(file_path, at, role, hash)`.
+    지우기는 `DELETE FROM messages` 하나로 하고 트리거가 FTS 를 따라 지운다 —
+    예전에는 FTS 가 본문까지 들고 있었고 `file_path` 가 `UNINDEXED` 라 파일 하나 바뀔 때마다 표 전체를 훑었다
+  - **같은 줄은 두 번 담지 않는다**(`INSERT OR IGNORE` + `ux_messages_key`). 중복은 세 곳에서 온다:
+    도구가 같은 말을 두 레코드에 남기고(Codex), 이어 읽기 경계가 겹치고, 담는 도중에 죽으면 다음 갱신이 같은 자리를 다시 담는다.
+    막는 자리를 저장소 한 곳으로 모았다 (2026-09-11 실측: 여분 행 1,953 개)
+  - `detail=none` 은 **쓸 수 없다.** 색인이 절반으로 줄지만 trigram 은 세 글자 넘는 말을 삼각자 *구절*로 찾고,
+    그 판에서는 구절 질의가 막혀 있다(`fts5: phrase queries are not supported`). 재어 보고 되돌렸다
+  - **판이 바뀌면 VACUUM 한다.** `DELETE` 는 빈 쪽을 파일에 남긴다 — 판이 다섯 번 오르는 동안
+    실측 557MB 까지 부풀었고 같은 내용을 새로 담으면 133MB 였다. 닫을 때 `wal_checkpoint(TRUNCATE)` 도 한 번 돈다(WAL 이 109MB 였다)
+  - 검색은 **상한 200건**. 상한이 없던 때는 흔한 낱말 하나에 수만 줄의 본문 전체가 메모리로 올라왔다
+- **목록·검색·사용량은 배경 스레드에서 돈다.** SQLite 읽기는 동기라, `Task.FromResult` 로 감싸면 전부 화면 스레드에서 돌아 창이 멈춘다
+- **아직 남은 것**: `last_offset` 은 *열거 때 본* 파일 크기다. 담는 동안 자란 줄은 다음 갱신에 다시 읽히는데,
+  본문은 `ux_messages_key` 가 막아 주지만 **사용량은 additive 라 조금 더해질 수 있다.**
+  제대로 고치려면 `IProvider.ReadMessagesAsync` 가 "여기까지" 를 받아야 하고, 그것은 어댑터 프로토콜까지 바뀌는 일이다 (docs/REVIEW_BACKLOG.md R9)
 - `usage_daily(date, tool, project, model, input, output, cache_create, cache_read)`. Codex는 누적값이라 세션 단위로 **덮어쓰기**(세션 StartedAt 날짜에 귀속), Claude는 메시지 timestamp 날짜별 **합산**
 
 ### 5.2 .daiso 편집
