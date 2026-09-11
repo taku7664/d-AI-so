@@ -852,7 +852,11 @@ public sealed partial class TerminalViewModel : ObservableObject
                     ? chosen
                     : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
-                await _launcher.LaunchAsync(directory, executable, arguments).ConfigureAwait(true);
+                // npm 도 claude 와 같은 npm 셸 세트(npm · npm.cmd · npm.ps1)다. 이름만 넘기면 PowerShell 이 npm.ps1 을 골라
+                // 기본 실행 정책에 막힌다 — 0.1.1 을 새 PC 에 깐 뒤 Codex 설치 버튼에서 실제로 났다 (2026-09-11). .cmd 절대 경로로 넘긴다
+                var launchTarget = Daiso.Providers.Common.ExecutableLocator.NpmLaunchTarget(executable);
+
+                await _launcher.LaunchAsync(directory, launchTarget, arguments).ConfigureAwait(true);
             }
 
             var deadline = DateTimeOffset.UtcNow + InstallWatch;

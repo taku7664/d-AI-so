@@ -13,7 +13,7 @@
 
 ### 고친 것
 
-- Windows 기본 실행 정책(Restricted)인 새 PC 에서 터미널이 `claude.ps1 파일을 로드할 수 없습니다` 로 죽던 문제. PowerShell 에 `.cmd` 를 직접 넘겨 정책과 무관하게 뜹니다
+- Windows 기본 실행 정책(Restricted)인 새 PC 에서 터미널이 `claude.ps1 파일을 로드할 수 없습니다` 로 죽던 문제. PowerShell 에 `.cmd` 를 직접 넘겨 정책과 무관하게 뜹니다. 설치 버튼의 `npm` 도 같은 처리를 합니다
 
 ## 0.1.0 (2026-09-11)
 
