@@ -70,7 +70,7 @@ public sealed class SearchablePicker : Grid
             Glyph = "",
             FontSize = 12,
             VerticalAlignment = VerticalAlignment.Center,
-            Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"],
+            Style = (Style)Application.Current.Resources["MutedIcon"],
         };
 
         var faceGrid = new Grid();

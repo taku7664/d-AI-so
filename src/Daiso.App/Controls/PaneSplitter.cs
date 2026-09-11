@@ -1,4 +1,4 @@
-using Daiso.App.Services;
+﻿using Daiso.App.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI;
 using Microsoft.UI.Input;
@@ -40,7 +40,7 @@ public sealed class PaneSplitter : Grid
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Stretch,
             CornerRadius = new CornerRadius(1),
-            Background = (Brush)Application.Current.Resources["ControlStrokeColorDefaultBrush"],
+            Style = (Style)Application.Current.Resources["SplitterLine"],
         };
         Children.Add(_line);
 
@@ -145,6 +145,7 @@ public sealed class PaneSplitter : Grid
         return Math.Clamp(width, column.MinWidth, max);
     }
 
+    /// <summary>얹거나 끄는 동안 강조한다. 색이 아니라 스타일을 바꾼다 — 브러시를 직접 꺼내면 테마를 못 따라간다</summary>
     private void Highlight(bool on) =>
-        _line.Background = (Brush)Application.Current.Resources[on ? "AccentFillColorDefaultBrush" : "ControlStrokeColorDefaultBrush"];
+        _line.Style = (Style)Application.Current.Resources[on ? "SplitterLineActive" : "SplitterLine"];
 }

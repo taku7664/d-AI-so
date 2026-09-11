@@ -197,6 +197,48 @@
             <SolidColorBrush x:Key="AuthErrorBrush" Color="#FFC42B1C" />
             <SolidColorBrush x:Key="PulseDotBrush" Color="#FFE5484D" />
 
+            <!--
+                ── 코드가 입히는 스타일 ──────────────────────────────────────────
+                코드가 <c>Application.Current.Resources["…Brush"]</c> 로 브러시를 직접 꺼내면 <b>앱 테마</b>로 풀린다.
+                이 앱은 테마를 창의 RootGrid 에 입히므로(ShellWindow.ApplyTheme), 다크로 두어도 꺼내온 값은 라이트의 것이고
+                테마를 바꿔도 따라오지 않는다 — 다크 모드에서 상태 줄 글씨가 검게 나왔다 (2026-09-11 사람의 지적).
+                스타일 안의 ThemeResource 는 그 요소의 테마로 풀리고 테마가 바뀌면 다시 풀린다. 그래서 색이 아니라 스타일을 건넨다.
+            -->
+            <Style x:Key="StatusBarText" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="{StaticResource CaptionFontSize}" />
+                <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+            </Style>
+
+            <!-- 같은 자리에 실패를 적을 때. 빨강도 테마마다 다르다 -->
+            <Style x:Key="StatusBarErrorText" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="{StaticResource CaptionFontSize}" />
+                <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="Foreground" Value="{ThemeResource SystemFillColorCriticalBrush}" />
+            </Style>
+
+            <!-- 칸 나누는 손잡이의 선. 끌거나 얹었을 때만 강조색이 된다 -->
+            <Style x:Key="SplitterLine" TargetType="Border">
+                <Setter Property="Background" Value="{ThemeResource ControlStrokeColorDefaultBrush}" />
+            </Style>
+            <Style x:Key="SplitterLineActive" TargetType="Border">
+                <Setter Property="Background" Value="{ThemeResource AccentFillColorDefaultBrush}" />
+            </Style>
+
+            <!-- 알림 점. 테두리는 카드 바탕색이라 테마를 탄다 -->
+            <Style x:Key="PulseDotFace" TargetType="Ellipse">
+                <Setter Property="Fill" Value="{StaticResource PulseDotBrush}" />
+                <Setter Property="Stroke" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+                <Setter Property="StrokeThickness" Value="1.5" />
+            </Style>
+
+            <!-- 덜 중요한 아이콘(고르개의 꺾쇠 등) -->
+            <Style x:Key="MutedIcon" TargetType="FontIcon">
+                <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            </Style>
+
             <!-- 명시적 테마(라이트/다크)에서 창 바탕과 제목줄을 칠하는 색. Mica 를 끄는 경우에만 쓴다 -->
             <Color x:Key="WindowChromeLightBackground">#FFF3F3F3</Color>
             <Color x:Key="WindowChromeDarkBackground">#FF202020</Color>

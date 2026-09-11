@@ -1,4 +1,4 @@
-<Window
+﻿<Window
     x:Class="Daiso.App.ShellWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -190,12 +190,11 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
+                <!-- 색은 ApplyStatus 가 스타일로 갈아 끼운다 (App.xaml 의 StatusBarText / StatusBarErrorText) -->
                 <TextBlock
                     x:Name="StatusText"
                     Grid.Column="0"
-                    VerticalAlignment="Center"
-                    TextTrimming="CharacterEllipsis"
-                    Style="{ThemeResource CaptionTextBlockStyle}" />
+                    Style="{StaticResource StatusBarText}" />
 
                 <muxc:ProgressBar
                     x:Name="StatusProgress"

@@ -1,4 +1,4 @@
-using Daiso.App.Services;
+﻿using Daiso.App.Services;
 using Daiso.App.ViewModels;
 using Daiso.App.Views;
 using Daiso.App.Strings;
@@ -275,9 +275,10 @@ public sealed partial class ShellWindow : Window
         StatusBar.Visibility = hasStatus ? Visibility.Visible : Visibility.Collapsed;
 
         StatusText.Text = hasNotice ? notice : _viewModel.StatusMessage;
-        StatusText.Foreground = hasNotice
-            ? (Brush)Application.Current.Resources["SystemFillColorCriticalBrush"]
-            : (Brush)Application.Current.Resources["TextFillColorPrimaryBrush"];
+
+        // 색이 아니라 스타일을 갈아 끼운다. 브러시를 여기서 꺼내면 앱 테마로 풀려
+        // 다크 모드인데 글씨가 검게 나왔다 (2026-09-11 사람의 지적, App.xaml 의 StatusBarText 주석)
+        StatusText.Style = (Style)Application.Current.Resources[hasNotice ? "StatusBarErrorText" : "StatusBarText"];
         StatusProgress.Visibility = _viewModel.IsIndexing ? Visibility.Visible : Visibility.Collapsed;
         StatusProgress.IsIndeterminate = _viewModel.StatusPercent <= 0;
         StatusProgress.Value = _viewModel.StatusPercent;

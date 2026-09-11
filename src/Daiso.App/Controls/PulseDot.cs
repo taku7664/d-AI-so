@@ -1,4 +1,4 @@
-using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
@@ -33,9 +33,8 @@ public sealed class PulseDot : Grid
         {
             Width = 8,
             Height = 8,
-            Fill = (Brush)Application.Current.Resources["PulseDotBrush"],
-            Stroke = (Brush)Application.Current.Resources["CardBackgroundFillColorDefaultBrush"],
-            StrokeThickness = 1.5,
+            // 테두리가 카드 바탕색이라 테마를 탄다. 스타일로 입혀야 다크에서 따라온다
+            Style = (Style)Application.Current.Resources["PulseDotFace"],
         };
 
         Children.Add(ring);

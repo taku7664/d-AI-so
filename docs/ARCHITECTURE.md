@@ -861,6 +861,7 @@ MUST 넷을 어긴 페이지를 만들면 테스트가 빨개진다. 규칙을 �
 **테마** — 설정의 테마는 고른 즉시 적용한다 (`SettingsViewModel.ThemeChanged` → `ShellWindow.ApplyTheme`).
 - `System`: `MicaBackdrop` + 배경 없음. OS 테마를 따른다
 - `Light` / `Dark`: Mica는 OS 테마 색으로 남아 글자와 어긋나므로 **끄고** 그 테마의 단색으로 칠한다
+- **테마 색은 코드가 꺼내지 않는다.** 테마는 `RootGrid.RequestedTheme` 에 입히므로 `Application.Current.Resources["…Brush"]` 로 꺼낸 브러시는 **앱 테마**로 풀리고, 한 번 꺼내면 굳어 테마를 바꿔도 따라오지 않는다 — 다크 모드에서 상태 줄 글씨가 검게 나왔다 (2026-09-11). 색이 아니라 **스타일**을 건넨다: 스타일 안의 `ThemeResource` 는 그 요소의 테마로 풀리고 테마가 바뀌면 다시 풀린다(`App.xaml` 의 `StatusBarText`·`SplitterLine`·`PulseDotFace`·`MutedIcon`). `ThemeBrushTests` 가 되돌아오는 것을 막는다. 테마를 타지 않는 자체 색(`AuthOkBrush` 등)만 예외다
 - 제목줄은 `ExtendsContentIntoTitleBar` + WinUI `TitleBar` 컨트롤(`SetTitleBar(AppTitleBar)`)로 앱이 직접 그린다. Windows 10은 제목줄 색 API를 지원하지 않아 시스템이 그리면 밝은 띠가 남는다. `TitleBar`가 끌기 영역과 버튼의 입력 통과 영역을 스스로 맞추므로 `InputNonClientPointerSource`를 손으로 만지지 않는다. `NavigationView`의 뒤로·햄버거는 숨긴다(중복)
 ---
 
