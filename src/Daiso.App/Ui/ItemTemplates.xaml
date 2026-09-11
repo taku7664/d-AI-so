@@ -439,13 +439,20 @@
                         <Flyout Placement="BottomEdgeAlignedLeft">
                             <Flyout.FlyoutPresenterStyle>
                                 <Style TargetType="FlyoutPresenter">
-                                    <Setter Property="MaxWidth" Value="480" />
                                     <Setter Property="Padding" Value="16" />
                                 </Style>
                             </Flyout.FlyoutPresenterStyle>
-                            <!-- 줄이 많으면 팝오버 안에서 스크롤한다. 세션 화면의 부가 정보 줄과 같은 것이다 -->
+                            <!--
+                                줄이 많으면 팝오버 안에서 스크롤한다. 세션 화면의 부가 정보 줄과 같은 것이다.
+                                <b>폭은 팝오버가 아니라 이 목록이 정한다.</b> 껍데기(FlyoutPresenter)에만 MaxWidth 를 주면
+                                안쪽 ScrollViewer 가 내용에 무한 폭을 내주어 TextBlock 이 줄바꿈을 포기하고,
+                                긴 줄이 껍데기 끝에서 글자째로 잘려 나갔다 — `HorizontalScrollMode="Disabled"` 로도 막히지 않았다
+                                (Antigravity 의 `로그인 보관: …` 줄. 2026-09-11 화면에서 확인).
+                                목록이 폭을 들고 있으면 껍데기는 그 폭 + 여백으로 따라 커진다
+                            -->
                             <ScrollViewer MaxHeight="320" VerticalScrollBarVisibility="Auto">
                                 <ItemsControl
+                                    MaxWidth="448"
                                     ItemsSource="{x:Bind Extras}"
                                     ItemTemplate="{StaticResource ExtraLineTemplate}" />
                             </ScrollViewer>
