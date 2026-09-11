@@ -356,7 +356,7 @@ public sealed record ExportOptions(bool IncludeToolCalls = true, bool IncludeSys
 **인증**
 - `%USERPROFILE%\.claude\.credentials.json` → `claudeAiOauth`
   - `refreshTokenExpiresAt` (ms epoch) → **`SessionExpiresAt`**. `expiresAt`은 자동 갱신되는 단기 액세스 토큰이라 상태 판정에 쓰지 않는다 (확인: 액세스 토큰 만료 후에도 CLI 정상 동작)
-  - `subscriptionType`, `rateLimitTier`, `scopes` → Extras
+  - `subscriptionType`, `rateLimitTier`, `scopes` → Extras (`구독:`·`사용량 등급:`·`권한:` — 필드 이름을 그대로 옮기지 않는다)
   - `mcpOAuth` 키 이름(`|` 앞부분)만 → Extras
 - `%USERPROFILE%\.claude.json` → `oauthAccount.{emailAddress, displayName, organizationName}` → `Email`, `AccountLabel`. 파일이나 키가 없으면 null
 
@@ -383,6 +383,13 @@ public sealed record ExportOptions(bool IncludeToolCalls = true, bool IncludeSys
 - `%USERPROFILE%\.codex\auth.json` → `auth_mode`, `last_refresh`, `OPENAI_API_KEY`(null 여부만), `tokens.{id_token, access_token, refresh_token, account_id}`
 - **`SessionExpiresAt`**: `access_token`의 JWT payload `exp` (서명 검증 없이 base64 디코드만, 값은 exp 숫자만 사용). 디코드 실패 시 null → LoggedIn
 - API 키 모드(`auth_mode == "apikey"`)는 만료 없음 → null
+- 계정: `id_token` payload 의 `email` 과 요금제(`https://api.openai.com/auth`.`chatgpt_plan_type`, 없으면 최상위 `chatgpt_plan_type`) → `Email`, `AccountLabel`.
+  `JwtReader` 가 payload 에서 **만료·이메일·요금제 세 조각만** 꺼내고 원문은 버린다 (§7.1)
+- **인증 방식을 계정 이름 자리에 넣지 않는다.** 전에는 `auth_mode`(`chatgpt`)를 `AccountLabel` 로 넘겨 계정처럼 보였고,
+  같은 값이 부가 정보에 한 번 더 나왔다 (2026-09-11 사람의 지적). 읽을 것이 없으면 비운다 — §4.5 의 이메일 규칙과 같다
+- 부가 정보는 **JSON 필드 이름을 옮기지 않는다.** `인증 방식: ChatGPT 로그인`·`요금제: Plus`·`마지막 갱신: …`·`API 키: 설정됨` 처럼
+  사람이 읽는 문구 키로 바꾼다(값→키 매핑은 Provider, 문구는 resw). 모르는 `auth_mode` 는 값을 그대로 보여 준다.
+  `tokens.account_id` 는 사람이 쓸 데가 없어 보여 주지 않는다
 
 **세션**
 - 루트: `%USERPROFILE%\.codex\sessions\YYYY\MM\DD\rollout-*.jsonl` + `%USERPROFILE%\.codex\archived_sessions\**\*.jsonl` (`IsArchived=true`)

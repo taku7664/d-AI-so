@@ -24,7 +24,9 @@ public sealed class CodexAuthTests
 
         status.State.Should().Be(AuthState.LoggedIn);
         status.SessionExpiresAt.Should().Be(Fixtures.Expiry);
-        status.AccountLabel.Should().Be("chatgpt");
+        // 계정 이름 자리에는 계정이 들어간다. 인증 방식(`chatgpt`)이 아니다
+        status.AccountLabel.Should().Be("plus");
+        status.Email.Should().Be("fixture@example.com");
     }
 
     [Fact]
@@ -69,8 +71,37 @@ public sealed class CodexAuthTests
     {
         var status = CodexAuthReader.Read(AuthJson, Fixtures.Now);
 
-        status.Extras.Should().Contain(new AuthNote("AuthNote_AuthMode", "chatgpt"));
+        // 파일에 적힌 `chatgpt` 를 그대로 옮기지 않고 사람이 읽는 문구 키로 바꾼다
+        status.Extras.Should().Contain(new AuthNote("AuthNote_AuthChatGpt"));
+        status.Extras.Should().Contain(new AuthNote("AuthNote_Plan", "plus"));
         status.Extras.Should().Contain(note => note.Key == "AuthNote_ApiKeyMissing");
+        status.Extras.Should().NotContain(note => note.Key == "AuthNote_AccountId",
+            because: "account_id 는 사람이 쓸 데가 없다");
+    }
+
+    [Fact]
+    public void An_unknown_auth_mode_is_shown_as_written()
+    {
+        const string Json = """
+            {"auth_mode": "something-new", "tokens": {}}
+            """;
+
+        CodexAuthReader.Read(Json, Fixtures.Now).Extras
+            .Should().Contain(new AuthNote("AuthNote_AuthMode", "something-new"),
+                because: "모르는 방식이면 값을 그대로 보여 준다 — 침묵하면 무엇으로 로그인했는지 알 수 없다");
+    }
+
+    [Fact]
+    public void An_id_token_that_says_nothing_leaves_the_account_empty()
+    {
+        const string Json = """
+            {"auth_mode": "chatgpt", "tokens": {"id_token": "not-a-jwt"}}
+            """;
+
+        var status = CodexAuthReader.Read(Json, Fixtures.Now);
+
+        status.AccountLabel.Should().BeNull(because: "없는 값을 다른 값으로 메우지 않는다");
+        status.Email.Should().BeNull();
     }
 
     [Theory]

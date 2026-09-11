@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Daiso.App.Services;
@@ -580,9 +581,7 @@ public sealed partial class ToolCardViewModel : ObservableObject
         // Provider 는 문구 키만 준다. 사람이 읽는 말로 바꾸는 것은 여기 몫이다 (ARCHITECTURE §6.1)
         foreach (var note in status.Extras)
         {
-            Extras.Add(note.Argument is { } argument
-                ? UiStrings.Format(note.Key, argument)
-                : UiStrings.Get(note.Key));
+            Extras.Add(Line(note));
         }
 
         OnPropertyChanged(nameof(StateBrush));
@@ -592,5 +591,34 @@ public sealed partial class ToolCardViewModel : ObservableObject
         OnPropertyChanged(nameof(NeedsLogin));
         OnPropertyChanged(nameof(HasExtras));
         OnPropertyChanged(nameof(LoginLabel));
+    }
+
+    /// <summary>시각을 담고 있어 꼴을 다시 잡아야 하는 부가 정보.</summary>
+    private static readonly HashSet<string> TimestampNotes = new(StringComparer.Ordinal)
+    {
+        "AuthNote_LastRefresh",
+    };
+
+    /// <summary>
+    /// 부가 정보 한 줄. 시각은 파일에 적힌 ISO 문자열을 그대로 두지 않고 지역 시간의 읽는 꼴로 바꾼다.
+    /// <para>
+    /// 값이 날짜처럼 보이는지로 판별하지 않고 <b>키로</b> 가른다 — `요금제: 5` 같은 값도
+    /// 날짜로 읽히기 때문이다 (`5` 를 5월로 본다).
+    /// </para>
+    /// </summary>
+    private static string Line(AuthNote note)
+    {
+        if (note.Argument is not { } argument)
+        {
+            return UiStrings.Get(note.Key);
+        }
+
+        if (TimestampNotes.Contains(note.Key)
+            && DateTimeOffset.TryParse(argument, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var at))
+        {
+            return UiStrings.Format(note.Key, at.ToLocalTime());
+        }
+
+        return UiStrings.Format(note.Key, argument);
     }
 }
