@@ -177,7 +177,7 @@
                     <Rectangle Style="{StaticResource ToolbarSeparator}" />
 
                     <Button x:Name="RoomPromptButton" Style="{StaticResource ToolbarIconButton}" AutomationProperties.AutomationId="RoomPromptButton" AutomationProperties.Name="{loc:Str Key=Room_ApplyPrompt}" ToolTipService.ToolTip="{loc:Str Key=Room_ApplyPromptHint}">
-                        <FontIcon Glyph="&#xE8BD;" FontSize="{StaticResource BodyFontSize}" />
+                        <FontIcon Glyph="&#xE8A5;" FontSize="{StaticResource BodyFontSize}" />
                         <Button.Flyout>
                             <MenuFlyout x:Name="RoomPromptFlyout" Opening="OnRoomPromptFlyoutOpening" Placement="BottomEdgeAlignedLeft" />
                         </Button.Flyout>

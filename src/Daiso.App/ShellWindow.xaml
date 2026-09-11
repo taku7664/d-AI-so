@@ -126,7 +126,7 @@
                 </muxc:NavigationViewItem>
                 <muxc:NavigationViewItem Content="{loc:Str Key=Nav_Sessions}" Tag="Sessions" AutomationProperties.AutomationId="NavSessions">
                     <muxc:NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE8A5;" />
+                        <FontIcon Glyph="&#xE8BD;" />
                     </muxc:NavigationViewItem.Icon>
                 </muxc:NavigationViewItem>
                 <muxc:NavigationViewItem Content="{loc:Str Key=Nav_RuleMaker}" Tag="RuleMaker" AutomationProperties.AutomationId="NavRuleMaker">
@@ -136,7 +136,7 @@
                 </muxc:NavigationViewItem>
                 <muxc:NavigationViewItem Content="{loc:Str Key=Nav_Prompts}" Tag="Prompts" AutomationProperties.AutomationId="NavPrompts">
                     <muxc:NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE8BD;" />
+                        <FontIcon Glyph="&#xE8A5;" />
                     </muxc:NavigationViewItem.Icon>
                 </muxc:NavigationViewItem>
                 <muxc:NavigationViewItem Content="{loc:Str Key=Nav_Settings}" Tag="Settings" AutomationProperties.AutomationId="NavSettings">
