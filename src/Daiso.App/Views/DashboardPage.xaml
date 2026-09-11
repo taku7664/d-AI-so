@@ -41,20 +41,24 @@
                 <TextBlock Text="{loc:Str Key=Dashboard_ToolStatus}" Style="{StaticResource SectionTitleText}" />
 
                 <!--
-                    도구 카드: 도구 수만큼. 넓으면 한 줄에 셋, 좁으면 줄을 바꾼다.
-                    폭은 카드가 정한다(ItemsStretch=None). Fill 이던 때는 셋이 창 폭(최대 1280)을 나눠 가져
-                    카드 하나가 400 을 넘었다 — 안에 든 것은 아이콘·이름·계정 몇 줄뿐이라 가로가 남아돌았다
-                    (2026-09-11 사람의 요청으로 3분의 2로). 줄 바꿈은 그대로 UniformGridLayout 이 한다
+                    도구 카드: 도구 수만큼. <b>한 줄에 두 장</b>이고 남은 폭을 둘이 나눠 갖는다
+                    (2026-09-11 사람의 요청). 셋씩 놓던 때는 한 장이 400 을 넘어 가로가 남아돌았고,
+                    폭을 카드에 맡겼을 때는(ItemsStretch=None) 오른쪽에 빈 자리가 크게 남았다.
+
+                    `MinItemWidth` 는 카드 폭이 아니라 <b>몇 줄로 나눌지 정하는 하한</b>이다(Fill 이므로).
+                    360 인 이유: 창 하한 1024 에서 좌측 메뉴 210 과 페이지 여백 48 을 빼면 본문이 766 이고,
+                    두 장이 들어가려면 하한이 그 절반(383)보다 작아야 한다. 더 좁아지면 한 줄에 한 장으로 접힌다.
+                    폭 상한은 Reading(1280) 이라 넓은 창에서 한 장이 약 608 이 된다
                 -->
                 <ItemsRepeater ItemsSource="{x:Bind ViewModel.VisibleTools}"
                 ItemTemplate="{StaticResource ToolCardTemplate}">
                     <ItemsRepeater.Layout>
                         <UniformGridLayout
-                            MinItemWidth="280"
-                            MaximumRowsOrColumns="3"
+                            MinItemWidth="360"
+                            MaximumRowsOrColumns="2"
                             MinRowSpacing="{StaticResource GapXLarge}"
                             MinColumnSpacing="{StaticResource GapXLarge}"
-                            ItemsStretch="None" />
+                            ItemsStretch="Fill" />
                     </ItemsRepeater.Layout>
 
                 </ItemsRepeater>
