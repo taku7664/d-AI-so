@@ -51,8 +51,9 @@ public sealed partial class ShellWindow : Window
 
         Navigate("Dashboard");
         WatchSpots();
-        // 뷰모델이 대화상자를 띄우고 화면을 옮길 수 있도록 창의 것을 건넨다 (docs/REVIEW_BACKLOG.md D1)
-        App.Services.GetRequiredService<DialogHost>().Attach(RootGrid.XamlRoot);
+        // 뷰모델이 대화상자를 띄우고 화면을 옮길 수 있도록 창의 것을 건넨다 (docs/REVIEW_BACKLOG.md D1).
+        // XamlRoot 는 값이 아니라 찾는 함수로 준다 — 이 생성자 시점에는 아직 null 이다
+        App.Services.GetRequiredService<DialogHost>().Attach(() => RootGrid.XamlRoot);
         App.Services.GetRequiredService<Navigator>().Attach(NavigateTo);
 
         _viewModel.StartBackgroundRefresh();

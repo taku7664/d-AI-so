@@ -37,18 +37,40 @@ public sealed class DialogHost : IDialogHost
     /// <summary>입력 대화상자의 폭. 제목보다 길어야 헤더가 접히지 않는다.</summary>
     private const double InputWidth = 360;
 
-    private XamlRoot? _root;
+    private Func<XamlRoot?>? _rootSource;
 
     /// <summary>
-    /// 창이 뜬 뒤 셸이 한 번 부른다. 이걸 받기 전에는 대화상자를 띄울 수 없다 —
-    /// 그때는 조용히 아무 일도 하지 않는다(앱을 죽이지 않는다).
+    /// 셸이 한 번 부른다. <b>값이 아니라 찾는 함수</b>를 받는다 —
+    /// 창 생성자 시점에는 <c>XamlRoot</c> 가 아직 null 이고, 창이 활성화된 뒤에야 생기기 때문이다.
+    /// 예전에는 값을 받아 두었는데 그게 null 이라 모든 물음(프로필 저장 이름·삭제 확인·오류 안내)이
+    /// 조용히 버려졌다 (2026-09-11 요약 화면에서 확인). 이제는 물을 때마다 다시 찾는다.
     /// </summary>
-    public void Attach(XamlRoot root) => _root = root;
+    public void Attach(Func<XamlRoot?> rootSource)
+    {
+        ArgumentNullException.ThrowIfNull(rootSource);
+        _rootSource = rootSource;
+    }
+
+    /// <summary>지금 대화상자를 붙일 곳. 창이 아직 안 떴으면 null.</summary>
+    private XamlRoot? Root
+    {
+        get
+        {
+            var root = _rootSource?.Invoke();
+
+            if (root is null)
+            {
+                System.Diagnostics.Debug.WriteLine("DialogHost: XamlRoot 가 없어 대화상자를 띄우지 못했다");
+            }
+
+            return root;
+        }
+    }
 
     /// <inheritdoc />
     public async Task NoticeAsync(string title, string body)
     {
-        if (_root is null)
+        if (Root is null)
         {
             return;
         }
@@ -64,7 +86,7 @@ public sealed class DialogHost : IDialogHost
     /// <inheritdoc />
     public async Task<bool> ConfirmAsync(string title, string body, string confirmText)
     {
-        if (_root is null)
+        if (Root is null)
         {
             return false;
         }
@@ -83,7 +105,7 @@ public sealed class DialogHost : IDialogHost
     /// <inheritdoc />
     public async Task<string?> AskTextAsync(string title, string header, string placeholder, string confirmText)
     {
-        if (_root is null)
+        if (Root is null)
         {
             return null;
         }
@@ -108,7 +130,7 @@ public sealed class DialogHost : IDialogHost
 
     private async Task<ContentDialogResult> Show(ContentDialog dialog)
     {
-        dialog.XamlRoot = _root;
+        dialog.XamlRoot = Root;
 
         try
         {
