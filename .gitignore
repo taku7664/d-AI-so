@@ -34,3 +34,11 @@ artifacts/
 # `프롬프트 → 프로젝트에 넣기` 가 고른 프롬프트를 여기에 쓴다.
 # 정본은 src/Daiso.Core/Resources/Prompts (내장 자원) 이고 여기 있는 것은 그 복사본이다
 docs/prompts/
+
+# 다른 도구용 지시문 파일
+# `연동` 이 만드는 마커 블록 파일이다. 내용은 PROJECT_RULES.daiso 를 읽으라는 한 줄뿐이고,
+# 이 저장소에서는 Codex·Antigravity 로 작업한 기록이 없어(인덱스 확인) 읽는 쪽이 없다.
+# 규칙의 정본은 PROJECT_RULES.daiso 이고 Claude 쪽 연결은 CLAUDE.md 가 들고 있다.
+# 나중에 그 도구로 작업하며 `연동` 을 누르면 파일은 다시 생기고, 추적만 하지 않는다
+AGENTS.md
+GEMINI.md
