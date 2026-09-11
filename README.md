@@ -51,6 +51,12 @@ pwsh tools/run-app.ps1
 설치가 필요 없고, Windows App SDK를 실행 파일에 담았기 때문에(`WindowsAppSDKSelfContained`)
 PC에 깔린 런타임 버전과 상관없이 돕니다. 창은 1024×700까지만 작아집니다.
 
+배포용 zip을 만들 때는 `dotnet build -c Release` 산출물 폴더를 그대로 압축하세요.
+`dotnet publish`는 쓰지 마세요. unpackaged WinUI 앱에서는 컴파일된 XAML(`App.xbf`, `Views/`, `Ui/`)과
+`d-AI-so.pri`를 빠뜨려서, 실행하면 시작하자마자 죽습니다(2026-09-11 확인).
+
+판 번호는 `Directory.Build.props`의 `Version` 하나로 관리합니다. 설정 화면이 그 값을 그대로 보여줍니다.
+
 ## 도구 추가
 
 앱이 아는 도구는 세 개로 고정된 게 아닙니다.
@@ -249,6 +255,7 @@ dotnet run --project tools/Daiso.Cli -- auth
 | [docs/PLUGIN_PLAN.md](docs/PLUGIN_PLAN.md) | 도구 추가 기능의 설계와 판단 기록 |
 | [docs/UX_SCENARIOS.md](docs/UX_SCENARIOS.md) | 화면 시나리오와 검증 기록 |
 | [docs/REVIEW_BACKLOG.md](docs/REVIEW_BACKLOG.md) | 코드 검토 지적과 처리 결과 |
+| [CHANGELOG.md](CHANGELOG.md) | 판별 변경 기록 |
 
 ## 라이선스
 
