@@ -232,4 +232,13 @@ public sealed partial class ToolLaunchViewModel : ObservableObject
 
         return space < 0 ? (command, string.Empty) : (command[..space], command[(space + 1)..]);
     }
+
+    /// <summary>
+    /// 설치 명령의 실행 파일이 PC 에 없을 때 열어 줄 내려받기 페이지. 아는 것은 <c>npm</c>(Node.js) 하나다.
+    /// 모르는 실행 파일이면 null — 그때는 명령을 그대로 돌리고 셸이 말하게 둔다.
+    /// </summary>
+    public static string? PrerequisitePageFor(string executable) =>
+        string.Equals(executable, "npm", StringComparison.OrdinalIgnoreCase)
+            ? "https://nodejs.org/ko/download"
+            : null;
 }

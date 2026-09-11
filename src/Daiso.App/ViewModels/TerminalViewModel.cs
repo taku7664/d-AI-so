@@ -836,6 +836,18 @@ public sealed partial class TerminalViewModel : ObservableObject
             else
             {
                 var (executable, arguments) = tool.InstallParts();
+
+                // 설치 명령의 실행 파일(npm)이 없는 PC 다. 그대로 돌리면 새 터미널에 "npm 을 찾을 수 없다"만 뜨고 끝나
+                // 고장으로 읽힌다. 앱이 Node.js 를 대신 깔지는 않는다(docs/RELEASE.md) — 내려받기 페이지를 열고 말해 준다.
+                // 지켜보기는 하지 않는다. Node 를 깐 뒤에도 이미 뜬 앱의 PATH 사본에는 npm 이 없어 앱을 다시 켜야 한다
+                if (ToolLaunchViewModel.PrerequisitePageFor(executable) is { } prerequisite
+                    && !Daiso.Providers.Common.ExecutableLocator.ExistsOnPath(executable))
+                {
+                    _uriOpener.Open(prerequisite);
+                    LastCommand = UiStrings.Format("Terminal_InstallNeedsPrerequisite", executable, tool.Label);
+                    return;
+                }
+
                 var directory = WorkingDirectory is { Length: > 0 } chosen && Directory.Exists(chosen)
                     ? chosen
                     : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
