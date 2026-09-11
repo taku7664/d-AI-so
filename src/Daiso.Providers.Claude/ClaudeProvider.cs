@@ -50,6 +50,10 @@ public sealed class ClaudeProvider : IProvider, IUsageReader
     public string ExecutableName => "claude";
 
     /// <inheritdoc />
+    /// <remarks>PowerShell 이 <c>.ps1</c> 을 고르지 않게 <c>.cmd</c> 절대 경로를 준다 (<see cref="ExecutableLocator.NpmLaunchTarget"/>).</remarks>
+    public string LaunchTarget => ExecutableLocator.NpmLaunchTarget(ExecutableName);
+
+    /// <inheritdoc />
     public string InstallCommand => "npm install -g @anthropic-ai/claude-code";
 
     /// <inheritdoc />

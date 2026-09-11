@@ -628,7 +628,8 @@ RefreshAsync
 ```
 - 미리보기 줄도 설치 전이면 설치 명령을 그대로 보여준다. 누르면 무엇이 실행되는지 숨기지 않는다
 `WindowsTerminalLauncher` 규칙:
-- `claude`/`codex`는 npm이 설치한 `.cmd` 셸이다. **항상 셸로 감싼다**: `pwsh -NoExit -Command "& claude <args>"` (pwsh 없으면 `powershell`, 없으면 `cmd /k claude <args>`). 인자 안 큰따옴표(첫 메시지)는 PowerShell 경로에서 `\"`로 이스케이프하고 cmd는 그대로 둔다(테스트 있음)
+- `claude`/`codex`는 npm이 설치한 `.cmd` 셸이다. **항상 셸로 감싼다**: `pwsh -NoExit -Command "& <claude.cmd 절대 경로> <args>"` (pwsh 없으면 `powershell`, 없으면 `cmd /k …`). 인자 안 큰따옴표(첫 메시지)는 PowerShell 경로에서 `\"`로 이스케이프하고 cmd는 그대로 둔다(테스트 있음)
+- **이름만 넘기지 않는다.** npm 은 `claude`·`claude.cmd`·`claude.ps1` 을 나란히 깔고, PowerShell 은 이름만 받으면 `.ps1` 을 고른다. Windows 기본 실행 정책(Restricted)은 서명 없는 스크립트를 거부하므로 **새 PC 에서는 터미널 방·새 창 열기가 전부 "claude.ps1 파일을 로드할 수 없습니다" 로 죽는다**(2026-09-11 다른 PC 에서 재현). `.cmd` 는 정책과 무관하게 돈다. 그래서 Claude·Codex 의 `IProvider.LaunchTarget` 은 `ExecutableLocator.NpmLaunchTarget` 으로 PATH 의 `.cmd` 절대 경로를 준다(`ExecutableLocatorTests`). 사용자 PC 의 실행 정책을 앱이 바꾸지 않는다 — 그것은 시스템 설정이다. 챗봇 방은 이미 `cmd.exe /c` 로 띄워 영향이 없었다
 - `wt.exe`가 PATH에 있으면 `wt -d <dir> <위 셸 명령>`, 없으면 셸을 직접 새 창으로 실행. **wt 없음이 기본 경로**이며 테스트 대상 (Windows 10 Home 기본 상태에 wt 없음 확인)
 - Codex는 데스크톱 앱이 설치한 네이티브 exe를 쓰지 않는다. PATH의 npm `codex.cmd`만 사용
 
