@@ -42,3 +42,6 @@ docs/prompts/
 # 나중에 그 도구로 작업하며 `연동` 을 누르면 파일은 다시 생기고, 추적만 하지 않는다
 AGENTS.md
 GEMINI.md
+
+# 설치 프로그램 산출물
+artifacts/installer/
