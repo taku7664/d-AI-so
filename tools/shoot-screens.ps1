@@ -21,6 +21,9 @@ using System;
 using System.Runtime.InteropServices;
 public class ShotWin {
     [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
+    // 보이는 테두리만. GetWindowRect 는 Windows 10 이 창 밖에 숨겨 두는 리사이즈 여백(좌우·아래 7~8px)까지 주므로
+    // 그대로 찍으면 그림 가장자리에 바탕화면이 비친다
+    [DllImport("dwmapi.dll")] public static extern int DwmGetWindowAttribute(IntPtr h, int attr, out RECT r, int size);
     [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
     [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h, int cmd);
     [DllImport("user32.dll")] public static extern bool SetWindowPos(IntPtr h, IntPtr after, int x, int y, int cx, int cy, uint flags);
@@ -47,9 +50,20 @@ function Send-Ctrl([int]$digit) {
     [ShotWin]::keybd_event(0x11, 0, 2, [IntPtr]::Zero)
 }
 
-function Save-Window([string]$path) {
+# DWMWA_EXTENDED_FRAME_BOUNDS = 9
+function Get-VisibleRect {
     $rect = New-Object ShotWin+RECT
-    [ShotWin]::GetWindowRect($handle, [ref]$rect) | Out-Null
+    $size = [System.Runtime.InteropServices.Marshal]::SizeOf($rect)
+
+    if ([ShotWin]::DwmGetWindowAttribute($handle, 9, [ref]$rect, $size) -ne 0) {
+        [ShotWin]::GetWindowRect($handle, [ref]$rect) | Out-Null
+    }
+
+    return $rect
+}
+
+function Save-Window([string]$path) {
+    $rect = Get-VisibleRect
     $w = $rect.Right - $rect.Left
     $h = $rect.Bottom - $rect.Top
 
@@ -72,7 +86,20 @@ function Save-Window([string]$path) {
 Start-Sleep -Milliseconds 700
 
 foreach ($width in $Widths) {
+    # 보이는 폭이 $width 가 되게 맞춘다. SetWindowPos 는 숨은 여백까지 포함한 크기를 받으므로 그 차이만큼 더 준다
     [ShotWin]::SetWindowPos($handle, [IntPtr]::Zero, 40, 40, $width, $Height, 0x0004) | Out-Null
+    Start-Sleep -Milliseconds 500
+
+    $outer = New-Object ShotWin+RECT
+    [ShotWin]::GetWindowRect($handle, [ref]$outer) | Out-Null
+    $inner = Get-VisibleRect
+    $padX = ($outer.Right - $outer.Left) - ($inner.Right - $inner.Left)
+    $padY = ($outer.Bottom - $outer.Top) - ($inner.Bottom - $inner.Top)
+
+    if ($padX -ne 0 -or $padY -ne 0) {
+        [ShotWin]::SetWindowPos($handle, [IntPtr]::Zero, 40, 40, $width + $padX, $Height + $padY, 0x0004) | Out-Null
+    }
+
     Start-Sleep -Milliseconds 800
 
     for ($i = 1; $i -le $pages.Count; $i++) {
