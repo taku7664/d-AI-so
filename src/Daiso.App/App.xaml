@@ -22,8 +22,6 @@
                 제목줄을 36 으로 낮춰 그 셋이 제목줄 안에 딱 맞게 한다.
                 기본값은 각각 32/48/40 이고, 이 창은 LeftHeader 가 있어 48 로 그려지고 있었다.
             -->
-            <x:Double x:Key="TitleBarCompactHeight">36</x:Double>
-            <x:Double x:Key="TitleBarExpandedHeight">36</x:Double>
 
             <!--
                 ── 토큰 ────────────────────────────────────────────────────────────

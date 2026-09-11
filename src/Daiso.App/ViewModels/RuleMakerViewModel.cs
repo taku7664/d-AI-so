@@ -84,8 +84,6 @@ public sealed partial class RuleMakerViewModel : ObservableObject
         "d-AI-so",
         "presets");
 
-    /// <summary>우선순위 콤보 항목.</summary>
-    public IReadOnlyList<string> Priorities { get; } = ["MUST", "SHOULD", "MAY"];
 
     /// <summary>라이브러리에 저장된 프리셋 파일.</summary>
     public ObservableCollection<string> LibraryPresets { get; } = [];
@@ -454,11 +452,6 @@ public sealed partial class RuleMakerViewModel : ObservableObject
         Refresh();
     }
 
-    [RelayCommand]
-    public void MoveRuleUp(RuleEditViewModel? rule) => Move(Rules, rule, -1);
-
-    [RelayCommand]
-    public void MoveRuleDown(RuleEditViewModel? rule) => Move(Rules, rule, +1);
 
     /// <summary>미리보기를 다시 만든다. 검증에 걸리면 사유를 보여준다.</summary>
     public void Refresh()

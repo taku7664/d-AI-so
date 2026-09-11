@@ -864,7 +864,6 @@ public sealed partial class SessionRowViewModel : ObservableObject
 
     public string ToolName => Session.Tool.ToString();
 
-    public string StartedText => $"{Session.StartedAt.ToLocalTime():yyyy-MM-dd HH:mm}";
 
     public string ModifiedText => $"{Session.ModifiedAt.ToLocalTime():yyyy-MM-dd HH:mm}";
 
@@ -969,8 +968,6 @@ public sealed partial class MessageViewModel : ObservableObject
 
     public string TimeText => $"{Message.At.ToLocalTime():HH:mm}";
 
-    /// <summary>어시스턴트 말인가. 역할 알약 색을 다르게 해 한눈에 구분한다.</summary>
-    public bool IsAssistant => Message.Role == MessageRole.Assistant;
 
     /// <summary>사람이 한 말에만 왼쪽 강조 바를 세운다. 눈으로 턴을 가르는 표시다.</summary>
     public Microsoft.UI.Xaml.Visibility UserBarVisibility => Message.Role == MessageRole.User

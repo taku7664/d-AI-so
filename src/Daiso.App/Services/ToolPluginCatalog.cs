@@ -39,10 +39,6 @@ public sealed class ToolPluginCatalog
     /// <summary>앱이 쓸 수 있는 플러그인 도구.</summary>
     public IReadOnlyList<IProvider> Tools => [.. _loads.Where(load => load.Ok).Select(load => load.Provider!)];
 
-    /// <summary>읽지 못한 것.</summary>
-    public IReadOnlyList<ToolPluginLoad> Failures => [.. _loads.Where(load => !load.Ok)];
-
-    public bool HasFailures => _loads.Any(load => !load.Ok);
 
     /// <summary>플러그인을 놓은 폴더. 설정 화면이 "여기를 봅니다"로 보여 준다.</summary>
     public string Directory => ToolPluginLoader.DefaultDirectory;

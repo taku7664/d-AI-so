@@ -104,7 +104,6 @@ public sealed partial class ChatBubbleViewModel : ObservableObject
 
     public Visibility ToolVisibility => Kind == ChatBubbleKind.Tool ? Visibility.Visible : Visibility.Collapsed;
 
-    public Visibility PermissionVisibility => Kind == ChatBubbleKind.Permission ? Visibility.Visible : Visibility.Collapsed;
 
     public Visibility PendingVisibility => Kind == ChatBubbleKind.Permission && !Decided ? Visibility.Visible : Visibility.Collapsed;
 

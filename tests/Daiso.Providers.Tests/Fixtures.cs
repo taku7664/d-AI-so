@@ -22,8 +22,6 @@ internal static class Fixtures
 
     internal static string GeminiPath(string name) => Path.Combine(Root, "gemini", name);
 
-    internal static string ReadGemini(string name) => File.ReadAllText(GeminiPath(name), Encoding.UTF8);
-
     private static string Root => Path.Combine(AppContext.BaseDirectory, "fixtures");
 
     /// <summary>테스트마다 지워지는 임시 폴더.</summary>

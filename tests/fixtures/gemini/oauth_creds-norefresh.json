@@ -1,6 +1,0 @@
-{
-  "access_token": "FAKE-ACCESS-TOKEN-NOT-REAL",
-  "scope": "https://www.googleapis.com/auth/cloud-platform",
-  "token_type": "Bearer",
-  "expiry_date": 1764547200000
-}

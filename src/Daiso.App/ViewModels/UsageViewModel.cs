@@ -323,5 +323,4 @@ public sealed class UsageRowViewModel
     public string CostText =>
         Cost > 0 ? UiStrings.Format("Usage_CostEstimate", Cost) : UiStrings.Get("Usage_NoPrice");
 
-    public string ShortLabel => Label.Length <= 60 ? Label : "…" + Label[^60..];
 }
