@@ -176,11 +176,20 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
     }
 
     /// <inheritdoc />
+    /// <remarks>
+    /// <b>배경 스레드에서 돈다.</b> SQLite 의 읽기는 동기라, 예전처럼 <c>Task.FromResult</c> 로 감싸면
+    /// 질의·행 만들기가 전부 부르는 쪽(=화면) 스레드에서 돌아 그동안 창이 멈춘다.
+    /// </remarks>
     public Task<IReadOnlyList<SessionInfo>> ListAsync(SessionFilter filter, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(filter);
         ct.ThrowIfCancellationRequested();
 
+        return Task.Run(() => List(filter, ct), ct);
+    }
+
+    private IReadOnlyList<SessionInfo> List(SessionFilter filter, CancellationToken ct)
+    {
         using var connection = OpenRead();
         using var command = connection.CreateCommand();
         var where = new List<string>();
@@ -235,28 +244,37 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
 
         while (reader.Read())
         {
+            ct.ThrowIfCancellationRequested();
             sessions.Add(ReadSession(reader));
         }
 
-        return Task.FromResult<IReadOnlyList<SessionInfo>>(sessions);
+        return sessions;
     }
 
     /// <inheritdoc />
+    /// <inheritdoc />
+    /// <remarks>배경 스레드에서 돈다 (<see cref="ListAsync"/> 와 같은 이유).</remarks>
     public Task<IReadOnlyList<SearchHit>> SearchAsync(string query, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
         var trimmed = query?.Trim() ?? string.Empty;
+
         if (trimmed.Length == 0)
         {
             return Task.FromResult<IReadOnlyList<SearchHit>>([]);
         }
 
-        using var connection = OpenRead();
+        return Task.Run<IReadOnlyList<SearchHit>>(
+            () =>
+            {
+                using var connection = OpenRead();
 
-        return Task.FromResult(trimmed.Length >= TrigramMinimumLength
-            ? SearchWithFts(connection, trimmed)
-            : SearchWithLike(connection, trimmed));
+                return trimmed.Length >= TrigramMinimumLength
+                    ? SearchWithFts(connection, trimmed)
+                    : SearchWithLike(connection, trimmed);
+            },
+            ct);
     }
 
     /// <inheritdoc />
@@ -264,10 +282,17 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
         GetUsageAsync(from, to, tool: null, ct);
 
     /// <inheritdoc />
+    /// <inheritdoc />
+    /// <remarks>배경 스레드에서 돈다 (<see cref="ListAsync"/> 와 같은 이유).</remarks>
     public Task<UsageSummary> GetUsageAsync(DateOnly from, DateOnly to, ToolKind? tool, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
+        return Task.Run(() => Usage(from, to, tool, ct), ct);
+    }
+
+    private UsageSummary Usage(DateOnly from, DateOnly to, ToolKind? tool, CancellationToken ct)
+    {
         using var connection = OpenRead();
         using var command = connection.CreateCommand();
         command.CommandText = tool is null
@@ -297,6 +322,8 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
 
         while (reader.Read())
         {
+            ct.ThrowIfCancellationRequested();
+
             var date = DateOnly.ParseExact(reader.GetString(0), "yyyy-MM-dd", CultureInfo.InvariantCulture);
             var project = reader.IsDBNull(1) ? SessionLabels.Unknown : reader.GetString(1);
             var model = reader.IsDBNull(2) ? SessionLabels.Unknown : reader.GetString(2);
@@ -313,7 +340,7 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
             .Select(pair => new UsageDay(pair.Key, pair.Value))
             .ToList();
 
-        return Task.FromResult(new UsageSummary(orderedDays, byProject, byModel));
+        return new UsageSummary(orderedDays, byProject, byModel);
     }
 
     // ── 인덱싱 ───────────────────────────────────────────────────────────

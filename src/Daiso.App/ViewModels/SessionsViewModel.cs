@@ -286,11 +286,20 @@ public sealed partial class SessionsViewModel : ObservableObject
             return;
         }
 
+        var generation = ++searchGeneration;
+
         IsBusy = true;
 
         try
         {
             var hits = await _indexService.Index.SearchAsync(query, ct).ConfigureAwait(true);
+
+            // 검색이 진짜로 배경에서 돌기 시작했으므로(2026-09-11) 늦게 온 답이 새 답을 덮을 수 있다.
+            // 목록 읽기와 같은 규칙: 마지막 요청만 화면에 쓴다
+            if (generation != searchGeneration)
+            {
+                return;
+            }
 
             foreach (var byProject in hits.GroupBy(hit => hit.Session.ProjectPath ?? UnknownProject, StringComparer.OrdinalIgnoreCase))
             {
@@ -317,10 +326,16 @@ public sealed partial class SessionsViewModel : ObservableObject
         }
         finally
         {
-            IsBusy = false;
-            NotifySearchVisibility();
+            if (generation == searchGeneration)
+            {
+                IsBusy = false;
+                NotifySearchVisibility();
+            }
         }
     }
+
+    /// <summary>검색도 목록과 같이 마지막 요청만 화면에 쓴다.</summary>
+    private int searchGeneration;
 
     /// <summary>검색 결과를 지운다.</summary>
     [RelayCommand]
