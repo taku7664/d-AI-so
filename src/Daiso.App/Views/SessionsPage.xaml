@@ -7,70 +7,70 @@
     xmlns:controls="using:Daiso.App.Controls"
     xmlns:vm="using:Daiso.App.ViewModels">
 
-    <!-- 골격은 PageBody 가 정한다: 검색(명령 줄) → 필터 줄 → 목록·상세(본문). 폭은 Wide (UI_REFACTOR_PLAN §6, §8.2) -->
+    <!--
+        골격은 PageBody 가 정한다: 필터 줄 → 목록·상세(본문). 폭은 Wide (UI_REFACTOR_PLAN §6, §8.2).
+        검색은 명령 줄(맨 위)이 아니라 <b>도구 탭 바로 아래</b>에 둔다 — 탭으로 도구를 좁히고 그 안에서
+        찾는 순서라, 탭보다 위에 있으면 무엇을 뒤지는 검색인지 알 수 없다 (2026-09-11 사람의 지적)
+    -->
     <controls:PageBody Layout="Wide">
         <controls:PageBody.KeyboardAccelerators>
             <KeyboardAccelerator Modifiers="Control" Key="F" Invoked="OnFocusSearchInvoked" />
             <KeyboardAccelerator Key="Escape" Invoked="OnClearSearchInvoked" />
         </controls:PageBody.KeyboardAccelerators>
 
-        <controls:PageBody.Commands>
-        <StackPanel Spacing="{StaticResource GapMedium}">
-
-            <Grid ColumnSpacing="{StaticResource GapLarge}">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
-                <TextBox
-                    x:Name="SearchBox"
-                    Grid.Column="0"
-                    VerticalAlignment="Center"
-                    Text="{x:Bind ViewModel.SearchQuery, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                    PlaceholderText="{loc:Str Key=Sessions_SearchPlaceholder}"
-                    AutomationProperties.AutomationId="SearchBox"
-                    KeyDown="OnSearchKeyDown" />
-
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{StaticResource GapMedium}" VerticalAlignment="Center">
-                <Button
-                    AutomationProperties.AutomationId="SearchButton"
-                    AutomationProperties.Name="{loc:Str Key=Common_Search}"
-                    ToolTipService.ToolTip="{loc:Str Key=Common_SearchTip}"
-                    Style="{ThemeResource AccentButtonStyle}"
-                    Command="{x:Bind ViewModel.SearchCommand}">
-                    <FontIcon Glyph="&#xE721;" FontSize="{StaticResource BodyFontSize}" />
-                </Button>
-                <!-- 지울 것이 없는데 ✕ 가 떠 있으면 무엇을 지우는 단추인지 알 수 없다 -->
-                <Button
-                    AutomationProperties.AutomationId="ClearSearchButton"
-                    AutomationProperties.Name="{loc:Str Key=Sessions_ClearSearch}"
-                    ToolTipService.ToolTip="{loc:Str Key=Sessions_ClearSearchTip}"
-                    Visibility="{x:Bind ViewModel.HasSearchQuery, Mode=OneWay}"
-                    Command="{x:Bind ViewModel.ClearSearchCommand}">
-                    <FontIcon Glyph="&#xE711;" FontSize="{StaticResource BodyFontSize}" />
-                </Button>
-                <!-- 새로고침은 검색과 다른 일이다. 같은 간격으로 붙여 두면 검색 단추 셋처럼 읽힌다 -->
-                <Button
-                    Margin="16,0,0,0"
-                    AutomationProperties.AutomationId="ReloadButton"
-                    AutomationProperties.Name="{loc:Str Key=Sessions_ReloadList}"
-                    ToolTipService.ToolTip="{loc:Str Key=Sessions_ReloadListTip}"
-                    Command="{x:Bind ViewModel.LoadCommand}">
-                    <Button.KeyboardAccelerators>
-                        <KeyboardAccelerator Key="F5" />
-                    </Button.KeyboardAccelerators>
-                    <FontIcon Glyph="&#xE72C;" FontSize="{StaticResource BodyFontSize}" />
-                </Button>
-                </StackPanel>
-            </Grid>
-        </StackPanel>
-        </controls:PageBody.Commands>
-
         <!-- 필터 줄 (바꾸면 바로 적용). 도구별 거르기는 탭, 나머지 축은 콤보 (UI_REFACTOR_PLAN §8.4) -->
         <controls:PageBody.Filters>
         <StackPanel Spacing="{StaticResource GapLarge}">
         <muxc:SelectorBar x:Name="ToolTabs" SelectionChanged="OnToolTabChanged" AutomationProperties.AutomationId="ToolTabs" />
+
+        <!-- 검색 줄: 찾을 말 → 찾기 → 지우기, 그리고 목록 다시 읽기 -->
+        <Grid ColumnSpacing="{StaticResource GapLarge}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBox
+                x:Name="SearchBox"
+                Grid.Column="0"
+                VerticalAlignment="Center"
+                Text="{x:Bind ViewModel.SearchQuery, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                PlaceholderText="{loc:Str Key=Sessions_SearchPlaceholder}"
+                AutomationProperties.AutomationId="SearchBox"
+                KeyDown="OnSearchKeyDown" />
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{StaticResource GapMedium}" VerticalAlignment="Center">
+            <Button
+                AutomationProperties.AutomationId="SearchButton"
+                AutomationProperties.Name="{loc:Str Key=Common_Search}"
+                ToolTipService.ToolTip="{loc:Str Key=Common_SearchTip}"
+                Style="{ThemeResource AccentButtonStyle}"
+                Command="{x:Bind ViewModel.SearchCommand}">
+                <FontIcon Glyph="&#xE721;" FontSize="{StaticResource BodyFontSize}" />
+            </Button>
+            <!-- 지울 것이 없는데 ✕ 가 떠 있으면 무엇을 지우는 단추인지 알 수 없다 -->
+            <Button
+                AutomationProperties.AutomationId="ClearSearchButton"
+                AutomationProperties.Name="{loc:Str Key=Sessions_ClearSearch}"
+                ToolTipService.ToolTip="{loc:Str Key=Sessions_ClearSearchTip}"
+                Visibility="{x:Bind ViewModel.HasSearchQuery, Mode=OneWay}"
+                Command="{x:Bind ViewModel.ClearSearchCommand}">
+                <FontIcon Glyph="&#xE711;" FontSize="{StaticResource BodyFontSize}" />
+            </Button>
+            <!-- 새로고침은 검색과 다른 일이다. 같은 간격으로 붙여 두면 검색 단추 셋처럼 읽힌다 -->
+            <Button
+                Margin="16,0,0,0"
+                AutomationProperties.AutomationId="ReloadButton"
+                AutomationProperties.Name="{loc:Str Key=Sessions_ReloadList}"
+                ToolTipService.ToolTip="{loc:Str Key=Sessions_ReloadListTip}"
+                Command="{x:Bind ViewModel.LoadCommand}">
+                <Button.KeyboardAccelerators>
+                    <KeyboardAccelerator Key="F5" />
+                </Button.KeyboardAccelerators>
+                <FontIcon Glyph="&#xE72C;" FontSize="{StaticResource BodyFontSize}" />
+            </Button>
+            </StackPanel>
+        </Grid>
 
         <!--
             라벨을 칸 위(Header)가 아니라 칸 왼쪽에 둔다. 위에 두면 줄 높이가 두 배가 되고,
