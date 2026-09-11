@@ -619,8 +619,15 @@ RefreshAsync
              **프롬프트는 새로/이어서 둘 다에 붙는다** — 세 도구 다 resume 뒤에 첫 메시지를 받는다(help 로 확인, 2026-09-10)
   방        도구 줄(탭 띠 바로 아래, 포토샵식 32px 아이콘만 + 툴팁): 찾기(켜면 입력칸) │ 프롬프트 넣기 · 규칙 편집 │ 폴더 열기 · 같은 폴더로 새 터미널 │ 방 이름
              그 아래 xterm이 남은 높이를 다 쓴다. 페이지에 들어올 때 방이 있으면 마지막 방, 없으면 새 터미널 탭. 마지막 방을 닫으면 새 터미널 탭으로
-  안 본 답    다른 탭에 있는 동안 어시스턴트 답이 오면 그 방 탭 로고 모서리에 빨간 점(PulseDot: 고리가 퍼지는 연출 반복)이 켜지고,
-             좌측 메뉴 "터미널" 항목에도 빨간 InfoBadge가 붙는다(RoomManager.HasUnseen 집계). 그 탭을 보면 꺼진다
+  일 끝남     보고 있지 않은 방에 어시스턴트 답이 오면 그 방 탭 로고 모서리에 **초록 점**(PulseDot: 고리가 퍼지는 연출 반복)이 켜지고,
+             좌측 메뉴 "터미널" 항목에도 초록 InfoBadge가 붙는다(RoomManager.HasUnseen 집계). 그 방을 보면 꺼진다.
+             빨강이었는데 초록으로 바꿨다 — 실패가 아니라 "가서 보면 된다"는 뜻이라 빨강은 거짓으로 급했다 (2026-09-11 사람의 요청)
+  보고 있는가  **`RoomManager` 한 곳이 정한다**: 창이 앞에 있고(`SetWindowActive`) 터미널 화면이 열려 있고(`SetTerminalVisible`)
+             그 방 탭이 골라져 있을 때만 본 것으로 친다. 화면은 `ActiveRoom` 만 적는다(`RoomWatchingTests`).
+             예전에는 터미널 화면이 방을 바꿀 때만 이 표시를 옮겨, 다른 화면·다른 앱에 가 있는 동안 끝난 일에는 점이 아예 켜지지 않았다 (2026-09-11)
+  윈도우 알림  점이 새로 켜지는 순간 `RoomManager.RoomFinished` → `DoneNotifier` 가 오른쪽 아래 알림을 띄운다.
+             누르면 창을 앞으로 끌어내고 그 방을 연다(방 값은 `IRoom.Id`). **한 번 끝날 때 한 번만** — 점이 꺼졌다 다시 켜져야 다음 알림이다.
+             설치 없이 도는 앱이라 `AppNotificationManager.Register(이름, 아이콘)` 으로 자리를 등록한다. 알림을 못 쓰는 환경이면 점만 뜬다
 화면 열림 → 도구마다 IProvider.IsInstalledAsync
 인자 합치기  TerminalViewModel.ComposeArguments = [resume 인자] [사용자 인자] [프롬프트 시작 메시지]
              프롬프트를 골랐으면 IPromptLibrary.WriteIntoProject(docs/prompts/{id}.md) 후 PromptPresetSerializer.StarterMessage를

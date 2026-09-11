@@ -47,7 +47,13 @@ public sealed partial class ShellWindow : Window
         ApplyIcon();
 
         _fileDrop = new FileDropTarget(() => ContentFrame.Content as IFileDropSink);
-        Activated += (_, _) => RegisterFileDrop();
+        Activated += (_, args) =>
+        {
+            RegisterFileDrop();
+
+            // 창이 뒤로 가면 보고 있는 방이 없다 — 그래야 자리를 비운 사이 끝난 일에 점이 켜진다
+            App.Rooms.SetWindowActive(args.WindowActivationState != WindowActivationState.Deactivated);
+        };
 
         Navigate("Dashboard");
         WatchSpots();
@@ -58,9 +64,49 @@ public sealed partial class ShellWindow : Window
 
         _viewModel.StartBackgroundRefresh();
 
+        // 일이 끝나면 오른쪽 아래 알림. 누르면 그 방으로 데려간다 (2026-09-11 사람의 요청)
+        _doneNotifier = new DoneNotifier(DispatcherQueue, GoToRoom);
+        _doneNotifier.Start();
+        App.Rooms.RoomFinished += (_, room) => _doneNotifier.Notify(room);
+
         AppWindow.Closing += OnClosing;
         Closed += OnClosed;
     }
+
+    private readonly DoneNotifier _doneNotifier;
+
+    /// <summary>
+    /// 알림을 눌렀다. 창을 앞으로 끌어내고 그 방을 연다.
+    /// 방이 이미 닫혔으면 터미널 화면까지만 간다 — 아무 일도 안 하는 것보다 낫다.
+    /// </summary>
+    private void GoToRoom(string id)
+    {
+        BringToFront();
+        NavigateTo("Terminal");
+
+        if (App.Rooms.Rooms.FirstOrDefault(room => room.Id == id) is { } target)
+        {
+            App.Rooms.ActiveRoom = target;
+        }
+    }
+
+    /// <summary>창을 앞으로. 최소화돼 있으면 되살린다.</summary>
+    private void BringToFront()
+    {
+        if (AppWindow.Presenter is OverlappedPresenter { State: OverlappedPresenterState.Minimized } presenter)
+        {
+            presenter.Restore();
+        }
+
+        AppWindow.Show();
+
+        // Activate() 만으로는 다른 앱이 앞에 있을 때 올라오지 않는다
+        SetForegroundWindow(WinRT.Interop.WindowNative.GetWindowHandle(this));
+    }
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
+    private static extern bool SetForegroundWindow(IntPtr hWnd);
 
     /// <summary>다른 페이지의 안내에서 이 페이지로 보내 달라고 할 때 쓴다. 왼쪽 선택 표시도 맞춘다.</summary>
     /// <summary>열린 방 등록부. 좌측 메뉴 터미널 항목의 안 본 답 점이 이걸 본다.</summary>
@@ -101,6 +147,9 @@ public sealed partial class ShellWindow : Window
     private void OnFrameNavigated(object sender, Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
     {
         Navigation.Header = (e.Content as Controls.IPageHeaderSource)?.Header;
+
+        // 터미널 화면을 떠나면 그 방을 더는 보고 있지 않다
+        App.Rooms.SetTerminalVisible(e.Content is Views.TerminalPage);
 
         // 자식 창(XAML 아일랜드·WebView2)은 나중에 생기므로 페이지를 옮길 때마다 아직 안 된 창을 등록한다
         RegisterFileDrop();
@@ -442,6 +491,7 @@ public sealed partial class ShellWindow : Window
 
     private void OnClosed(object sender, WindowEventArgs args)
     {
+        _doneNotifier.Dispose();
         App.Rooms.DisposeAll();
         _settings.Current.WindowWidth = AppWindow.Size.Width;
         _settings.Current.WindowHeight = AppWindow.Size.Height;

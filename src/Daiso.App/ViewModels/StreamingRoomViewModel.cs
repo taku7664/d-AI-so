@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Daiso.App.Services;
@@ -37,6 +37,9 @@ public sealed partial class StreamingRoomViewModel : ObservableObject, IRoom
     public string ProjectDirectory { get; }
 
     public string Title { get; }
+
+    /// <inheritdoc />
+    public string Id { get; } = Guid.NewGuid().ToString("N");
 
     public string ShortTitle => Formats.FolderName(ProjectDirectory);
 

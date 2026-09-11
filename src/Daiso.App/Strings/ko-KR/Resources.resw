@@ -1469,6 +1469,12 @@
   <data name="Settings_NoWebView2" xml:space="preserve">
     <value>이 PC에 WebView2 런타임이 없어 앱 안에서 열 수 없습니다. Microsoft Edge WebView2 런타임을 설치하면 됩니다</value>
   </data>
+  <data name="App_Name" xml:space="preserve">
+    <value>DAIso</value>
+  </data>
+  <data name="Room_DoneTitle" xml:space="preserve">
+    <value>작업이 끝났습니다</value>
+  </data>
   <data name="Room_CloseTitle" xml:space="preserve">
     <value>열려 있는 대화가 있습니다</value>
   </data>

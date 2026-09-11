@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using Microsoft.UI.Xaml;
 
 namespace Daiso.App.ViewModels;
@@ -10,6 +10,9 @@ namespace Daiso.App.ViewModels;
 /// </summary>
 public interface IRoom : IDisposable, INotifyPropertyChanged
 {
+    /// <summary>이 방을 가리키는 값. 윈도우 알림이 "어느 방이 끝났는지" 를 이걸로 들고 다닌다.</summary>
+    string Id { get; }
+
     /// <summary>제목(도구 · 폴더, 프로세스가 제목을 보내면 그 뒤에). 탭 툴팁.</summary>
     string Title { get; }
 

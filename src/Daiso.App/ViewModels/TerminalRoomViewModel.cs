@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using Daiso.App.Services;
 using Daiso.Core;
 using Daiso.Infrastructure;
@@ -42,6 +42,9 @@ public sealed partial class TerminalRoomViewModel : ObservableObject, IRoom
     private string title;
 
     /// <summary>탭에 다는 짧은 이름(폴더). 도구 아바타와 함께.</summary>
+    /// <inheritdoc />
+    public string Id { get; } = Guid.NewGuid().ToString("N");
+
     public string ShortTitle => Formats.FolderName(ProjectDirectory);
 
     /// <summary>안의 프로그램이 바꾼 창 제목. 비어 있으면 도구·폴더만 보인다.</summary>
