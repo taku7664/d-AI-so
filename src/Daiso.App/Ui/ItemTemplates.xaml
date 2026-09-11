@@ -363,7 +363,14 @@
     </DataTemplate>
 
     <DataTemplate x:Key="ToolCardTemplate" x:DataType="vm:ToolCardViewModel">
-        <Border Style="{StaticResource CardBorder}">
+        <!--
+            카드를 <b>포커스 가능한 껍데기</b>로 감싼다 (2026-09-11 사람의 요청).
+            누르면 포커스가 오고, 포커스가 오면 띠가 그 카드를 가운데로 굴린다(`DashboardPage.CenterCard`).
+            껍데기는 보이지 않는다 — 배경·테두리·여백이 없어 카드 생김새를 건드리지 않고
+            누를 수 있다는 것과 포커스 테두리만 더한다.
+            안쪽 단추(로그인·계정·부가 정보)는 제 클릭을 스스로 먹으므로 껍데기까지 올라오지 않는다.
+        -->
+        <Button Style="{StaticResource ToolCardButton}" AutomationProperties.Name="{x:Bind Title}">
             <StackPanel Spacing="{StaticResource GapLarge}">
                 <!-- 제목 줄: 점 · 이름 · 상태 알약 -->
                 <Grid ColumnSpacing="{StaticResource GapMedium}">
@@ -534,35 +541,60 @@
                     </muxc:DropDownButton>
                 </StackPanel>
             </StackPanel>
-        </Border>
+        </Button>
     </DataTemplate>
 
+    <!--
+        최근 세션 한 줄. 할 일은 <b>우클릭 메뉴</b>에 있다 (2026-09-11 사람의 요청).
+        줄마다 재생 단추를 달아 두었더니 할 수 있는 일이 하나로 못 박혀 있었고
+        (터미널로 여는 것만), 줄 오른쪽을 단추가 늘 차지했다.
+        메뉴는 늘 자리를 안 먹고, 할 일이 늘어도 줄 모양이 그대로다.
+    -->
     <DataTemplate x:Key="RecentSessionTemplate" x:DataType="vm:RecentSessionViewModel">
-        <Grid ColumnSpacing="{StaticResource GapLarge}" Margin="0,0,0,10">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <controls:ToolIcon Grid.Column="0" Kind="{x:Bind Session.Tool}" Size="24" VerticalAlignment="Center" />
-            <StackPanel Grid.Column="1" Spacing="{StaticResource GapHair}">
-                <TextBlock
-                    Text="{x:Bind ProjectText}"
-                    Style="{ThemeResource BodyStrongTextBlockStyle}"
-                    TextWrapping="NoWrap"
-                    TextTrimming="CharacterEllipsis"
-                    ToolTipService.ToolTip="{x:Bind PathText}" />
-                <TextBlock Text="{x:Bind MetaText}" Style="{StaticResource MutedText}" />
-            </StackPanel>
-            <Button
-                Grid.Column="2"
-                AutomationProperties.AutomationId="ResumeRecentButton"
-                AutomationProperties.Name="{loc:Str Key=Dashboard_ResumeHere}"
-                ToolTipService.ToolTip="{loc:Str Key=Dashboard_ResumeHere}"
-                Command="{x:Bind ResumeCommand}">
-                <FontIcon Glyph="&#xE768;" FontSize="{StaticResource BodyFontSize}" />
-            </Button>
-        </Grid>
+        <!--
+            줄 전체가 단추다. 마우스를 올리면 단추가 스스로 칠해 <b>우클릭할 것이 있다</b>는 신호를 준다
+            (2026-09-11 사람의 요청). 재생 단추를 없앤 자리를 우클릭 메뉴가 대신한다.
+            칠을 손으로 하지 않는 이유는 ListRowButton 주석에 적었다
+        -->
+        <Button Style="{StaticResource ListRowButton}" AutomationProperties.Name="{x:Bind ProjectText}">
+            <Button.ContextFlyout>
+                <MenuFlyout>
+                    <!-- 아이콘은 좌측 메뉴의 터미널·세션 것과 같다. 가는 곳이 같으면 표시도 같아야 한다 -->
+                    <MenuFlyoutItem
+                        Text="{loc:Str Key=Dashboard_OpenInTerminal}"
+                        AutomationProperties.AutomationId="ResumeRecentMenuItem"
+                        Command="{x:Bind ResumeCommand}">
+                        <MenuFlyoutItem.Icon>
+                            <FontIcon Glyph="&#xE756;" />
+                        </MenuFlyoutItem.Icon>
+                    </MenuFlyoutItem>
+                    <MenuFlyoutItem
+                        Text="{loc:Str Key=Dashboard_OpenDetails}"
+                        AutomationProperties.AutomationId="OpenDetailsMenuItem"
+                        Command="{x:Bind OpenDetailsCommand}">
+                        <MenuFlyoutItem.Icon>
+                            <FontIcon Glyph="&#xE8A5;" />
+                        </MenuFlyoutItem.Icon>
+                    </MenuFlyoutItem>
+                </MenuFlyout>
+            </Button.ContextFlyout>
+            <Grid ColumnSpacing="{StaticResource GapLarge}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <controls:ToolIcon Grid.Column="0" Kind="{x:Bind Session.Tool}" Size="24" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" Spacing="{StaticResource GapHair}">
+                    <TextBlock
+                        Text="{x:Bind ProjectText}"
+                        Style="{ThemeResource BodyStrongTextBlockStyle}"
+                        TextWrapping="NoWrap"
+                        TextTrimming="CharacterEllipsis"
+                        ToolTipService.ToolTip="{x:Bind PathText}" />
+                    <TextBlock Text="{x:Bind MetaText}" Style="{StaticResource MutedText}" />
+                </StackPanel>
+            </Grid>
+        </Button>
     </DataTemplate>
 
 </ResourceDictionary>

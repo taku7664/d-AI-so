@@ -1,4 +1,4 @@
-<Application
+﻿<Application
     x:Class="Daiso.App.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -91,6 +91,43 @@
                 <Setter Property="Padding" Value="0,12,0,0" />
                 <Setter Property="BorderThickness" Value="0,1,0,0" />
                 <Setter Property="BorderBrush" Value="{ThemeResource DividerStrokeColorDefaultBrush}" />
+            </Style>
+
+            <!--
+                <b>카드가 곧 버튼이다.</b> 요약 화면의 도구 카드 (2026-09-11 사람의 요청).
+                CardBorder 를 감싸는 껍데기로 두었더니 트리가 한 겹 깊어져 PageDepthTests 예산을 넘겼다 —
+                겹을 더하는 대신 <b>Border 를 없애고</b> 이 버튼이 카드 생김새를 직접 갖는다.
+                값은 CardBorder 와 같게 둔다: 그래야 페이지 안의 다른 카드와 한 벌로 보인다.
+            -->
+            <Style x:Key="ToolCardButton" TargetType="Button">
+                <Setter Property="Padding" Value="20" />
+                <Setter Property="CornerRadius" Value="{StaticResource RadiusLarge}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+                <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                <Setter Property="VerticalAlignment" Value="Stretch" />
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="VerticalContentAlignment" Value="Top" />
+                <Setter Property="UseSystemFocusVisuals" Value="True" />
+            </Style>
+
+            <!--
+                목록 한 줄. 호버 칠을 <b>단추가 스스로</b> 한다 — 예전에는 줄에
+                PointerEntered 처리기를 달아 손으로 칠했는데, 그러면 생김새 사전이
+                코드비하인드를 갖게 되어 ItemTemplateTests 가 막는다.
+                담는 목록(ListView, SelectionMode=None)에 맡기는 길도 막혔다: 칠이 보이지 않았다.
+                평소 배경은 투명이라 카드 위에 떠 보이지 않고, 마우스가 올라올 때만 칠이 뜬다
+            -->
+            <Style x:Key="ListRowButton" TargetType="Button">
+                <Setter Property="Padding" Value="8,6" />
+                <Setter Property="CornerRadius" Value="{StaticResource RadiusMedium}" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+                <Setter Property="UseSystemFocusVisuals" Value="True" />
             </Style>
 
             <!-- 카드: 페이지 안의 한 덩어리 -->

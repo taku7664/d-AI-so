@@ -38,6 +38,10 @@ public sealed partial class DashboardPage : Page, IPageHeaderSource
             }
         };
 
+        // 탭으로 거르면 카드 수가 바뀌어 넘치는 양도 바뀐다. 화살표가 그대로 남으면 못 누르는 단추가 된다
+        ViewModel.VisibleTools.CollectionChanged += (_, _) =>
+            DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, SyncArrows);
+
         Loaded += async (_, _) =>
         {
             SelectorBarVisuals.Select(ToolTabs, ViewModel.SelectedTabIndex);
@@ -78,21 +82,114 @@ public sealed partial class DashboardPage : Page, IPageHeaderSource
 
     private double _cardWidth;
 
-    private void OnToolStripSizeChanged(object sender, SizeChangedEventArgs e) => ApplyCardWidth();
+    private void OnToolStripSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        ApplyCardWidth();
+        SyncArrows();
+    }
 
-    /// <summary>카드가 화면에 올라올 때마다 지금 폭을 입힌다. 가상화라 스크롤 중에도 새로 올라온다.</summary>
+    private void OnToolStripViewChanged(object? sender, ScrollViewerViewChangedEventArgs e) => SyncArrows();
+
+    private void OnToolCardsPrevClick(object sender, RoutedEventArgs e) => ScrollBy(-1);
+
+    private void OnToolCardsNextClick(object sender, RoutedEventArgs e) => ScrollBy(1);
+
+    /// <summary>카드 한 장 + 간격만큼 민다. 반 장씩 걸치면 어디까지 봤는지 알 수 없다.</summary>
+    private void ScrollBy(int cards)
+    {
+        var step = (_cardWidth > 0 ? _cardWidth : MinimumCardWidth) + Spacing;
+
+        ToolStrip.ChangeView(ToolStrip.HorizontalOffset + (step * cards), null, null, disableAnimation: false);
+    }
+
+    /// <summary>
+    /// 갈 수 있는 쪽의 화살표만 보인다. 넘칠 것이 없으면 둘 다 감춘다 —
+    /// 누를 수 없는 단추가 떠 있으면 그것도 거짓말이다.
+    /// </summary>
+    private void SyncArrows()
+    {
+        // 1px 은 반올림 오차다. 이걸 안 두면 끝까지 밀어도 화살표가 남는다
+        const double Slack = 1;
+
+        var scrollable = ToolStrip.ScrollableWidth;
+
+        ToolPrevButton.Visibility = scrollable > Slack && ToolStrip.HorizontalOffset > Slack
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+        ToolNextButton.Visibility = scrollable > Slack && ToolStrip.HorizontalOffset < scrollable - Slack
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+    }
+
+    private static double Spacing => (double)Application.Current.Resources["GapXLarge"];
+
+    /// <summary>
+    /// 카드가 화면에 올라올 때마다 지금 폭을 입히고, 가운데로 굴릴 계기 둘을 붙인다.
+    /// 가상화라 스크롤 중에도 새로 올라온다.
+    /// <para>
+    /// <b>둘 다 필요하다.</b> <c>GotFocus</c> 는 포커스가 <b>들어올 때만</b> 뜬다 —
+    /// 이미 고른 카드를 다시 눌러도 아무 일이 없었다 (2026-09-11 사람의 지적).
+    /// <c>Click</c> 은 누를 때마다 뜨니 다시 눌러도 가운데로 간다.
+    /// 반대로 <c>Click</c> 만 두면 Tab 으로 옮겨 온 카드가 화면 밖에 남는다.
+    /// </para>
+    /// </summary>
     private void OnToolCardPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
     {
-        if (_cardWidth > 0 && args.Element is FrameworkElement card)
+        if (args.Element is not FrameworkElement card)
+        {
+            return;
+        }
+
+        if (_cardWidth > 0)
         {
             card.Width = _cardWidth;
         }
+
+        // 같은 요소가 재사용되므로 두 번 붙지 않게 먼저 뗀다
+        card.GotFocus -= OnToolCardCentreRequested;
+        card.GotFocus += OnToolCardCentreRequested;
+
+        if (card is Microsoft.UI.Xaml.Controls.Primitives.ButtonBase button)
+        {
+            button.Click -= OnToolCardCentreRequested;
+            button.Click += OnToolCardCentreRequested;
+        }
+    }
+
+    /// <summary>포커스가 왔거나 눌렸다. 둘 다 "이 카드를 보고 싶다"는 뜻이라 같은 곳으로 보낸다.</summary>
+    private void OnToolCardCentreRequested(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement card)
+        {
+            CenterCard(card);
+        }
+    }
+
+    /// <summary>
+    /// 그 카드를 띠 가운데로 굴린다. <b>끝쪽 카드는 갈 수 있는 만큼만</b> 간다 —
+    /// 가운데로 보내려면 빈 자리를 만들어야 하는데, 그러면 카드 옆에 빈칸이 생겨 더 어색하다.
+    /// </summary>
+    private void CenterCard(FrameworkElement card)
+    {
+        var index = ToolCards.GetElementIndex(card);
+        var step = (_cardWidth > 0 ? _cardWidth : MinimumCardWidth) + Spacing;
+
+        if (index < 0 || ToolStrip.ViewportWidth <= 0)
+        {
+            return;
+        }
+
+        // 카드 왼쪽 끝을 가운데로 보낸 뒤 카드 절반만큼 되돌리면 카드 가운데가 화면 가운데에 온다
+        var centered = (index * step) + (_cardWidth / 2) - (ToolStrip.ViewportWidth / 2);
+        var target = Math.Clamp(centered, 0, ToolStrip.ScrollableWidth);
+
+        ToolStrip.ChangeView(target, null, null, disableAnimation: false);
     }
 
     /// <summary>보이는 칸을 재어 카드 폭을 정하고, 이미 올라와 있는 카드에도 입힌다.</summary>
     private void ApplyCardWidth()
     {
-        var spacing = (double)Application.Current.Resources["GapXLarge"];
         var available = ToolStrip.ViewportWidth > 0 ? ToolStrip.ViewportWidth : ToolStrip.ActualWidth;
 
         if (available <= 0)
@@ -102,7 +199,7 @@ public sealed partial class DashboardPage : Page, IPageHeaderSource
 
         var width = Math.Max(
             MinimumCardWidth,
-            (available - (spacing * (VisibleCards - 1))) / VisibleCards);
+            (available - (Spacing * (VisibleCards - 1))) / VisibleCards);
 
         if (Math.Abs(width - _cardWidth) < 0.5)
         {
@@ -118,6 +215,9 @@ public sealed partial class DashboardPage : Page, IPageHeaderSource
                 card.Width = width;
             }
         }
+
+        // 폭이 바뀌면 넘치는 양도 바뀐다. 레이아웃이 끝난 뒤에 재야 맞다
+        DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, SyncArrows);
     }
 
     /// <summary>탭을 누르면 뷰모델이 카드·최근 세션·통계를 다시 거른다.</summary>

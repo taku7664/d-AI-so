@@ -251,6 +251,14 @@ public sealed partial class SessionsViewModel : ObservableObject
             RebuildProjects();
             ApplyProjectSelection();
             StatusText = UiStrings.Format("Sessions_Overview", Projects.Count, _allSessions.Count);
+
+            // 다른 화면이 "이 세션을 열어 달라"고 심어 둔 것이 있으면 지금 고른다.
+            // 읽기가 끝난 뒤여야 한다 — 먼저 고르면 이 읽기가 목록을 새로 만들며 선택을 덮는다
+            if (_pendingOpen is { } pending)
+            {
+                _pendingOpen = null;
+                await SelectFromSearchAsync(pending, ct).ConfigureAwait(true);
+            }
         }
         finally
         {
@@ -336,6 +344,22 @@ public sealed partial class SessionsViewModel : ObservableObject
         OnPropertyChanged(nameof(CanPickProject));
         OnPropertyChanged(nameof(ProjectListVisibility));
         OnPropertyChanged(nameof(SearchTreeVisibility));
+    }
+
+    /// <summary>다른 화면에서 넘어온 "이 세션을 열어 달라". 목록을 읽은 뒤에 고른다.</summary>
+    private SessionInfo? _pendingOpen;
+
+    /// <summary>
+    /// 이 세션을 상세로 열어 달라고 심는다. 요약 화면의 <c>상세보기</c> 가 부른다.
+    /// <para>
+    /// 곧바로 고르지 않는 이유: 화면으로 옮겨 가면 그 화면이 <see cref="LoadAsync"/> 를 돌리고,
+    /// 그 읽기가 목록을 새로 만들며 선택을 덮는다. 읽기가 끝나는 자리에서 집어 든다.
+    /// </para>
+    /// </summary>
+    public void RequestOpen(SessionInfo session)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+        _pendingOpen = session;
     }
 
     /// <summary>검색 결과에서 세션을 골라 목록·상세를 맞춘다.</summary>

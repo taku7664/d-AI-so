@@ -7,6 +7,26 @@
     xmlns:controls="using:Daiso.App.Controls"
     xmlns:vm="using:Daiso.App.ViewModels">
 
+    <Page.Resources>
+        <!--
+            도구 띠의 양쪽 화살표. 카드 위에 얹히므로 <b>속이 비치지 않아야</b> 글씨와 겹쳐 읽히지 않는다.
+            카드와 같은 배경·테두리를 써서 "카드 위에 놓인 단추"로 보이게 한다
+        -->
+        <Style x:Key="ToolStripArrow" TargetType="Button">
+            <!-- 28 + RadiusRound(14) 이 정확한 동그라미다. 말풍선 아바타가 쓰는 짝과 같다 -->
+            <Setter Property="Width" Value="28" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="{StaticResource RadiusRound}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorSecondaryBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <!-- 카드 테두리에 딱 붙이지 않고 살짝 안으로 넣는다. 밖으로 빼면 페이지 여백을 먹는다 -->
+            <Setter Property="Margin" Value="6,0" />
+        </Style>
+    </Page.Resources>
+
     <!-- 골격은 PageBody 가 정한다: 명령 줄 → 필터 줄 → 본문. 여백 24, 줄 사이 12, 폭은 Reading(1280 상한) (UI_REFACTOR_PLAN §6) -->
     <controls:PageBody Layout="Reading">
         <controls:PageBody.Commands>
@@ -49,23 +69,57 @@
                     창 크기에 따라 달라지기 때문이다. `OnToolStripSizeChanged` 가 재어서 넣는다.
                     세로 스크롤은 끈다 — 바깥 페이지가 이미 세로로 스크롤한다
                 -->
-                <ScrollViewer
-                    x:Name="ToolStrip"
-                    HorizontalScrollMode="Enabled"
-                    HorizontalScrollBarVisibility="Auto"
-                    VerticalScrollMode="Disabled"
-                    VerticalScrollBarVisibility="Disabled"
-                    SizeChanged="OnToolStripSizeChanged">
-                    <ItemsRepeater
-                        x:Name="ToolCards"
-                        ItemsSource="{x:Bind ViewModel.VisibleTools}"
-                        ItemTemplate="{StaticResource ToolCardTemplate}"
-                        ElementPrepared="OnToolCardPrepared">
-                        <ItemsRepeater.Layout>
-                            <StackLayout Orientation="Horizontal" Spacing="{StaticResource GapXLarge}" />
-                        </ItemsRepeater.Layout>
-                    </ItemsRepeater>
-                </ScrollViewer>
+                <!--
+                    띠 위에 양쪽 화살표를 얹는다. 가로 스크롤만으로는 <b>더 있는지</b>가 안 보인다 —
+                    스크롤바는 얇고, 휠은 세로로 먹고, 터치패드 없이는 옆으로 밀 길이 마땅치 않다
+                    (2026-09-11 사람의 지적).
+
+                    단추는 <b>갈 수 있을 때만</b> 나온다(`OnToolStripViewChanged`). 도구가 둘뿐이면 아예 없다 —
+                    누를 수 없는 화살표가 떠 있으면 그것도 거짓말이다.
+                -->
+                <Grid>
+                    <ScrollViewer
+                        x:Name="ToolStrip"
+                        HorizontalScrollMode="Enabled"
+                        HorizontalScrollBarVisibility="Hidden"
+                        VerticalScrollMode="Disabled"
+                        VerticalScrollBarVisibility="Disabled"
+                        SizeChanged="OnToolStripSizeChanged"
+                        ViewChanged="OnToolStripViewChanged">
+                        <ItemsRepeater
+                            x:Name="ToolCards"
+                            ItemsSource="{x:Bind ViewModel.VisibleTools}"
+                            ItemTemplate="{StaticResource ToolCardTemplate}"
+                            ElementPrepared="OnToolCardPrepared">
+                            <ItemsRepeater.Layout>
+                                <StackLayout Orientation="Horizontal" Spacing="{StaticResource GapXLarge}" />
+                            </ItemsRepeater.Layout>
+                        </ItemsRepeater>
+                    </ScrollViewer>
+
+                    <Button
+                        x:Name="ToolPrevButton"
+                        Style="{StaticResource ToolStripArrow}"
+                        HorizontalAlignment="Left"
+                        AutomationProperties.AutomationId="ToolCardsPrevButton"
+                        AutomationProperties.Name="{loc:Str Key=Dashboard_CardsPrev}"
+                        ToolTipService.ToolTip="{loc:Str Key=Dashboard_CardsPrev}"
+                        Visibility="Collapsed"
+                        Click="OnToolCardsPrevClick">
+                        <FontIcon Glyph="&#xE76B;" FontSize="{StaticResource CaptionFontSize}" />
+                    </Button>
+                    <Button
+                        x:Name="ToolNextButton"
+                        Style="{StaticResource ToolStripArrow}"
+                        HorizontalAlignment="Right"
+                        AutomationProperties.AutomationId="ToolCardsNextButton"
+                        AutomationProperties.Name="{loc:Str Key=Dashboard_CardsNext}"
+                        ToolTipService.ToolTip="{loc:Str Key=Dashboard_CardsNext}"
+                        Visibility="Collapsed"
+                        Click="OnToolCardsNextClick">
+                        <FontIcon Glyph="&#xE76C;" FontSize="{StaticResource CaptionFontSize}" />
+                    </Button>
+                </Grid>
 
 
                 <!-- 최근 세션 -->
@@ -79,6 +133,11 @@
                             <TextBlock Text="{loc:Str Key=Dashboard_RecentEmpty}" Style="{StaticResource PageSubtitleText}" />
                         </Border>
 
+                        <!--
+                            그릇은 ItemsControl 그대로다. 여백·모서리·호버 칠을 줄(ListRowButton)이
+                            스스로 가지므로 컨테이너가 손댈 것이 없다 — ListView 에 맡겨 봤더니
+                            SelectionMode=None 에서는 칠이 보이지 않았다 (2026-09-11)
+                        -->
                         <ItemsControl
                             AutomationProperties.AutomationId="RecentSessionList"
                             ItemsSource="{x:Bind ViewModel.RecentSessions}"

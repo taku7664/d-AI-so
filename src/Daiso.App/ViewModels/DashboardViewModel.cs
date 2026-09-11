@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Daiso.App.Services;
@@ -374,6 +374,27 @@ public sealed partial class DashboardViewModel : ObservableObject
     [RelayCommand]
     public void GoToSessions() => _navigator.Go("Sessions");
 
+    /// <summary>
+    /// 그 세션을 세션 화면에서 골라 상세로 보여 준다.
+    /// <para>
+    /// 고르라고 <b>심어 두고</b> 화면을 옮긴다 — 옮겨 간 화면이 목록을 다시 읽으므로,
+    /// 먼저 골라 두면 그 읽기가 선택을 덮는다 (<c>SessionsViewModel.RequestOpen</c>).
+    /// </para>
+    /// </summary>
+    [RelayCommand]
+    public void OpenDetails(RecentSessionViewModel? row)
+    {
+        if (row is null)
+        {
+            return;
+        }
+
+        // 같은 이유로 생성자가 아니라 여기서 꺼낸다(PrepareResume 과 같은 꼴).
+        // 화면 뷰모델끼리 생성자로 얽으면 DI 가 서로를 기다릴 수 있다
+        App.Services.GetRequiredService<SessionsViewModel>().RequestOpen(row.Session);
+        _navigator.Go("Sessions");
+    }
+
     /// <summary>사용량 화면으로 보낸다. 요약의 토큰 수치는 거기서 자세히 본다.</summary>
     [RelayCommand]
     public void GoToUsage() => _navigator.Go("Usage");
@@ -397,6 +418,10 @@ public sealed partial class RecentSessionViewModel : ObservableObject
     /// <summary>이 세션을 터미널 화면에 채워 넣고 그 화면으로 간다.</summary>
     [RelayCommand]
     public void Resume() => _owner.ResumeRecentCommand.Execute(this);
+
+    /// <summary>세션 화면에서 이 세션을 골라 상세를 본다.</summary>
+    [RelayCommand]
+    public void OpenDetails() => _owner.OpenDetailsCommand.Execute(this);
 
     /// <summary>도구 한 글자.</summary>
     public string ToolInitial => ToolLook.Initial(Session.Tool);
