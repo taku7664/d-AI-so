@@ -401,16 +401,26 @@
                         <TextBlock Text="{x:Bind StateText, Mode=OneWay}" FontSize="{StaticResource CaptionFontSize}" />
                     </Border>
                 </Grid>
-                <!-- 계정 -->
+                <!--
+                    계정 칸. <b>줄 뜻이 고정이다</b>: 이름 → 이메일 → 요금제 → 만료 → 설치.
+                    값이 없어도 줄을 지우지 않는다 — 도구마다 줄 수가 달라지면 카드 셋을 나란히 놓고
+                    같은 자리를 비교할 수 없다 (2026-09-11 사람의 지적). 없는 값은 "… 정보 없음"으로 말한다
+                -->
                 <StackPanel Spacing="{StaticResource GapMicro}">
                     <TextBlock
-                        Text="{x:Bind AccountLabel, Mode=OneWay}"
+                        Text="{x:Bind AccountText, Mode=OneWay}"
                         TextWrapping="NoWrap"
                         TextTrimming="CharacterEllipsis"
                         Style="{ThemeResource BodyStrongTextBlockStyle}"
-                        ToolTipService.ToolTip="{x:Bind AccountLabel, Mode=OneWay}" />
+                        ToolTipService.ToolTip="{x:Bind AccountText, Mode=OneWay}" />
                     <TextBlock
-                        Text="{x:Bind Email, Mode=OneWay}"
+                        Text="{x:Bind EmailText, Mode=OneWay}"
+                        TextWrapping="NoWrap"
+                        TextTrimming="CharacterEllipsis"
+                        Style="{StaticResource MutedText}"
+                        ToolTipService.ToolTip="{x:Bind EmailText, Mode=OneWay}" />
+                    <TextBlock
+                        Text="{x:Bind PlanText, Mode=OneWay}"
                         Style="{StaticResource MutedText}" />
                     <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapSmall}">
                         <FontIcon

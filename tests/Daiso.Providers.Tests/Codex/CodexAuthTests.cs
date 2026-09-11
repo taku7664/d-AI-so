@@ -24,9 +24,10 @@ public sealed class CodexAuthTests
 
         status.State.Should().Be(AuthState.LoggedIn);
         status.SessionExpiresAt.Should().Be(Fixtures.Expiry);
-        // 계정 이름 자리에는 계정이 들어간다. 인증 방식(`chatgpt`)이 아니다
-        status.AccountLabel.Should().Be("plus");
+        // 계정 이름 자리에는 계정 이름만 들어간다. 인증 방식(`chatgpt`)도 요금제도 아니다
+        status.AccountLabel.Should().BeNull(because: "id 토큰에 사람 이름이 없다");
         status.Email.Should().Be("fixture@example.com");
+        status.Plan.Should().Be("plus");
     }
 
     [Fact]
@@ -73,7 +74,6 @@ public sealed class CodexAuthTests
 
         // 파일에 적힌 `chatgpt` 를 그대로 옮기지 않고 사람이 읽는 문구 키로 바꾼다
         status.Extras.Should().Contain(new AuthNote("AuthNote_AuthChatGpt"));
-        status.Extras.Should().Contain(new AuthNote("AuthNote_Plan", "plus"));
         status.Extras.Should().Contain(note => note.Key == "AuthNote_ApiKeyMissing");
         status.Extras.Should().NotContain(note => note.Key == "AuthNote_AccountId",
             because: "account_id 는 사람이 쓸 데가 없다");
@@ -102,6 +102,7 @@ public sealed class CodexAuthTests
 
         status.AccountLabel.Should().BeNull(because: "없는 값을 다른 값으로 메우지 않는다");
         status.Email.Should().BeNull();
+        status.Plan.Should().BeNull();
     }
 
     [Theory]

@@ -59,8 +59,10 @@ public sealed class ClaudeAuthTests
     {
         var status = ClaudeAuthReader.Read(Credentials, ClaudeJson, Fixtures.Now);
 
-        status.AccountLabel.Should().Be("Fixture User · Fixture Org · max");
+        // 구독 등급은 이름 줄에 섞지 않는다. 카드에 요금제 자리가 따로 있다
+        status.AccountLabel.Should().Be("Fixture User · Fixture Org");
         status.Email.Should().Be("fixture@example.test");
+        status.Plan.Should().Be("max");
     }
 
     [Fact]
@@ -73,11 +75,12 @@ public sealed class ClaudeAuthTests
     }
 
     [Fact]
-    public void Extras_list_subscription_tier_scopes_and_mcp_connector_names()
+    public void Extras_list_the_tier_scopes_and_mcp_connector_names()
     {
         var status = ClaudeAuthReader.Read(Credentials, ClaudeJson, Fixtures.Now);
 
-        status.Extras.Should().Contain(new AuthNote("AuthNote_Subscription", "max"));
+        status.Extras.Should().NotContain(note => note.Key == "AuthNote_Subscription",
+            because: "구독은 카드의 요금제 줄이 맡는다. 부가 정보에서 한 번 더 말하지 않는다");
         status.Extras.Should().Contain(new AuthNote("AuthNote_RateLimitTier", "tier4"));
         status.Extras.Should().Contain(new AuthNote("AuthNote_Scope", "user:inference"));
         status.Extras.Should().Contain(new AuthNote("AuthNote_Mcp", "fixture-connector"));

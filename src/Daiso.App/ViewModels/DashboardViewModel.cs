@@ -460,6 +460,9 @@ public sealed partial class ToolCardViewModel : ObservableObject
     private string? email;
 
     [ObservableProperty]
+    private string? plan;
+
+    [ObservableProperty]
     private DateTimeOffset? sessionExpiresAt;
 
     private readonly DashboardViewModel _owner;
@@ -549,6 +552,22 @@ public sealed partial class ToolCardViewModel : ObservableObject
         _ => UiStrings.Get("Auth_NoInfo"),
     };
 
+    // 카드의 계정 칸은 <b>줄 뜻이 고정</b>이다: 이름 → 이메일 → 요금제 → 만료 → 설치.
+    // 값이 없으면 줄을 지우지 않고 "… 정보 없음"을 넣는다 — 도구마다 줄 수가 달라지면
+    // 카드 셋을 나란히 놓고 같은 자리를 비교할 수 없다 (2026-09-11 사람의 지적).
+    // 만료 줄이 이미 `만료 정보 없음`으로 그렇게 하고 있어 말투도 그것에 맞췄다.
+
+    /// <summary>계정 이름. 사람·조직만 담는다 (요금제는 아래 줄이 맡는다).</summary>
+    public string AccountText => AccountLabel ?? UiStrings.Get("Auth_NoAccount");
+
+    /// <summary>계정 이메일.</summary>
+    public string EmailText => Email ?? UiStrings.Get("Auth_NoEmail");
+
+    /// <summary>요금제·구독 등급.</summary>
+    public string PlanText => Plan is { } plan
+        ? UiStrings.Format("Auth_Plan", plan)
+        : UiStrings.Get("Auth_NoPlan");
+
     /// <summary>설치 여부 문구.</summary>
     public string InstalledText =>
         UiStrings.Get(IsInstalled ? "Auth_Installed" : "Auth_NotInstalled");
@@ -574,6 +593,7 @@ public sealed partial class ToolCardViewModel : ObservableObject
         State = status.State;
         AccountLabel = status.AccountLabel;
         Email = status.Email;
+        Plan = status.Plan;
         SessionExpiresAt = status.SessionExpiresAt;
 
         Extras.Clear();
@@ -584,6 +604,9 @@ public sealed partial class ToolCardViewModel : ObservableObject
             Extras.Add(Line(note));
         }
 
+        OnPropertyChanged(nameof(AccountText));
+        OnPropertyChanged(nameof(EmailText));
+        OnPropertyChanged(nameof(PlanText));
         OnPropertyChanged(nameof(StateBrush));
         OnPropertyChanged(nameof(StateText));
         OnPropertyChanged(nameof(InstalledText));

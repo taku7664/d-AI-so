@@ -34,16 +34,18 @@ public static class CodexAuthReader
         // API 키 모드는 만료 개념이 없다.
         var expiresAt = isApiKey ? null : JwtReader.Expiry(tokens.Prop("access_token").Text());
 
-        // 계정은 id 토큰이 말한다. 인증 방식(`chatgpt`)을 계정 이름 자리에 넣지 않는다 — 그것은 계정이 아니다
+        // 계정은 id 토큰이 말한다. 인증 방식(`chatgpt`)을 계정 이름 자리에 넣지 않는다 — 그것은 계정이 아니다.
+        // 이름을 읽을 곳은 없다(id 토큰에 사람 이름이 없다). 이름 자리는 비우고 이메일·요금제만 채운다
         var (email, plan) = JwtReader.Account(tokens.Prop("id_token").Text());
 
         return new AuthStatus(
             ToolKind.Codex,
             AuthStatus.StateFor(expiresAt, now),
-            plan ?? email,
+            null,
             email,
             expiresAt,
-            Extras(root, mode, isApiKey, plan));
+            Extras(root, mode, isApiKey),
+            plan);
     }
 
     /// <summary>
@@ -54,7 +56,7 @@ public static class CodexAuthReader
     /// (2026-09-11 사람의 지적). `account_id` 는 사람이 쓸 데가 없어 아예 뺐다.
     /// </para>
     /// </summary>
-    private static IReadOnlyList<AuthNote> Extras(JsonElement root, string? mode, bool isApiKey, string? plan)
+    private static IReadOnlyList<AuthNote> Extras(JsonElement root, string? mode, bool isApiKey)
     {
         var extras = new List<AuthNote>();
 
@@ -66,11 +68,6 @@ public static class CodexAuthReader
             "chatgpt" => new AuthNote("AuthNote_AuthChatGpt"),
             _ => new AuthNote("AuthNote_AuthMode", mode),
         });
-
-        if (plan is { } value)
-        {
-            extras.Add(new AuthNote("AuthNote_Plan", value));
-        }
 
         if (root.Prop("last_refresh").Text() is { } lastRefresh)
         {

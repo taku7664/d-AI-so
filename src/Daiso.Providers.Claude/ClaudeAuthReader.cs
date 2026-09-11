@@ -37,7 +37,7 @@ public static class ClaudeAuthReader
             : (DateTimeOffset?)null;
 
         var extras = Extras(oauth.Value);
-        var (label, email) = Account(claudeJson, oauth.Prop("subscriptionType").Text());
+        var (label, email) = Account(claudeJson);
 
         return new AuthStatus(
             ToolKind.Claude,
@@ -45,17 +45,13 @@ public static class ClaudeAuthReader
             label,
             email,
             expiresAt,
-            extras);
+            extras,
+            oauth.Prop("subscriptionType").Text());
     }
 
     private static IReadOnlyList<AuthNote> Extras(JsonElement oauth)
     {
         var extras = new List<AuthNote>();
-
-        if (oauth.Prop("subscriptionType").Text() is { } subscription)
-        {
-            extras.Add(new AuthNote("AuthNote_Subscription", subscription));
-        }
 
         if (oauth.Prop("rateLimitTier").Text() is { } tier)
         {
@@ -86,7 +82,11 @@ public static class ClaudeAuthReader
         return extras;
     }
 
-    private static (string? Label, string? Email) Account(string? claudeJson, string? subscriptionType)
+    /// <summary>
+    /// 계정 이름과 이메일. <b>구독 등급은 여기 섞지 않는다</b> — 카드에 요금제 자리가 따로 있고,
+    /// 도구마다 이름 줄의 뜻이 달라지면 세 카드를 나란히 읽을 수 없다 (2026-09-11 사람의 지적).
+    /// </summary>
+    private static (string? Label, string? Email) Account(string? claudeJson)
     {
         if (claudeJson is null)
         {
@@ -105,7 +105,6 @@ public static class ClaudeAuthReader
         {
             account.Prop("displayName").Text(),
             account.Prop("organizationName").Text(),
-            subscriptionType,
         }.Where(part => part is not null);
 
         var label = string.Join(" · ", parts);

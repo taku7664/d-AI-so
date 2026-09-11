@@ -349,6 +349,12 @@ public sealed record ExportOptions(bool IncludeToolCalls = true, bool IncludeSys
 
 ## 4. Provider 구현 메모
 
+**로그인 카드의 줄은 뜻이 고정이다**: 계정 이름 → 이메일 → 요금제 → 만료 → 설치.
+`AuthStatus` 의 `AccountLabel`·`Email`·`Plan`·`SessionExpiresAt` 이 그 자리에 하나씩 대응하고, 값이 없으면
+화면이 줄을 지우는 대신 `… 정보 없음` 을 넣는다. 도구마다 줄 수나 줄 뜻이 달라지면 카드 셋을 나란히 놓고
+같은 자리를 비교할 수 없다 (2026-09-11 사람의 지적). 그래서 **구독·요금제를 이름 줄에 섞지 않는다** —
+`AccountShapeTests` 가 그것을 잠근다. 같은 값을 부가 정보에서 한 번 더 말하지도 않는다.
+
 모든 파일 읽기는 **UTF-8 명시** (`new StreamReader(path, Encoding.UTF8)`). 시스템 로케일(CP949)에 의존하지 않는다.
 
 ### 4.1 Claude (`Daiso.Providers.Claude`)
@@ -359,6 +365,7 @@ public sealed record ExportOptions(bool IncludeToolCalls = true, bool IncludeSys
   - `subscriptionType`, `rateLimitTier`, `scopes` → Extras (`구독:`·`사용량 등급:`·`권한:` — 필드 이름을 그대로 옮기지 않는다)
   - `mcpOAuth` 키 이름(`|` 앞부분)만 → Extras
 - `%USERPROFILE%\.claude.json` → `oauthAccount.{emailAddress, displayName, organizationName}` → `Email`, `AccountLabel`. 파일이나 키가 없으면 null
+- `subscriptionType` → **`Plan`**. `AccountLabel` 에 섞지 않는다 (4장 머리의 카드 줄 규칙)
 
 **세션**
 - 루트: `%USERPROFILE%\.claude\projects\*\*.jsonl` (하위 폴더 `memory/` 등은 무시)
@@ -383,7 +390,8 @@ public sealed record ExportOptions(bool IncludeToolCalls = true, bool IncludeSys
 - `%USERPROFILE%\.codex\auth.json` → `auth_mode`, `last_refresh`, `OPENAI_API_KEY`(null 여부만), `tokens.{id_token, access_token, refresh_token, account_id}`
 - **`SessionExpiresAt`**: `access_token`의 JWT payload `exp` (서명 검증 없이 base64 디코드만, 값은 exp 숫자만 사용). 디코드 실패 시 null → LoggedIn
 - API 키 모드(`auth_mode == "apikey"`)는 만료 없음 → null
-- 계정: `id_token` payload 의 `email` 과 요금제(`https://api.openai.com/auth`.`chatgpt_plan_type`, 없으면 최상위 `chatgpt_plan_type`) → `Email`, `AccountLabel`.
+- 계정: `id_token` payload 의 `email` → `Email`, 요금제(`https://api.openai.com/auth`.`chatgpt_plan_type`, 없으면 최상위 `chatgpt_plan_type`) → `Plan`.
+  사람 이름을 읽을 곳이 없어 `AccountLabel` 은 null 이다.
   `JwtReader` 가 payload 에서 **만료·이메일·요금제 세 조각만** 꺼내고 원문은 버린다 (§7.1)
 - **인증 방식을 계정 이름 자리에 넣지 않는다.** 전에는 `auth_mode`(`chatgpt`)를 `AccountLabel` 로 넘겨 계정처럼 보였고,
   같은 값이 부가 정보에 한 번 더 나왔다 (2026-09-11 사람의 지적). 읽을 것이 없으면 비운다 — §4.5 의 이메일 규칙과 같다
@@ -457,6 +465,7 @@ public sealed record ExportOptions(bool IncludeToolCalls = true, bool IncludeSys
   `CredentialBlob` 은 건드리지 않고 곧바로 `CredFree` 한다. 토큰은 화면·로그·파일 어디에도 쓰지 않는다
 - **만료는 알 수 없다**(`SessionExpiresAt = null`). CLI 가 알아서 갱신하고 앱은 그 시각을 볼 수 없다. 부가 정보에 `만료: 알 수 없음`으로 이유를 적는다 —
   아무 말이 없으면 앱이 못 읽는 것인지 로그인이 안 된 것인지 구분할 수 없다
+- 요금제도 알 수 없다 → `Plan = null` → 카드는 `요금제 정보 없음`
 - **이메일 자리는 비운다.** 읽을 수 있는 계정 파일은 은퇴한 Gemini CLI 의 `google_accounts.json` 뿐이고,
   다른 계정으로 `agy` 에 로그인했으면 그 값은 틀린 값이다. 부가 정보에 `계정 이메일: CLI가 파일에 남기지 않습니다`로 밝힌다
 - **은퇴한 Gemini CLI 의 `oauth_creds.json` 은 이 도구의 상태가 아니다.** 처음 이식할 때는 그 파일의 `refresh_token`·`expiry_date`·`scope` 를

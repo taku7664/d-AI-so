@@ -26,13 +26,16 @@ public sealed record AuthNote(string Key, string? Argument = null);
 /// <summary>
 /// 도구별 로그인 상태. 토큰 값은 어떤 필드에도 담지 않는다. (ARCHITECTURE §7.1)
 /// </summary>
+/// <param name="AccountLabel">계정 이름. 사람·조직처럼 <b>누구인지</b>를 말하는 값만 담는다.</param>
+/// <param name="Plan">요금제·구독 등급. <see cref="AccountLabel"/> 에 섞지 않는다 — 카드가 자리를 따로 갖는다.</param>
 public sealed record AuthStatus(
     ToolKind Tool,
     AuthState State,
     string? AccountLabel,
     string? Email,
     DateTimeOffset? SessionExpiresAt,
-    IReadOnlyList<AuthNote> Extras)
+    IReadOnlyList<AuthNote> Extras,
+    string? Plan = null)
 {
     /// <summary>ExpiringSoon으로 볼 남은 기간.</summary>
     public static readonly TimeSpan ExpiringSoonWindow = TimeSpan.FromDays(7);
