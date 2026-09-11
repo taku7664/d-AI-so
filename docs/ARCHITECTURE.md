@@ -15,11 +15,16 @@
 ├──────────────────────┬──────────────────────┤
 │ Daiso.Providers      │ Daiso.Infrastructure │
 │  .Claude  .Codex     │  SQLite · FS · Process│  Core 인터페이스 구현
+│  .Antigravity        │                      │
+│  .Manifest (플러그인) │                      │
 └──────────────────────┴──────────────────────┘
 ```
 
 의존 방향: `App → Core ← Providers`, `App → Core ← Infrastructure`, `Infrastructure → Providers`(세션 인덱스가 Provider를 사용).
-`Providers.Claude`/`Providers.Codex` → `Providers.Common`. Common은 Core만 참조한다 (§4.3 공용 코드가 Core 순수성 규칙을 지킬 수 없어 별도 어셈블리로 둔다).
+`Providers.Claude`/`Providers.Codex`/`Providers.Antigravity`/`Providers.Manifest` → `Providers.Common`.
+Common은 Core만 참조한다 (§4.3 공용 코드가 Core 순수성 규칙을 지킬 수 없어 별도 어셈블리로 둔다).
+
+`Providers.Manifest`는 **매니페스트 파일 한 장을 `IProvider`로 만든다** — 빌드된 앱에 도구를 더하는 길이다 (§9).
 Core는 YamlDotNet 외에 아무것도 참조하지 않는다.
 
 | 프로젝트 | TFM | 주요 패키지 |
@@ -89,7 +94,17 @@ public sealed record OrCondition(IReadOnlyList<Condition> Items) : Condition;
 ### 2.2 Session
 
 ```csharp
-public enum ToolKind { Claude, Codex }
+// enum 이 아니다. 바깥(플러그인)에서 값을 만들 수 있어야 한다 (§9)
+public readonly record struct ToolKind   // .Id 는 소문자: "claude" | "codex" | "antigravity" | 플러그인 id
+{
+    public static ToolKind Claude { get; }        // "claude"
+    public static ToolKind Codex { get; }         // "codex"
+    public static ToolKind Antigravity { get; }   // "antigravity"
+    public static IReadOnlyList<ToolKind> BuiltIn { get; }   // 플러그인이 못 쓰는 예약 id
+
+    public string Id { get; }
+    public static bool TryParse(string? id, out ToolKind kind);   // 대소문자 안 가림 (옛 기록의 "Claude")
+}
 
 public sealed record SessionInfo(
     ToolKind Tool,
@@ -237,6 +252,7 @@ public sealed record MigrationResult(ToolKind Target, string Content, IReadOnlyL
 public interface IProvider
 {
     ToolKind Kind { get; }
+    ToolDisplay Display { get; }                    // 이름·제작사·색·로고. 기본 구현 없음 (§9)
     string ExecutableName { get; }                  // "claude" | "codex" — npm 셸(.cmd)만 사용
     string RulesFileName { get; }                   // "CLAUDE.md" | "AGENTS.md"
     IReadOnlyList<string> ContextFilePatterns(string projectDir);   // §4.4 로드 순서대로
@@ -443,7 +459,7 @@ public sealed record ExportOptions(bool IncludeToolCalls = true, bool IncludeSys
 - 프로필(§5.7) 파일: `antigravity-cli/settings.json`(선택). **필수 파일이 없다** — 자격 증명이 파일이 아니라 프로필로 로그인을 옮길 수 없다
 
 **세션**
-- 루트: `%USERPROFILE%\.gemini	mp\{프로젝트 이름 | SHA-256}\chats\session-*.jsonl`. 아카이브 개념 없음
+- 루트: `%USERPROFILE%\.gemini\tmp\{프로젝트 이름 | SHA-256}\chats\session-*.jsonl`. 아카이브 개념 없음
 - **append-only 로그가 아니다. 레코드 네 가지를 순서대로 리플레이해야 최종 상태가 나온다** (`GeminiTranscriptReader`, CLI 0.58 읽기 코드와 같은 규칙)
   | 레코드 | 판별 | 뜻 |
   |---|---|---|
@@ -766,7 +782,10 @@ MUST 넷을 어긴 페이지를 만들면 테스트가 빨개진다. 규칙을 �
 - **도구 탭 두 꼴**: 화면 전체를 거르는 탭(요약·사용량·세션)은 필터 줄의 독립 띠 `전체 · Codex · Claude · Antigravity`. 카드 하나만 거르는 탭(터미널)은 **그 카드 머리에 붙여** 아래에 구분선을 두고 아이콘을 넣는다. 떠 있는 띠는 어디 것인지 읽히지 않는다
 - **화면 루트는 `Controls/PageBody` 하나다.** 슬롯은 `Commands`(명령 줄) → `Filters`(필터·탭 줄) → `Body` → `Footer` 순서고 비운 슬롯은 줄이 사라진다. 여백 `PagePadding`(24), 줄 사이 12. 폭은 `Layout="Reading"`(`PageMaxWidth` 1280 상한, 왼쫁 정렬 — 요약·사용량·설정) / `Layout="Wide"`(창 전체 — 터미널·세션·내 규칙·내 프롬프트) 둘뿐이다. Reading 은 PageBody 가 본문을 스크롤에 담고 머리·푸터는 스크롤하지 않는다. 페이지가 `ScrollViewer`·`MaxWidth`·`Padding`으로 폭과 여백을 직접 정하면 틀린 것이다
 - **도구 순서는 `ToolLook.DisplayOrder` = Codex → Claude → Antigravity**. 요약 탭·카드, 터미널 탭, 세션 필터, 컨텍스트 토글이 전부 이 순서다
-- **도구 표시는 `ToolLook` 한 곳**: 이름(`Claude Code`·`Codex CLI`·`Antigravity CLI`), 짧은 이름, 배지 한 글자(C·X·A), 색(주황·초록·파랑). 뷰모델은 `ToolKind`로 분기하지 않고 여기를 부른다. 도구가 늘면 `ToolKind`·`ToolLook`·DI·터미널 프리셋·세션 필터·컨텍스트 토글을 늘린다
+- **도구 표시는 도구가 내놓는다**: `IProvider.Display`(`ToolDisplay` — 이름·제작사·짧은 이름·배지 한 글자·색·로고 path·표시 순서). Core 에서는 전부 문자열·숫자다(색은 `#RRGGBB`, 로고는 24×24 SVG path) — Core 는 WinUI 를 모른다.
+  `ToolLook`은 **값을 들고 있지 않은 조회 창구**다: 등록된 도구에서 `Display`를 찾아 `Color`·`Brush`·`PathIcon`으로 바꿔 준다. 색이 하나면 단색, 둘 이상이면 그라데이션 — 어느 쪽인지 따로 묻지 않는다. 모르는 도구는 `ToolDisplay.Unknown`(id 를 그대로 보여 줌)으로 답한다. 앱이 뜰 때 `ToolRegistry.Refresh()`가 한 번 심는다.
+  뷰모델·XAML은 `ToolKind`로 분기하지 않는다. **화면 XAML 에 도구 이름을 적지 않는다** — `ToolNameInXamlTests`가 막는다. 도구 탭은 `SelectorBarVisuals.FillToolTabs`가 `ToolLook.DisplayOrder`로 채운다
+- **도구를 늘리는 길은 둘**: (1) 앱에 묻어 두기 — `ToolKind` 상수·`Providers.X` 프로젝트·DI 등록. (2) **빌드 없이** — `%USERPROFILE%\.daiso\tools\*.yaml` 매니페스트(+ 필요하면 세션 어댑터). 자세한 것은 `docs/PLUGIN_PLAN.md`
 - **가속기 풍선 숨김**: 셸 루트 격자는 `KeyboardAcceleratorPlacementMode="Hidden"`. 안 그러면 `Ctrl+1` 같은 풍선이 본문 어디에나 뜬다. 단축키는 설정 화면에 적혀 있다
 - **저장하지 않은 편집 보호**: 편집기가 더티(`IsDirty` — 마지막 열기·저장·새로 만들기 시점과 직렬화 결과가 다름)이면 다른 목록 항목을 고르거나 새로 만들기·열기·최근 파일을 누를 때 `DiscardDialog`로 묻는다. 취소하면 선택을 이전 항목으로 되돌리고 편집기는 그대로다. 목록을 다시 채우며 같은 항목을 되찾는 것과 방금 저장한 사본을 되찾는 것은 묻지 않는다
 
