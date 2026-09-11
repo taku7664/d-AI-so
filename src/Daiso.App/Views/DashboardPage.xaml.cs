@@ -3,6 +3,7 @@ using Daiso.App.Services;
 using Daiso.App.Strings;
 using Daiso.App.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
 namespace Daiso.App.Views;
@@ -58,6 +59,64 @@ public sealed partial class DashboardPage : Page, IPageHeaderSource
         if (e.PropertyName == nameof(ShellViewModel.IsIndexing) && !Shell.IsIndexing)
         {
             UiCommands.Start(ViewModel.LoadCommand);
+        }
+    }
+
+    // ── 도구 카드 띠 ───────────────────────────────────────────────────────
+    //
+    // 카드는 언제나 한 줄이고 넘치면 가로로 스크롤한다. 폭은 "두 장이 딱 들어가는 값" —
+    // 지금 보이는 칸의 절반이라 창 크기에 따라 달라지고, 그래서 XAML 이 정하지 못한다.
+    //
+    // StackLayout 은 항목에게 원하는 폭을 그대로 주므로 카드가 제 내용대로 커진다.
+    // 여기서 폭을 못 박아야 카드 셋이 같은 크기로 보인다.
+
+    /// <summary>한 화면에 보일 카드 수. 셋으로 늘리려면 이 값만 바꾼다.</summary>
+    private const int VisibleCards = 2;
+
+    /// <summary>카드가 이보다 좁아지면 안에 든 글이 잘린다. 그때는 두 장이 안 들어가고 스크롤로 넘긴다.</summary>
+    private const double MinimumCardWidth = 300;
+
+    private double _cardWidth;
+
+    private void OnToolStripSizeChanged(object sender, SizeChangedEventArgs e) => ApplyCardWidth();
+
+    /// <summary>카드가 화면에 올라올 때마다 지금 폭을 입힌다. 가상화라 스크롤 중에도 새로 올라온다.</summary>
+    private void OnToolCardPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
+    {
+        if (_cardWidth > 0 && args.Element is FrameworkElement card)
+        {
+            card.Width = _cardWidth;
+        }
+    }
+
+    /// <summary>보이는 칸을 재어 카드 폭을 정하고, 이미 올라와 있는 카드에도 입힌다.</summary>
+    private void ApplyCardWidth()
+    {
+        var spacing = (double)Application.Current.Resources["GapXLarge"];
+        var available = ToolStrip.ViewportWidth > 0 ? ToolStrip.ViewportWidth : ToolStrip.ActualWidth;
+
+        if (available <= 0)
+        {
+            return;
+        }
+
+        var width = Math.Max(
+            MinimumCardWidth,
+            (available - (spacing * (VisibleCards - 1))) / VisibleCards);
+
+        if (Math.Abs(width - _cardWidth) < 0.5)
+        {
+            return;
+        }
+
+        _cardWidth = width;
+
+        for (var i = 0; i < ViewModel.VisibleTools.Count; i++)
+        {
+            if (ToolCards.TryGetElement(i) is FrameworkElement card)
+            {
+                card.Width = width;
+            }
         }
     }
 

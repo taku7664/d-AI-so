@@ -41,27 +41,31 @@
                 <TextBlock Text="{loc:Str Key=Dashboard_ToolStatus}" Style="{StaticResource SectionTitleText}" />
 
                 <!--
-                    도구 카드: 도구 수만큼. <b>한 줄에 두 장</b>이고 남은 폭을 둘이 나눠 갖는다
-                    (2026-09-11 사람의 요청). 셋씩 놓던 때는 한 장이 400 을 넘어 가로가 남아돌았고,
-                    폭을 카드에 맡겼을 때는(ItemsStretch=None) 오른쪽에 빈 자리가 크게 남았다.
+                    도구 카드: <b>언제나 한 줄</b>이고 넘치면 가로로 스크롤한다 (2026-09-11 사람의 요청).
+                    줄바꿈을 허용하던 때(UniformGridLayout)는 도구가 셋이면 둘 + 하나로 접혀
+                    둘째 줄이 반쯤 빈 채로 남았다 — 도구가 늘수록 그 어긋남이 커진다.
 
-                    `MinItemWidth` 는 카드 폭이 아니라 <b>몇 줄로 나눌지 정하는 하한</b>이다(Fill 이므로).
-                    360 인 이유: 창 하한 1024 에서 좌측 메뉴 210 과 페이지 여백 48 을 빼면 본문이 766 이고,
-                    두 장이 들어가려면 하한이 그 절반(383)보다 작아야 한다. 더 좁아지면 한 줄에 한 장으로 접힌다.
-                    폭 상한은 Reading(1280) 이라 넓은 창에서 한 장이 약 608 이 된다
+                    카드 폭은 XAML 이 정하지 못한다. <b>두 장이 딱 들어가는 폭</b>은 지금 보이는 칸의 절반이라
+                    창 크기에 따라 달라지기 때문이다. `OnToolStripSizeChanged` 가 재어서 넣는다.
+                    세로 스크롤은 끈다 — 바깥 페이지가 이미 세로로 스크롤한다
                 -->
-                <ItemsRepeater ItemsSource="{x:Bind ViewModel.VisibleTools}"
-                ItemTemplate="{StaticResource ToolCardTemplate}">
-                    <ItemsRepeater.Layout>
-                        <UniformGridLayout
-                            MinItemWidth="360"
-                            MaximumRowsOrColumns="2"
-                            MinRowSpacing="{StaticResource GapXLarge}"
-                            MinColumnSpacing="{StaticResource GapXLarge}"
-                            ItemsStretch="Fill" />
-                    </ItemsRepeater.Layout>
-
-                </ItemsRepeater>
+                <ScrollViewer
+                    x:Name="ToolStrip"
+                    HorizontalScrollMode="Enabled"
+                    HorizontalScrollBarVisibility="Auto"
+                    VerticalScrollMode="Disabled"
+                    VerticalScrollBarVisibility="Disabled"
+                    SizeChanged="OnToolStripSizeChanged">
+                    <ItemsRepeater
+                        x:Name="ToolCards"
+                        ItemsSource="{x:Bind ViewModel.VisibleTools}"
+                        ItemTemplate="{StaticResource ToolCardTemplate}"
+                        ElementPrepared="OnToolCardPrepared">
+                        <ItemsRepeater.Layout>
+                            <StackLayout Orientation="Horizontal" Spacing="{StaticResource GapXLarge}" />
+                        </ItemsRepeater.Layout>
+                    </ItemsRepeater>
+                </ScrollViewer>
 
 
                 <!-- 최근 세션 -->
