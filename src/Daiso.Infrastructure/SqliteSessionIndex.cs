@@ -15,6 +15,12 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
 
     private const int SnippetRadius = 40;
 
+    /// <summary>
+    /// 한 번에 돌려주는 검색 결과 수. 상한이 없던 때는 흔한 낱말 하나에 수만 줄의 <b>본문 전체</b>가
+    /// 메모리로 올라왔다. 화면은 세션마다 스무 줄까지만 보여 준다.
+    /// </summary>
+    private const int SearchLimit = 200;
+
     private readonly IReadOnlyList<IProvider> _providers;
 
     /// <summary>쓰기 전용 연결. 갱신·재구축만 쓴다.</summary>
@@ -65,6 +71,17 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
 
     public void Dispose()
     {
+        // 체크포인트를 손으로 한 번 돌린다. 앱이 곱게 닫히지 않으면 WAL 이 그대로 남는데,
+        // 실측으로 109MB 까지 자라 있었다. 실패해도 닫는 일은 계속한다
+        try
+        {
+            Execute("PRAGMA wal_checkpoint(TRUNCATE);");
+        }
+        catch (SqliteException)
+        {
+            // 다른 연결이 읽는 중이면 접지 못한다. 다음 기회에 접힌다
+        }
+
         _connection.Dispose();
         _writeGate.Dispose();
     }
@@ -88,7 +105,8 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
 
         try
         {
-            Execute("DELETE FROM messages_fts; DELETE FROM sessions; DELETE FROM usage_daily;");
+            // messages 를 비우면 트리거가 FTS 도 따라 비운다
+            Execute("DELETE FROM messages; DELETE FROM sessions; DELETE FROM usage_daily;");
 
             var sessions = await CollectAsync(ct).ConfigureAwait(false);
             var done = 0;
@@ -101,6 +119,9 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
                 await IndexAsync(provider, session, fromOffset: 0, previous: null, ct).ConfigureAwait(false);
                 done++;
             }
+
+            // 처음부터 다시 담았으면 조각난 색인을 한 번 합친다. 갱신마다 하기에는 무겁다(4만 행에 7초)
+            Optimize();
 
             progress?.Report(new IndexProgress(done, sessions.Count, string.Empty));
         }
@@ -332,17 +353,23 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
         var assistants = previous?.AssistantMessageCount ?? 0;
         var firstPrompt = previous?.FirstPrompt;
 
+        // 본문·세션 행·사용량을 <b>한 트랜잭션</b>으로 묶는다. 예전에는 본문만 커밋하고 나왔는데,
+        // 그 사이에 앱이 죽으면 오프셋이 옛 값으로 남아 같은 자리를 다시 담았다
         using (var transaction = _connection.BeginTransaction())
         {
             using var insert = _connection.CreateCommand();
             insert.Transaction = transaction;
+            // OR IGNORE: 같은 파일·시각·역할·본문이면 두 번째부터 조용히 버린다.
+            // 중복은 세 곳에서 온다 — 도구가 같은 말을 두 레코드에 남기고(Codex), 이어 읽기 경계가 겹치고,
+            // 담는 도중에 죽으면 다음 갱신이 같은 자리를 다시 담는다. 막는 자리는 여기 하나면 된다
             insert.CommandText = """
-                INSERT INTO messages_fts (file_path, at, role, text)
-                VALUES ($path, $at, $role, $text)
+                INSERT OR IGNORE INTO messages (file_path, at, role, hash, text)
+                VALUES ($path, $at, $role, $hash, $text)
                 """;
             var pathParameter = insert.Parameters.Add("$path", SqliteType.Text);
             var atParameter = insert.Parameters.Add("$at", SqliteType.Text);
             var roleParameter = insert.Parameters.Add("$role", SqliteType.Text);
+            var hashParameter = insert.Parameters.Add("$hash", SqliteType.Integer);
             var textParameter = insert.Parameters.Add("$text", SqliteType.Text);
             pathParameter.Value = session.FilePath;
 
@@ -358,10 +385,12 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
 
                 atParameter.Value = Text(message.At);
                 roleParameter.Value = message.Role.ToString();
+                hashParameter.Value = Fingerprint(message.Text);
                 textParameter.Value = message.Text;
-                insert.ExecuteNonQuery();
 
-                if (message.IsSidechain)
+                var added = insert.ExecuteNonQuery() > 0;
+
+                if (message.IsSidechain || !added)
                 {
                     continue;
                 }
@@ -377,24 +406,46 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
                 }
             }
 
+            var stored = session with
+            {
+                UserMessageCount = users,
+                AssistantMessageCount = assistants,
+                FirstPrompt = firstPrompt,
+            };
+
+            UpsertSession(stored, session.SizeBytes, transaction);
+            await UpdateUsageAsync(provider, stored, fromOffset, transaction, ct).ConfigureAwait(false);
+
             transaction.Commit();
         }
+    }
 
-        var stored = session with
+    /// <summary>
+    /// 본문 한 줄의 지문. 같은 줄인지 보는 데만 쓴다(<c>ux_messages_key</c>).
+    /// FNV-1a 64비트 — 표준 라이브러리만으로 값이 <b>판마다 같고</b> 빠르다.
+    /// <c>string.GetHashCode</c> 는 프로세스마다 달라 디스크에 적을 수 없다.
+    /// </summary>
+    private static long Fingerprint(string text)
+    {
+        const ulong Offset = 14695981039346656037;
+        const ulong Prime = 1099511628211;
+
+        var hash = Offset;
+
+        foreach (var ch in text)
         {
-            UserMessageCount = users,
-            AssistantMessageCount = assistants,
-            FirstPrompt = firstPrompt,
-        };
+            hash = (hash ^ (byte)ch) * Prime;
+            hash = (hash ^ (byte)(ch >> 8)) * Prime;
+        }
 
-        UpsertSession(stored, session.SizeBytes);
-        await UpdateUsageAsync(provider, stored, fromOffset, ct).ConfigureAwait(false);
+        return unchecked((long)hash);
     }
 
     private async Task UpdateUsageAsync(
         IProvider provider,
         SessionInfo session,
         long fromOffset,
+        SqliteTransaction transaction,
         CancellationToken ct)
     {
         if (provider is not IUsageReader usageReader)
@@ -409,7 +460,7 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
             .ReadUsageAsync(session.FilePath, fromOffset, sessionDate, ct)
             .ConfigureAwait(false))
         {
-            WriteUsage(session, project, day, usageReader.UsageIsAdditive);
+            WriteUsage(session, project, day, usageReader.UsageIsAdditive, transaction);
         }
     }
 
@@ -417,9 +468,10 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
     /// 날짜별 합산(Claude) 또는 세션 단위 덮어쓰기(Codex).
     /// 덮어쓰기는 세션 파일 단위로 행을 하나만 유지한다.
     /// </summary>
-    private void WriteUsage(SessionInfo session, string? project, UsageDay day, bool additive)
+    private void WriteUsage(SessionInfo session, string? project, UsageDay day, bool additive, SqliteTransaction transaction)
     {
         using var command = _connection.CreateCommand();
+        command.Transaction = transaction;
         command.CommandText = additive
             ? """
               INSERT INTO usage_daily
@@ -454,9 +506,10 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
         command.ExecuteNonQuery();
     }
 
-    private void UpsertSession(SessionInfo session, long lastOffset)
+    private void UpsertSession(SessionInfo session, long lastOffset, SqliteTransaction transaction)
     {
         using var command = _connection.CreateCommand();
+        command.Transaction = transaction;
         command.CommandText = """
             INSERT INTO sessions (
                 file_path, tool, session_id, project_path, project_exists, started_at, modified_at,
@@ -528,11 +581,12 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
         command.ExecuteNonQuery();
     }
 
+    /// <summary>이 파일에서 온 것을 모두 지운다. FTS 는 트리거가 따라 지운다.</summary>
     private void DeleteRows(string filePath)
     {
         using var command = _connection.CreateCommand();
         command.CommandText = """
-            DELETE FROM messages_fts WHERE file_path = $path;
+            DELETE FROM messages WHERE file_path = $path;
             DELETE FROM usage_daily WHERE file_path = $path;
             """;
         command.Parameters.AddWithValue("$path", filePath);
@@ -577,10 +631,11 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
         command.CommandText = $"""
             SELECT {SessionColumns.Replace("sessions.", "s.", StringComparison.Ordinal)},
                    m.at, m.role, m.text
-            FROM messages_fts m
+            FROM messages m
             JOIN sessions s ON s.file_path = m.file_path
-            WHERE messages_fts MATCH $query
+            WHERE m.id IN (SELECT rowid FROM messages_fts WHERE messages_fts MATCH $query)
             ORDER BY s.modified_at DESC
+            LIMIT {SearchLimit}
             """;
         command.Parameters.AddWithValue("$query", $"\"{query.Replace("\"", "\"\"", StringComparison.Ordinal)}\"");
 
@@ -593,16 +648,21 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
         command.CommandText = $"""
             SELECT {SessionColumns.Replace("sessions.", "s.", StringComparison.Ordinal)},
                    m.at, m.role, m.text
-            FROM messages_fts m
+            FROM messages m
             JOIN sessions s ON s.file_path = m.file_path
             WHERE m.text LIKE $like
             ORDER BY s.modified_at DESC
+            LIMIT {SearchLimit}
             """;
         command.Parameters.AddWithValue("$like", $"%{query}%");
 
         return ReadHits(command, query);
     }
 
+    /// <summary>
+    /// 찾은 줄을 읽는다. <b>그 글자가 실제로 든 줄만</b> 남긴다 — 어차피 잘라 보여 주려면
+    /// 자리를 찾아야 하므로 값은 공짜고, 색인과 화면이 어긋나는 일(대소문자·정규화)이 줄어든다.
+    /// </summary>
     private static IReadOnlyList<SearchHit> ReadHits(SqliteCommand command, string query)
     {
         var hits = new List<SearchHit>();
@@ -611,28 +671,29 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
 
         while (reader.Read())
         {
-            var session = ReadSession(reader);
-            var at = ParseTimestamp(reader.GetString(messageStart));
-            var role = Enum.Parse<MessageRole>(reader.GetString(messageStart + 1));
             var text = reader.GetString(messageStart + 2);
+            var found = text.IndexOf(query, StringComparison.OrdinalIgnoreCase);
 
-            hits.Add(new SearchHit(session, new SessionMessage(at, role, text, false), Snippet(text, query)));
+            if (found < 0)
+            {
+                continue;
+            }
+
+            var session = ReadSession(reader);
+            var when = ParseTimestamp(reader.GetString(messageStart));
+            var role = Enum.Parse<MessageRole>(reader.GetString(messageStart + 1));
+
+            hits.Add(new SearchHit(session, new SessionMessage(when, role, text, false), Snippet(text, found, query.Length)));
         }
 
         return hits;
     }
 
-    /// <summary>일치 지점 주변만 잘라 보여준다.</summary>
-    private static string Snippet(string text, string query)
+    /// <summary>일치 지점 주변만 잘라 보여준다. 자리는 부르는 쪽이 이미 찾아 두었다.</summary>
+    private static string Snippet(string text, int index, int length)
     {
-        var index = text.IndexOf(query, StringComparison.OrdinalIgnoreCase);
-        if (index < 0)
-        {
-            return text.Length <= SnippetRadius * 2 ? text : text[..(SnippetRadius * 2)] + "…";
-        }
-
         var start = Math.Max(0, index - SnippetRadius);
-        var end = Math.Min(text.Length, index + query.Length + SnippetRadius);
+        var end = Math.Min(text.Length, index + length + SnippetRadius);
 
         return (start > 0 ? "…" : string.Empty)
             + text[start..end]
@@ -658,29 +719,70 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
     /// 3: Gemini 프로젝트 경로를 디스크의 실제 대소문자로 저장.
     /// 4: `ToolKind.Gemini` → `ToolKind.Antigravity`. tool 열에 도구 이름이 문자열로 들어가므로 옛 행("Gemini")은 Enum.Parse 가 못 읽는다.
     /// 5: ToolKind 가 enum → 문자열 id. tool 열이 "Claude" 에서 "claude" 가 된다 (docs/PLUGIN_PLAN.md Stage 1).
+    /// 6: 본문을 messages 로 옮기고 FTS 는 색인만(external content, detail=none).
     /// </summary>
-    private const int IndexFormatVersion = 5;
+    private const int IndexFormatVersion = 6;
 
+    /// <summary>
+    /// 표를 만들고, 형식이 옛것이면 <b>표째로 버리고</b> 다시 만든다.
+    /// <para>
+    /// 지우기만 해서는 안 되는 이유가 둘이다. 하나, FTS 의 옵션(<c>detail</c>·<c>content</c>)은
+    /// 만들 때 정해져서 <c>DELETE</c> 로는 바뀌지 않는다. 둘, <c>DELETE</c> 는 빈 쪽(page)을 파일에
+    /// 그대로 남긴다 — 판이 다섯 번 오르는 동안 그렇게 부풀어 실측 557MB 였고, 같은 내용을 새로 담으면 133MB 였다.
+    /// 그래서 버린 다음 <see cref="Vacuum"/> 으로 자리를 돌려준다.
+    /// </para>
+    /// </summary>
     private void CreateSchema()
     {
+        var stale = StoredVersion() != IndexFormatVersion;
+
+        if (stale)
+        {
+            Execute("""
+                DROP TRIGGER IF EXISTS messages_ai;
+                DROP TRIGGER IF EXISTS messages_ad;
+                DROP TABLE IF EXISTS messages_fts;
+                DROP TABLE IF EXISTS messages;
+                DROP TABLE IF EXISTS sessions;
+                DROP TABLE IF EXISTS usage_daily;
+                """);
+        }
+
         Execute(SchemaSql);
-        EnsureFormatVersion();
-    }
 
-    private void EnsureFormatVersion()
-    {
-        using var read = _connection.CreateCommand();
-        read.CommandText = "PRAGMA user_version;";
-        var current = Convert.ToInt32(read.ExecuteScalar(), System.Globalization.CultureInfo.InvariantCulture);
-
-        if (current == IndexFormatVersion)
+        if (!stale)
         {
             return;
         }
 
-        Execute($"DELETE FROM messages_fts; DELETE FROM sessions; DELETE FROM usage_daily; PRAGMA user_version = {IndexFormatVersion};");
+        Execute($"PRAGMA user_version = {IndexFormatVersion};");
+        Vacuum();
     }
 
+    private int StoredVersion()
+    {
+        using var read = _connection.CreateCommand();
+        read.CommandText = "PRAGMA user_version;";
+
+        return Convert.ToInt32(read.ExecuteScalar(), CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>버려진 쪽을 파일에서 걷어낸다. 트랜잭션 안에서는 돌지 않으므로 따로 부른다.</summary>
+    private void Vacuum() => Execute("VACUUM;");
+
+    /// <summary>
+    /// 본문은 <c>messages</c> 가 들고, FTS 는 색인만 든다(external content).
+    /// <para>
+    /// 전에는 FTS 표가 본문까지 들고 있었고 <c>file_path</c> 가 <c>UNINDEXED</c> 라,
+    /// 파일 하나가 바뀔 때마다 <c>DELETE … WHERE file_path=?</c> 가 표 전체를 훑었다.
+    /// 이제 지우기는 <c>ix_messages_file</c> 를 타고, FTS 는 트리거가 따라 지운다.
+    /// </para>
+    /// <para>
+    /// <b><c>detail=none</c> 은 쓸 수 없다.</b> 색인이 절반으로 줄어 솔깃하지만, trigram 은 세 글자 넘는 말을
+    /// 삼각자 <b>구절</b>로 찾는데 그 판에서는 구절 질의가 막혀 있다(fts5: phrase queries are not supported).
+    /// 재어 보고 되돌렸다 — 2026-09-11.
+    /// </para>
+    /// </summary>
     private const string SchemaSql = """
         PRAGMA journal_mode = WAL;
 
@@ -710,13 +812,34 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
         CREATE INDEX IF NOT EXISTS ix_sessions_project ON sessions (project_path);
         CREATE INDEX IF NOT EXISTS ix_sessions_modified ON sessions (modified_at);
 
+        CREATE TABLE IF NOT EXISTS messages (
+            id        INTEGER PRIMARY KEY,
+            file_path TEXT NOT NULL,
+            at        TEXT NOT NULL,
+            role      TEXT NOT NULL,
+            hash      INTEGER NOT NULL,
+            text      TEXT NOT NULL
+        );
+
+        CREATE INDEX IF NOT EXISTS ix_messages_file ON messages (file_path);
+
+        CREATE UNIQUE INDEX IF NOT EXISTS ux_messages_key
+            ON messages (file_path, at, role, hash);
+
         CREATE VIRTUAL TABLE IF NOT EXISTS messages_fts USING fts5 (
-            file_path UNINDEXED,
-            at        UNINDEXED,
-            role      UNINDEXED,
             text,
+            content = 'messages',
+            content_rowid = 'id',
             tokenize = 'trigram'
         );
+
+        CREATE TRIGGER IF NOT EXISTS messages_ai AFTER INSERT ON messages BEGIN
+            INSERT INTO messages_fts (rowid, text) VALUES (new.id, new.text);
+        END;
+
+        CREATE TRIGGER IF NOT EXISTS messages_ad AFTER DELETE ON messages BEGIN
+            INSERT INTO messages_fts (messages_fts, rowid, text) VALUES ('delete', old.id, old.text);
+        END;
 
         CREATE TABLE IF NOT EXISTS usage_daily (
             date         TEXT NOT NULL,
@@ -731,6 +854,19 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
             PRIMARY KEY (date, tool, project, model, file_path)
         );
         """;
+
+    /// <summary>조각난 색인을 합친다. 검색이 빨라지고 파일도 줄어든다.</summary>
+    private void Optimize()
+    {
+        try
+        {
+            Execute("INSERT INTO messages_fts (messages_fts) VALUES ('optimize');");
+        }
+        catch (SqliteException)
+        {
+            // 합치기는 있으면 좋은 것이지 꼭 있어야 하는 것이 아니다
+        }
+    }
 
     private void Execute(string sql)
     {

@@ -380,6 +380,73 @@ public sealed class SqliteSessionIndexTests : IDisposable
         usage.ByModel.Should().ContainKey("gpt-5.1-codex");
     }
 
+    // ── 중복 ─────────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task The_same_line_twice_is_stored_once()
+    {
+        // 도구가 같은 말을 두 레코드에 남기는 일이 있다(Codex 의 event_msg + response_item).
+        // 실제 인덱스에서 그렇게 생긴 여분 행이 1,953 개였다 (2026-09-11 실측)
+        var (provider, index, path) = CreateWithFakeProvider();
+        using var owned = index;
+
+        var at = new DateTimeOffset(2026, 9, 1, 0, 0, 0, TimeSpan.Zero);
+        provider.SetMessages(
+            path,
+            new SessionMessage(at, MessageRole.User, "같은 말 한 번", false),
+            new SessionMessage(at, MessageRole.User, "같은 말 한 번", false));
+
+        await index.RefreshAsync(default);
+
+        (await index.SearchAsync("같은 말 한 번", default)).Should().HaveCount(1);
+    }
+
+    [Fact]
+    public async Task An_overlapping_reread_does_not_duplicate()
+    {
+        // 이어 읽기 시작점이 겹치면 같은 줄이 다시 온다. 담는 쪽에서 막는다
+        var (provider, index, path) = CreateWithFakeProvider();
+        using var owned = index;
+
+        var at = new DateTimeOffset(2026, 9, 1, 0, 0, 0, TimeSpan.Zero);
+        provider.SetMessages(path, new SessionMessage(at, MessageRole.User, "겹치는 줄", false));
+        await index.RefreshAsync(default);
+
+        provider.Sessions[0] = provider.Sessions[0] with
+        {
+            SizeBytes = provider.Sessions[0].SizeBytes + 100,
+            ModifiedAt = provider.Sessions[0].ModifiedAt.AddMinutes(1),
+        };
+        provider.SetMessages(
+            path,
+            new SessionMessage(at, MessageRole.User, "겹치는 줄", false),
+            new SessionMessage(at.AddMinutes(1), MessageRole.User, "새로 붙은 줄", false));
+
+        await index.RefreshAsync(default);
+
+        (await index.SearchAsync("겹치는 줄", default)).Should().HaveCount(1);
+        (await index.SearchAsync("새로 붙은 줄", default)).Should().HaveCount(1);
+    }
+
+    [Fact]
+    public async Task A_deleted_session_takes_its_messages_with_it()
+    {
+        var (provider, index, path) = CreateWithFakeProvider();
+        using var owned = index;
+
+        provider.SetMessages(
+            path,
+            new SessionMessage(DateTimeOffset.UnixEpoch, MessageRole.User, "사라질 말", false));
+        await index.RefreshAsync(default);
+        (await index.SearchAsync("사라질 말", default)).Should().HaveCount(1);
+
+        provider.Sessions.Clear();
+        await index.RefreshAsync(default);
+
+        (await index.SearchAsync("사라질 말", default)).Should().BeEmpty(
+            because: "세션이 사라지면 본문도 FTS 도 같이 사라져야 한다");
+    }
+
     // ── 도우미 ───────────────────────────────────────────────────────────
 
     private string DatabasePath() => Path.Combine(_directory, $"index-{Guid.NewGuid():N}.db");
