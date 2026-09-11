@@ -18,12 +18,27 @@ namespace Daiso.Providers.Manifest;
 /// </summary>
 public sealed class AdapterChannel : IDisposable
 {
-    /// <summary>한 요청이 이만큼 안에 끝나야 한다. 멈춘 어댑터가 화면을 붙잡지 못하게 한다.</summary>
+    /// <summary>
+    /// <b>한 줄</b>이 이만큼 안에 와야 한다. 멈춘 어댑터가 화면을 붙잡지 못하게 한다.
+    /// <para>
+    /// 요청 전체에 걸던 때는 세션이 크면 멀쩡히 흘려보내던 어댑터가 30초에 잘렸다.
+    /// 기다리는 이유는 "답이 오지 않는 것"이지 "답이 많은 것"이 아니다.
+    /// </para>
+    /// </summary>
     private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(30);
+
+    /// <summary>어댑터가 stderr 에 쏟은 말 중 남겨 둘 길이. 오류 문구에 꼬리로 붙인다.</summary>
+    private const int ErrorTailLength = 2000;
+
+    /// <summary>이유를 적기 전에 stderr 가 다 들어오기를 기다리는 시간. 다른 스레드로 오기 때문이다.</summary>
+    private static readonly TimeSpan StderrGrace = TimeSpan.FromSeconds(2);
 
     private readonly string _command;
     private readonly string _workingDirectory;
     private readonly SemaphoreSlim _turn = new(1, 1);
+
+    private readonly object _errorGate = new();
+    private readonly StringBuilder _errorTail = new();
 
     private Process? _process;
     private bool _disposed;
@@ -38,8 +53,20 @@ public sealed class AdapterChannel : IDisposable
         _workingDirectory = workingDirectory;
     }
 
-    /// <summary>마지막으로 어긋난 이유. 없으면 null.</summary>
+    /// <summary>마지막으로 어긋난 이유. 없으면 null. 어댑터가 stderr 에 남긴 말이 있으면 뒤에 붙는다.</summary>
     public string? LastError { get; private set; }
+
+    /// <summary>어댑터가 stderr 에 남긴 마지막 말. 플러그인을 만드는 사람이 볼 유일한 단서다.</summary>
+    public string? ErrorOutput
+    {
+        get
+        {
+            lock (_errorGate)
+            {
+                return _errorTail.Length == 0 ? null : _errorTail.ToString();
+            }
+        }
+    }
 
     /// <summary>어댑터가 <c>hello</c> 에서 알려 준 이름.</summary>
     public string? AdapterName { get; private set; }
@@ -73,8 +100,7 @@ public sealed class AdapterChannel : IDisposable
         // 통로가 하나뿐이라 요청이 겹치면 답이 섞인다. 한 번에 하나만 보낸다
         await _turn.WaitAsync(ct).ConfigureAwait(false);
 
-        using var deadline = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        deadline.CancelAfter(Timeout);
+        var finished = false;
 
         try
         {
@@ -82,22 +108,24 @@ public sealed class AdapterChannel : IDisposable
 
             if (process is null)
             {
+                finished = true;
                 yield break;
             }
 
             await process.StandardInput
-                .WriteLineAsync(JsonSerializer.Serialize(request, AdapterProtocol.Json).AsMemory(), deadline.Token)
+                .WriteLineAsync(JsonSerializer.Serialize(request, AdapterProtocol.Json).AsMemory(), ct)
                 .ConfigureAwait(false);
-            await process.StandardInput.FlushAsync(deadline.Token).ConfigureAwait(false);
+            await process.StandardInput.FlushAsync(ct).ConfigureAwait(false);
 
             while (true)
             {
-                var line = await ReadLineAsync(process, deadline.Token).ConfigureAwait(false);
+                var line = await ReadLineAsync(process, ct).ConfigureAwait(false);
 
                 if (line is null)
                 {
-                    LastError ??= "어댑터가 답을 끝내기 전에 닫혔다";
+                    Fail("어댑터가 답을 끝내기 전에 닫혔다");
                     Kill();
+                    finished = true;
                     yield break;
                 }
 
@@ -109,8 +137,9 @@ public sealed class AdapterChannel : IDisposable
                 }
                 catch (JsonException ex)
                 {
-                    LastError = $"어댑터가 JSON 이 아닌 줄을 보냈다: {ex.Message}";
+                    Fail($"어댑터가 JSON 이 아닌 줄을 보냈다: {ex.Message}");
                     Kill();
+                    finished = true;
                     yield break;
                 }
 
@@ -121,7 +150,8 @@ public sealed class AdapterChannel : IDisposable
 
                 if (parsed.Error is { Length: > 0 } error)
                 {
-                    LastError = error;
+                    Fail(error);
+                    finished = true;
                     yield break;
                 }
 
@@ -129,14 +159,35 @@ public sealed class AdapterChannel : IDisposable
 
                 if (parsed.Done)
                 {
+                    finished = true;
                     yield break;
                 }
             }
         }
         finally
         {
+            // 받는 쪽이 `done` 전에 그만뒀으면(상한에 걸려 break 한다) 남은 줄이 통로에 그대로 있다.
+            // 그대로 두면 <b>다음 요청의 답에 섞인다</b>. 통로를 접어 다음에 새로 띄운다
+            if (!finished)
+            {
+                Kill();
+            }
+
             _turn.Release();
         }
+    }
+
+    /// <summary>어긋난 이유를 적는다. 어댑터가 stderr 에 남긴 말이 있으면 꼬리로 붙인다.</summary>
+    private void Fail(string reason)
+    {
+        // stderr 는 다른 스레드로 온다. 이미 끝난 프로세스라면 남은 줄이 다 들어오기를 잠깐 기다린다 —
+        // 인자 있는 WaitForExit 은 비동기 읽기가 끝나는 것까지 같이 기다려 준다
+        if (_process is { HasExited: true } process)
+        {
+            process.WaitForExit((int)StderrGrace.TotalMilliseconds);
+        }
+
+        LastError = ErrorOutput is { Length: > 0 } tail ? $"{reason}\n{tail}" : reason;
     }
 
     /// <summary>
@@ -145,13 +196,17 @@ public sealed class AdapterChannel : IDisposable
     /// </summary>
     private async Task<string?> ReadLineAsync(Process process, CancellationToken ct)
     {
+        // 기다림은 줄마다 새로 잰다. 답이 계속 오는 동안에는 얼마든지 오래 걸려도 된다
+        using var deadline = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        deadline.CancelAfter(Timeout);
+
         try
         {
-            return await process.StandardOutput.ReadLineAsync(ct).ConfigureAwait(false);
+            return await process.StandardOutput.ReadLineAsync(deadline.Token).ConfigureAwait(false);
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
         {
-            LastError = $"어댑터가 {Timeout.TotalSeconds:0} 초 안에 답하지 않았다";
+            Fail($"어댑터가 {Timeout.TotalSeconds:0} 초 안에 한 줄도 보내지 않았다");
             Kill();
             return null;
         }
@@ -159,9 +214,16 @@ public sealed class AdapterChannel : IDisposable
 
     private Process? Start()
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+
         if (_process is { HasExited: false })
         {
             return _process;
+        }
+
+        lock (_errorGate)
+        {
+            _errorTail.Clear();
         }
 
         var (file, arguments) = Split(_command);
@@ -179,12 +241,20 @@ public sealed class AdapterChannel : IDisposable
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 StandardOutputEncoding = new UTF8Encoding(false),
+                StandardErrorEncoding = new UTF8Encoding(false),
             });
 
             if (_process is null)
             {
                 LastError = $"어댑터를 띄우지 못했다: {file}";
+
+                return null;
             }
+
+            // stderr 를 <b>반드시 읽어야 한다</b>. 리다이렉트해 놓고 읽지 않으면 파이프가 차서
+            // 어댑터가 쓰다가 멈추고, 우리는 그것을 "답이 없다"로 잘못 읽는다
+            _process.ErrorDataReceived += OnErrorLine;
+            _process.BeginErrorReadLine();
 
             return _process;
         }
@@ -215,6 +285,25 @@ public sealed class AdapterChannel : IDisposable
         return space < 0 ? (trimmed, string.Empty) : (trimmed[..space], trimmed[(space + 1)..]);
     }
 
+    /// <summary>어댑터가 stderr 에 남긴 말. 뒤쪽만 남긴다 — 앞을 버리는 쪽이 원인에 가깝다.</summary>
+    private void OnErrorLine(object sender, DataReceivedEventArgs args)
+    {
+        if (args.Data is not { Length: > 0 } line)
+        {
+            return;
+        }
+
+        lock (_errorGate)
+        {
+            _errorTail.AppendLine(line);
+
+            if (_errorTail.Length > ErrorTailLength)
+            {
+                _errorTail.Remove(0, _errorTail.Length - ErrorTailLength);
+            }
+        }
+    }
+
     private void Kill()
     {
         try
@@ -230,7 +319,12 @@ public sealed class AdapterChannel : IDisposable
         }
         finally
         {
-            _process?.Dispose();
+            if (_process is { } process)
+            {
+                process.ErrorDataReceived -= OnErrorLine;
+                process.Dispose();
+            }
+
             _process = null;
         }
     }

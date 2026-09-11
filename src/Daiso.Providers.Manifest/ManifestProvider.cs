@@ -38,7 +38,7 @@ public sealed class ManifestProvider : IProvider, IDisposable
         _home = home.Directory;
 
         _adapter = manifest.AdapterCommand is { Length: > 0 } command
-            ? new AdapterChannel(Fill(command), manifestDirectory)
+            ? new AdapterChannel(FillCommand(command), manifestDirectory)
             : null;
     }
 
@@ -217,6 +217,9 @@ public sealed class ManifestProvider : IProvider, IDisposable
     public Task<bool> HandshakeAsync(CancellationToken ct) =>
         _adapter?.HandshakeAsync(ct) ?? Task.FromResult(true);
 
+    /// <summary>어댑터가 마지막으로 어긋난 이유. 설정 화면이 보여 준다.</summary>
+    public string? LastAdapterError => _adapter?.LastError;
+
     public void Dispose() => _adapter?.Dispose();
 
     /// <inheritdoc />
@@ -235,10 +238,21 @@ public sealed class ManifestProvider : IProvider, IDisposable
     /// 경로의 자리를 채운다. <b>셋뿐이다</b> — 표현식·조건을 넣지 않는다(docs/PLUGIN_PLAN.md §7).
     /// 넣고 싶어지는 순간이 어댑터로 갈 신호다.
     /// </summary>
+    /// <summary>
+    /// <b>경로</b> 자리를 채운다. 매니페스트는 경로를 <c>/</c> 로 적으므로 이 판의 구분자로 바꾼다.
+    /// </summary>
     private string Fill(string template, string? projectDir = null) =>
+        FillCommand(template, projectDir).Replace('/', Path.DirectorySeparatorChar);
+
+    /// <summary>
+    /// <b>명령줄</b> 자리를 채운다. 여기서는 <c>/</c> 를 건드리지 않는다 —
+    /// 전에는 경로와 같은 규칙을 써서 <c>cmd /c …</c> 가 <c>cmd \c …</c> 가 됐고,
+    /// 그러면 cmd 가 인자를 못 알아듣고 대화 모드로 떨어져 우리 요청을 명령으로 실행했다 (2026-09-11).
+    /// 명령 안의 경로는 매니페스트가 <c>{HERE}</c> 로 적고, 그 값은 이미 이 판의 구분자다.
+    /// </summary>
+    private string FillCommand(string template, string? projectDir = null) =>
         template
             .Replace("{USERPROFILE}", _home, StringComparison.Ordinal)
             .Replace("{HERE}", _manifestDirectory, StringComparison.Ordinal)
-            .Replace("{PROJECT}", projectDir ?? string.Empty, StringComparison.Ordinal)
-            .Replace('/', Path.DirectorySeparatorChar);
+            .Replace("{PROJECT}", projectDir ?? string.Empty, StringComparison.Ordinal);
 }

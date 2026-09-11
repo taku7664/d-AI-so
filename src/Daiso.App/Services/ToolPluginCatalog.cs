@@ -48,6 +48,44 @@ public sealed class ToolPluginCatalog
     public string Directory => ToolPluginLoader.DefaultDirectory;
 
     /// <summary>
+    /// 어댑터마다 <c>hello</c> 를 한 번 주고받는다 (docs/PLUGIN_PLAN.md Stage 5).
+    ///
+    /// <para>
+    /// <b>이걸 부르는 데가 없었다.</b> 판 협상도, 어댑터가 알려 주는 이름·이어읽기 여부도
+    /// 테스트에서만 돌고 앱에서는 죽은 코드였다 (2026-09-11 점검). 앱이 뜬 뒤 배경에서 한 번 돈다.
+    /// </para>
+    /// <para>
+    /// 말이 안 통하면 목록의 그 줄을 <b>실패로 바꾼다</b> — 설정 화면이 이유를 그대로 보여 준다.
+    /// 이미 실린 도구를 여기서 빼지는 않는다. 그건 앱을 다시 켜야 하는 일이고, 화면이 그렇게 말한다.
+    /// </para>
+    /// </summary>
+    public async Task VerifyAsync(CancellationToken ct)
+    {
+        var verified = new List<ToolPluginLoad>(_loads.Count);
+
+        foreach (var load in _loads)
+        {
+            verified.Add(load.Provider is { } provider && !await Talks(provider, ct).ConfigureAwait(false)
+                ? load with { Errors = [provider.LastAdapterError ?? "어댑터와 말이 통하지 않는다"] }
+                : load);
+        }
+
+        _loads = verified;
+    }
+
+    private static async Task<bool> Talks(ManifestProvider provider, CancellationToken ct)
+    {
+        try
+        {
+            return await provider.HandshakeAsync(ct).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is IOException or InvalidOperationException or ObjectDisposedException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
     /// 폴더를 다시 읽는다. <b>이미 실린 도구는 바뀌지 않는다</b> — 도구는 DI 가 앱이 뜰 때 물어 둔 것이라
     /// 새 도구가 화면에 나오려면 앱을 다시 켜야 한다. 그 사실을 설정 화면이 말한다.
     /// </summary>

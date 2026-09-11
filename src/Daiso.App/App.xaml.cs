@@ -74,6 +74,10 @@ public partial class App : Application
         MainWindow = _window;
         _crashReporter.Attach(_window);
         _window.Activate();
+
+        // 플러그인 어댑터와 말이 통하는지 배경에서 한 번 물어본다 (docs/PLUGIN_PLAN.md Stage 5).
+        // 창이 뜬 다음에 하는 이유: 남이 만든 프로세스를 띄우는 일이라 앱 시작을 붙잡으면 안 된다
+        _ = Services.GetRequiredService<ToolPluginCatalog>().VerifyAsync(CancellationToken.None);
     }
 
     /// <summary>

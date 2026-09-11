@@ -83,6 +83,40 @@ public sealed class AdapterFailureTests : IDisposable
     }
 
     [Fact]
+    public async Task What_the_adapter_wrote_to_stderr_comes_back_in_the_reason()
+    {
+        // 플러그인을 만드는 사람이 볼 유일한 단서다. 예전에는 stderr 를 잡아만 두고 읽지 않아 사라졌다
+        using var plugin = Plugin("cmd /c echo BOOM-FROM-ADAPTER 1>&2");
+
+        await foreach (var _ in plugin.EnumerateSessionsAsync(CancellationToken.None))
+        {
+            // 답은 없다. 이유만 본다
+        }
+
+        plugin.AdapterError.Should().Contain("BOOM-FROM-ADAPTER", because: plugin.AdapterError ?? "(없음)");
+    }
+
+    [Fact]
+    public async Task A_chatty_stderr_does_not_hang_the_channel()
+    {
+        // stderr 를 읽지 않으면 파이프가 차서 어댑터가 쓰다가 멈춘다. 그때 우리는 그것을
+        // "30초 안에 답이 없다"로 잘못 읽었다. 파이프 버퍼(약 4KB)를 훌쩍 넘겨 본다
+        using var plugin = Plugin("cmd /c for /l %i in (1,1,2000) do @echo ....................... 1>&2");
+
+        var started = DateTimeOffset.UtcNow;
+
+        await foreach (var _ in plugin.EnumerateSessionsAsync(CancellationToken.None))
+        {
+            // 답은 없다
+        }
+
+        var elapsed = DateTimeOffset.UtcNow - started;
+
+        elapsed.Should().BeLessThan(TimeSpan.FromSeconds(20), because: "막히지 않고 바로 끝나야 한다");
+        plugin.AdapterError.Should().NotContain("초 안에", because: "시간 초과가 아니라 그냥 끝난 것이다");
+    }
+
+    [Fact]
     public async Task A_handshake_with_a_dead_adapter_fails_without_throwing()
     {
         using var plugin = Plugin(@"C:\그런\파일은\없다.exe");
