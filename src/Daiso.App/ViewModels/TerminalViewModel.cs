@@ -937,7 +937,7 @@ public sealed class ResumeCandidateViewModel
                 return UiStrings.Get("Common_NoPrompt");
             }
 
-            return cleaned.Length > 80 ? cleaned[..80] + "…" : cleaned;
+            return cleaned.Length > 80 ? TextCut.Head(cleaned, 80) + "…" : cleaned;
         }
     }
 

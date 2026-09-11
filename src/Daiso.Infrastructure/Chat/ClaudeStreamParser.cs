@@ -1,3 +1,4 @@
+using Daiso.Core;
 using System.Text;
 using System.Text.Json;
 using Daiso.Core.Chat;
@@ -214,7 +215,7 @@ public static class ClaudeStreamParser
     private static string Shorten(string value)
     {
         var trimmed = value.Trim();
-        return trimmed.Length <= SummaryLimit ? trimmed : trimmed[..SummaryLimit] + " …";
+        return trimmed.Length <= SummaryLimit ? trimmed : TextCut.Head(trimmed, SummaryLimit) + " …";
     }
 
     private static string? Str(JsonElement element, string name) =>

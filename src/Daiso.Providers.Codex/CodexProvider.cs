@@ -371,7 +371,7 @@ public sealed class CodexProvider : IProvider, IUsageReader
     private static string Shorten(string text)
     {
         var trimmed = text.Trim();
-        return trimmed.Length <= FirstPromptLength ? trimmed : trimmed[..FirstPromptLength];
+        return TextCut.Head(trimmed, FirstPromptLength);
     }
 
     private static async Task<string?> ReadTextOrNullAsync(string path, CancellationToken ct)

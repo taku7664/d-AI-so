@@ -25,9 +25,21 @@ internal sealed class CodexRecordParser
 
     /// <summary>
     /// 같은 응답이 event_msg.agent_message와 response_item 양쪽에 남는 경우가 있다.
-    /// 바로 앞서 낸 어시스턴트 텍스트와 같으면 건너뛴다. (ARCHITECTURE §4.2 중복 방지)
+    /// 이미 낸 어시스턴트 텍스트면 건너뛴다. (ARCHITECTURE §4.2 중복 방지)
+    ///
+    /// <para>
+    /// <b>바로 앞 하나만 기억하던 때는 놓쳤다.</b> 같은 말이 A B A B 로 번갈아 나오면 둘 다 통과해
+    /// 목록·검색에 두 번 보였다 — 실제 인덱스에서 그렇게 생긴 여분 행이 1,953 개였다 (2026-09-11 실측).
+    /// 그래서 최근 것을 <see cref="RecentMemory"/> 개까지 기억한다. 다 기억하지 않는 이유는
+    /// 세션 하나가 수십 MB 라 본문을 전부 들고 있을 수 없기 때문이고, 중복은 늘 <b>가까이</b> 붙어 나온다.
+    /// </para>
     /// </summary>
-    private string? _lastAssistantText;
+    private readonly LinkedList<string> _recentAssistant = new();
+
+    private readonly HashSet<string> _recentAssistantIndex = new(StringComparer.Ordinal);
+
+    /// <summary>중복을 알아보려고 기억하는 최근 어시스턴트 텍스트 수.</summary>
+    private const int RecentMemory = 64;
 
     /// <summary>파싱할 수 없거나 무시 대상이면 Messages가 빈 레코드를 돌려준다.</summary>
     internal CodexRecord? Parse(string line)
@@ -153,14 +165,31 @@ internal sealed class CodexRecordParser
 
     private IReadOnlyList<SessionMessage> Assistant(DateTimeOffset at, string text)
     {
-        if (string.Equals(_lastAssistantText, text, StringComparison.Ordinal))
+        if (!_recentAssistantIndex.Add(text))
         {
             return NoMessages;
         }
 
-        _lastAssistantText = text;
-        return [new SessionMessage(at, MessageRole.Assistant, text, false)];
+        _recentAssistant.AddLast(text);
+
+        if (_recentAssistant.Count > RecentMemory)
+        {
+            _recentAssistantIndex.Remove(_recentAssistant.First!.Value);
+            _recentAssistant.RemoveFirst();
+        }
+
+        // 도구 호출·그 결과는 <b>대화가 아니다</b>. Codex 는 그것도 어시스턴트 본문으로 적어 놓는데,
+        // 그대로 두면 검색이 파일 읽기 기록으로 덮인다 — 실제 인덱스의 27%(11,424행)가 이것이었다
+        // (2026-09-11 실측). ARCHITECTURE §2.2 는 도구 호출을 인덱스에서 빼기로 정해 두었다
+        var role = text.StartsWith(ExternalAgentMarker, StringComparison.Ordinal)
+            ? MessageRole.Tool
+            : MessageRole.Assistant;
+
+        return [new SessionMessage(at, role, text, false)];
     }
+
+    /// <summary>Codex 가 바깥 에이전트의 도구 호출·결과를 적을 때 앞에 붙이는 표시.</summary>
+    private const string ExternalAgentMarker = "[external_agent_tool_";
 
     private static IReadOnlyList<SessionMessage> Compacted(JsonElement? payload, DateTimeOffset at)
     {

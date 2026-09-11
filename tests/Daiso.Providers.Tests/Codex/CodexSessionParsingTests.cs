@@ -138,6 +138,54 @@ public sealed class CodexSessionParsingTests
         _provider.RulesFileName.Should().Be("AGENTS.md");
     }
 
+    /// <summary>
+    /// 같은 어시스턴트 말이 <b>떨어져서</b> 두 번 나와도 한 번만 센다.
+    /// 바로 앞 하나만 기억하던 때는 A B A 가 다 통과해 목록·검색에 두 번 보였다 (2026-09-11 점검).
+    /// </summary>
+    [Fact]
+    public async Task The_same_answer_far_apart_is_still_one_message()
+    {
+        var path = Path.Combine(Fixtures.CreateTempDirectory(), "rollout-dup.jsonl");
+
+        await File.WriteAllLinesAsync(
+            path,
+            [
+                """{"type":"session_meta","timestamp":"2026-09-01T00:00:00Z","payload":{"id":"dup","cwd":"C:/X","cli_version":"0.153.0"}}""",
+                """{"type":"event_msg","timestamp":"2026-09-01T00:00:01Z","payload":{"type":"agent_message","message":"같은 답"}}""",
+                """{"type":"event_msg","timestamp":"2026-09-01T00:00:02Z","payload":{"type":"agent_message","message":"다른 답"}}""",
+                """{"type":"event_msg","timestamp":"2026-09-01T00:00:03Z","payload":{"type":"agent_message","message":"같은 답"}}""",
+            ]);
+
+        var messages = await Read(path);
+
+        messages.Where(message => message.Text == "같은 답").Should().HaveCount(1);
+        messages.Where(message => message.Text == "다른 답").Should().HaveCount(1);
+    }
+
+    /// <summary>
+    /// 바깥 에이전트의 도구 호출은 <b>대화가 아니다</b>. Codex 가 그것을 어시스턴트 본문으로 적어 두는데,
+    /// 그대로 두면 검색이 파일 읽기 기록으로 덮인다 — 실제 인덱스의 27%가 이것이었다 (2026-09-11 실측).
+    /// </summary>
+    [Fact]
+    public async Task An_external_agent_tool_call_is_a_tool_message()
+    {
+        var path = Path.Combine(Fixtures.CreateTempDirectory(), "rollout-tool.jsonl");
+
+        await File.WriteAllLinesAsync(
+            path,
+            [
+                """{"type":"session_meta","timestamp":"2026-09-01T00:00:00Z","payload":{"id":"tool","cwd":"C:/X","cli_version":"0.153.0"}}""",
+                """{"type":"event_msg","timestamp":"2026-09-01T00:00:01Z","payload":{"type":"agent_message","message":"[external_agent_tool_call: Read] file: c:/x/y.cs"}}""",
+                """{"type":"event_msg","timestamp":"2026-09-01T00:00:02Z","payload":{"type":"agent_message","message":"사람에게 하는 말"}}""",
+            ]);
+
+        var messages = await Read(path);
+
+        messages.Should().ContainSingle(message => message.Role == MessageRole.Assistant)
+            .Which.Text.Should().Be("사람에게 하는 말");
+        messages.Should().ContainSingle(message => message.Role == MessageRole.Tool);
+    }
+
     private async Task<List<SessionMessage>> Read(string path, long offset = 0)
     {
         var messages = new List<SessionMessage>();

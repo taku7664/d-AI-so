@@ -209,5 +209,5 @@ internal static class ClaudeRecordParser
 
     /// <summary>도구 결과는 인덱스에 넣지 않으므로 표시용으로만 짧게 남긴다.</summary>
     private static string Truncate(string text) =>
-        text.Length <= 500 ? text : text[..500] + "…";
+        text.Length <= 500 ? text : TextCut.Head(text, 500) + "…";
 }

@@ -425,7 +425,7 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
                 if (message.Role == MessageRole.User)
                 {
                     users++;
-                    firstPrompt ??= message.Text.Length <= 200 ? message.Text : message.Text[..200];
+                    firstPrompt ??= TextCut.Head(message.Text, 200);
                 }
                 else
                 {
