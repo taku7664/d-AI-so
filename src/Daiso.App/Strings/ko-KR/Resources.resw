@@ -662,6 +662,41 @@
   <data name="Settings_CacheRead" xml:space="preserve">
     <value>캐시 읽기</value>
   </data>
+  <!-- ── 도구 플러그인 (docs/PLUGIN_PLAN.md Stage 6) ──────────────────── -->
+  <data name="Plugins_Section" xml:space="preserve">
+    <value>도구 플러그인</value>
+  </data>
+  <data name="Plugins_Hint" xml:space="preserve">
+    <value>이 폴더에 파일을 놓으면 앱이 아는 AI 도구가 늘어납니다</value>
+  </data>
+  <data name="Plugins_Empty" xml:space="preserve">
+    <value>놓아 둔 도구가 없습니다</value>
+  </data>
+  <data name="Plugins_Reload" xml:space="preserve">
+    <value>다시 읽기</value>
+  </data>
+  <data name="Plugins_OpenFolder" xml:space="preserve">
+    <value>폴더 열기</value>
+  </data>
+  <data name="Plugins_ReloadedNeedsRestart" xml:space="preserve">
+    <value>다시 읽었습니다. 새로 찾은 도구는 앱을 다시 켜야 화면에 나옵니다</value>
+  </data>
+  <data name="Plugins_Failed" xml:space="preserve">
+    <value>읽지 못했습니다</value>
+  </data>
+  <data name="Plugins_WithSessions" xml:space="preserve">
+    <value>지난 대화까지 읽습니다</value>
+  </data>
+  <data name="Plugins_WithoutSessions" xml:space="preserve">
+    <value>실행은 되지만 지난 대화는 못 읽습니다</value>
+  </data>
+  <data name="Plugins_AdapterBroken" xml:space="preserve">
+    <value>지난 대화를 읽는 프로그램이 답하지 않습니다: {0}</value>
+  </data>
+  <data name="Plugins_Runs" xml:space="preserve">
+    <value>돌리는 명령</value>
+  </data>
+
   <data name="Settings_DisplayAndIndex" xml:space="preserve">
     <value>표시와 인덱스</value>
   </data>

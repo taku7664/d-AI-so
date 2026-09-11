@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Daiso.App.Services;
@@ -42,15 +42,58 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private string? statusText;
 
-    public SettingsViewModel(ISettingsStore settings, IndexService indexService)
+    private readonly Services.ToolPluginCatalog _plugins;
+
+    public SettingsViewModel(ISettingsStore settings, IndexService indexService, Services.ToolPluginCatalog plugins)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(indexService);
+        ArgumentNullException.ThrowIfNull(plugins);
 
         _settings = settings;
         _indexService = indexService;
+        _plugins = plugins;
 
         Load();
+        RefreshPlugins();
+    }
+
+    // ── 도구 플러그인 (docs/PLUGIN_PLAN.md Stage 6) ────────────────────────
+
+    /// <summary>읽은 것과 못 읽은 것 전부. 실패를 감추지 않는다.</summary>
+    public System.Collections.ObjectModel.ObservableCollection<ToolPluginRowViewModel> Plugins { get; } = [];
+
+    /// <summary>매니페스트를 놓는 자리. "여기를 봅니다"로 그대로 보여 준다.</summary>
+    public string PluginDirectory => _plugins.Directory;
+
+    /// <summary>플러그인이 하나도 없는가. 안 쓰는 사람에게는 안내 한 줄만 보인다.</summary>
+    public bool HasNoPlugins => Plugins.Count == 0;
+
+    public bool HasPlugins => Plugins.Count > 0;
+
+    /// <summary>
+    /// 다시 읽은 뒤 <b>앱을 다시 켜야 한다고 말한다</b>. 이미 실린 도구는 앱이 뜰 때 물어 둔 것이라
+    /// 목록만 새로 읽는다고 화면의 도구가 늘지 않는다 — 조용히 안 늘면 "왜 안 되지"가 된다.
+    /// </summary>
+    [RelayCommand]
+    public void ReloadPlugins()
+    {
+        _plugins.Reload();
+        RefreshPlugins();
+        StatusText = UiStrings.Get("Plugins_ReloadedNeedsRestart");
+    }
+
+    private void RefreshPlugins()
+    {
+        Plugins.Clear();
+
+        foreach (var load in _plugins.Loads)
+        {
+            Plugins.Add(new ToolPluginRowViewModel(load));
+        }
+
+        OnPropertyChanged(nameof(HasNoPlugins));
+        OnPropertyChanged(nameof(HasPlugins));
     }
 
     /// <summary>테마를 고르면 창이 바로 갈아입도록 알린다. 값은 "System" | "Light" | "Dark".</summary>

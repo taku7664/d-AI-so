@@ -47,4 +47,23 @@ public sealed partial class SettingsPage : Page, IPageHeaderSource
             ViewModel.RemovePriceCommand.Execute(row);
         }
     }
+
+    /// <summary>
+    /// 플러그인 폴더를 연다. <b>없으면 만들어서 연다</b> — 처음 쓰는 사람에게 "그런 폴더 없음"을
+    /// 보여 주고 끝내면 어디에 놓으라는 것인지 알 수 없다 (docs/PLUGIN_PLAN.md Stage 6).
+    /// </summary>
+    private async void OnOpenPluginFolderClick(object sender, RoutedEventArgs e)
+    {
+        var path = ViewModel.PluginDirectory;
+
+        try
+        {
+            Directory.CreateDirectory(path);
+            await Windows.System.Launcher.LaunchFolderPathAsync(path);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            ViewModel.StatusText = ex.Message;
+        }
+    }
 }

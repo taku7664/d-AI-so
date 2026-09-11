@@ -1,4 +1,4 @@
-# 도구 플러그인 계획 — 빌드된 앱에 도구를 더할 수 있게
+﻿# 도구 플러그인 계획 — 빌드된 앱에 도구를 더할 수 있게
 
 **목표 한 줄**: 앱을 다시 빌드하지 않고, 파일을 놓아 새 AI CLI 를 앱이 알아보게 한다.
 
@@ -6,7 +6,13 @@
 도구를 하나 더하려면 `ToolKind` enum · `ToolLook` · `ToolIcon` · XAML 탭 · DI 등록을 손으로 고쳐 다시 빌드해야 한다.
 
 > **2026-09-11 재검수에서 1차 초안을 한 군데 뒤집었다.** "세션 로그를 선언형 필드 매핑으로 읽는다"는
-> 실제 파서를 열어 보니 성립하지 않는다(§5). 그 자리를 **바깥 프로세스 어댑터**로 바꿨다(§6).
+> 실제 파서를 열어 보니 성립하지 않는다(§4). 그 자리를 **바깥 프로세스 어댑터**로 바꿨다(§6).
+>
+> **2026-09-11 Stage 0~6 구현 완료.** 아래 단계는 전부 들어갔다. 실제로 놓인 곳:
+> `src/Daiso.Core/Plugins/` (매니페스트·파서) · `src/Daiso.Providers.Manifest/` (도구·로더·어댑터 통로) ·
+> `src/Daiso.App/Services/ToolPluginCatalog.cs` (목록과 실패) · 설정 화면의 `도구 플러그인` 카드 ·
+> `tools/adapters/Daiso.Adapter.Claude/` (참조 어댑터).
+> 구현하며 계획과 달라진 것은 각 단계 끝에 **실제**로 적어 뒀다.
 
 ---
 
@@ -37,7 +43,9 @@
 `CorePurityTests` 가 `Daiso.Core` 에서 `File` · `Directory` · `Process` · `Environment` 참조를 금지한다(ARCHITECTURE §1).
 플러그인 설계가 여기에 걸린다:
 
-- **매니페스트를 읽는 코드는 `Daiso.Infrastructure` 에 둔다.** Core 는 파일을 못 연다.
+- **매니페스트를 읽는 코드는 Core 바깥이다.** Core 는 파일을 못 연다.
+  *실제로는 `Daiso.Providers.Manifest` 에 넣었다* — 실행 파일 찾기(`ExecutableLocator`)·홈 폴더(`ProviderHome`)가
+  `Daiso.Providers.Common` 에 있어서, 다른 도구 어댑터들과 같은 자리에 두는 편이 맞았다.
 - **표시 정보는 Core 에서 문자열이다.** 색은 `#RRGGBB`, 로고는 24×24 SVG path 문자열.
   `Windows.UI.Color` · `Brush` 로 바꾸는 일은 `Daiso.App` 이 한다 — 지금 `ToolLook` 이 하는 일이 그대로 남는다.
   (로고가 이미 SVG path 문자열인 것이 여기서 크게 유리하다. 이미지 파일을 따로 다룰 필요가 없다.)
@@ -175,11 +183,10 @@ auth:
     - path: "{USERPROFILE}/.mycli/auth.json"
       required: true
 
-models:
-  from: command                  # command | file | list
-  command: "mycli models --json"
-  idField: id
-  nameField: name
+models:                          # 고정 목록만 받는다 (아래 설명)
+  list:
+    - id: fast
+      name: 빠른 모델
 
 adapter:                         # 없으면 세션 기록 없이 동작한다 (§5 D)
   command: "{HERE}/mycli-adapter.exe"
@@ -187,6 +194,10 @@ adapter:                         # 없으면 세션 기록 없이 동작한다 (
 
 치환은 `{USERPROFILE}` · `{PROJECT}` · `{id}` · `{HERE}`(매니페스트가 있는 폴더) **넷뿐이다.**
 표현식 · 조건 · 반복을 넣지 않는다 — 넣고 싶어지는 순간이 어댑터로 갈 신호다.
+
+**모델은 고정 목록만 받는다.** 1차 초안에는 `from: command` 로 명령을 돌려 목록을 얻는 길이 있었는데 뺐다 —
+매니페스트를 *읽는 것만으로* 남의 명령이 돌아가면 안 된다. 파일을 놓는 것과 코드를 돌리는 것은 다른 결정이고,
+후자는 어댑터라는 눈에 보이는 자리에서만 일어나야 한다(설정 화면이 그 명령을 그대로 보여 준다).
 
 ---
 
@@ -209,38 +220,61 @@ adapter:                         # 없으면 세션 기록 없이 동작한다 (
 세 도구가 실제 세션 표본에서 만들어 내는 `SessionInfo` · `SessionMessage` 를 특성화 테스트로 못 박는다.
 뒤 단계 전부가 "이 값이 안 바뀌는가"로 검사된다.
 **완료 기준**: 도구 셋 각각 고정 표본 → 기대값 비교 테스트가 있다.
+**실제**: `tests/Daiso.Providers.Tests/Common/SessionShapeTests.cs` + `Common/Snapshots/*.txt`.
+세션 메타 · 본문을 훑은 메타 · 메시지 전부를 한 장의 글로 만들어 견준다. 파일 경로·크기는 뺀다(임시 폴더마다 달라진다).
 
 ### Stage 1 — `ToolKind` enum → 문자열 id ⚠️ 되돌리기 어려움
 `ToolId`(문자열을 감싼 record)로 바꾼다. 내장 셋은 상수로 남긴다.
 **두 저장소를 같이 옮긴다**: `SqliteSessionIndex`(`IndexFormatVersion` 4 → 5) · `AuthProfileStore`(폴더 이름 포함).
 **모르는 id 를 만나도 죽지 않는다** — 지금 `Enum.Parse` 는 던진다.
 **완료 기준**: 인덱스를 다시 지어 세션 수가 전과 같다. 보관해 둔 계정이 그대로 보이고 되돌리기가 된다. Stage 0 이 통과한다.
+**실제**: `ToolKind` 를 `readonly record struct` 로 바꿔 **이름을 지켰다** — 부르는 곳 223 군데를 안 건드렸다.
+`switch (kind)` 는 상수가 아니게 되어 `switch (kind.Id)` 로 바꿨다(다섯 곳).
+옛 기록의 `"Claude"` 를 읽어야 해서 `TryParse` 는 대소문자를 안 가린다. 계정 보관함 폴더도 Windows 가
+대소문자를 안 가려 그대로 찾힌다. **스냅샷에서 바뀐 줄은 파일마다 `tool=` 한 줄뿐이었다.**
 
 ### Stage 2 — 표시 정보를 `IProvider` 로
 이름 · 제작사 · 짧은 이름 · 한 글자 · **색(`#RRGGBB` 문자열)** · **로고(SVG path 문자열)** · 표시 순서를 `IProvider` 가 낸다.
 `ToolLook` 은 지우지 않고 **조회 창구로 남긴다** — 부르는 곳 20군데를 안 건드리고 안쪽만 바꾼다.
 문자열 → `Color` · `Brush` 변환은 `ToolLook` 이 계속 한다(§2).
 **완료 기준**: `ToolLook` 에 `switch (kind)` 가 없다. `CorePurityTests` 가 통과한다. 화면이 전과 같이 보인다.
+**실제**: `ToolDisplay`(Core, 문자열만) 를 `IProvider.Display` 로 받는다. 기본 구현을 두지 않아 도구를 더하면
+컴파일러가 이름·색·로고를 묻는다. 단색/그라데이션을 따로 묻지 않고 **색 개수가 곧 답**이다.
+`ToolLook` 은 값 없는 조회 창구로 남아 부르는 곳 스무 군데가 그대로다.
+소스 글자를 훑던 `ToolLookTests` 는 값을 보는 `ToolDisplayTests` 로 바꿨다 — 검사할 것이 글자가 아니라 동작이다.
 
 ### Stage 3 — XAML 탭을 데이터로
 `SelectorBarItem` 셋을 `ItemsSource` 로 바꾼다.
 **완료 기준**: XAML 에 도구 이름 문자열이 없다. 테스트가 잠근다.
+**실제**: `SelectorBar` 에는 `ItemsSource` 가 없어 `SelectorBarVisuals.FillToolTabs` 가 코드로 채운다.
+`ToolNameInXamlTests` 가 화면 XAML 전부를 훑어 도구 이름이 다시 박히는 것을 막는다(주석은 뺀다).
 
 ### Stage 4 — 매니페스트 로더 (어댑터 없이)
 `%USERPROFILE%\.daiso\tools\*.yaml` → `ManifestProvider : IProvider`. 로더는 `Daiso.Infrastructure` 에 둔다(§2).
 세션 읽기는 빈 목록을 낸다.
 **완료 기준**: 매니페스트 하나를 놓고 앱을 켜면 도구가 넷이 되고, **실행 · 설치 · 규칙 · 프롬프트 · 카드 · 탭이 다 된다.**
 매니페스트 하나가 깨져도 앱이 뜨고 나머지 도구가 산다.
+**실제**: 플러그인은 **컨테이너를 세우기 전에** 읽는다. `IEnumerable<IProvider>` 를 직접 등록해 합치려 하면
+그 팩터리 안의 `GetServices<IProvider>()` 가 자기 자신을 불러 끝없이 돈다 — 읽어서 하나씩 `IProvider` 로
+등록하면 컨테이너의 기본 동작이 그대로 산다. 완료 기준은 `ToolPluginLoaderTests` 11 건이 잠근다.
 
 ### Stage 5 — 어댑터 프로토콜
 §6 을 구현한다. **검증은 Claude 재현**: `ClaudeProvider` 를 감싼 시험용 어댑터를 만들어,
 매니페스트 + 어댑터로만 Stage 0 의 기대값과 같은 값이 나오는지 본다.
 이 시험용 어댑터는 **참조 구현으로 저장소에 남긴다** — 플러그인 작성자가 베낄 것이 있어야 한다.
 **완료 기준**: 위 재현이 통과한다. 어댑터를 강제 종료해도 앱이 살고 그 도구만 오류가 된다.
+**실제**: `AdapterReproducesClaudeTests` 가 **진짜 프로세스를 띄워** 내장 `ClaudeProvider` 와 값을 견준다
+(세션 · 훑은 메타 · 메시지의 역할·사이드체인·시각까지). 흉내 낸 프로세스로는 잴 의미가 없어서 그렇게 했다.
+`AdapterFailureTests` 가 못 띄우는 어댑터 · 말없이 끝나는 어댑터 · JSON 이 아닌 줄을 뱉는 어댑터를 본다 —
+셋 다 목록이 비고 이유만 남는다. 한 요청에 30 초 제한을 두어 멈춘 어댑터가 화면을 붙잡지 못한다.
 
 ### Stage 6 — 사람에게 보이게
 설정에 `도구 플러그인` 목록: 어디서 읽었는지 · 무엇이 틀렸는지 · **어떤 명령을 돌리는지** · 다시 읽기.
 **완료 기준**: 깨진 매니페스트, id 충돌, 죽는 어댑터 — 셋 다 앱이 뜨고 그 자리에서 이유를 말한다.
+**실제**: 설정 화면의 `도구 플러그인` 카드. 성공한 것과 실패한 것이 **같은 목록**에 있고,
+각 줄이 파일 경로 · 상태(`지난 대화까지 읽습니다` / `실행은 되지만 지난 대화는 못 읽습니다`) ·
+**돌리는 명령** · 틀린 이유를 그대로 보여 준다. `다시 읽기` 는 목록만 새로 읽으므로
+**앱을 다시 켜야 한다고 말한다** — 조용히 안 늘면 "왜 안 되지"가 된다.
 
 ---
 

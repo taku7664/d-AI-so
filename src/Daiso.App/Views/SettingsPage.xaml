@@ -1,4 +1,4 @@
-<Page
+﻿<Page
     x:Class="Daiso.App.Views.SettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -254,6 +254,93 @@
                             <TextBlock Grid.Row="4" Grid.Column="0" Text="{loc:Str Key=Settings_ShortcutSave}" Style="{StaticResource MonoText}" />
                             <TextBlock Grid.Row="4" Grid.Column="1" Text="{loc:Str Key=Settings_ShortcutSaveWhat}" Style="{StaticResource MutedText}" />
                         </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!--
+                    도구 플러그인. 읽은 것과 <b>못 읽은 것</b>을 같은 목록에 놓는다 —
+                    매니페스트를 놓았는데 도구가 안 보이면 여기 말고는 이유를 알 곳이 없다
+                    (docs/PLUGIN_PLAN.md Stage 6)
+                -->
+                <Border Style="{StaticResource CardBorder}">
+                    <StackPanel Spacing="{StaticResource GapLarge}">
+                        <TextBlock Text="{loc:Str Key=Plugins_Section}" Style="{StaticResource SectionTitleText}" />
+                        <TextBlock Text="{loc:Str Key=Plugins_Hint}" Style="{StaticResource MutedText}" TextWrapping="Wrap" />
+
+                        <Grid ColumnSpacing="{StaticResource GapMedium}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock
+                                Grid.Column="0"
+                                AutomationProperties.AutomationId="PluginDirectory"
+                                Text="{x:Bind ViewModel.PluginDirectory}"
+                                ToolTipService.ToolTip="{x:Bind ViewModel.PluginDirectory}"
+                                Style="{StaticResource MonoText}"
+                                TextTrimming="CharacterEllipsis"
+                                VerticalAlignment="Center" />
+                            <Button
+                                Grid.Column="1"
+                                Content="{loc:Str Key=Plugins_OpenFolder}"
+                                AutomationProperties.AutomationId="OpenPluginFolderButton"
+                                Click="OnOpenPluginFolderClick" />
+                            <Button
+                                Grid.Column="2"
+                                Content="{loc:Str Key=Plugins_Reload}"
+                                AutomationProperties.AutomationId="ReloadPluginsButton"
+                                Command="{x:Bind ViewModel.ReloadPluginsCommand}" />
+                        </Grid>
+
+                        <Border Style="{StaticResource NoticeBorder}" Visibility="{x:Bind ViewModel.HasNoPlugins, Mode=OneWay}">
+                            <TextBlock Text="{loc:Str Key=Plugins_Empty}" Style="{StaticResource MutedText}" />
+                        </Border>
+
+                        <ItemsControl
+                            AutomationProperties.AutomationId="PluginList"
+                            ItemsSource="{x:Bind ViewModel.Plugins}"
+                            Visibility="{x:Bind ViewModel.HasPlugins, Mode=OneWay}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:ToolPluginRowViewModel">
+                                    <Border Style="{StaticResource NoticeBorder}" Margin="0,0,0,8">
+                                        <StackPanel Spacing="{StaticResource GapTiny}">
+                                            <StackPanel Orientation="Horizontal" Spacing="{StaticResource GapMedium}">
+                                                <!-- 됐는지 안 됐는지가 회색 한 줄이면 한눈에 안 갈린다 -->
+                                                <FontIcon Glyph="&#xE73E;" FontSize="{StaticResource BodyFontSize}" Foreground="{ThemeResource SystemFillColorSuccessBrush}" Visibility="{x:Bind Ok}" VerticalAlignment="Center" />
+                                                <FontIcon Glyph="&#xE783;" FontSize="{StaticResource BodyFontSize}" Foreground="{ThemeResource SystemFillColorCriticalBrush}" Visibility="{x:Bind Failed}" VerticalAlignment="Center" />
+                                                <TextBlock Text="{x:Bind Name}" Style="{ThemeResource BodyStrongTextBlockStyle}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                                <TextBlock Text="{x:Bind StateText}" Style="{StaticResource MutedText}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                            </StackPanel>
+
+                                            <TextBlock
+                                                Text="{x:Bind FilePath}"
+                                                ToolTipService.ToolTip="{x:Bind FilePath}"
+                                                Style="{StaticResource MutedText}"
+                                                FontSize="{StaticResource CaptionFontSize}"
+                                                TextTrimming="CharacterEllipsis"
+                                                TextWrapping="NoWrap" />
+
+                                            <!-- 무엇을 돌리는지 감추지 않는다 -->
+                                            <TextBlock
+                                                Text="{x:Bind CommandText}"
+                                                ToolTipService.ToolTip="{loc:Str Key=Plugins_Runs}"
+                                                Visibility="{x:Bind HasCommand}"
+                                                Style="{StaticResource MonoText}"
+                                                FontSize="{StaticResource CaptionFontSize}"
+                                                TextTrimming="CharacterEllipsis"
+                                                TextWrapping="NoWrap" />
+
+                                            <TextBlock
+                                                Text="{x:Bind ErrorText}"
+                                                Visibility="{x:Bind Failed}"
+                                                Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                                TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </StackPanel>
                 </Border>
 
