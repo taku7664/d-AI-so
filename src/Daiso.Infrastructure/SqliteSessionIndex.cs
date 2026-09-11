@@ -440,7 +440,7 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
                 FirstPrompt = firstPrompt,
             };
 
-            UpsertSession(stored, session.SizeBytes, transaction);
+            UpsertSession(stored, ReadUpTo(session), transaction);
             await UpdateUsageAsync(provider, stored, fromOffset, transaction, ct).ConfigureAwait(false);
 
             transaction.Commit();
@@ -881,6 +881,34 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
             PRIMARY KEY (date, tool, project, model, file_path)
         );
         """;
+
+    /// <summary>
+    /// 다음에 이어 읽을 자리. <b>다 읽은 뒤</b>의 파일 크기다.
+    ///
+    /// <para>
+    /// 전에는 <i>열거할 때</i> 본 크기를 적었다. 제공자는 그 뒤로도 파일 끝까지 읽으므로,
+    /// 담는 동안 자란 줄은 이번에도 담기고 <b>다음 갱신에 또</b> 담겼다 — 본문은 <c>ux_messages_key</c> 가
+    /// 막아 주지만 사용량은 더하기라 조금씩 부풀었다 (2026-09-11 점검).
+    /// </para>
+    /// <para>
+    /// 이제는 읽기를 마친 시점의 끝을 적는다. 남는 위험은 "끝에 닿은 순간과 크기를 재는 순간 사이"로
+    /// 아주 좁고, 그 사이에 붙은 줄은 <b>파일이 또 자라므로</b> 다음 갱신이 크기 비교에서 잡아낸다.
+    /// 파일을 열 수 없으면 열거 때 본 크기로 둔다 — 그쪽은 중복이지 유실이 아니다.
+    /// </para>
+    /// </summary>
+    private static long ReadUpTo(SessionInfo session)
+    {
+        try
+        {
+            var info = new FileInfo(session.FilePath);
+
+            return info.Exists ? info.Length : session.SizeBytes;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return session.SizeBytes;
+        }
+    }
 
     /// <summary>조각난 색인을 합친다. 검색이 빨라지고 파일도 줄어든다.</summary>
     private void Optimize()

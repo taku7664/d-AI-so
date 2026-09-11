@@ -539,7 +539,7 @@ RefreshAsync
      · 파서 형식 버전(PRAGMA user_version) 이 코드의 상수와 다르면 → 표를 **버리고** 다시 만든 뒤 VACUUM, 전부 처음부터. 파서를 고치면 상수를 올린다
      · size 감소/변경 → offset 0부터 재파싱 (재작성된 경우)
      · 동일          → 건너뜀
-  → messages 삽입(트리거가 FTS 따라감), usage_daily 갱신, last_offset = 열거 때 본 파일 크기
+  → messages 삽입(트리거가 FTS 따라감), usage_daily 갱신, last_offset = **다 읽은 뒤**의 파일 크기
      · 이 셋은 **한 트랜잭션**이다. 본문만 커밋하고 나오면, 그 사이에 죽었을 때 오프셋이 옛 값으로 남아 같은 자리를 다시 담는다
 ```
 - SQLite: `%LOCALAPPDATA%\d-AI-so\index.db`
@@ -558,9 +558,9 @@ RefreshAsync
     실측 557MB 까지 부풀었고 같은 내용을 새로 담으면 133MB 였다. 닫을 때 `wal_checkpoint(TRUNCATE)` 도 한 번 돈다(WAL 이 109MB 였다)
   - 검색은 **상한 200건**. 상한이 없던 때는 흔한 낱말 하나에 수만 줄의 본문 전체가 메모리로 올라왔다
 - **목록·검색·사용량은 배경 스레드에서 돈다.** SQLite 읽기는 동기라, `Task.FromResult` 로 감싸면 전부 화면 스레드에서 돌아 창이 멈춘다
-- **아직 남은 것**: `last_offset` 은 *열거 때 본* 파일 크기다. 담는 동안 자란 줄은 다음 갱신에 다시 읽히는데,
-  본문은 `ux_messages_key` 가 막아 주지만 **사용량은 additive 라 조금 더해질 수 있다.**
-  제대로 고치려면 `IProvider.ReadMessagesAsync` 가 "여기까지" 를 받아야 하고, 그것은 어댑터 프로토콜까지 바뀌는 일이다 (docs/REVIEW_BACKLOG.md R9)
+- `last_offset` 은 **다 읽은 뒤**의 파일 크기다. 열거 때 본 크기를 적던 때는, 제공자가 그 뒤로도 끝까지 읽으므로
+  담는 동안 자란 줄이 다음 갱신에 또 담겼다 — 본문은 `ux_messages_key` 가 막지만 사용량은 더하기라 조금씩 부풀었다.
+  남는 위험은 "끝에 닿은 순간과 크기를 재는 순간 사이"뿐이고, 그 사이에 붙은 줄은 파일이 또 자라므로 다음 갱신의 크기 비교가 잡는다
 - `usage_daily(date, tool, project, model, input, output, cache_create, cache_read)`. Codex는 누적값이라 세션 단위로 **덮어쓰기**(세션 StartedAt 날짜에 귀속), Claude는 메시지 timestamp 날짜별 **합산**
 
 ### 5.2 .daiso 편집
