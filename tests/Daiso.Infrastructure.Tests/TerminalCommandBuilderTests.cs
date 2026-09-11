@@ -90,6 +90,49 @@ public sealed class TerminalCommandBuilderTests
         act.Should().Throw<ArgumentException>();
     }
 
+    /// <summary>
+    /// 첫 메시지는 <b>글</b>이다. PowerShell 은 큰따옴표 안에서도 <c>$(…)</c> 를 풀어 읽으므로
+    /// 그대로 넣으면 프롬프트에 적힌 명령이 실행됐다 (2026-09-11 점검).
+    /// </summary>
+    [Fact]
+    public void A_first_message_cannot_run_commands()
+    {
+        var command = Builder("pwsh").BuildShellCommand("claude", "\"$(Remove-Item) 를 설명해줘\"");
+
+        command.Arguments.Should().Contain("`$(Remove-Item", because: "$ 를 죽여야 안이 실행되지 않는다");
+        command.Arguments.Should().NotContain(" $(Remove-Item");
+    }
+
+    [Fact]
+    public void A_first_message_with_a_backtick_keeps_it_as_text()
+    {
+        var command = Builder("pwsh").BuildShellCommand("claude", "\"`code` 를 보라\"");
+
+        command.Arguments.Should().Contain("``code``");
+    }
+
+    /// <summary>
+    /// 따옴표 <b>밖</b>의 셸 문법은 일부러 들어온다. Antigravity 설치가 파이프에 기대고 있다 —
+    /// 안을 지키는 일이 밖을 망가뜨리면 안 된다.
+    /// </summary>
+    [Fact]
+    public void Shell_syntax_outside_quotes_survives()
+    {
+        var command = Builder("pwsh").BuildShellCommand("irm", "https://antigravity.google/cli/install.ps1 | iex");
+
+        command.Arguments.Should().Be("-NoExit -Command \"& irm https://antigravity.google/cli/install.ps1 | iex\"");
+    }
+
+    /// <summary>wt 는 <c>;</c> 를 탭 구분자로 읽는다. 프롬프트의 세미콜론에서 명령이 잘렸다.</summary>
+    [Fact]
+    public void A_semicolon_does_not_split_the_windows_terminal_command()
+    {
+        var command = Builder("wt", "pwsh").Build(WorkingDir, "claude", "\"먼저 빌드; 그다음 테스트\"");
+
+        command.FileName.Should().Be("wt");
+        command.Arguments.Should().Contain(@"빌드\; 그다음");
+    }
+
     private static TerminalCommandBuilder Builder(params string[] available) =>
         new(name => available.Contains(name, StringComparer.Ordinal));
 
