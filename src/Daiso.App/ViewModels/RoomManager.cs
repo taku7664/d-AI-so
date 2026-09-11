@@ -52,17 +52,30 @@ public sealed partial class RoomManager : ObservableObject
     /// <summary>살아 있는 방이 있는가. 앱을 닫을 때 물어볼지 판단한다.</summary>
     public bool HasRooms => Rooms.Count > 0;
 
-    /// <summary>모든 방을 정리한다(자식 프로세스 트리 kill). 앱 종료 때.</summary>
+    /// <summary>
+    /// 모든 방을 정리한다(자식 프로세스 트리 kill). 앱 종료 때.
+    /// <para>
+    /// <b>한꺼번에 정리한다.</b> 방 하나를 닫는 일은 읽기 루프가 빠져나오기를 최대 2초 기다리는데,
+    /// 차례로 하면 방 넷이면 8초 동안 창이 닫히지 않고 멈춰 있었다 (2026-09-11 점검).
+    /// 방끼리는 서로 무관하므로 같이 기다리면 전체가 그 2초 안에 끝난다.
+    /// </para>
+    /// </summary>
     public void DisposeAll()
     {
-        foreach (var room in Rooms)
+        var rooms = Rooms.ToList();
+
+        foreach (var room in rooms)
         {
             room.PropertyChanged -= OnRoomChanged;
-            room.Dispose();
         }
 
         Rooms.Clear();
         Recompute();
+
+        if (rooms.Count > 0)
+        {
+            Parallel.ForEach(rooms, room => room.Dispose());
+        }
     }
 
     private void OnRoomChanged(object? sender, PropertyChangedEventArgs e)

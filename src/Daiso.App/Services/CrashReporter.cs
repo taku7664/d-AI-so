@@ -109,12 +109,40 @@ public sealed class CrashReporter
                 .ToString();
 
             File.WriteAllText(path, SensitiveTextMasker.MaskSensitive(text), Utf8NoBom);
+            Prune();
 
             return path;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             return null;
+        }
+    }
+
+    /// <summary>남겨 둘 기록 수. 이보다 오래된 것은 지운다.</summary>
+    private const int KeepLogs = 20;
+
+    /// <summary>
+    /// 오래된 기록을 지운다. 보관 기한이 없으면 기록이 영원히 쌓이는데,
+    /// 그 안에는 (가려 놓았어도) 사람의 경로·프로젝트 이름이 들어 있다 (2026-09-11 점검).
+    /// </summary>
+    private static void Prune()
+    {
+        try
+        {
+            var stale = new DirectoryInfo(LogDirectory)
+                .GetFiles("crash-*.log")
+                .OrderByDescending(file => file.LastWriteTimeUtc)
+                .Skip(KeepLogs);
+
+            foreach (var file in stale)
+            {
+                file.Delete();
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or DirectoryNotFoundException)
+        {
+            // 정리는 있으면 좋은 것이다. 기록 자체는 이미 남았다
         }
     }
 }

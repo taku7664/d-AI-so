@@ -22,6 +22,13 @@ public sealed class SessionTail : IDisposable
     private readonly CancellationTokenSource _cts = new();
     private readonly TimeSpan _interval;
 
+    /// <summary>
+    /// 이 프로젝트 것이 아니라고 이미 판정한 파일. <b>다시 열지 않는다.</b>
+    /// 활성 파일을 찾기 전에는 매 초 후보를 훑는데, 판정하려면 파일을 파싱해야 해서
+    /// 세션이 여러 개 새로 생기면 같은 파일을 초마다 다시 읽었다 (2026-09-11 점검).
+    /// </summary>
+    private readonly HashSet<string> _notMine = new(StringComparer.OrdinalIgnoreCase);
+
     private string? _activeFile;
     private int _delivered;
     private long _lastSize = -1;
@@ -43,7 +50,13 @@ public sealed class SessionTail : IDisposable
     public event Action<string>? SessionFound;
 
     /// <summary>폴링을 시작한다.</summary>
-    public void Start() => _ = Task.Run(() => LoopAsync(_cts.Token));
+    public void Start()
+    {
+        _started = true;
+        _ = Task.Run(() => LoopAsync(_cts.Token));
+    }
+
+    private bool _started;
 
     /// <summary>지금 따라가는 세션 파일. 아직 못 찾았으면 null.</summary>
     public string? ActiveFile => _activeFile;
@@ -67,14 +80,19 @@ public sealed class SessionTail : IDisposable
             }
             catch (OperationCanceledException)
             {
-                return;
+                break;
             }
         }
+
+        // 루프가 완전히 빠져나온 뒤에 해제한다. Dispose 가 먼저 해제하면
+        // 아직 토큰을 쓰고 있던 이 루프가 ObjectDisposedException 을 맞고, 그것은
+        // 아무도 지켜보지 않는 Task 로 사라진다 (2026-09-11 점검)
+        _cts.Dispose();
     }
 
     private async Task TickAsync(CancellationToken ct)
     {
-        _activeFile ??= FindActiveFile();
+        _activeFile ??= await FindActiveFileAsync(ct).ConfigureAwait(false);
         if (_activeFile is null)
         {
             return;
@@ -119,7 +137,7 @@ public sealed class SessionTail : IDisposable
     /// 이 프로젝트의, 방을 연 뒤 **새로 만들어진** 가장 최근 세션 파일. 생성 시각으로 거른다.
     /// 이미 열려 있던 다른 세션(이 앱을 띄운 세션까지)은 갱신돼도 만들어진 지 오래라 잡히지 않는다.
     /// </summary>
-    private string? FindActiveFile()
+    private async Task<string?> FindActiveFileAsync(CancellationToken ct)
     {
         if (!Directory.Exists(_provider.SessionsRoot))
         {
@@ -147,7 +165,7 @@ public sealed class SessionTail : IDisposable
                 continue;
             }
 
-            if (BelongsToProject(file))
+            if (await BelongsToProjectAsync(file, ct).ConfigureAwait(false))
             {
                 best = file;
                 bestTime = created;
@@ -178,18 +196,38 @@ public sealed class SessionTail : IDisposable
         return files;
     }
 
-    /// <summary>파일 하나가 이 프로젝트 것인지. 세션 메타의 프로젝트 경로로 판정한다.</summary>
-    private bool BelongsToProject(string file)
+    /// <summary>
+    /// 파일 하나가 이 프로젝트 것인지. 세션 메타의 프로젝트 경로로 판정한다.
+    /// <para>
+    /// 아니라고 나온 파일은 기억해 두고 다시 열지 않는다 — 판정은 파일을 파싱하는 일이고,
+    /// 이 검사는 활성 파일을 찾을 때까지 <b>매 초</b> 돈다.
+    /// </para>
+    /// </summary>
+    private async Task<bool> BelongsToProjectAsync(string file, CancellationToken ct)
     {
-        try
-        {
-            var info = _provider.ReadSessionInfoAsync(file, _cts.Token).GetAwaiter().GetResult();
-            return ProjectPathNormalizer.AreSame(info.ProjectPath, _projectDirectory);
-        }
-        catch (Exception ex) when (ex is IOException or InvalidOperationException or FormatException)
+        if (_notMine.Contains(file))
         {
             return false;
         }
+
+        try
+        {
+            var info = await _provider.ReadSessionInfoAsync(file, ct).ConfigureAwait(false);
+
+            if (ProjectPathNormalizer.AreSame(info.ProjectPath, _projectDirectory))
+            {
+                return true;
+            }
+        }
+        catch (Exception ex) when (ex is IOException or InvalidOperationException or FormatException)
+        {
+            // 아직 반쯤 쓰인 파일이거나 잠겼다. 다음 기회에 다시 본다
+            return false;
+        }
+
+        _notMine.Add(file);
+
+        return false;
     }
 
     public void Dispose()
@@ -201,6 +239,11 @@ public sealed class SessionTail : IDisposable
 
         _disposed = true;
         _cts.Cancel();
-        _cts.Dispose();
+
+        // 돌고 있는 루프가 있으면 그 루프가 빠져나올 때 해제한다. 여기서 해제하면 루프가 터진다
+        if (!_started)
+        {
+            _cts.Dispose();
+        }
     }
 }

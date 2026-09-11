@@ -411,10 +411,14 @@ public sealed partial class SessionsViewModel : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(session);
 
+        // 앞의 읽기를 끊되 <b>해제하지는 않는다</b>. 그쪽은 아직 제 토큰을 들고 있고,
+        // 해제된 토큰에 무언가를 걸려고 하면 ObjectDisposedException 이 난다.
+        // 각 읽기가 자기 CTS 를 자기 finally 에서 해제한다 (2026-09-11 점검)
         _timelineCts?.Cancel();
-        _timelineCts?.Dispose();
-        _timelineCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        var token = _timelineCts.Token;
+
+        var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        _timelineCts = cts;
+        var token = cts.Token;
 
         Timeline = [];
         _loadedMessages = [];
@@ -477,6 +481,13 @@ public sealed partial class SessionsViewModel : ObservableObject
                 IsTimelineLoading = false;
                 NotifyTimelineState();
             }
+
+            if (ReferenceEquals(_timelineCts, cts))
+            {
+                _timelineCts = null;
+            }
+
+            cts.Dispose();
         }
     }
 

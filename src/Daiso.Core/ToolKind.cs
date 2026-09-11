@@ -71,7 +71,9 @@ public readonly record struct ToolKind : IComparable<ToolKind>
 
         var trimmed = id.Trim();
 
-        if (trimmed.Length is < MinLength or > MaxLength || !trimmed.All(IsAllowed))
+        if (trimmed.Length is < MinLength or > MaxLength
+            || !trimmed.All(IsAllowed)
+            || !char.IsAsciiLetter(trimmed[0]))
         {
             return false;
         }
@@ -80,7 +82,11 @@ public readonly record struct ToolKind : IComparable<ToolKind>
         return true;
     }
 
-    /// <summary>첫 글자는 글자여야 한다. 숫자나 <c>-</c> 로 시작하는 폴더 이름은 읽기 어렵다.</summary>
+    /// <summary>
+    /// 쓸 수 있는 글자. 첫 글자가 글자여야 한다는 규칙은 <see cref="TryParse"/> 가 본다 —
+    /// 주석은 그렇게 적혀 있는데 검사에 없어서 <c>-x</c>·<c>99</c> 같은 id 가 통과했다 (2026-09-11 점검).
+    /// 이 값은 계정 보관함의 폴더 이름이 된다.
+    /// </summary>
     private static bool IsAllowed(char ch) =>
         ch is >= 'a' and <= 'z' or >= 'A' and <= 'Z' or >= '0' and <= '9' or '-';
 
