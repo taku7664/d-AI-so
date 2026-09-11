@@ -21,11 +21,13 @@ internal sealed class PseudoConsole : IDisposable
     private const uint CreateUnicodeEnvironment = 0x00000400;
 
     private IntPtr _handle;
+    private IntPtr _job;
     private bool _disposed;
 
-    private PseudoConsole(IntPtr handle, SafeFileHandle input, SafeFileHandle output, int processId, IntPtr processHandle)
+    private PseudoConsole(IntPtr handle, SafeFileHandle input, SafeFileHandle output, int processId, IntPtr processHandle, IntPtr job)
     {
         _handle = handle;
+        _job = job;
         Input = input;
         Output = output;
         ProcessId = processId;
@@ -150,7 +152,17 @@ internal sealed class PseudoConsole : IDisposable
             Marshal.FreeHGlobal(attributeList);
             attributeList = IntPtr.Zero;
 
-            return new PseudoConsole(handle, inputWrite, outputRead, info.dwProcessId, processHandle);
+            // 작업 개체(Job)에 넣는다. 이것이 <b>트리 전체</b>를 잡는 유일한 확실한 방법이다 —
+            // 스냅숏을 훑어 자식을 죽이는 방식은 그 뒤에 태어난 손자를 놓쳐 node·claude 가 남았다.
+            // KILL_ON_JOB_CLOSE 라 우리가 죽어도 커널이 대신 정리한다
+            var job = CreateJob();
+
+            if (job != IntPtr.Zero)
+            {
+                AssignProcessToJobObject(job, processHandle);
+            }
+
+            return new PseudoConsole(handle, inputWrite, outputRead, info.dwProcessId, processHandle, job);
         }
         catch
         {
@@ -178,13 +190,29 @@ internal sealed class PseudoConsole : IDisposable
         ResizePseudoConsole(_handle, new Coord { X = columns, Y = rows });
     }
 
-    /// <summary>프로세스가 아직 살아 있으면 끝낸다(트리 전체는 아니다. 셸 아래 자식은 셸이 정리한다).</summary>
+    /// <summary>프로세스가 아직 살아 있으면 끝낸다(이 프로세스만).</summary>
     internal void Kill()
     {
         if (ProcessHandle != IntPtr.Zero)
         {
             TerminateProcess(ProcessHandle, 1);
         }
+    }
+
+    /// <summary>
+    /// 트리 전체를 끝낸다. 자식이 콘솔 출력 쪽을 잡고 있으면 루트만 죽여서는 읽기가 EOF 를 보지 못한다.
+    /// <para>
+    /// 작업 개체가 없으면(만들지 못했다) 이 프로세스만이라도 끝낸다.
+    /// </para>
+    /// </summary>
+    internal void TerminateTree()
+    {
+        if (_job != IntPtr.Zero && TerminateJobObject(_job, 1))
+        {
+            return;
+        }
+
+        Kill();
     }
 
     /// <summary>종료 코드. 아직 돌고 있으면 null.</summary>
@@ -200,6 +228,92 @@ internal sealed class PseudoConsole : IDisposable
             return code == StillActive ? null : (int)code;
         }
     }
+
+    /// <summary>작업 개체를 만들고 "핸들을 닫으면 다 죽인다"로 맞춘다. 실패하면 IntPtr.Zero.</summary>
+    private static IntPtr CreateJob()
+    {
+        var job = CreateJobObject(IntPtr.Zero, null);
+
+        if (job == IntPtr.Zero)
+        {
+            return IntPtr.Zero;
+        }
+
+        var limits = new JobObjectExtendedLimitInformation();
+        limits.BasicLimitInformation.LimitFlags = JobObjectLimitKillOnJobClose;
+
+        var size = Marshal.SizeOf<JobObjectExtendedLimitInformation>();
+        var buffer = Marshal.AllocHGlobal(size);
+
+        try
+        {
+            Marshal.StructureToPtr(limits, buffer, fDeleteOld: false);
+
+            if (!SetInformationJobObject(job, JobObjectExtendedLimitInformationClass, buffer, (uint)size))
+            {
+                CloseHandle(job);
+
+                return IntPtr.Zero;
+            }
+        }
+        finally
+        {
+            Marshal.FreeHGlobal(buffer);
+        }
+
+        return job;
+    }
+
+    private const uint JobObjectLimitKillOnJobClose = 0x00002000;
+    private const int JobObjectExtendedLimitInformationClass = 9;
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct JobObjectBasicLimitInformation
+    {
+        public long PerProcessUserTimeLimit;
+        public long PerJobUserTimeLimit;
+        public uint LimitFlags;
+        public nuint MinimumWorkingSetSize;
+        public nuint MaximumWorkingSetSize;
+        public uint ActiveProcessLimit;
+        public nuint Affinity;
+        public uint PriorityClass;
+        public uint SchedulingClass;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct IoCounters
+    {
+        public ulong ReadOperationCount;
+        public ulong WriteOperationCount;
+        public ulong OtherOperationCount;
+        public ulong ReadTransferCount;
+        public ulong WriteTransferCount;
+        public ulong OtherTransferCount;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct JobObjectExtendedLimitInformation
+    {
+        public JobObjectBasicLimitInformation BasicLimitInformation;
+        public IoCounters IoInfo;
+        public nuint ProcessMemoryLimit;
+        public nuint JobMemoryLimit;
+        public nuint PeakProcessMemoryUsed;
+        public nuint PeakJobMemoryUsed;
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    private static extern IntPtr CreateJobObject(IntPtr securityAttributes, string? name);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool SetInformationJobObject(IntPtr job, int infoClass, IntPtr info, uint length);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool AssignProcessToJobObject(IntPtr job, IntPtr process);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool TerminateJobObject(IntPtr job, uint exitCode);
 
     private const uint StillActive = 259;
     private const int StdInputHandle = -10;
@@ -235,6 +349,13 @@ internal sealed class PseudoConsole : IDisposable
 
         _disposed = true;
         Close();
+
+        // 작업 개체를 닫으면 남아 있는 자식·손자까지 커널이 끝낸다 (KILL_ON_JOB_CLOSE)
+        if (_job != IntPtr.Zero)
+        {
+            CloseHandle(_job);
+            _job = IntPtr.Zero;
+        }
 
         if (ProcessHandle != IntPtr.Zero)
         {

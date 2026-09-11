@@ -141,18 +141,16 @@ public sealed class PtySession : IDisposable
     /// <summary>강제 종료. 방을 닫을 때 프로세스가 아직 살아 있으면 쓴다.</summary>
     public void Kill() => KillTree();
 
-    private void KillTree()
-    {
-        try
-        {
-            using var process = Process.GetProcessById(_console.ProcessId);
-            process.Kill(entireProcessTree: true);
-        }
-        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or System.ComponentModel.Win32Exception or NotSupportedException)
-        {
-            // 이미 끝났거나 접근 불가. 콘솔 닫기로 마저 정리된다
-        }
-    }
+    /// <summary>
+    /// 트리 전체를 끝낸다. <b>작업 개체(Job)</b>가 한다 (<c>PseudoConsole.TerminateTree</c>).
+    /// <para>
+    /// 전에는 pid 로 <c>Process</c> 를 찾아 <c>Kill(entireProcessTree)</c> 했다. 그것은 그 순간의
+    /// 프로세스 목록을 훑어 부모-자식을 잇는 방식이라, <b>부모가 먼저 죽어 고아가 된 손자</b>나
+    /// <b>콘솔에서 떨어져 나간 자식</b>을 놓친다. 작업 개체는 태어난 순서와 부모가 누구든 다 잡고,
+    /// 우리가 죽어도 커널이 대신 정리한다 (2026-09-11 점검).
+    /// </para>
+    /// </summary>
+    private void KillTree() => _console.TerminateTree();
 
     private async Task ReadLoopAsync()
     {
