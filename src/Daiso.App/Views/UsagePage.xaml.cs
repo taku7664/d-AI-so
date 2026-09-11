@@ -1,4 +1,4 @@
-using Daiso.App.Strings;
+﻿using Daiso.App.Strings;
 using Daiso.App.Controls;
 using Daiso.App.Services;
 using Daiso.App.ViewModels;
@@ -15,7 +15,8 @@ public sealed partial class UsagePage : Page, IPageHeaderSource
     public UsagePage()
     {
         InitializeComponent();
-        SelectorBarVisuals.ResetPressedOnLeave(ToolTabs);
+        // 도구 탭은 XAML 이 아니라 지금 앱이 아는 도구 목록이 채운다 (docs/PLUGIN_PLAN.md Stage 3)
+        SelectorBarVisuals.FillToolTabs(ToolTabs);
         Usage = App.Services.GetRequiredService<UsageViewModel>();
         Header = new PageHeader("Usage_Title", UiStrings.Get("Usage_Subtitle"));
 

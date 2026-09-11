@@ -1,4 +1,4 @@
-using Daiso.App.Controls;
+﻿using Daiso.App.Controls;
 using Daiso.App.Services;
 using Daiso.App.Strings;
 using Daiso.App.ViewModels;
@@ -22,7 +22,8 @@ public sealed partial class DashboardPage : Page, IPageHeaderSource
     public DashboardPage()
     {
         InitializeComponent();
-        SelectorBarVisuals.ResetPressedOnLeave(ToolTabs);
+        // 도구 탭은 XAML 이 아니라 지금 앱이 아는 도구 목록이 채운다 (docs/PLUGIN_PLAN.md Stage 3)
+        SelectorBarVisuals.FillToolTabs(ToolTabs);
         ViewModel = App.Services.GetRequiredService<DashboardViewModel>();
         Header = new PageHeader("Dashboard_Title", UiStrings.Get("Dashboard_ToolStatusHint"));
         Shell.PropertyChanged += OnShellPropertyChanged;

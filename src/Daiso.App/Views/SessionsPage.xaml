@@ -70,12 +70,7 @@
         <!-- 필터 줄 (바꾸면 바로 적용). 도구별 거르기는 탭, 나머지 축은 콤보 (UI_REFACTOR_PLAN §8.4) -->
         <controls:PageBody.Filters>
         <StackPanel Spacing="{StaticResource GapLarge}">
-        <muxc:SelectorBar x:Name="ToolTabs" SelectionChanged="OnToolTabChanged" AutomationProperties.AutomationId="ToolTabs">
-            <muxc:SelectorBarItem Text="{loc:Str Key=Common_All}" IsSelected="True" AutomationProperties.AutomationId="ToolTabAll" />
-            <muxc:SelectorBarItem Text="Codex" AutomationProperties.AutomationId="ToolTabCodex" />
-            <muxc:SelectorBarItem Text="Claude" AutomationProperties.AutomationId="ToolTabClaude" />
-            <muxc:SelectorBarItem Text="Antigravity" AutomationProperties.AutomationId="ToolTabAntigravity" />
-        </muxc:SelectorBar>
+        <muxc:SelectorBar x:Name="ToolTabs" SelectionChanged="OnToolTabChanged" AutomationProperties.AutomationId="ToolTabs" />
 
         <!--
             라벨을 칸 위(Header)가 아니라 칸 왼쪽에 둔다. 위에 두면 줄 높이가 두 배가 되고,

@@ -1,4 +1,4 @@
-<Page
+﻿<Page
     x:Class="Daiso.App.Views.DashboardPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -33,12 +33,7 @@
 
         <!-- 필터 줄: 전체 · 도구별. 카드·최근 세션·통계가 탭을 따라간다 -->
         <controls:PageBody.Filters>
-                <muxc:SelectorBar x:Name="ToolTabs" SelectionChanged="OnToolTabChanged" AutomationProperties.AutomationId="ToolTabs">
-                    <muxc:SelectorBarItem Text="{loc:Str Key=Common_All}" IsSelected="True" AutomationProperties.AutomationId="ToolTabAll" />
-                    <muxc:SelectorBarItem Text="Codex" AutomationProperties.AutomationId="ToolTabCodex" />
-                    <muxc:SelectorBarItem Text="Claude" AutomationProperties.AutomationId="ToolTabClaude" />
-                    <muxc:SelectorBarItem Text="Antigravity" AutomationProperties.AutomationId="ToolTabAntigravity" />
-                </muxc:SelectorBar>
+                <muxc:SelectorBar x:Name="ToolTabs" SelectionChanged="OnToolTabChanged" AutomationProperties.AutomationId="ToolTabs" />
         </controls:PageBody.Filters>
 
         <controls:PageBody.Body>

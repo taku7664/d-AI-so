@@ -11,6 +11,41 @@ namespace Daiso.App.Controls;
 /// </summary>
 internal static class SelectorBarVisuals
 {
+    /// <summary>
+    /// 도구 탭을 채운다: <c>전체</c> 다음에 지금 앱이 아는 도구가 표시 순서대로.
+    /// <para>
+    /// <b>XAML 에 도구 이름을 적지 않는다</b> — 적어 두면 빌드된 앱에 도구를 더해도 탭에 안 나온다
+    /// (docs/PLUGIN_PLAN.md Stage 3). <c>SelectorBar</c> 에는 <c>ItemsSource</c> 가 없어서 코드가 채운다.
+    /// </para>
+    /// <para>
+    /// 순서가 곧 계약이다. 뷰모델은 탭 번호를 <c>ToolLook.DisplayOrder[번호 - 1]</c> 로 되돌리므로
+    /// 여기 순서와 <see cref="Services.ToolLook.DisplayOrder"/> 가 어긋나면 탭과 도구가 어긋난다.
+    /// </para>
+    /// </summary>
+    internal static void FillToolTabs(SelectorBar bar)
+    {
+        ArgumentNullException.ThrowIfNull(bar);
+
+        bar.Items.Clear();
+        bar.Items.Add(new SelectorBarItem
+        {
+            Text = Strings.UiStrings.All,
+            IsSelected = true,
+        });
+
+        foreach (var kind in Services.ToolLook.DisplayOrder)
+        {
+            bar.Items.Add(new SelectorBarItem
+            {
+                Text = Services.ToolLook.Short(kind),
+                // 자동화 id 는 예전 XAML 이 쓰던 이름을 그대로 지킨다. 화면 시험이 이 이름으로 누른다
+                Name = "ToolTab" + kind.Id,
+            });
+        }
+
+        ResetPressedOnLeave(bar);
+    }
+
     /// <summary>탭 띠 하나에 되돌리기를 붙인다. 페이지 생성자에서 한 번.</summary>
     internal static void ResetPressedOnLeave(SelectorBar bar)
     {

@@ -41,12 +41,7 @@
 
         <!-- 필터 줄: 전체 · 도구별. 아래 모든 카드가 탭을 따른다 (요약과 같은 규칙) -->
         <controls:PageBody.Filters>
-                <muxc:SelectorBar x:Name="ToolTabs" SelectionChanged="OnToolTabChanged" AutomationProperties.AutomationId="ToolTabs">
-                    <muxc:SelectorBarItem Text="{loc:Str Key=Common_All}" IsSelected="True" AutomationProperties.AutomationId="ToolTabAll" />
-                    <muxc:SelectorBarItem Text="Codex" AutomationProperties.AutomationId="ToolTabCodex" />
-                    <muxc:SelectorBarItem Text="Claude" AutomationProperties.AutomationId="ToolTabClaude" />
-                    <muxc:SelectorBarItem Text="Antigravity" AutomationProperties.AutomationId="ToolTabAntigravity" />
-                </muxc:SelectorBar>
+                <muxc:SelectorBar x:Name="ToolTabs" SelectionChanged="OnToolTabChanged" AutomationProperties.AutomationId="ToolTabs" />
         </controls:PageBody.Filters>
 
         <controls:PageBody.Body>
