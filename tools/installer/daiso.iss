@@ -20,6 +20,10 @@
   #define SourceDir "..\..\src\Daiso.App\bin\Release\net8.0-windows10.0.19041.0\win-x64"
 #endif
 
+#ifndef RedistDir
+  #define RedistDir "..\..\artifacts\redist"
+#endif
+
 #define AppName "d-AI-so"
 #define AppExe "d-AI-so.exe"
 #define AppPublisher "PPAK_JU"
@@ -63,69 +67,42 @@ Name: "korean"; MessagesFile: "compiler:Languages\Korean.isl"
 Name: "desktopicon"; Description: "바탕화면에 아이콘 만들기"; GroupDescription: "추가 작업:"; Flags: unchecked
 
 [Files]
-; 컴파일된 XAML(.xbf)과 d-AI-so.pri 까지 통째로 담는다. 하나라도 빠지면 시작하자마자 죽는다
+; 컴파일된 XAML(.xbf)과 d-AI-so.pri 까지 통째로 담는다. 하나라도 빠지면 시작하자마자 죽는다.
+; .NET 런타임도 이 폴더 안에 있다(SelfContained=true). 받는 PC 에 .NET 이 없어도 뜬다 (docs/RELEASE.md)
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "arm64\*,*.pdb"
+
+; WebView2 Evergreen 부트스트래퍼(약 2MB). 내장 터미널(xterm)이 WebView2 위에서 돈다.
+; 없는 PC 에서만 돌린다. Microsoft 가 재배포용으로 배포하는 파일이고 tools\make-installer.ps1 이 공식 주소에서 받아 둔다
+Source: "{#RedistDir}\MicrosoftEdgeWebview2Setup.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall; Check: not WebView2Found
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExe}"
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopicon
 
 [Run]
+; 부트스트래퍼는 인터넷에서 런타임을 받아 깐다. 스스로 권한을 올리고, 못 올리면 사용자 단위로 깐다.
+; 실패해도 앱 설치는 계속한다 — 앱은 WebView2 가 없으면 내장 터미널 대신 새 창으로 CLI 를 띄운다
+Filename: "{tmp}\MicrosoftEdgeWebview2Setup.exe"; Parameters: "/silent /install"; StatusMsg: "WebView2 런타임을 설치하는 중…"; Flags: waituntilterminated skipifdoesntexist; Check: not WebView2Found
 Filename: "{app}\{#AppExe}"; Description: "{#AppName} 실행"; Flags: nowait postinstall skipifsilent
 
 [Code]
 
+{
+  WebView2 런타임이 있는지 본다. Microsoft 문서가 정한 자리 — Edge 업데이트 클라이언트 키의 pv(버전) 값.
+  기계 단위(64비트 OS 는 WOW6432Node) 또는 사용자 단위 어느 쪽이든 있으면 된다.
+}
+function WebView2Found: Boolean;
 var
-  ErrorCode: Integer;
-
-{ .NET 8 데스크톱 런타임이 있는지 본다. 앱은 프레임워크 의존이라 이것이 없으면 실행되지 않는다 }
-function HasEightUnder(Shared: String): Boolean;
-var
-  Found: TFindRec;
+  Version: String;
 begin
   Result := False;
 
-  if FindFirst(Shared + '\8.*', Found) then
-  begin
-    try
-      repeat
-        if (Found.Attributes and FILE_ATTRIBUTE_DIRECTORY) <> 0 then
-        begin
-          Result := True;
-          Exit;
-        end;
-      until not FindNext(Found);
-    finally
-      FindClose(Found);
-    end;
-  end;
-end;
-
-function DesktopRuntimeFound: Boolean;
-begin
-  Result := HasEightUnder(ExpandConstant('{commonpf64}\dotnet\shared\Microsoft.WindowsDesktop.App'))
-         or HasEightUnder(ExpandConstant('{commonpf32}\dotnet\shared\Microsoft.WindowsDesktop.App'))
-         or HasEightUnder(ExpandConstant('{localappdata}\Microsoft\dotnet\shared\Microsoft.WindowsDesktop.App'));
-end;
-
-function InitializeSetup: Boolean;
-begin
-  Result := True;
-
-  if not DesktopRuntimeFound then
-  begin
-    if MsgBox('.NET 8 데스크톱 런타임이 보이지 않습니다.' + #13#10#13#10 +
-              '이 앱은 그 런타임이 있어야 실행됩니다.' + #13#10 +
-              '지금 설치를 계속하고 런타임은 따로 받으시겠습니까?' + #13#10#13#10 +
-              '아니요를 누르면 내려받는 페이지를 엽니다.',
-              mbConfirmation, MB_YESNO) = IDNO then
-    begin
-      ShellExecAsOriginalUser('open',
-        'https://dotnet.microsoft.com/download/dotnet/8.0/runtime?cid=getdotnetcore&runtime=desktop',
-        '', '', SW_SHOW, ewNoWait, ErrorCode);
-      Result := False;
-    end;
-  end;
+  if RegQueryStringValue(HKLM, 'SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}', 'pv', Version)
+     and (Version <> '') and (Version <> '0.0.0.0') then
+    Result := True
+  else if RegQueryStringValue(HKCU, 'SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}', 'pv', Version)
+     and (Version <> '') and (Version <> '0.0.0.0') then
+    Result := True;
 end;
 
 {

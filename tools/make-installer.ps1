@@ -37,7 +37,27 @@ if (-not (Test-Path (Join-Path $source "App.xbf"))) {
     throw "App.xbf 가 없다. Release 빌드가 끝나지 않았거나 산출물 경로가 바뀌었다: $source"
 }
 
-& $iscc "/DAppVersion=$version" "/DSourceDir=$source" (Join-Path $PSScriptRoot "installer\daiso.iss")
+# 자체 포함 빌드 확인. hostfxr.dll 이 없으면 프레임워크 의존 빌드라 .NET 없는 PC 에서 뜨지 않는다 (docs/RELEASE.md)
+if (-not (Test-Path (Join-Path $source "hostfxr.dll"))) {
+    throw "hostfxr.dll 이 없다. Daiso.App.csproj 의 SelfContained 가 true 인지 본다: $source"
+}
+
+# WebView2 Evergreen 부트스트래퍼. Microsoft 의 고정 주소(fwlink)가 항상 최신 부트스트래퍼를 준다.
+# 저장소에 넣지 않고 만들 때 받는다 — 바이너리를 묵혀 두지 않고, 재배포 조건도 "Microsoft 가 배포하는 그 파일"로 남는다
+$redist = Join-Path $root "artifacts\redist"
+$bootstrapper = Join-Path $redist "MicrosoftEdgeWebview2Setup.exe"
+if (-not (Test-Path $bootstrapper)) {
+    New-Item -ItemType Directory -Force $redist | Out-Null
+    Write-Output "WebView2 부트스트래퍼를 받는다…"
+    Invoke-WebRequest "https://go.microsoft.com/fwlink/p/?LinkId=2124703" -OutFile $bootstrapper
+}
+$signer = Get-AuthenticodeSignature $bootstrapper
+if ($signer.Status -ne "Valid" -or $signer.SignerCertificate.Subject -notmatch "Microsoft Corporation") {
+    Remove-Item $bootstrapper -Force
+    throw "받은 WebView2 부트스트래퍼의 서명이 Microsoft 가 아니다. 지웠다. 다시 돌린다"
+}
+
+& $iscc "/DAppVersion=$version" "/DSourceDir=$source" "/DRedistDir=$redist" (Join-Path $PSScriptRoot "installer\daiso.iss")
 if ($LASTEXITCODE -ne 0) { throw "Inno Setup 컴파일 실패" }
 
 $setup = Join-Path $root "artifacts\installer\d-AI-so-$version-setup.exe"

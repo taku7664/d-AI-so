@@ -6,6 +6,12 @@
 
 첫 배포판입니다. 화면 일곱 개가 다 돌고, 도구를 YAML로 추가할 수 있는 상태입니다.
 
+### 설치
+
+- 설치 프로그램 하나로 끝납니다. .NET 런타임은 앱에 담겨 있고, WebView2 런타임은 없는 PC 에서만 설치 중에 깝니다. 규칙은 [docs/RELEASE.md](docs/RELEASE.md)
+- Claude Code·Codex 를 npm 으로 깔려면 Node.js 가 필요합니다. 없으면 앱이 설치 버튼에서 내려받기 페이지를 열어 줍니다
+- Windows 기본 실행 정책(Restricted)인 새 PC 에서 터미널이 `claude.ps1 파일을 로드할 수 없습니다` 로 죽던 문제. PowerShell 에 `.cmd` 를 직접 넘겨 정책과 무관하게 뜹니다
+
 ### 기능
 
 - **도구 세 개 지원** — Claude Code, Codex CLI, Antigravity CLI. 계정·요금제·만료일을 카드로 보여줍니다

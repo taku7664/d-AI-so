@@ -48,12 +48,12 @@ pwsh tools/run-app.ps1
 ```
 
 산출물은 `src/Daiso.App/bin/Debug/net8.0-windows10.0.19041.0/win-x64/d-AI-so.exe`입니다.
-설치가 필요 없고, Windows App SDK를 실행 파일에 담았기 때문에(`WindowsAppSDKSelfContained`)
-PC에 깔린 런타임 버전과 상관없이 돕니다. 창은 1024×700까지만 작아집니다.
+설치가 필요 없고, .NET 런타임과 Windows App SDK를 산출물에 담았기 때문에(`SelfContained`, `WindowsAppSDKSelfContained`)
+PC에 깔린 런타임과 상관없이 돕니다. 창은 1024×700까지만 작아집니다.
 
-배포용 zip을 만들 때는 `dotnet build -c Release` 산출물 폴더를 그대로 압축하세요.
-`dotnet publish`는 쓰지 마세요. unpackaged WinUI 앱에서는 컴파일된 XAML(`App.xbf`, `Views/`, `Ui/`)과
-`d-AI-so.pri`를 빠뜨려서, 실행하면 시작하자마자 죽습니다(2026-09-11 확인).
+배포는 `tools/make-installer.ps1`로 설치 프로그램을 만듭니다. 무엇을 담고 무엇을 담지 않는지는
+[docs/RELEASE.md](docs/RELEASE.md)가 정합니다. `dotnet publish`는 쓰지 마세요. unpackaged WinUI 앱에서는
+컴파일된 XAML(`App.xbf`, `Views/`, `Ui/`)과 `d-AI-so.pri`를 빠뜨려서, 실행하면 시작하자마자 죽습니다(2026-09-11 확인).
 
 판 번호는 `Directory.Build.props`의 `Version` 하나로 관리합니다. 설정 화면이 그 값을 그대로 보여줍니다.
 

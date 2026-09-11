@@ -14,7 +14,8 @@
     <!-- 솔루션 빌드(Debug|x64)와 프로젝트 단독 빌드(AnyCPU)가 서로 다른 폴더에 산출물을 내지 않게 한다. 어느 쪽으로 빌드해도 bin\Debug\... 하나다 -->
     <AppendPlatformToOutputPath>false</AppendPlatformToOutputPath>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <SelfContained>false</SelfContained>
+    <!-- .NET 런타임을 산출물에 담는다. 설치 프로그램이 런타임 설치기를 따로 돌리지 않고, 받는 PC 에 .NET 이 없어도 뜬다 (docs/RELEASE.md) -->
+    <SelfContained>true</SelfContained>
 
     <!-- 설치 없이 실행되는 unpackaged 앱. 머신에 Windows App Runtime 1.8이 이미 있다 -->
     <WindowsPackageType>None</WindowsPackageType>
