@@ -62,6 +62,7 @@ public static class Program
         try
         {
             // 넘기는 일은 이 스레드에서 기다리면 서로 붙잡고 멈춘다. 다른 스레드에 맡기고 끝나기만 기다린다
+            // 해제하지 않는다. 늦게 끝난 넘기기가 해제된 것을 건드리지 않게 — 이 프로세스는 곧 사라진다
             var done = new ManualResetEvent(false);
 
             _ = Task.Run(async () =>
@@ -80,7 +81,12 @@ public static class Program
                 }
             });
 
-            return done.WaitOne(TimeSpan.FromSeconds(5));
+            // 주인은 분명히 있다(FindOrRegisterForKey 가 그렇게 답했다). 넘기기가 늦는다고 여기서 뜨면
+            // 두 앱이 같은 인덱스 파일을 같이 쓴다 — 늦더라도 물러나는 쪽이 맞다.
+            // 기다림은 창이 영영 안 뜨는 것처럼 보이지 않게 하는 상한일 뿐이다
+            done.WaitOne(TimeSpan.FromSeconds(5));
+
+            return true;
         }
         catch (Exception ex) when (ex is InvalidOperationException or System.Runtime.InteropServices.COMException)
         {

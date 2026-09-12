@@ -538,7 +538,13 @@ public sealed partial class ShellWindow : Window
             _closeConfirmed = true;
             App.Rooms.DisposeAll();
             Close();
+
+            return;
         }
+
+        // 끝내기를 물렸다. 표시를 되돌리지 않으면 그 뒤로는 창 X 가 알림 영역으로 숨지 않고
+        // 매번 끝낼지 다시 묻는다 — 한 번 물린 것이 앱의 닫기 동작을 바꿔 버린다 (2026-09-12 점검)
+        _exitRequested = false;
     }
 
     /// <summary>닫는 중인가. 닫힌 뒤에 오는 창 사건이 이미 닫힌 서비스를 건드리지 않게 한다.</summary>
