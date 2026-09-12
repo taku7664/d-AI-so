@@ -235,7 +235,7 @@ public sealed partial class RuleMakerViewModel : ObservableObject
 
         foreach (var blank in Rules.Where(rule => rule.ConditionPreview.Length == 0 && !rule.Actions.Any(HasText)).ToList())
         {
-            blank.Changed -= OnChildChanged;
+            Forget(blank);
             Rules.Remove(blank);
         }
 
@@ -412,6 +412,7 @@ public sealed partial class RuleMakerViewModel : ObservableObject
     {
         if (action is not null && Global.Remove(action))
         {
+            Untrack(action);
             Refresh();
         }
     }
@@ -444,9 +445,38 @@ public sealed partial class RuleMakerViewModel : ObservableObject
             return;
         }
 
-        rule.Changed -= OnChildChanged;
+        Forget(rule);
         SelectedRule = Rules.FirstOrDefault();
         Refresh();
+    }
+
+    /// <summary>
+    /// 규칙에 행동 줄을 하나 더한다. <b>지켜보기를 함께 건다</b> —
+    /// 화면이 직접 <c>Actions.Add</c> 하던 때는 그 줄에 친 글이 미리보기에도 저장 단추에도 닿지 않았다.
+    /// </summary>
+    [RelayCommand]
+    public void AddRuleAction(RuleEditViewModel? rule)
+    {
+        if (rule is null)
+        {
+            return;
+        }
+
+        rule.Actions.Add(Track(new ActionEditViewModel()));
+        rule.NotifyChanged();
+    }
+
+    /// <summary>규칙에서 행동 줄을 뺀다. 지켜보기도 함께 뗀다.</summary>
+    [RelayCommand]
+    public void RemoveRuleAction(ActionEditViewModel? action)
+    {
+        if (action is null || SelectedRule is not { } rule || !rule.Actions.Remove(action))
+        {
+            return;
+        }
+
+        Untrack(action);
+        rule.NotifyChanged();
     }
 
 
@@ -508,6 +538,11 @@ public sealed partial class RuleMakerViewModel : ObservableObject
         PresetName = preset.Name;
         Description = preset.Description;
 
+        foreach (var action in Global)
+        {
+            Untrack(action);
+        }
+
         Global.Clear();
         foreach (var action in preset.Global)
         {
@@ -516,7 +551,7 @@ public sealed partial class RuleMakerViewModel : ObservableObject
 
         foreach (var rule in Rules)
         {
-            rule.Changed -= OnChildChanged;
+            Forget(rule);
         }
 
         Rules.Clear();
@@ -542,6 +577,23 @@ public sealed partial class RuleMakerViewModel : ObservableObject
     {
         action.PropertyChanged += OnChildChanged;
         return action;
+    }
+
+    /// <summary>
+    /// <see cref="Track"/> 의 짝. <b>없으면 프리셋을 갈아 끼울 때마다 행동 줄이 그대로 쌓인다</b> —
+    /// 이 뷰모델은 하나뿐이라 앱이 끝날 때까지 살아 있다 (2026-09-12 점검).
+    /// </summary>
+    private void Untrack(ActionEditViewModel action) => action.PropertyChanged -= OnChildChanged;
+
+    /// <summary>규칙 하나를 목록에서 놓아 준다. 규칙과 그 행동 줄의 지켜보기를 모두 뗀다.</summary>
+    private void Forget(RuleEditViewModel rule)
+    {
+        rule.Changed -= OnChildChanged;
+
+        foreach (var action in rule.Actions)
+        {
+            Untrack(action);
+        }
     }
 
     private void OnChildChanged(object? sender, EventArgs e) => Refresh();

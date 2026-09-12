@@ -1,4 +1,4 @@
-using Daiso.App.Controls;
+﻿using Daiso.App.Controls;
 using Daiso.App.Services;
 using Daiso.App.Strings;
 using Daiso.App.ViewModels;
@@ -590,8 +590,7 @@ public sealed partial class RuleMakerPage : Page, IPageHeaderSource
         if (ViewModel.SelectedRule is { } rule)
         {
             _focusNextActionBox = true;
-            rule.Actions.Add(new ActionEditViewModel());
-            rule.NotifyChanged();
+            ViewModel.AddRuleAction(rule);
         }
     }
 
@@ -603,10 +602,9 @@ public sealed partial class RuleMakerPage : Page, IPageHeaderSource
 
     private void OnRuleActionRemoveClick(object sender, RoutedEventArgs e)
     {
-        if (ViewModel.SelectedRule is { } rule && Context<ActionEditViewModel>(sender) is { } action)
+        if (Context<ActionEditViewModel>(sender) is { } action)
         {
-            rule.Actions.Remove(action);
-            rule.NotifyChanged();
+            ViewModel.RemoveRuleAction(action);
         }
     }
 
