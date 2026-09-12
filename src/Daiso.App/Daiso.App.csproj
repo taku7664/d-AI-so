@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -28,6 +28,9 @@
     <!-- 리소스의 기본 언어. 이 언어의 .resw가 없는 항목은 빌드 경고(PRI263)로 잡힌다 -->
     <DefaultLanguage>ko-KR</DefaultLanguage>
     <EnableMsixTooling>false</EnableMsixTooling>
+
+    <!-- 들머리를 직접 쓴다(Program.cs). 앱이 하나만 뜨게 하려고 — 창을 닫아도 알림 영역에 남기 때문이다 -->
+    <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
 
     <!-- MVVMTK0045: [ObservableProperty] 필드가 AOT에 맞지 않다는 경고. 이 앱은 AOT를 쓰지 않는다 -->
     <NoWarn>$(NoWarn);MVVMTK0045</NoWarn>

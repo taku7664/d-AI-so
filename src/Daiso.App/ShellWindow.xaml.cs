@@ -71,6 +71,15 @@ public sealed partial class ShellWindow : Window
 
         _viewModel.StartBackgroundRefresh();
 
+        // 창을 닫아도 앱은 남는다. 돌아올 문과 끝내는 문을 알림 영역에 둔다 (2026-09-12 사람의 요청)
+        _tray = new TrayIcon(
+            UiStrings.Get("App_Name"),
+            Path.Combine(AppContext.BaseDirectory, "Assets", "daiso.ico"),
+            UiStrings.Get("Tray_Show"),
+            UiStrings.Get("Tray_Exit"));
+        _tray.ShowRequested += () => DispatcherQueue.TryEnqueue(BringToFront);
+        _tray.ExitRequested += () => DispatcherQueue.TryEnqueue(ExitForReal);
+
         // 일이 끝나면 오른쪽 아래 알림. 누르면 그 방으로 데려간다 (2026-09-11 사람의 요청)
         _doneNotifier = new DoneNotifier(DispatcherQueue, GoToRoom);
         _doneNotifier.Start();
@@ -81,6 +90,21 @@ public sealed partial class ShellWindow : Window
     }
 
     private readonly DoneNotifier _doneNotifier;
+    private readonly TrayIcon _tray;
+
+    /// <summary>알림 영역 메뉴로 끝내기를 골랐는가. 이때만 창이 정말 닫힌다.</summary>
+    private bool _exitRequested;
+
+    /// <summary>창이 숨어 있다고 한 번 알렸는가. 매번 말하면 잔소리다.</summary>
+    private bool _toldAboutTray;
+
+    /// <summary>정말 끝낸다. 알림 영역 메뉴만 이 길로 온다.</summary>
+    private void ExitForReal()
+    {
+        _exitRequested = true;
+        AppWindow.Show();
+        Close();
+    }
 
     /// <summary>
     /// 알림을 눌렀다. 창을 앞으로 끌어내고 그 방을 연다.
@@ -96,6 +120,9 @@ public sealed partial class ShellWindow : Window
             App.Rooms.ActiveRoom = target;
         }
     }
+
+    /// <summary>숨어 있던 창을 다시 보인다. 두 번째 실행이 물러나면서 부른다.</summary>
+    public void ComeBack() => BringToFront();
 
     /// <summary>창을 앞으로. 최소화돼 있으면 되살린다.</summary>
     private void BringToFront()
@@ -470,6 +497,23 @@ public sealed partial class ShellWindow : Window
     /// </summary>
     private async void OnClosing(AppWindow sender, AppWindowClosingEventArgs args)
     {
+        // 창을 닫는 것은 앱을 끝내는 것이 아니다. 숨기고 알림 영역에 남는다 —
+        // 그래야 일을 맡겨 둔 도구가 계속 돌고, 끝나면 알림이 뜬다 (2026-09-12 사람의 요청).
+        // 정말 끝내는 길은 알림 영역 메뉴 하나뿐이다
+        if (!_exitRequested)
+        {
+            args.Cancel = true;
+            AppWindow.Hide();
+
+            if (!_toldAboutTray)
+            {
+                _toldAboutTray = true;
+                _tray.ShowBalloon(UiStrings.Get("App_Name"), UiStrings.Get("Tray_StillRunning"));
+            }
+
+            return;
+        }
+
         if (_closeConfirmed || !App.Rooms.HasRooms)
         {
             App.Rooms.DisposeAll();
@@ -502,6 +546,7 @@ public sealed partial class ShellWindow : Window
     private void OnClosed(object sender, WindowEventArgs args)
     {
         _shuttingDown = true;
+        _tray.Dispose();
         _doneNotifier.Dispose();
         App.Rooms.DisposeAll();
         _settings.Current.WindowWidth = AppWindow.Size.Width;

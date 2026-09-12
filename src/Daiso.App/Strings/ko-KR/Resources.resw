@@ -1472,6 +1472,15 @@
   <data name="App_Name" xml:space="preserve">
     <value>DAIso</value>
   </data>
+  <data name="Tray_Show" xml:space="preserve">
+    <value>열기</value>
+  </data>
+  <data name="Tray_Exit" xml:space="preserve">
+    <value>끝내기</value>
+  </data>
+  <data name="Tray_StillRunning" xml:space="preserve">
+    <value>창만 닫았습니다. 맡겨 둔 일은 계속 돌아가고, 끝나면 알려 드립니다. 완전히 끝내려면 이 아이콘을 오른쪽 단추로 눌러 끝내기를 고르세요.</value>
+  </data>
   <data name="Room_DoneTitle" xml:space="preserve">
     <value>작업이 끝났습니다</value>
   </data>

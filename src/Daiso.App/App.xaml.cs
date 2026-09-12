@@ -65,6 +65,13 @@ public partial class App : Application
     /// <summary>열려 있는 Shell 창. 파일 선택 대화상자가 창 핸들을 필요로 한다.</summary>
     public static Window? MainWindow { get; private set; }
 
+    /// <summary>
+    /// 두 번째로 실행된 프로세스가 물러나면서 이쪽에 부탁한다: 네가 나와라.
+    /// 창을 닫아 알림 영역에 들어가 있을 때, 바로 가기를 다시 누르는 것이 곧 창을 되부르는 길이 된다.
+    /// </summary>
+    public static void ShowExistingWindow() =>
+        (MainWindow as ShellWindow)?.DispatcherQueue.TryEnqueue(() => (MainWindow as ShellWindow)?.ComeBack());
+
     /// <summary>열린 방을 들고 있는 하나뿐인 자리. 화면을 옮겨도 방은 여기 살아 있다. (ARCHITECTURE §5.3)</summary>
     public static ViewModels.RoomManager Rooms => Services.GetRequiredService<ViewModels.RoomManager>();
 
