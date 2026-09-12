@@ -48,6 +48,12 @@ public sealed class TrayIcon : IDisposable
     private IntPtr _icon;
     private bool _added;
 
+    /// <summary>
+    /// 아이콘이 정말 붙었는가. <b>붙지 않았으면 창을 숨겨서는 안 된다</b> —
+    /// 돌아올 문도 끝내는 문도 없이 앱이 갇힌다.
+    /// </summary>
+    public bool IsAvailable => _added;
+
     /// <summary>아이콘을 눌렀다. 창을 다시 보여 달라는 뜻이다.</summary>
     public event Action? ShowRequested;
 

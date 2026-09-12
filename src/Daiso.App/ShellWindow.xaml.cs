@@ -499,8 +499,9 @@ public sealed partial class ShellWindow : Window
     {
         // 창을 닫는 것은 앱을 끝내는 것이 아니다. 숨기고 알림 영역에 남는다 —
         // 그래야 일을 맡겨 둔 도구가 계속 돌고, 끝나면 알림이 뜬다 (2026-09-12 사람의 요청).
-        // 정말 끝내는 길은 알림 영역 메뉴 하나뿐이다
-        if (!_exitRequested)
+        // 정말 끝내는 길은 알림 영역 메뉴 하나뿐이므로, <b>아이콘이 붙지 못한 PC 에서는 숨기지 않는다</b> —
+        // 그랬다가는 열 수도 끝낼 수도 없는 앱이 남는다
+        if (!_exitRequested && _tray.IsAvailable)
         {
             args.Cancel = true;
             AppWindow.Hide();
