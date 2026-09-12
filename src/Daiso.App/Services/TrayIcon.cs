@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 
 namespace Daiso.App.Services;
 
@@ -13,6 +13,18 @@ namespace Daiso.App.Services;
 /// <para>
 /// WinUI 는 이 자리를 다루는 길을 주지 않아 Win32 를 직접 쓴다. 아이콘은 창에 달리는 것이 아니라
 /// <b>메시지만 받는 창</b>(HWND_MESSAGE)에 달린다 — 그래야 앱 창을 숨겨도 아이콘이 살아 있다.
+/// </para>
+///
+/// <para>
+/// <b>아이콘에 고정된 값을 붙인다(<c>NIF_GUID</c>).</b> 윈도우는 앱이 <b>강제로</b> 죽으면 아이콘을 바로 치우지 않는다 —
+/// 그 자리를 건드릴 때에야 주인이 없는 것을 알아채고 지운다(윈도우 전체의 동작이지 이 앱만의 일이 아니다).
+/// 그동안 앱을 다시 켜면 껍데기 옆에 새 아이콘이 붙어 <b>여러 개로 보였다</b> (2026-09-12 사람의 지적).
+/// 같은 값으로 등록하면 윈도우가 그 자리를 <b>갈아 끼운다</b> — 늘지 않는다.
+/// </para>
+///
+/// <para>
+/// 다만 이 값은 실행 파일 위치와 함께 기억된다. 파일을 옮기면 등록이 거절될 수 있어,
+/// 그때는 값 없이 한 번 더 시도한다 — 아이콘이 하나 더 보이는 것이 아예 없는 것보다 낫다.
 /// </para>
 /// </summary>
 public sealed class TrayIcon : IDisposable
@@ -83,12 +95,26 @@ public sealed class TrayIcon : IDisposable
         }
 
         var data = NewData();
-        data.uFlags = NifMessage | NifIcon | NifTip;
+        data.uFlags = NifMessage | NifIcon | NifTip | NifGuid;
         data.uCallbackMessage = TrayCallback;
         data.hIcon = _icon;
         data.szTip = tooltip;
+        data.guidItem = IconId;
 
         _added = Shell_NotifyIcon(NimAdd, ref data);
+
+        if (!_added)
+        {
+            // 값이 다른 위치에 묶여 있어 거절됐다. 값 없이 붙인다
+            _useGuid = false;
+            data = NewData();
+            data.uFlags = NifMessage | NifIcon | NifTip;
+            data.uCallbackMessage = TrayCallback;
+            data.hIcon = _icon;
+            data.szTip = tooltip;
+
+            _added = Shell_NotifyIcon(NimAdd, ref data);
+        }
     }
 
     /// <summary>아이콘에서 잠깐 뜨는 말풍선. 창이 어디로 갔는지 한 번 알려 주는 데 쓴다.</summary>
@@ -100,7 +126,7 @@ public sealed class TrayIcon : IDisposable
         }
 
         var data = NewData();
-        data.uFlags = NifInfo;
+        data.uFlags |= NifInfo;
         data.szInfoTitle = title;
         data.szInfo = body;
         data.dwInfoFlags = 0;
@@ -108,15 +134,32 @@ public sealed class TrayIcon : IDisposable
         Shell_NotifyIcon(NimModify, ref data);
     }
 
-    private NOTIFYICONDATA NewData() => new()
+    /// <summary>이 앱의 아이콘을 가리키는 고정된 값. 다시 켜도 같은 자리를 쓴다.</summary>
+    private static readonly Guid IconId = new("3F2A6C51-9B4E-4D27-8C10-DA150A1C7E63");
+
+    /// <summary>고정된 값으로 붙였는가. 거절돼 값 없이 붙였으면 지울 때도 값을 쓰면 안 된다.</summary>
+    private bool _useGuid = true;
+
+    private NOTIFYICONDATA NewData()
     {
-        cbSize = Marshal.SizeOf<NOTIFYICONDATA>(),
-        hWnd = _window,
-        uID = 1,
-        szTip = string.Empty,
-        szInfo = string.Empty,
-        szInfoTitle = string.Empty,
-    };
+        var data = new NOTIFYICONDATA
+        {
+            cbSize = Marshal.SizeOf<NOTIFYICONDATA>(),
+            hWnd = _window,
+            uID = 1,
+            szTip = string.Empty,
+            szInfo = string.Empty,
+            szInfoTitle = string.Empty,
+        };
+
+        if (_useGuid)
+        {
+            data.uFlags = NifGuid;
+            data.guidItem = IconId;
+        }
+
+        return data;
+    }
 
     private IntPtr HandleMessage(IntPtr hWnd, uint message, IntPtr wParam, IntPtr lParam)
     {
@@ -222,6 +265,7 @@ public sealed class TrayIcon : IDisposable
     private const int NifIcon = 0x02;
     private const int NifTip = 0x04;
     private const int NifInfo = 0x10;
+    private const int NifGuid = 0x20;
 
     private const uint ImageIcon = 1;
     private const uint LoadFromFile = 0x0010;

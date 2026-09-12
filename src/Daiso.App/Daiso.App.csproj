@@ -11,7 +11,9 @@
     -->
     <AssemblyTitle>DAIso</AssemblyTitle>
     <RootNamespace>Daiso.App</RootNamespace>
-    <AssemblyName>d-AI-so</AssemblyName>
+    <!-- 쓰는 이름은 DAIso 하나다. 실행 파일 이름도 그것으로 맞춘다 (2026-09-12 사람의 결정).
+         <b>자료 폴더(`%LOCALAPPDATA%\d-AI-so`)는 그대로 둔다</b> — 옮기면 인덱스·설정·계정 보관함이 갈 곳을 잃는다 -->
+    <AssemblyName>DAIso</AssemblyName>
     <UseWinUI>true</UseWinUI>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\daiso.ico</ApplicationIcon>

@@ -1,4 +1,4 @@
-# 새 터미널 카드의 단계별 화면을 찍는다. shoot-screens.ps1 은 Ctrl+1~7 로 화면만 옮기므로
+﻿# 새 터미널 카드의 단계별 화면을 찍는다. shoot-screens.ps1 은 Ctrl+1~7 로 화면만 옮기므로
 # "AI를 고른 뒤", "이어서를 고른 뒤" 같은 상태는 못 찍는다. 그 상태들이 이 카드 설계의 핵심이라
 # (docs/TERMINAL_CARD_PLAN.md §4.3~§4.8) UI 자동화로 눌러 가며 찍는다.
 #
@@ -29,7 +29,7 @@ public class StepWin {
 }
 "@
 
-$app = Get-Process -Name "d-AI-so" -ErrorAction SilentlyContinue
+$app = Get-Process -Name "DAIso" -ErrorAction SilentlyContinue
 if (-not $app) { throw "앱이 안 떠 있다. tools\run-app.ps1 로 먼저 띄운다" }
 
 $handle = $app.MainWindowHandle

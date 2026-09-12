@@ -1,4 +1,4 @@
-using Microsoft.UI.Dispatching;
+﻿using Microsoft.UI.Dispatching;
 using Microsoft.Windows.AppLifecycle;
 
 namespace Daiso.App;
@@ -16,7 +16,7 @@ namespace Daiso.App;
 public static class Program
 {
     /// <summary>이 앱을 가리키는 이름. 같은 이름을 먼저 잡은 프로세스가 주인이다.</summary>
-    private const string InstanceKey = "d-AI-so";
+    private const string InstanceKey = "DAIso";
 
     [STAThread]
     private static void Main()

@@ -1,4 +1,4 @@
-# 배포 규칙
+﻿# 배포 규칙
 
 설치 프로그램이 **무엇을 담고 무엇을 담지 않는지**를 정한다. 의존성을 더하거나 빼려면 이 문서를 먼저 고치고 코드가 따른다.
 만드는 방법은 `tools/make-installer.ps1` 한 줄이고, 설치 프로그램 정의는 `tools/installer/daiso.iss` 다.
@@ -37,10 +37,14 @@
 스크립트가 하는 일, 순서대로:
 
 1. `Directory.Build.props` 의 `Version` 을 읽는다. 판 번호의 정본은 여기 하나다.
-2. 떠 있는 앱을 끄고 `dotnet build -c Release` 를 돈다. **`dotnet publish` 는 쓰지 않는다** — unpackaged WinUI 는 publish 에서 컴파일된 XAML(`App.xbf`)과 `d-AI-so.pri` 가 빠져 시작하자마자 죽는다 (2026-09-11 확인).
+2. 떠 있는 앱을 끄고 `dotnet build -c Release` 를 돈다. **`dotnet publish` 는 쓰지 않는다** — unpackaged WinUI 는 publish 에서 컴파일된 XAML(`App.xbf`)과 `DAIso.pri` 가 빠져 시작하자마자 죽는다 (2026-09-11 확인).
 3. 산출물에 `App.xbf`(XAML 이 있다)와 `hostfxr.dll`(자체 포함이다)이 있는지 본다. 하나라도 없으면 멈춘다.
 4. `artifacts\redist\MicrosoftEdgeWebview2Setup.exe` 가 없으면 Microsoft 고정 주소(`https://go.microsoft.com/fwlink/p/?LinkId=2124703`)에서 받고, **Authenticode 서명이 Microsoft 인지 확인한다.** 아니면 지우고 멈춘다. 저장소에는 넣지 않는다(`artifacts/` 는 gitignore).
-5. Inno Setup 6 으로 `artifacts\installer\d-AI-so-{판}-setup.exe` 를 만들고 SHA256 을 찍는다.
+5. Inno Setup 6 으로 `artifacts\installer\DAIso-{판}-setup.exe` 를 만들고 SHA256 을 찍는다.
+
+> **이름이 바뀐 판(0.1.2~)**: 실행 파일이 `d-AI-so.exe` 에서 `DAIso.exe` 로, 설치 폴더가 `DAIso` 로 바뀌었다 (2026-09-12).
+> 묶는 열쇠(`AppId`)는 그대로라 판올림은 같은 앱으로 이어지지만, **옛 폴더와 바로 가기가 남을 수 있다** — 올린 뒤 한 번 확인한다.
+> **자료 폴더(`%LOCALAPPDATA%\d-AI-so`)는 그대로 둔다.** 인덱스·설정·계정 보관함이 거기 있고, 옮기면 쓰던 것이 사라진다.
 
 ## 4. 올리는 곳
 

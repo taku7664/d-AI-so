@@ -1,4 +1,4 @@
-# 일곱 화면을 여러 창 폭에서 찍는다. UI 작업의 완료 기준을 눈이 아니라 그림으로 확인하는 용도.
+﻿# 일곱 화면을 여러 창 폭에서 찍는다. UI 작업의 완료 기준을 눈이 아니라 그림으로 확인하는 용도.
 # 이유: 페이지마다 여백·폭이 어긋나는 것은 한 화면만 보면 안 보이고, 나란히 놓아야 보인다.
 #
 #   .\tools\shoot-screens.ps1                          # 1024 · 1280 · 1600
@@ -32,7 +32,7 @@ public class ShotWin {
 }
 "@
 
-$app = Get-Process -Name "d-AI-so" -ErrorAction SilentlyContinue
+$app = Get-Process -Name "DAIso" -ErrorAction SilentlyContinue
 if (-not $app) { throw "앱이 안 떠 있다. tools\run-app.ps1 로 먼저 띄운다" }
 
 $handle = $app.MainWindowHandle

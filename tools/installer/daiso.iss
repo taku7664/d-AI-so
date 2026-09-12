@@ -1,4 +1,4 @@
-; d-AI-so 설치 프로그램 (Inno Setup 6)
+﻿; DAIso 설치 프로그램 (Inno Setup 6)
 ;
 ; 만드는 방법은 tools\make-installer.ps1 을 쓴다. 판 번호와 원본 폴더를 그 스크립트가 넘긴다.
 ;   .\tools\make-installer.ps1
@@ -24,8 +24,8 @@
   #define RedistDir "..\..\artifacts\redist"
 #endif
 
-#define AppName "d-AI-so"
-#define AppExe "d-AI-so.exe"
+#define AppName "DAIso"
+#define AppExe "DAIso.exe"
 #define AppPublisher "PPAK_JU"
 #define AppUrl "https://github.com/taku7664/d-AI-so"
 
@@ -54,7 +54,7 @@ ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0.17763
 
 OutputDir=..\..\artifacts\installer
-OutputBaseFilename=d-AI-so-{#AppVersion}-setup
+OutputBaseFilename=DAIso-{#AppVersion}-setup
 Compression=lzma2/ultra64
 SolidCompression=yes
 LZMAUseSeparateProcess=yes
@@ -67,7 +67,7 @@ Name: "korean"; MessagesFile: "compiler:Languages\Korean.isl"
 Name: "desktopicon"; Description: "바탕화면에 아이콘 만들기"; GroupDescription: "추가 작업:"; Flags: unchecked
 
 [Files]
-; 컴파일된 XAML(.xbf)과 d-AI-so.pri 까지 통째로 담는다. 하나라도 빠지면 시작하자마자 죽는다.
+; 컴파일된 XAML(.xbf)과 DAIso.pri 까지 통째로 담는다. 하나라도 빠지면 시작하자마자 죽는다.
 ; .NET 런타임도 이 폴더 안에 있다(SelfContained=true). 받는 PC 에 .NET 이 없어도 뜬다 (docs/RELEASE.md)
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "arm64\*,*.pdb"
 
