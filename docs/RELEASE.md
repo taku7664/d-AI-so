@@ -42,7 +42,7 @@
 4. `artifacts\redist\MicrosoftEdgeWebview2Setup.exe` 가 없으면 Microsoft 고정 주소(`https://go.microsoft.com/fwlink/p/?LinkId=2124703`)에서 받고, **Authenticode 서명이 Microsoft 인지 확인한다.** 아니면 지우고 멈춘다. 저장소에는 넣지 않는다(`artifacts/` 는 gitignore).
 5. Inno Setup 6 으로 `artifacts\installer\DAIso-{판}-setup.exe` 를 만들고 SHA256 을 찍는다.
 
-> **이름이 바뀐 판(0.1.2~)**: 실행 파일이 `d-AI-so.exe` 에서 `DAIso.exe` 로, 설치 폴더가 `DAIso` 로 바뀌었다 (2026-09-12).
+> **이름이 바뀐 판(0.2.0~)**: 실행 파일이 `d-AI-so.exe` 에서 `DAIso.exe` 로, 설치 폴더가 `DAIso` 로 바뀌었다 (2026-09-12).
 > 묶는 열쇠(`AppId`)는 그대로라 판올림은 같은 앱으로 이어지지만, **옛 폴더와 바로 가기가 남을 수 있다** — 올린 뒤 한 번 확인한다.
 > **자료 폴더도 `%LOCALAPPDATA%\DAIso` 로 옮겨 간다.** 앱이 처음 뜰 때 옛 폴더를 통째로 옮긴다(`AppPaths`) — 인덱스·설정·계정 보관함이 그대로 따라온다.
 > 같은 드라이브 안에서 이름만 바뀌므로 크기와 상관없이 한순간이고, 옮기지 못하면(파일이 잠겨 있으면) 옛 폴더를 계속 쓴다.

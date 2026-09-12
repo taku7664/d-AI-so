@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <!-- 판 번호는 여기 하나로 둔다. 앱이 설정 화면에 어셈블리 판을 그대로 보여 준다 -->
-    <Version>0.1.1</Version>
+    <Version>0.2.0</Version>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
