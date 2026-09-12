@@ -251,11 +251,23 @@ public sealed class TerminalHost : UserControl
         }
     }
 
+    /// <summary>
+    /// 페이지가 뜨기 전 출력을 모아 둘 칸 수. 넘으면 앞을 버린다 —
+    /// 페이지가 끝내 뜨지 않는 PC 에서 출력이 끝없이 쌓이지 않게 한다. 되돌릴 화면은 방이 따로 들고 있다.
+    /// </summary>
+    private const int MaxPendingOut = 2048;
+
     private void PostOutput(string base64)
     {
         if (!_ready)
         {
+            if (_pendingOut.Count >= MaxPendingOut)
+            {
+                _pendingOut.RemoveAt(0);
+            }
+
             _pendingOut.Add(base64);
+
             return;
         }
 
@@ -292,7 +304,12 @@ public sealed class TerminalHost : UserControl
         Post(new { type = "dump" });
 
         var done = await Task.WhenAny(pending.Task, Task.Delay(DumpTimeout)).ConfigureAwait(true);
-        _dump = null;
+
+        // 내 자리일 때만 치운다. 기다리는 사이에 다음 왕복이 시작됐으면 그쪽 자리를 지워 버린다
+        if (ReferenceEquals(_dump, pending))
+        {
+            _dump = null;
+        }
 
         return done == pending.Task ? await pending.Task.ConfigureAwait(true) : string.Empty;
     }

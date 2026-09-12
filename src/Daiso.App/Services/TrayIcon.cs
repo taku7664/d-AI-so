@@ -48,6 +48,12 @@ public sealed class TrayIcon : IDisposable
     private IntPtr _icon;
     private bool _added;
 
+    /// <summary>등록한 창 클래스 이름. 끝낼 때 이 이름으로 되돌린다.</summary>
+    private string? _className;
+
+    /// <summary>클래스 등록이 실제로 됐는가. 안 됐으면 되돌릴 것도 없다.</summary>
+    private bool _classRegistered;
+
     /// <summary>
     /// 아이콘이 정말 붙었는가. <b>붙지 않았으면 창을 숨겨서는 안 된다</b> —
     /// 돌아올 문도 끝내는 문도 없이 앱이 갇힌다.
@@ -73,7 +79,8 @@ public sealed class TrayIcon : IDisposable
         _exitText = exitText;
         _wndProc = HandleMessage;
 
-        var className = "DaisoTray_" + Guid.NewGuid().ToString("N");
+        _className = "DaisoTray_" + Guid.NewGuid().ToString("N");
+        var className = _className;
         var wndClass = new WNDCLASSEX
         {
             cbSize = Marshal.SizeOf<WNDCLASSEX>(),
@@ -86,6 +93,8 @@ public sealed class TrayIcon : IDisposable
         {
             return;
         }
+
+        _classRegistered = true;
 
         // HWND_MESSAGE(-3) 아래에 두면 화면에 뜨지 않고 메시지만 받는다
         _window = CreateWindowEx(0, className, className, 0, 0, 0, 0, 0, new IntPtr(-3), IntPtr.Zero, wndClass.hInstance, IntPtr.Zero);
@@ -259,6 +268,13 @@ public sealed class TrayIcon : IDisposable
             DestroyWindow(_window);
             _window = IntPtr.Zero;
         }
+
+        // 창을 없앤 다음에 클래스를 되돌린다. 창이 남아 있으면 UnregisterClass 가 거절한다
+        if (_classRegistered && _className is { } name)
+        {
+            UnregisterClass(name, GetModuleHandle(null));
+            _classRegistered = false;
+        }
     }
 
     // ── Win32 ────────────────────────────────────────────────────────────
@@ -328,6 +344,9 @@ public sealed class TrayIcon : IDisposable
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     private static extern ushort RegisterClassEx(ref WNDCLASSEX wndClass);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern bool UnregisterClass(string className, IntPtr instance);
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     private static extern IntPtr CreateWindowEx(

@@ -244,7 +244,13 @@ public sealed class PtySession : IDisposable
 
         // 2) 읽기를 취소하고, 루프가 완전히 빠져나온 뒤에만 스트림·핸들을 닫는다. 겹치면 힙이 깨진다
         _cts.Cancel();
-        _readDrained.Task.Wait(TimeSpan.FromSeconds(2));
+
+        // 안 빠져나왔으면 <b>닫지 않는다</b>. 읽는 중인 핸들을 닫는 것이 이 파일 머리말이 경고한 바로 그 일이다.
+        // 핸들 몇 개가 프로세스가 끝날 때까지 남는 편이, 힙이 깨져 앱이 통째로 죽는 것보다 낫다 (2026-09-12 점검)
+        if (!_readDrained.Task.Wait(TimeSpan.FromSeconds(2)))
+        {
+            return;
+        }
 
         _output.Dispose();
         _input.Dispose();

@@ -29,6 +29,9 @@ public sealed class SessionTail : IDisposable
     /// </summary>
     private readonly HashSet<string> _notMine = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>취소와 해제가 겹치지 않게 하는 자물쇠. 둘 다 이 안에서만 한다.</summary>
+    private readonly object _cancelGate = new();
+
     private string? _activeFile;
     private int _delivered;
     private long _lastSize = -1;
@@ -87,7 +90,13 @@ public sealed class SessionTail : IDisposable
         // 루프가 완전히 빠져나온 뒤에 해제한다. Dispose 가 먼저 해제하면
         // 아직 토큰을 쓰고 있던 이 루프가 ObjectDisposedException 을 맞고, 그것은
         // 아무도 지켜보지 않는 Task 로 사라진다 (2026-09-11 점검)
-        _cts.Dispose();
+        //
+        // <b>Cancel 이 끝난 것을 보고 해제한다.</b> CancellationTokenSource 는 Cancel 과 Dispose 를
+        // 동시에 부르는 것을 보장하지 않아, 취소가 아직 돌고 있는데 여기서 해제하면 그쪽이 터진다 (2026-09-12 점검)
+        lock (_cancelGate)
+        {
+            _cts.Dispose();
+        }
     }
 
     private async Task TickAsync(CancellationToken ct)
@@ -238,12 +247,16 @@ public sealed class SessionTail : IDisposable
         }
 
         _disposed = true;
-        _cts.Cancel();
 
-        // 돌고 있는 루프가 있으면 그 루프가 빠져나올 때 해제한다. 여기서 해제하면 루프가 터진다
-        if (!_started)
+        lock (_cancelGate)
         {
-            _cts.Dispose();
+            _cts.Cancel();
+
+            // 돌고 있는 루프가 있으면 그 루프가 빠져나올 때 해제한다. 여기서 해제하면 루프가 터진다
+            if (!_started)
+            {
+                _cts.Dispose();
+            }
         }
     }
 }
