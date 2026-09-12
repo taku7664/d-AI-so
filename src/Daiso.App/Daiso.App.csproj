@@ -5,6 +5,11 @@
     <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <Product>DAIso</Product>
+    <!--
+      윈도우가 앱 이름으로 읽는 자리는 실행 파일의 <b>설명</b>(FileDescription)이다. 비워 두면 파일 이름(`d-AI-so`)이 그대로 쓰여
+      알림과 작업 관리자에 `d-AI-so` 로 떴다 (2026-09-12 사람의 지적). 쓰는 이름은 DAIso 하나다
+    -->
+    <AssemblyTitle>DAIso</AssemblyTitle>
     <RootNamespace>Daiso.App</RootNamespace>
     <AssemblyName>d-AI-so</AssemblyName>
     <UseWinUI>true</UseWinUI>
