@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
 using Daiso.Infrastructure;
 
@@ -36,10 +36,7 @@ public sealed class SettingsStore : ISettingsStore
 
     public SettingsStore()
     {
-        Path = System.IO.Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "d-AI-so",
-            "settings.json");
+        Path = AppPaths.Combine("settings.json");
 
         Current = Load(Path);
     }

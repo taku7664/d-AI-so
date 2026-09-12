@@ -79,10 +79,7 @@ public sealed partial class RuleMakerViewModel : ObservableObject
     public ObservableCollection<string> RecentFiles { get; }
 
     /// <summary>프리셋 라이브러리 폴더.</summary>
-    public string PresetLibraryDirectory { get; } = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "d-AI-so",
-        "presets");
+    public string PresetLibraryDirectory { get; } = Daiso.Infrastructure.AppPaths.Combine("presets");
 
 
     /// <summary>라이브러리에 저장된 프리셋 파일.</summary>

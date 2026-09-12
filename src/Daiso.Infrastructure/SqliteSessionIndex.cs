@@ -64,10 +64,7 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
     public static string DefaultDatabasePath =>
         Environment.GetEnvironmentVariable(DatabasePathVariable) is { Length: > 0 } overridden
             ? overridden
-            : Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "d-AI-so",
-                "index.db");
+            : AppPaths.Combine("index.db");
 
     public void Dispose()
     {

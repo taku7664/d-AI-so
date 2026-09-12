@@ -1,4 +1,4 @@
-# GOAL — d-AI-so v1.0
+﻿# GOAL — d-AI-so v1.0
 
 ## 완성 상태 (이것이 목표)
 Windows에서 실행되는 WinUI 3 앱 **d-AI-so**가 다음을 모두 할 수 있다.
@@ -104,7 +104,7 @@ Windows에서 실행되는 WinUI 3 앱 **d-AI-so**가 다음을 모두 할 수 �
 ### 범위
 - `src/Daiso.App` (net8.0-windows10.0.19041, Windows App SDK, unpackaged)
 - CommunityToolkit.Mvvm, Microsoft.Extensions.DependencyInjection
-- 페이지 5개 + Shell. 설정 저장 `%LOCALAPPDATA%\d-AI-so\settings.json`
+- 페이지 5개 + Shell. 설정 저장 `%LOCALAPPDATA%\DAIso\settings.json`
 
 ### Step 8. App 골격
 - WinUI 3 프로젝트 생성, `Daiso.sln`에 추가, Core/Providers/Infrastructure 참조
@@ -131,7 +131,7 @@ Windows에서 실행되는 WinUI 3 앱 **d-AI-so**가 다음을 모두 할 수 �
 - 완료: 실제 세션으로 검색·상세·내보내기 동작. 삭제는 임시로 만든 더미 jsonl 폴더를 세션 루트로 지정해 검증(실제 세션 삭제 금지)
 
 ### Step 12. RuleMaker 페이지
-- 파일 메뉴: 새로 만들기 / 열기 / 저장 / 다른 이름으로 저장 / 최근 파일 / 프리셋 라이브러리(`%LOCALAPPDATA%\d-AI-so\presets`)에 저장·불러오기
+- 파일 메뉴: 새로 만들기 / 열기 / 저장 / 다른 이름으로 저장 / 최근 파일 / 프리셋 라이브러리(`%LOCALAPPDATA%\DAIso\presets`)에 저장·불러오기
 - 헤더 편집: name, description
 - Global 행동 목록: 추가/삭제/순서 이동, 각 행 텍스트 + Priority 콤보
 - Rule 목록: 각 Rule은 조건 트리 편집기 + 행동 목록

@@ -123,7 +123,7 @@ begin
   if UninstallSilent then
     Exit;
 
-  DataDir := ExpandConstant('{localappdata}\d-AI-so');
+  DataDir := ExpandConstant('{localappdata}\DAIso');
 
   if not DirExists(DataDir) then
     Exit;

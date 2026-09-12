@@ -545,7 +545,8 @@ RefreshAsync
   → messages 삽입(트리거가 FTS 따라감), usage_daily 갱신, last_offset = **다 읽은 뒤**의 파일 크기
      · 이 셋은 **한 트랜잭션**이다. 본문만 커밋하고 나오면, 그 사이에 죽었을 때 오프셋이 옛 값으로 남아 같은 자리를 다시 담는다
 ```
-- SQLite: `%LOCALAPPDATA%\d-AI-so\index.db`. 설정으로 바꿀 수 있다
+- SQLite: `%LOCALAPPDATA%\DAIso\index.db`. 설정으로 바꿀 수 있다
+- **자료 폴더 이름은 `AppPaths` 한 곳이 정한다.** 0.1.1 까지는 `d-AI-so` 였고 이름을 바꾸면서(2026-09-12) 앱이 처음 뜰 때 옛 폴더를 **통째로 옮겨 온다** — 인덱스·설정·계정 보관함·프롬프트·로그가 함께 따라온다. 같은 드라이브 안에서 이름만 바뀌므로 크기와 상관없이 한순간이다. 파일이 잠겨 옮기지 못하면 **옛 폴더를 계속 쓴다**(`AppPathsTests`)
 - **설정한 경로를 쓸 수 없으면 기본 경로로 물러선다**(`IndexLocation.Resolve`). 여기서 던지면 DI 를 짜는 도중이라 **창이 뜨기 전에 앱이 죽고**, 설정 화면을 열 수 없어 손으로 `settings.json` 을 고쳐야만 살아났다 (2026-09-11 없는 드라이브로 재현). 물러선 이유는 설정 화면에 적는다 — 조용히 다른 곳을 쓰는 것도 거짓말이다. 저장할 때도 `IndexLocation.Probe` 로 미리 막는다
 - **읽기와 쓰기는 연결을 나눈다.** 목록·검색·사용량은 호출마다 새 연결을 열고, 갱신·재구축은 전용 연결 + 세마포어로 직렬화한다.
   하나의 연결을 화면과 배경 갱신이 같이 쓰면 리더가 겹쳐 `IndexOutOfRange`로 깨진다 (WAL이라 읽기는 쓰기를 기다리지 않는다)
@@ -581,7 +582,7 @@ RefreshAsync
 
 - `Daiso.Core/Resources/Presets/*.daiso` 14개가 임베디드 리소스로 들어 있다. 형식은 사용자 파일과 완전히 같고, `BuiltInPresets.List/Read`로 읽는다
 - 카탈로그(순서·갈래)는 `BuiltInPresets.Catalog` 코드에 있다. 갈래는 `PresetCategory` — Language(C#, C++, Python, TypeScript, Rust, Unity), Workflow(Git, 테스트, 리뷰, 리팩터링, 보안, 문서, API), Communication(한국어 소통)
-- 내 규칙 화면은 **왼쪽 목록 · 끌 수 있는 구분선 · 오른쪽 편집기** 골격이다(내 프롬프트와 같다). 왼쪽 목록은 기본 제공 + 내 라이브러리(`%LOCALAPPDATA%\d-AI-so\presets`). **고르면 그것이 편집기에 실린다**(내 프롬프트와 같다). 기본 제공은 경로 없이 열려 저장할 때 내 파일이 되므로 원본은 바뀌지 않는다. 목록 아래 `지금 규칙에 추가`는 편집 중인 것 뒤에 붙일 때만 쓴다. 목록을 다시 채울 때의 선택 복원은 편집기를 건드리지 않는다
+- 내 규칙 화면은 **왼쪽 목록 · 끌 수 있는 구분선 · 오른쪽 편집기** 골격이다(내 프롬프트와 같다). 왼쪽 목록은 기본 제공 + 내 라이브러리(`%LOCALAPPDATA%\DAIso\presets`). **고르면 그것이 편집기에 실린다**(내 프롬프트와 같다). 기본 제공은 경로 없이 열려 저장할 때 내 파일이 되므로 원본은 바뀌지 않는다. 목록 아래 `지금 규칙에 추가`는 편집 중인 것 뒤에 붙일 때만 쓴다. 목록을 다시 채울 때의 선택 복원은 편집기를 건드리지 않는다
   - `새로 열기` — 편집기에 그대로 연다. 기본 제공은 **경로 없이** 열려 저장할 때 내 파일이 된다 (원본은 바뀌지 않는다)
   - `지금 규칙에 추가` — 편집 중인 규칙 뒤에 붙인다. 같은 문장의 전역 행동은 한 번만, 새 문서의 빈 자리표시자 줄은 치운다. 이름이 기본값이면 프리셋 이름을 가져온다
 - 테스트가 보장하는 것: 카탈로그와 리소스 파일 일치, 전부 파싱·검증·라운드트립, 이름 중복 없음, 조건 문장에 연산자 문자 없음
@@ -713,7 +714,7 @@ Apply(projectDir, direction, dryRun)
      current(지금 AuthStatus)를 함께 넘겨 "직전 상태"에도 계정 이름을 남긴다
   → 프로필의 파일을 복호화해 원래 경로에 바이트 그대로 기록
 
-보관 위치  %LOCALAPPDATA%\d-AI-so\profiles\{tool}\{name}```
+보관 위치  %LOCALAPPDATA%\DAIso\profiles\{tool}\{name}```
 
 - **토큰 값은 meta.json·화면·로그·예외 어디에도 넣지 않는다.** 암호화된 파일 안에만 있다
 - DPAPI는 현재 Windows 사용자 계정으로만 풀린다. 파일을 다른 PC로 옮겨도 열리지 않는다
@@ -730,7 +731,7 @@ Apply(projectDir, direction, dryRun)
 - 파일 형식: 맨 위 `---` 사이 앞머리(`name`, `description`, `category`, `output`) + Markdown 본문. `PromptPresetSerializer`가 읽고 쓴다. 모르는 키는 오류
 - 갈래 `PromptCategory`: Planning(기획) · Understanding(파악) · Fixing(수정) · Release(배포)
 - 기본 제공: `Daiso.Core/Resources/Prompts/*.md` 임베디드. `BuiltInPrompts`가 카탈로그 순서로 돌려준다. 첫 세트 7개: 기획 `planning-interview`(소규모 프로젝트 기획 인터뷰) · `feature-plan`(기능 하나 추가 계획), 파악 `codebase-tour`(기존 코드베이스 파악), 수정 `bug-repro`(버그 재현과 원인 추적) · `refactor-plan`(리팩터링 계획), 배포 `release-check`(배포 전 점검) · `retro`(작업 회고). 기록형(BUGFIX·RELEASE_CHECK·RETRO)은 파일 끝에 덧붙이고, 계획형은 있으면 덮어쓰지 않고 묻는다
-- 내 보관함: `%LOCALAPPDATA%\d-AI-so\prompts\*.md`. `IPromptLibrary`(구현 `PromptLibraryStore`). 기본 제공을 고쳐 저장하면 내 것으로 사본이 생긴다
+- 내 보관함: `%LOCALAPPDATA%\DAIso\prompts\*.md`. `IPromptLibrary`(구현 `PromptLibraryStore`). 기본 제공을 고쳐 저장하면 내 것으로 사본이 생긴다
 - **적용 방식**: 본문을 명령줄 인자로 넘기지 않는다(25KB, 길이 한도·인용 문제). 대신 `WriteIntoProject`가 프로젝트의 `docs/prompts/{id}.md`에 **본문만** 쓰고, 시작 메시지 `docs/prompts/{id}.md 파일을 읽고 그 절차대로 진행해 주세요. 결과는 {output} 에 씁니다.`를 만들어 준다. 사용자는 이것을 새 세션의 첫 메시지로 붙인다. 두 도구 공통
 - 기본 제공 프롬프트가 지키는 것(테스트가 검사): 코딩 에이전트가 절차 도중 파일을 만들지 않게 막는 문장, 결과 파일 위치 명시, H1 하나, 기획 인터뷰는 첫 회차 질문 정확히 5개
 - 터미널 화면의 프롬프트 드롭다운(적용 여부 표시)은 뒤로 미룬 항목이다
@@ -740,7 +741,7 @@ Apply(projectDir, direction, dryRun)
 - Shell: `NavigationView` 7 항목 → Dashboard(요약), Usage(사용량), Terminal(터미널), Sessions(세션), RuleMaker(내 규칙), Prompts(내 프롬프트), Settings(설정). `Ctrl+1`~`Ctrl+7`
 - 페이지별 ViewModel 1개, `ObservableObject` + `RelayCommand`
 - DI: `App.xaml.cs`에서 등록. Provider는 `IEnumerable<IProvider>`로 주입
-- 설정: `%LOCALAPPDATA%\d-AI-so\settings.json` (최근 폴더, 최근 .daiso, 단가표, 정리 규칙)
+- 설정: `%LOCALAPPDATA%\DAIso\settings.json` (최근 폴더, 최근 .daiso, 단가표, 정리 규칙)
 - 장시간 작업(인덱싱)은 `IProgress<T>` + `CancellationToken`, UI 스레드 차단 금지
 
 ### 6.1 화면 문구 (로컬라이징)
@@ -814,7 +815,7 @@ MUST 넷을 어긴 페이지를 만들면 테스트가 빨개진다. 규칙을 �
 검증은 눈이 아니라 캡처로 한다: `tools/shoot-screens.ps1`이 1024 · 1280 · 1600 × 일곱 화면을 찍는다.
 
 **앱 이름과 도구 아이콘 (2026-09-09)**
-- 화면·툴팁·설명·창 제목에 보이는 앱 이름은 **DAIso** 하나다. 저장소·실행 파일·설정 폴더 이름(`d-AI-so`)은 그대로 둔다(경로 호환).
+- 앱 이름은 **DAIso** 하나다. 화면·툴팁·창 제목뿐 아니라 **실행 파일(`DAIso.exe`)·설치 폴더·자료 폴더**까지 이 이름을 쓴다 (2026-09-12 사람의 결정). 저장소 이름(`d-AI-so`)만 그대로다.
 - 도구는 글자 배지 대신 **제작사 로고를 원 안에** 그린다: `Controls/ToolIcon`(원 + 로고), 탭·메뉴에는 `ToolLook.LogoIcon`(단색 PathIcon).
   로고 경로는 24×24 — Claude(주황 #D97757)·Codex→OpenAI(초록 #10A37F)는 simple-icons(CC0), Antigravity(파랑→보라→분홍 Google 그라데이션)는
   **대체 마크(위로 향하는 ＾)**다. 자체 로고가 있으나 simple-icons 에 없고(2026-09 확인) 쓸 수 있는 라이선스로 구하지 못했다 —

@@ -27,10 +27,7 @@ public sealed class CrashReporter
     }
 
     /// <summary>로그 파일이 쌓이는 폴더.</summary>
-    public static string LogDirectory { get; } = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "d-AI-so",
-        "logs");
+    public static string LogDirectory { get; } = AppPaths.Combine("logs");
 
     /// <summary>
     /// 창이 닫혔는가. 닫힌 뒤에는 알리지 않는다.

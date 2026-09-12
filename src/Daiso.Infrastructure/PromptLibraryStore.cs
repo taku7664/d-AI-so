@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using Daiso.Core;
 
 namespace Daiso.Infrastructure;
@@ -26,10 +26,7 @@ public sealed class PromptLibraryStore : IPromptLibrary
     }
 
     /// <summary>기본 보관 위치.</summary>
-    public static string DefaultRoot => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "d-AI-so",
-        "prompts");
+    public static string DefaultRoot => AppPaths.Combine("prompts");
 
     /// <inheritdoc />
     public IReadOnlyList<PromptPreset> List()

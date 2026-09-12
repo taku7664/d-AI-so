@@ -1,4 +1,4 @@
-using Daiso.Core;
+﻿using Daiso.Core;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Daiso.App.Services;
@@ -156,8 +156,8 @@ public sealed class TerminalHost : UserControl
 
         try
         {
-            // unpackaged 앱의 기본 사용자 데이터 폴더는 exe 옆이라 쓰기가 막힐 수 있다. 앱 설정과 같은 곳(%LOCALAPPDATA%\d-AI-so) 아래에 둔다
-            var dataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "d-AI-so", "WebView2");
+            // unpackaged 앱의 기본 사용자 데이터 폴더는 exe 옆이라 쓰기가 막힐 수 있다. 앱 설정과 같은 곳 아래에 둔다
+            var dataFolder = Daiso.Infrastructure.AppPaths.Combine("WebView2");
             Environment.SetEnvironmentVariable("WEBVIEW2_USER_DATA_FOLDER", dataFolder);
 
             await _web.EnsureCoreWebView2Async();

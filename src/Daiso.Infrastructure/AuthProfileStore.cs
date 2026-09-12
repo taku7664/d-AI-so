@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -47,10 +47,7 @@ public sealed class AuthProfileStore : IAuthProfileStore
     public static string DefaultRoot =>
         Environment.GetEnvironmentVariable(RootVariable) is { Length: > 0 } overridden
             ? overridden
-            : Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "d-AI-so",
-                "profiles");
+            : AppPaths.Combine("profiles");
 
     /// <inheritdoc />
     public IReadOnlyList<AuthProfile> List()
