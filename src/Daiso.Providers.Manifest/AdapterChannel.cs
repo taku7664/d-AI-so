@@ -77,6 +77,9 @@ public sealed class AdapterChannel : IDisposable
     /// <summary>말이 통하는지 한 번 물어본다. 판이 다르면 여기서 걸린다.</summary>
     public async Task<bool> HandshakeAsync(CancellationToken ct)
     {
+        // 지난 이유를 지우고 시작한다. 안 지우면 한 번 어긋난 통로는 뒤에 멀쩡해져도 계속 실패로 답한다
+        LastError = null;
+
         await foreach (var line in SendAsync(new AdapterRequest(AdapterProtocol.Version, "hello"), ct))
         {
             if (line.V != 0 && line.V != AdapterProtocol.Version)
@@ -219,6 +222,15 @@ public sealed class AdapterChannel : IDisposable
         if (_process is { HasExited: false })
         {
             return _process;
+        }
+
+        // 스스로 꺼진 프로세스가 남아 있다. 덮어쓰기 전에 놓아 준다 —
+        // 안 그러면 어댑터를 다시 띄울 때마다 프로세스 핸들과 stderr 구독이 하나씩 쌓인다 (2026-09-12 점검)
+        if (_process is { } dead)
+        {
+            dead.ErrorDataReceived -= OnErrorLine;
+            dead.Dispose();
+            _process = null;
         }
 
         lock (_errorGate)
