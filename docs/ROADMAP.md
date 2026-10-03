@@ -29,7 +29,7 @@ Electron 전환을 Stage 0~8로 나누고, 단계마다 할 일과 완료 기준
 ## Stage 3 — 화면 뼈대와 탭 계약
 
 - `web/` (Vite + React + TS). 시안의 왼쪽 메뉴·색·글꼴을 CSS 변수로 옮긴다. 글꼴 파일은 동봉한다
-- [TAB_PLUGINS.md](TAB_PLUGINS.md)의 탭 계약, 라우팅, `Ctrl+1~7` 단축키
+- [web/src/tabs/README.md](../web/src/tabs/README.md)·[src/Daiso.Server/Tabs/README.md](../src/Daiso.Server/Tabs/README.md)의 탭 약속, 라우팅, `Ctrl+1~7` 단축키
 - OpenAPI → TS 클라이언트 생성, `/ws` 알림 → 캐시 무효화(TanStack Query)
 - 문구를 `web/src/strings/ko.json`으로 옮기고 키 검사 vitest를 만든다
 - **완료 기준:** 일곱 탭이 빈 화면으로 뜨고 메뉴·단축키로 오간다. 크롬 탭과 Electron 창에서 똑같이 보인다
