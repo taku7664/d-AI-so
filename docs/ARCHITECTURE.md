@@ -7,11 +7,11 @@ Core 모델과 파싱 규칙은 여전히 `old/docs/ARCHITECTURE.md`가 정본�
 
 ```text
  ┌─ Electron 창 (기본) ─┐     ┌─ 크롬 탭 (AI 조작용) ─┐
- │  web/ 화면          │     │  같은 web/ 화면        │
+ │  frontend/web 화면   │     │  같은 화면             │
  └─────────┬──────────┘     └──────────┬────────────┘
            └──── http://127.0.0.1:{port} ┘   HTTP = 요청 · WebSocket = 알림·터미널 출력
                         │
- ┌─ Daiso.Server (C#, ASP.NET Core Kestrel) ─────────────────┐
+ ┌─ Daiso.Host (C#, ASP.NET Core Kestrel) ───────────────────┐
  │  /api/{탭 id}/...   탭마다 엔드포인트 묶음                   │
  │  Core · Providers · Infrastructure  (old/src 그대로)       │
  └───────────────────────────────────────────────────────────┘
@@ -19,27 +19,31 @@ Core 모델과 파싱 규칙은 여전히 `old/docs/ARCHITECTURE.md`가 정본�
 
 | 프로세스 | 맡는 것 |
 |---|---|
-| Electron 메인 (`desktop/`) | 서버를 띄우고 끄기, 창, 트레이, 두 번째 실행 막기, 파일 끌어 놓기 경로, 알림, "브라우저로 열기" |
-| 웹 화면 (`web/`) | 화면과 화면 상태만. 도메인 데이터는 서버에서 받아 캐시로만 든다 |
-| `Daiso.Server` (`src/Daiso.Server/`) | 도메인 데이터의 유일한 주인. 세션 인덱스, 설정, PTY, 규칙·프롬프트 파일, 플러그인 |
+| Electron 메인 (`frontend/desktop/`) | 서버를 띄우고 끄기, 창, 트레이, 두 번째 실행 막기, 파일 끌어 놓기 경로, 알림, "브라우저로 열기" |
+| 웹 화면 (`frontend/web/`) | 화면과 화면 상태만. 도메인 데이터는 서버에서 받아 캐시로만 든다 |
+| `Daiso.Host` (`backend/src/Daiso.Host/`) | 도메인 데이터의 유일한 주인. 세션 인덱스, 설정, PTY, 규칙·프롬프트 파일, 플러그인 |
 
 서버를 띄우는 순서와 보안은 [SECURITY.md](SECURITY.md)에 있다.
 
 ## 저장소 구조
 
 ```text
-docs/                  새 문서
-src/Daiso.Server/      C# 서버 (Stage 1)
-tests/                 새 테스트
-desktop/               Electron 메인 + preload (Stage 2)
-web/                   웹 화면 (Stage 3)
-Daiso.sln              새 솔루션. 백엔드는 Stage 8 전까지 old/src 를 참조한다 (Stage 0)
-package.json           npm. 지금은 ESLint·Prettier 같은 공용 개발 도구만. desktop/·web/ 이 생기면 workspaces 로 묶는다
-eslint.config.mjs      desktop/·web/ 공용 ESLint 설정
-.prettierrc.json       Prettier 설정 (.md 와 old/ 는 건드리지 않는다)
-.editorconfig          들여쓰기·줄 끝. old/ 에도 걸리므로 C# 분석기 규칙은 넣지 않는다
-PROJECT_RULES.daiso    코딩 규칙 정본
-old/                   2026-10-03 까지의 WinUI 앱 전부
+docs/                          여러 모듈에 걸친 문서
+frontend/                      TypeScript 전부. npm 은 여기서만 돈다
+  package.json                 npm workspaces 로 desktop·web 을 묶는다. 지금은 ESLint·Prettier 만
+  eslint.config.mjs            desktop·web 공용 ESLint 설정
+  .prettierrc.json             Prettier 설정 (.md 는 건드리지 않는다)
+  desktop/                     Electron 메인 + preload (Stage 2)
+  web/                         웹 화면 (Stage 3)
+    src/tabs/{id}/             탭마다 화면 모듈
+backend/                       C# 전부. dotnet 은 여기서만 돈다
+  Daiso.sln                    새 솔루션. 백엔드 라이브러리는 Stage 8 전까지 old/src 를 참조한다 (Stage 0)
+  src/Daiso.Host/              C# 프로세스: 보안 미들웨어, /ws, DI (Stage 1)
+    Tabs/{Id}/                 탭마다 엔드포인트 묶음
+  tests/                       새 테스트
+.editorconfig                  들여쓰기·줄 끝. old/ 에도 걸리므로 C# 분석기 규칙은 넣지 않는다
+PROJECT_RULES.daiso            코딩 규칙 정본 (C#·TS 공통)
+old/                           2026-10-03 까지의 WinUI 앱 전부
 ```
 
 ## 상태의 주인

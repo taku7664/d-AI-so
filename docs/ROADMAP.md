@@ -5,22 +5,22 @@ Electron 전환을 Stage 0~8로 나누고, 단계마다 할 일과 완료 기준
 
 ## Stage 0 — 루트 솔루션 뼈대
 
-- 루트에 `Daiso.sln`, `Directory.Build.props`, `global.json`(옛 값 그대로)을 만든다
+- `backend/`에 `Daiso.sln`, `Directory.Build.props`, `global.json`(옛 값 그대로)을 만든다
 - 새 솔루션이 `old/src`의 백엔드 프로젝트와 `old/tests`의 백엔드 테스트 세 벌을 참조한다. `Daiso.App`은 넣지 않는다
 - `old/tools/run-app.ps1`로 옛 앱이 여전히 뜨는지 확인한다
-- **완료 기준:** 루트에서 `dotnet build` · `dotnet test` 초록, `old/`에서도 초록
+- **완료 기준:** `backend/`에서 `dotnet build` · `dotnet test` 초록, `old/`에서도 초록
 
 ## Stage 1 — 서버 뼈대와 보안
 
-- `src/Daiso.Server/` (ASP.NET Core minimal API). DI 구성과 UI 의존 없는 서비스를 옮긴다 ([MIGRATION_MAP.md](MIGRATION_MAP.md))
+- `backend/src/Daiso.Host/` (ASP.NET Core minimal API). DI 구성과 UI 의존 없는 서비스를 옮긴다 ([MIGRATION_MAP.md](MIGRATION_MAP.md))
 - [SECURITY.md](SECURITY.md)의 일곱 가지 전부, 그리고 서버를 띄우는 순서
 - `GET /api/health`, OpenAPI 문서, 공용 WebSocket `/ws`
-- `tests/Daiso.Server.Tests/`: 보안 규칙을 하나씩 깨 보는 테스트
+- `backend/tests/Daiso.Host.Tests/`: 보안 규칙을 하나씩 깨 보는 테스트
 - **완료 기준:** 보안 테스트 초록. 크롬에서 토큰 주소로 열면 health가 보이고, 토큰 없이 열면 거절된다
 
 ## Stage 2 — Electron 껍데기
 
-- `desktop/` (Electron 메인 + preload, TypeScript). 루트 `package.json`의 workspace로 묶는다
+- `frontend/desktop/` (Electron 메인 + preload, TypeScript). `frontend/package.json`의 workspace로 묶는다
 - 서버를 자식 프로세스로 띄우고 주소를 읽어 창에 연다. 앱이 끝나면 서버도 끈다
 - 두 번째 실행 막기, 트레이, 창 X → 트레이로 숨기기, 트레이 메뉴 "브라우저로 열기"
 - 새 앱을 띄우는 `tools/run-app.ps1`을 루트에 새로 만든다 (옛 것은 `old/tools/`에 그대로)
@@ -28,10 +28,10 @@ Electron 전환을 Stage 0~8로 나누고, 단계마다 할 일과 완료 기준
 
 ## Stage 3 — 화면 뼈대와 탭 계약
 
-- `web/` (Vite + React + TS). 시안의 왼쪽 메뉴·색·글꼴을 CSS 변수로 옮긴다. 글꼴 파일은 동봉한다
-- [web/src/tabs/README.md](../web/src/tabs/README.md)·[src/Daiso.Server/Tabs/README.md](../src/Daiso.Server/Tabs/README.md)의 탭 약속, 라우팅, `Ctrl+1~7` 단축키
+- `frontend/web/` (Vite + React + TS). workspace로 묶는다. 시안의 왼쪽 메뉴·색·글꼴을 CSS 변수로 옮긴다. 글꼴 파일은 동봉한다
+- [frontend/web/src/tabs/README.md](../frontend/web/src/tabs/README.md)·[backend/src/Daiso.Host/Tabs/README.md](../backend/src/Daiso.Host/Tabs/README.md)의 탭 약속, 라우팅, `Ctrl+1~7` 단축키
 - OpenAPI → TS 클라이언트 생성, `/ws` 알림 → 캐시 무효화(TanStack Query)
-- 문구를 `web/src/strings/ko.json`으로 옮기고 키 검사 vitest를 만든다
+- 문구를 `frontend/web/src/strings/ko.json`으로 옮기고 키 검사 vitest를 만든다
 - **완료 기준:** 일곱 탭이 빈 화면으로 뜨고 메뉴·단축키로 오간다. 크롬 탭과 Electron 창에서 똑같이 보인다
 
 ## Stage 4 — 사용량 탭
@@ -63,7 +63,7 @@ Electron 전환을 Stage 0~8로 나누고, 단계마다 할 일과 완료 기준
 
 - `old/docs/RELEASE.md`를 `docs/`로 옮기고 §2 표를 먼저 고친다. Windows App SDK·WebView2 줄을 빼고 Electron 줄을 넣는다
 - 시작 전에 설치 프로그램 도구를 정한다 ([DECISIONS.md](DECISIONS.md) "미정")
-- 백엔드 프로젝트와 테스트를 `old/src`·`old/tests`에서 루트 `src/`·`tests/`로 `git mv`한다
+- 백엔드 프로젝트와 테스트를 `old/src`·`old/tests`에서 `backend/src`·`backend/tests`로 `git mv`한다
 - 필요한 옛 문서를 `docs/`로 옮긴 뒤 `old/`를 지운다
 - **완료 기준:** RELEASE §5 확인 목록을 깨끗한 Windows 10 Home에서 통과한다
 

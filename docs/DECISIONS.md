@@ -34,9 +34,11 @@
 | **화면 ↔ 서버는 HTTP + WebSocket** | 크롬 탭에서도 똑같이 돌아야 한다. Electron IPC를 쓰면 크롬 탭에서 안 된다 | Electron IPC · stdio 통신 |
 | **Electron 전용 기능은 좁은 다리 하나로** | `window.daisoDesktop`(preload)이 있을 때만 켠다. 없으면(크롬) 기능을 줄여 보여 준다 | 화면 곳곳에서 Electron API 직접 호출 |
 | **옛 앱은 `old/`에 두고 새 구조는 루트에 새로 짓는다** | 한 창에 XAML과 웹 화면을 섞을 수 없다. 새 앱이 다 따라잡으면 Stage 8에서 바꾼다 | 화면을 하나씩 옮기며 섞어 쓰기 |
-| **백엔드는 복사하지 않고 `old/src`를 참조한다** | 두 벌이 되면 버그를 두 번 고친다. Stage 8에서 `src/`로 옮긴다 | 처음부터 `src/`로 복사 |
+| **백엔드는 복사하지 않고 `old/src`를 참조한다** | 두 벌이 되면 버그를 두 번 고친다. Stage 8에서 `backend/src/`로 옮긴다 | 처음부터 `backend/src/`로 복사 |
 | 화면 스택: **Vite + React + TypeScript** | 자료와 예제가 가장 많고 AI가 가장 잘 다룬다 | 바꾸려면 Stage 3 전에 |
 | 서버 ↔ 웹 타입: **OpenAPI에서 TS 타입 생성** | C# record와 TS 타입이 어긋나면 런타임에야 터진다. 손으로 두 벌 적지 않는다 | 손으로 맞추기 |
+| **최상위를 언어로 나눈다:** `frontend/`(TS) · `backend/`(C#) | 한 폴더에 두 언어와 두 빌드 도구가 섞이지 않는다. 탭은 양쪽에 각자 `tabs` 폴더를 둔다 | 탭 폴더 하나에 화면(TS)과 엔드포인트(C#)를 같이 두기 |
+| C# 프로세스 이름: **`Daiso.Host`** | 백엔드 라이브러리와 탭 엔드포인트를 싣고 띄우는 프로세스다. 원격 서버가 아니다 | `Daiso.Server` (원격 서버로 오해) · `Daiso.Backend` (`backend/` 와 겹침) |
 | 패키지 매니저: **npm 하나** | Node 24에 같이 깔려 있다. lock 파일은 `package-lock.json` 하나다 | pnpm · yarn |
 | TypeScript **5.9** | typescript-eslint 8.71이 6.1 미만만 지원한다 (2026-10-03 확인) | TypeScript 7 |
 

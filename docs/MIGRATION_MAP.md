@@ -7,7 +7,7 @@
 
 | 지금 | 줄 수 | 갈 곳 |
 |---|---|---|
-| `App.xaml.cs`의 DI 구성 (99~186줄) | — | `Daiso.Server/Program.cs`. ViewModel 등록은 빼고 서비스만 |
+| `App.xaml.cs`의 DI 구성 (99~186줄) | — | `backend/src/Daiso.Host/Program.cs`. ViewModel 등록은 빼고 서비스만 |
 | `Services/IndexService.cs` | 98 | 서버 (UI 의존 3곳을 걷어 낸다) |
 | `Services/SettingsStore.cs` · `AppSettings.cs` | 125 · 78 | 서버. UI 의존 없음 |
 | `Services/KnownProjects.cs` | 69 | 서버. UI 의존 없음 |
@@ -53,7 +53,7 @@ ViewModel은 서버 엔드포인트와 React 화면으로 나눠 다시 쓴다. 
 
 | 지금 | 갈 곳 |
 |---|---|
-| `Strings/ko-KR/Resources.resw` | `web/src/strings/ko.json`. `StringResourceKeysTests`와 같은 일을 하는 vitest를 만든다 |
+| `Strings/ko-KR/Resources.resw` | `frontend/web/src/strings/ko.json`. `StringResourceKeysTests`와 같은 일을 하는 vitest를 만든다 |
 | `Assets/xterm/` | `web` 의존성 `@xterm/xterm`으로 바꾼다 |
 
 ## 버리는 것

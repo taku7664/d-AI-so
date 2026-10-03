@@ -1,7 +1,7 @@
 # 탭 (서버 쪽)
 
 이 폴더의 하위 폴더 하나가 탭 하나의 서버 엔드포인트 묶음이다.
-탭 하나 = **웹의 화면 모듈 하나 + 여기 있는 엔드포인트 묶음 하나**다. 화면 쪽 약속과 기본 탭 id 목록은 [web/src/tabs/README.md](../../../web/src/tabs/README.md)에 있다.
+탭 하나 = **웹의 화면 모듈 하나 + 여기 있는 엔드포인트 묶음 하나**다. 화면 쪽 약속과 기본 탭 id 목록은 [frontend/web/src/tabs/README.md](../../../../frontend/web/src/tabs/README.md)에 있다.
 
 ## 탭을 만드는 법
 
@@ -17,7 +17,7 @@ public interface ITabEndpoints
 
 - 엔드포인트는 `/api/{Id}/` 아래에만 단다. 다른 탭의 경로를 쓰지 않는다
 - 요청·응답 타입은 OpenAPI 문서에 나오게 만든다. 웹은 거기서 생성한 타입만 쓴다
-- 보안 검사는 미들웨어가 한다. 탭에서 따로 넣거나 빼지 않는다 ([docs/SECURITY.md](../../../docs/SECURITY.md))
+- 보안 검사는 미들웨어가 한다. 탭에서 따로 넣거나 빼지 않는다 ([docs/SECURITY.md](../../../../docs/SECURITY.md))
 
 ## 알림을 보내는 법
 

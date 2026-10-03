@@ -1,4 +1,4 @@
-// desktop/ · web/ 이 같이 쓰는 ESLint 설정. 규칙의 정본은 PROJECT_RULES.daiso 이고 여기는 그중 기계가 잡을 수 있는 것만 건다.
+// frontend/desktop · frontend/web 이 같이 쓰는 ESLint 설정. 규칙의 정본은 루트 PROJECT_RULES.daiso 이고 여기는 그중 기계가 잡을 수 있는 것만 건다.
 import js from '@eslint/js';
 import prettier from 'eslint-config-prettier';
 import reactHooks from 'eslint-plugin-react-hooks';
@@ -7,7 +7,7 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['old/**', '**/node_modules/**', '**/dist/**', '**/out/**', '**/bin/**', '**/obj/**', '**/*.gen.ts'],
+    ignores: ['**/node_modules/**', '**/dist/**', '**/out/**', '**/bin/**', '**/obj/**', '**/*.gen.ts'],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

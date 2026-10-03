@@ -2,7 +2,10 @@
 
 ## 저장소 구조
 
-- 루트: 새 구조(Electron + 웹 화면 + C# 서버)를 만드는 곳. 지금은 `docs/` 와 공용 설정(ESLint·Prettier·EditorConfig, `package.json`)뿐이다. 패키지 매니저는 npm 하나만 쓴다
+- 루트: 새 구조를 만드는 곳. 언어로 나눈다
+  - `frontend/`: TypeScript 전부(Electron `desktop/`, 화면 `web/`). npm 하나만 쓰고 `frontend/` 안에서만 돈다
+  - `backend/`: C# 전부(`Daiso.Host` 프로세스, 탭 엔드포인트, 테스트). dotnet 은 `backend/` 안에서만 돈다
+  - `docs/`: 여러 모듈에 걸친 문서. 한 모듈 것은 그 모듈 폴더의 `README.md`에 둔다
 - `old/`: 2026-10-03 까지의 WinUI 앱 전부(소스·테스트·도구·문서). 0.2.0 배포판이 여기서 나왔다. 새 구조를 만들 때 참고하고, 백엔드 프로젝트는 새 서버가 그대로 가져다 쓴다
 
 ## 문서

@@ -7,7 +7,7 @@ WinUI 3 앱을 **Electron + 웹 화면 + C# 서버**로 옮기는 작업의 문�
 
 | 날짜 | 한 일 |
 |---|---|
-| 2026-10-03 | 작업물을 `old/`로 옮김. 문서를 주제별로 나눔. 루트에 ESLint·Prettier·EditorConfig 설정을 둠 |
+| 2026-10-03 | 작업물을 `old/`로 옮김. 문서를 주제별로 나눔. 최상위를 `frontend/`(TS)·`backend/`(C#)로 나누고 ESLint·Prettier는 `frontend/`에 둠 |
 
 다음은 [ROADMAP.md](ROADMAP.md)의 Stage 0이다.
 
@@ -25,8 +25,8 @@ WinUI 3 앱을 **Electron + 웹 화면 + C# 서버**로 옮기는 작업의 문�
 
 | 문서 | 무엇 |
 |---|---|
-| [web/src/tabs/README.md](../web/src/tabs/README.md) | 탭의 화면 쪽 약속, 기본 탭 id 목록 |
-| [src/Daiso.Server/Tabs/README.md](../src/Daiso.Server/Tabs/README.md) | 탭의 서버 쪽 약속, 알림 보내는 법 |
+| [frontend/web/src/tabs/README.md](../frontend/web/src/tabs/README.md) | 탭의 화면 쪽 약속, 기본 탭 id 목록 |
+| [backend/src/Daiso.Host/Tabs/README.md](../backend/src/Daiso.Host/Tabs/README.md) | 탭의 서버 쪽 약속, 알림 보내는 법 |
 
 옛 문서 중 아직 정본인 것:
 
@@ -47,7 +47,7 @@ WinUI 3 앱을 **Electron + 웹 화면 + C# 서버**로 옮기는 작업의 문�
 - **백엔드(`old/src/Daiso.Core` · `Providers.*` · `Infrastructure`)는 옛 앱과 새 서버가 같이 쓴다.** 고치면 `old/` 솔루션의 빌드·테스트도 초록이어야 한다
 - **[DECISIONS.md](DECISIONS.md)에 적힌 결정은 다시 논의하지 않는다.** 바꾸려면 그 문서에 이유를 적고 바꾼다
 - **`docs/`에는 여러 모듈에 걸친 약속만 둔다.** 한 모듈에만 해당하는 약속은 그 모듈 폴더의 `README.md`에 쓴다
-- 코딩 규칙은 루트 `PROJECT_RULES.daiso`가 정본이다. ESLint(`eslint.config.mjs`)는 그중 기계가 잡을 수 있는 것만 건다
+- 코딩 규칙은 루트 `PROJECT_RULES.daiso`가 정본이다. ESLint(`frontend/eslint.config.mjs`)는 그중 기계가 잡을 수 있는 것만 건다
 
 ## 이 문서를 덮고 할 일
 

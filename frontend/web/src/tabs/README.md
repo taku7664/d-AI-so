@@ -1,7 +1,7 @@
 # 탭 (화면 쪽)
 
 이 폴더의 하위 폴더 하나가 탭 하나다. 왼쪽 메뉴에 뜨는 탭은 전부 여기서 온다.
-탭 하나 = **여기 있는 화면 모듈 하나 + 서버의 엔드포인트 묶음 하나**다. 서버 쪽 약속은 [src/Daiso.Server/Tabs/README.md](../../../src/Daiso.Server/Tabs/README.md)에 있다.
+탭 하나 = **여기 있는 화면 모듈 하나 + 서버의 엔드포인트 묶음 하나**다. 서버 쪽 약속은 [backend/src/Daiso.Host/Tabs/README.md](../../../../backend/src/Daiso.Host/Tabs/README.md)에 있다.
 
 ## 탭을 만드는 법
 
@@ -45,4 +45,4 @@ export const tab: TabModule = {
 ## 범위
 
 - **기본 탭이 실제로 쓰는 만큼만 약속에 넣는다.** 쓰이지 않는 확장 지점을 미리 만들지 않는다
-- 바깥 플러그인이 탭을 더하는 길은 지금 만들지 않는다 ([docs/DECISIONS.md](../../../docs/DECISIONS.md) "안 하기로 한 것")
+- 바깥 플러그인이 탭을 더하는 길은 지금 만들지 않는다 ([docs/DECISIONS.md](../../../../docs/DECISIONS.md) "안 하기로 한 것")
