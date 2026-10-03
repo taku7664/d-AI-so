@@ -34,6 +34,7 @@ artifacts/
 # `프롬프트 → 프로젝트에 넣기` 가 고른 프롬프트를 여기에 쓴다.
 # 정본은 src/Daiso.Core/Resources/Prompts (내장 자원) 이고 여기 있는 것은 그 복사본이다
 docs/prompts/
+old/docs/prompts/
 
 # 다른 도구용 지시문 파일
 # `연동` 이 만드는 마커 블록 파일이다. 내용은 PROJECT_RULES.daiso 를 읽으라는 한 줄뿐이고,

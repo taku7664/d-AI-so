@@ -1,6 +1,7 @@
 # Electron 프런트엔드 전환 계획
 
 > 2026-10-03. WinUI 3 화면(`Daiso.App`)을 걷어 내고 **Electron + 웹 화면**으로 바꾼다. C# 백엔드(Core · Providers · Infrastructure)는 그대로 쓴다.
+> 같은 날 지금까지의 작업물을 전부 `old/` 로 옮겼다. 새 구조는 루트에 새로 짓는다.
 > 이 문서는 무엇을 어디로 옮기고, 어떤 순서로 하며, 무엇을 처음부터 못 박아야 하는지를 정한다.
 > 화면 시안: https://claude.ai/artifact/DDRz5Lv416wn35na37WCPS (요약 · 터미널 · 세션 세 장)
 
@@ -10,21 +11,23 @@
 
 ### 먼저 읽을 것
 
-1. `CLAUDE.md` — 빌드·커밋 규칙
-2. `docs/ARCHITECTURE.md` §1 — 계층 구조. **이 계획은 App 계층만 갈아 끼운다.** Core 순수성 규칙은 그대로다
-3. `docs/RELEASE.md` — 배포 원칙. Stage 8에서 §2 표를 고친다
+1. `CLAUDE.md` — 저장소 구조·커밋 규칙
+2. `old/docs/ARCHITECTURE.md` §1 — 계층 구조. **이 계획은 App 계층만 갈아 끼운다.** Core 순수성 규칙은 그대로다
+3. `old/docs/RELEASE.md` — 배포 원칙. Stage 8에서 §2 표를 고친다
 4. 이 문서 §3(정한 것) · §4(보안) · §8(단계)
 
 ### 일하는 방식
 
 - **Stage 순서대로 한다.** 앞 단계의 완료 기준을 채우기 전에 다음을 시작하지 않는다
 - **단계마다 커밋하고 `git push origin main`**
-- **WinUI 앱은 Stage 8 전까지 지우지 않는다.** 새 앱이 기능을 다 따라잡을 때까지 지금 앱이 배포 가능한 상태로 남아 있어야 한다
+- **`old/` 는 Stage 8 전까지 지우지 않는다.** 새 앱이 기능을 다 따라잡을 때까지 옛 앱이 빌드·배포 가능한 상태로 남아 있어야 한다
+- **`old/src/Daiso.App` 은 얼린다.** 급한 배포가 아니면 고치지 않는다. 옛 앱의 화면 로직이 필요하면 읽고 새 쪽에 다시 쓴다
+- 백엔드 프로젝트(`old/src/Daiso.Core` · `Providers.*` · `Infrastructure`)는 옛 앱과 새 서버가 **같이 쓴다.** 고치면 `old/` 솔루션 빌드와 테스트도 초록이어야 한다
 - **§3의 결정은 다시 논의하지 않는다.** 바꾸려면 §3에 이유를 적고 바꾼다
 
 ### 지금 어디까지 됐나
 
-**아직 시작 전** (2026-10-03).
+**작업물을 `old/` 로 옮김** (2026-10-03). 루트에는 이 문서뿐이다. Stage 0부터 시작한다.
 
 ---
 
@@ -54,6 +57,18 @@
  │  /api/{탭 id}/...   탭마다 엔드포인트 묶음                   │
  │  Core · Providers · Infrastructure  (지금 코드 그대로)      │
  └───────────────────────────────────────────────────────────┘
+```
+
+### 저장소 구조
+
+```text
+docs/                  새 문서 (이 계획부터)
+src/Daiso.Server/      C# 서버 (Stage 1)
+tests/                 새 테스트
+desktop/               Electron 메인 + preload (Stage 2)
+web/                   웹 화면 (Stage 3)
+Daiso.sln              새 솔루션. 백엔드는 Stage 8 전까지 old/src 를 참조한다
+old/                   2026-10-03 까지의 WinUI 앱 전부
 ```
 
 ### 프로세스마다 하는 일
@@ -86,7 +101,8 @@
 | **백엔드는 C# 그대로** | §1의 버그 통계. 다 고쳐 둔 파서·인덱스·테스트를 버리지 않는다 | 백엔드까지 TypeScript로 다시 쓰기 (C#에서 막히면 그때 다시 본다) |
 | **화면 ↔ 서버는 HTTP + WebSocket** | 크롬 탭에서도 똑같이 돌아야 한다. Electron IPC를 쓰면 크롬 탭에서 안 된다 | Electron IPC · stdio 통신 |
 | **Electron 전용 기능은 좁은 다리 하나로** | `window.daisoDesktop`(preload)이 있을 때만 켠다. 없으면(크롬) 기능을 줄여 보여 준다 | 화면 곳곳에서 Electron API 직접 호출 |
-| **WinUI와 병행하다 한 번에 넘어간다** | 한 창에 XAML과 웹 화면을 섞을 수 없다. 새 앱이 다 따라잡으면 Stage 8에서 바꾼다 | 화면을 하나씩 옮기며 섞어 쓰기 |
+| **옛 앱은 `old/` 에 두고 새 구조는 루트에 새로 짓는다** | 한 창에 XAML과 웹 화면을 섞을 수 없다. 새 앱이 다 따라잡으면 Stage 8에서 바꾼다 | 화면을 하나씩 옮기며 섞어 쓰기 |
+| **백엔드는 복사하지 않고 `old/src` 를 참조한다** | 두 벌이 되면 버그를 두 번 고친다. Stage 8에서 `src/` 로 옮긴다 | 처음부터 `src/` 로 복사 |
 | 화면 스택: **Vite + React + TypeScript** | 자료와 예제가 가장 많고 AI가 가장 잘 다룬다 | 미정이던 것을 이 문서에서 정한다. 바꾸려면 Stage 3 전에 |
 | 서버 ↔ 웹 타입: **OpenAPI에서 TS 타입 생성** | C# record와 TS 타입이 어긋나면 런타임에야 터진다. 손으로 두 벌 적지 않는다 | 손으로 맞추기 |
 
@@ -162,7 +178,7 @@ public interface ITabEndpoints
 
 ## 7. 지금 App 코드를 어디로 옮기나
 
-`Daiso.App` 안에 화면이 아닌 로직이 꽤 있다. 줄 수와 UI 의존(`Microsoft.UI` · `DispatcherQueue` · 문구 리소스 참조 수)은 2026-10-03에 센 값이다.
+`old/src/Daiso.App` 안에 화면이 아닌 로직이 꽤 있다. 아래 경로는 모두 그 폴더 기준이다. 줄 수와 UI 의존(`Microsoft.UI` · `DispatcherQueue` · 문구 리소스 참조 수)은 2026-10-03에 센 값이다.
 
 ### 서버로 옮기는 것
 
@@ -202,21 +218,22 @@ ViewModel을 옮길 때마다 줄 하나하나를 **도메인 로직(서버로) 
 ### 버리는 것
 
 XAML 전부, `Controls/`, `Ui/`, `DialogHost`, `Navigator`, `NavigationHistory`, `ToolLook`의 브러시 부분.
-`Daiso.Core.Tests/Architecture/` 의 XAML 검사 테스트(`GridPlacementTests`, `ItemTemplateTests`, `PageSkeletonTests`, `ThemeBrushTests`, `ToolNameInXamlTests`, `UiTokenTests` 등)도 Stage 8에서 같이 지운다. 같은 목적의 검사가 웹 쪽에 필요하면 그때 vitest로 만든다.
+`old/tests/Daiso.Core.Tests/Architecture/` 의 XAML 검사 테스트(`GridPlacementTests`, `ItemTemplateTests`, `PageSkeletonTests`, `ThemeBrushTests`, `ToolNameInXamlTests`, `UiTokenTests` 등)도 Stage 8에서 같이 지운다. 같은 목적의 검사가 웹 쪽에 필요하면 그때 vitest로 만든다.
 
 ---
 
 ## 8. 단계
 
-### Stage 0 — App에서 화면 아닌 서비스를 떼어 낸다
+### Stage 0 — 루트 뼈대
 
-- §7 "서버로 옮기는 것" 중 서비스(IndexService, SettingsStore, KnownProjects, ToolRegistry, ToolPluginCatalog, RoomManager)를 새 라이브러리 `Daiso.Application`(net8.0-windows)으로 옮긴다
-- WinUI 앱은 이 라이브러리를 참조해 **지금과 똑같이** 돈다
-- **완료 기준:** 테스트 세 벌 초록, `tools/run-app.ps1`로 띄운 앱이 이전과 같다
+- 루트에 `Daiso.sln`, `Directory.Build.props`, `global.json`(옛 값을 그대로 가져온다), `.editorconfig` 를 만든다
+- 새 솔루션이 `old/src` 의 백엔드 프로젝트와 `old/tests` 의 백엔드 테스트 세 벌을 참조한다. `Daiso.App` 은 넣지 않는다
+- `old/tools/run-app.ps1` 로 옛 앱이 여전히 뜨는지 확인한다
+- **완료 기준:** 루트에서 `dotnet build` · `dotnet test` 초록, `old/` 에서도 초록
 
 ### Stage 1 — 서버 뼈대와 보안
 
-- `src/Daiso.Server/` (ASP.NET Core minimal API). `Daiso.Application`의 DI 구성을 그대로 쓴다
+- `src/Daiso.Server/` (ASP.NET Core minimal API). DI 구성은 옛 `App.xaml.cs` 에서 ViewModel 을 뺀 서비스만 옮긴다. §7 "서버로 옮기는 것" 중 UI 의존이 없는 서비스(SettingsStore, KnownProjects, ToolRegistry, ToolPluginCatalog)는 이때 가져오고, 나머지는 쓰는 탭을 만들 때 가져온다
 - §4 일곱 가지 전부. `GET /api/health`, OpenAPI 문서, 공용 WebSocket `/ws`
 - 시작하면 표준 출력에 `DAISO_LISTENING http://127.0.0.1:{port}` 한 줄을 쓴다. 부모 프로세스가 죽으면 스스로 끝난다
 - `tests/Daiso.Server.Tests/` — §4를 하나씩 깨 보는 테스트 (토큰 없음, 틀린 Host, 다른 Origin, 쿠키 없는 WebSocket 등)
@@ -227,14 +244,14 @@ XAML 전부, `Controls/`, `Ui/`, `DialogHost`, `Navigator`, `NavigationHistory`,
 - `desktop/` (Electron 메인 + preload, TypeScript)
 - 서버를 자식 프로세스로 띄우고 주소를 읽어 창에 연다. 앱이 끝나면 서버도 끈다
 - 두 번째 실행 막기, 트레이, 창 X → 트레이로 숨기기, 트레이 메뉴 "브라우저로 열기"
-- 개발 중에는 Vite 개발 서버를 연다. `tools/run-app.ps1`이 새 앱도 띄울 수 있게 고친다
+- 개발 중에는 Vite 개발 서버를 연다. 새 앱을 띄우는 `tools/run-app.ps1` 을 루트에 새로 만든다 (옛 것은 `old/tools/` 에 그대로)
 - **완료 기준:** 빌드한 Electron 앱이 서버를 띄우고 빈 화면을 보여 준다. 앱을 끄면 서버 프로세스가 남지 않는다
 
 ### Stage 3 — 화면 뼈대와 탭 계약
 
 - `web/` (Vite + React + TS). 시안의 왼쪽 메뉴·색·글꼴을 CSS 변수로 옮긴다. 글꼴 파일은 동봉한다
 - §6 탭 계약, 라우팅, `Ctrl+1~7` 단축키, OpenAPI → TS 클라이언트 생성, `/ws` 알림 → 캐시 무효화(TanStack Query)
-- 문구: `Strings/ko-KR/Resources.resw` → `web/src/strings/ko.json`. `StringResourceKeysTests`와 같은 일을 하는 vitest를 만든다
+- 문구: `old/src/Daiso.App/Strings/ko-KR/Resources.resw` → `web/src/strings/ko.json`. `StringResourceKeysTests`와 같은 일을 하는 vitest를 만든다
 - **완료 기준:** 일곱 탭이 빈 화면으로 뜨고 메뉴·단축키로 오간다. 크롬 탭과 Electron 창에서 똑같이 보인다
 
 ### Stage 4 — 사용량 탭 (첫 수직 조각)
@@ -262,8 +279,9 @@ XAML 전부, `Controls/`, `Ui/`, `DialogHost`, `Navigator`, `NavigationHistory`,
 
 ### Stage 8 — 배포 전환과 WinUI 제거
 
-- `docs/RELEASE.md` §2 표를 먼저 고친다: Windows App SDK·WebView2 줄을 빼고 Electron 줄을 넣는다. 설치 프로그램 도구(Inno 유지 / electron-builder NSIS)는 **미정**. 둘 다 관리자 권한 없이 사용자 폴더에 깔 수 있어야 한다
-- `Daiso.App` 프로젝트와 XAML 검사 테스트를 지운다. `ARCHITECTURE.md` §1·§5를 새 구조로 다시 쓴다
+- `RELEASE.md` 를 `docs/` 로 옮기고 §2 표를 먼저 고친다: Windows App SDK·WebView2 줄을 빼고 Electron 줄을 넣는다. 설치 프로그램 도구(Inno 유지 / electron-builder NSIS)는 **미정**. 둘 다 관리자 권한 없이 사용자 폴더에 깔 수 있어야 한다
+- 백엔드 프로젝트와 테스트를 `old/src`·`old/tests` 에서 루트 `src/`·`tests/` 로 `git mv` 한다
+- `old/` 를 지운다 (`Daiso.App`, XAML 검사 테스트 포함). 필요한 문서는 먼저 `docs/` 로 옮기고 `ARCHITECTURE.md` §1·§5를 새 구조로 다시 쓴다
 - **완료 기준:** RELEASE §5 확인 목록을 깨끗한 Windows 10 Home에서 통과한다
 
 ---
@@ -277,7 +295,8 @@ XAML 전부, `Controls/`, `Ui/`, `DialogHost`, `Navigator`, `NavigationHistory`,
 | 설치 파일이 커진다 (Chromium 동봉) | 받아들인다 (§1 성능 요구 낮음). 대신 WebView2 부트스트래퍼와 Windows App SDK가 빠진다 |
 | 서버 프로세스가 고아로 남는다 | 서버가 부모 프로세스를 지켜보다 스스로 끝난다. Stage 2 완료 기준에 넣었다 |
 | C# 서버에서 막힌다 | Stage 4까지 해 보고 판단한다. 백엔드를 TS로 옮기는 안은 §3에 버린 안으로 남아 있다 |
-| 되돌리기 | Stage 7까지 WinUI 앱이 그대로 남아 있으므로 언제든 멈출 수 있다. Stage 8이 되돌리기 어려운 단계다 |
+| 새 서버를 위해 백엔드를 고치다 옛 앱이 깨진다 | 백엔드를 고친 커밋은 `old/` 솔루션 빌드·테스트도 돌린다 (§0 일하는 방식) |
+| 되돌리기 | Stage 7까지 `old/` 가 그대로 남아 있으므로 언제든 멈출 수 있다. Stage 8이 되돌리기 어려운 단계다 |
 
 ---
 
@@ -300,4 +319,4 @@ XAML 전부, `Controls/`, `Ui/`, `DialogHost`, `Navigator`, `NavigationHistory`,
 
 ## 이 문서를 덮고 할 일
 
-Stage 0부터 시작한다. 첫 커밋은 `Daiso.Application` 라이브러리를 만들고 서비스를 옮기는 것이며, WinUI 앱 동작은 바뀌지 않아야 한다.
+Stage 0부터 시작한다. 첫 커밋은 루트 솔루션이 `old/src` 백엔드를 참조해 빌드·테스트가 도는 것이며, `old/` 안은 바뀌지 않아야 한다.
