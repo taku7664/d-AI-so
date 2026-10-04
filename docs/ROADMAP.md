@@ -19,7 +19,7 @@ Electron 전환을 Stage 0~8로 나누고, 단계마다 할 일과 완료 기준
 - `backend/src/Daiso.Host/` (ASP.NET Core minimal API). DI 구성과 UI 의존 없는 서비스를 옮긴다 ([MIGRATION_MAP.md](MIGRATION_MAP.md))
 - [SECURITY.md](SECURITY.md)의 일곱 가지 전부, 그리고 서버를 띄우는 순서
 - **Electron 없이 혼자 뜰 수 있어야 한다.** Stage 1에는 Electron이 없다. 토큰 환경 변수가 없으면 Host가 직접 토큰을 만들고, 열 주소를 표준 출력과 `server.json`에 남긴다 ([SECURITY.md](SECURITY.md))
-- 자료 폴더는 옛 앱과 같은 `%LOCALAPPDATA%\DAIso`를 쓴다. 옛 앱과 동시에 띄울 때의 규칙을 시작 전에 정한다 ([DECISIONS.md](DECISIONS.md) "미정")
+- 자료 폴더는 옛 앱과 같은 `%LOCALAPPDATA%\DAIso`를 쓴다 ([DECISIONS.md](DECISIONS.md) "정한 것"). 옛 앱의 인덱스는 쓰기 잠금이 프로세스 안에만 있다(`SqliteSessionIndex`의 `_writeGate`). 두 앱이 동시에 인덱스를 고칠 때 어떻게 되는지 이 단계에서 확인한다
 - `GET /api/health`, OpenAPI 문서, 공용 WebSocket `/ws`
 - `backend/tests/Daiso.Host.Tests/`: 보안 규칙을 하나씩 깨 보는 테스트
 - **완료 기준:** 보안 테스트 초록. 크롬에서 토큰 주소로 열면 health가 보이고, 토큰 없이 열면 거절된다
@@ -83,5 +83,5 @@ Electron 전환을 Stage 0~8로 나누고, 단계마다 할 일과 완료 기준
 | 서버 프로세스가 고아로 남는다 | 서버가 부모 프로세스를 지켜보다 스스로 끝난다. Stage 2 완료 기준에 넣었다 |
 | C# 서버에서 막힌다 | Stage 4에서 판단한다 |
 | 새 서버를 위해 백엔드를 고치다 옛 앱이 깨진다 | 백엔드를 고친 커밋은 `old/` 솔루션 빌드·테스트도 돌린다 |
-| 옛 앱과 새 앱이 같은 자료 폴더(`index.db`, `settings.json`)를 동시에 쓴다 | 나란히 비교할 때는 한쪽만 쓰게 한다. 규칙은 Stage 1 전에 정한다 |
+| 옛 앱과 새 앱이 같은 자료 폴더(`index.db`, `settings.json`)를 동시에 쓴다 | 설정은 한쪽에서만 바꾼다. 인덱스 동시 쓰기는 Stage 1에서 확인한다. Stage 8에서 옛 앱을 지우면 없어지는 위험이다 |
 | 되돌리기 | Stage 7까지 `old/`가 그대로 있으므로 언제든 멈출 수 있다. Stage 8이 되돌리기 어려운 단계다 |

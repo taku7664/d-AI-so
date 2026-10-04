@@ -14,7 +14,7 @@ WinUI 3 앱을 **Electron + 웹 화면 + C# 서버**로 옮기는 작업의 문�
 
 ### 이어받는 사람이 먼저 볼 것
 
-- Stage 1을 시작하기 전에 정해야 할 것이 둘 있다: Host TFM, 옛 앱과 자료 폴더를 같이 쓸 때의 규칙 ([DECISIONS.md](DECISIONS.md) "미정")
+- Stage 1을 시작하기 전에 Host TFM을 정해야 한다 ([DECISIONS.md](DECISIONS.md) "미정"). 자료 폴더는 옛 앱과 같이 쓰기로 정했다
 - `old/` 안 문서에 적힌 경로(`src/...`, `docs/...`, `tools/...`)는 **`old/` 기준**이다. 옮기면서 고치지 않았다
 - 화면 시안 링크는 저장소 주인 계정의 비공개 아티팩트다. 열리지 않으면 주인에게 공유를 부탁한다
 - 확인 명령: 옛 앱은 `old/`에서 `dotnet build Daiso.sln`·`dotnet test Daiso.sln`, 새 백엔드는 `backend/`에서 `dotnet build`·`dotnet test`, 프런트 설정은 `frontend/`에서 `npm ci` 뒤 `npm run lint`·`npm run format:check`
@@ -59,4 +59,4 @@ WinUI 3 앱을 **Electron + 웹 화면 + C# 서버**로 옮기는 작업의 문�
 
 ## 이 문서를 덮고 할 일
 
-[ROADMAP.md](ROADMAP.md)를 열고 Stage 1부터 한다. 그 전에 "미정"의 두 가지를 정한다.
+[ROADMAP.md](ROADMAP.md)를 열고 Stage 1부터 한다. 그 전에 "미정"의 Host TFM을 정한다.
