@@ -41,6 +41,7 @@
 | C# 프로세스 이름: **`Daiso.Host`** | 백엔드 라이브러리와 탭 엔드포인트를 싣고 띄우는 프로세스다. 원격 서버가 아니다 | `Daiso.Server` (원격 서버로 오해) · `Daiso.Backend` (`backend/` 와 겹침) |
 | 패키지 매니저: **npm 하나** | Node 24에 같이 깔려 있다. lock 파일은 `package-lock.json` 하나다 | pnpm · yarn |
 | 자료 폴더: **옛 앱과 같은 `%LOCALAPPDATA%\DAIso`** (2026-10-05) | 같은 `index.db`로 숫자를 나란히 비교할 수 있고, 다 옮긴 뒤 옛 앱을 지워도 사용자가 옮길 것이 없다. 동시에 띄우는 것은 막지 않는다. 다만 옛 앱은 `settings.json`을 시작할 때 한 번 읽고 저장할 때 통째로 덮어쓰므로(`old/src/Daiso.App/Services/SettingsStore.cs`) **설정은 한쪽에서만 바꾼다** | 새 앱만 다른 폴더 쓰기 · 동시에 띄우면 새 앱은 읽기만 |
+| `Daiso.Host` TFM: **`net10.0-windows`** (2026-10-05) | LTS이고 OpenAPI 문서 생성이 내장돼 있다. `-windows`여야 `Infrastructure`(`net8.0-windows`, ConPTY)를 참조할 수 있다 | `net8.0-windows` (OpenAPI에 Swashbuckle 같은 패키지가 따로 필요) |
 | TypeScript **5.9** | typescript-eslint 8.71이 6.1 미만만 지원한다 (2026-10-03 확인) | TypeScript 7 |
 
 ## 안 하기로 한 것
@@ -57,5 +58,4 @@
 | 규칙·프롬프트 폴더가 겹칠 때 우선순위 (사용자 폴더 vs 프로젝트 폴더) | Stage 7 시작 전 |
 | 설치 프로그램 도구 (Inno 유지 / electron-builder NSIS). 둘 다 관리자 권한 없이 사용자 폴더에 깔려야 한다 | Stage 8 시작 전 |
 | 라이트 테마. 시안은 어두운 테마만 있다 | Stage 3에서 CSS 변수로 자리만 만든다 |
-| `Daiso.Host` TFM. `net10.0-windows`(LTS, OpenAPI 문서 생성 내장)를 권한다. `net8.0-windows`로 가면 OpenAPI에 Swashbuckle 같은 별도 패키지가 필요하다. 어느 쪽이든 `-windows`여야 `Infrastructure`(ConPTY)를 참조할 수 있다 | Stage 1 시작 전 |
 | 기본 탭 id 7개(`frontend/web/src/tabs/README.md`의 표). 2026-10-03에 제안만 해 뒀다. 바꾸기 어려운 값이다 | Stage 3 시작 전 |

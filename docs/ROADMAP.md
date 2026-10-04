@@ -15,7 +15,7 @@ Electron 전환을 Stage 0~8로 나누고, 단계마다 할 일과 완료 기준
 
 ## Stage 1 — 서버 뼈대와 보안
 
-- 시작 전에 Host의 TFM을 정한다 ([DECISIONS.md](DECISIONS.md) "미정"). 어느 쪽이든 `Infrastructure`가 `net8.0-windows`라서 Host도 `-windows` TFM이어야 참조할 수 있다
+- Host TFM은 `net10.0-windows`다 ([DECISIONS.md](DECISIONS.md) "정한 것"). `Infrastructure`가 `net8.0-windows`라서 Host도 `-windows` TFM이어야 참조할 수 있다
 - `backend/src/Daiso.Host/` (ASP.NET Core minimal API). DI 구성과 UI 의존 없는 서비스를 옮긴다 ([MIGRATION_MAP.md](MIGRATION_MAP.md))
 - [SECURITY.md](SECURITY.md)의 일곱 가지 전부, 그리고 서버를 띄우는 순서
 - **Electron 없이 혼자 뜰 수 있어야 한다.** Stage 1에는 Electron이 없다. 토큰 환경 변수가 없으면 Host가 직접 토큰을 만들고, 열 주소를 표준 출력과 `server.json`에 남긴다 ([SECURITY.md](SECURITY.md))
