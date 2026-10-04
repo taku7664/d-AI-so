@@ -10,14 +10,14 @@
 | `App.xaml.cs`의 DI 구성 (99~186줄) | — | `backend/src/Daiso.Host/Program.cs`. ViewModel 등록은 빼고 서비스만 |
 | `Services/IndexService.cs` | 98 | 서버 (UI 의존 3곳을 걷어 낸다) |
 | `Services/SettingsStore.cs` · `AppSettings.cs` | 125 · 78 | 서버. UI 의존 없음 |
-| `Services/KnownProjects.cs` | 69 | 서버. UI 의존 없음 |
+| `Services/KnownProjects.cs` | 69 | 서버. 자기 안에는 UI 의존이 없지만 `IndexService`를 받으므로 `IndexService`와 같이 옮긴다 |
 | `Services/ToolRegistry.cs` · `ToolPluginCatalog.cs` | 31 · 95 | 서버. UI 의존 없음 |
 | `Services/CrashReporter.cs` | 172 | 서버 몫과 Electron 몫으로 나눈다 |
 | `Terminal/TerminalHost.cs`의 PTY 연결 부분 | 535 중 일부 | 서버 `/ws/pty/{room}`. WebView2 부분은 버린다 |
 | `ViewModels/RoomManager.cs` | 170 | 서버. 방 목록은 도메인 상태다 |
 | 각 ViewModel 안의 도메인 로직 | — | 서버 엔드포인트. 아래 "다시 쓰는 것" 참고 |
 
-UI 의존이 없는 서비스(SettingsStore, KnownProjects, ToolRegistry, ToolPluginCatalog)는 Stage 1에 가져온다. 나머지는 그 서비스를 쓰는 탭을 만들 때 가져온다.
+UI 의존이 없는 서비스(SettingsStore, ToolRegistry, ToolPluginCatalog)는 Stage 1에 가져왔다(`backend/src/Daiso.Host/Services/`). 나머지는 그 서비스를 쓰는 탭을 만들 때 가져온다.
 
 ## 다시 쓰는 것
 

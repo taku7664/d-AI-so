@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <!-- Infrastructure 가 net8.0-windows(ConPTY)라 이쪽도 -windows 여야 참조할 수 있다 (docs/DECISIONS.md) -->
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RootNamespace>Daiso.Host</RootNamespace>
+    <AssemblyName>Daiso.Host</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- 공개 형식마다 문서 주석을 강제하지는 않는다. 주석은 OpenAPI 설명으로 쓰려고 켠다 -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\old\src\Daiso.Core\Daiso.Core.csproj" />
+    <ProjectReference Include="..\..\..\old\src\Daiso.Infrastructure\Daiso.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\old\src\Daiso.Providers.Common\Daiso.Providers.Common.csproj" />
+    <ProjectReference Include="..\..\..\old\src\Daiso.Providers.Claude\Daiso.Providers.Claude.csproj" />
+    <ProjectReference Include="..\..\..\old\src\Daiso.Providers.Codex\Daiso.Providers.Codex.csproj" />
+    <ProjectReference Include="..\..\..\old\src\Daiso.Providers.Antigravity\Daiso.Providers.Antigravity.csproj" />
+    <ProjectReference Include="..\..\..\old\src\Daiso.Providers.Manifest\Daiso.Providers.Manifest.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Daiso.Host.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
+  </ItemGroup>
+
+</Project>

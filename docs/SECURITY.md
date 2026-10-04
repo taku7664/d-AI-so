@@ -21,9 +21,13 @@
 3. Electron이 그 주소에 토큰을 붙여 창에 연다
 4. 서버는 부모 프로세스를 지켜보다 부모가 죽으면 스스로 끝난다. 고아 서버를 남기지 않는다
 
+Electron이 넘기는 환경 변수는 `DAISO_TOKEN`(토큰)과 `DAISO_PARENT_PID`(Electron 메인 PID) 둘이다. Host는 토큰을 읽자마자 자기 환경에서 지워, Host가 띄우는 터미널이 토큰을 물려받지 않게 한다. 자세한 것은 [backend/src/Daiso.Host/README.md](../backend/src/Daiso.Host/README.md)
+
 Electron 없이 혼자 띄울 때(Stage 1, 개발 중)는 Host가 토큰을 만들고 `server.json`과 표준 출력에 토큰이 붙은 주소를 남긴다. 그 주소를 크롬으로 연다. 이때는 부모 감시를 하지 않는다.
 
 ## 구현할 때 지킬 것
 
-- 검사는 엔드포인트마다 넣지 않고 **미들웨어 한 곳**에 둔다
+- 검사는 엔드포인트마다 넣지 않고 **미들웨어 한 곳**에 둔다 (`backend/src/Daiso.Host/Security/LocalOnlyMiddleware.cs`)
+- 쿠키 이름에 포트를 붙인다(`daiso_{port}`). 쿠키는 포트를 가리지 않아서, 이름이 같으면 나중에 띄운 Host가 앞의 쿠키를 덮는다
+- 상태를 바꾸는 요청과 WebSocket에 `Origin`이 **없어도** 거절한다. 브라우저는 이 두 경우에 늘 `Origin`을 싣는다
 - `backend/tests/Daiso.Host.Tests/`에 **일곱 가지를 하나씩 깨 보는 테스트**를 둔다. 토큰 없음, 틀린 Host, 다른 Origin, 쿠키 없는 WebSocket 등이다. 새 경로가 생기면 테스트가 그 경로도 돌게 한다

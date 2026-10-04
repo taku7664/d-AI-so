@@ -8,9 +8,10 @@ WinUI 3 앱을 **Electron + 웹 화면 + C# 서버**로 옮기는 작업의 문�
 | 날짜 | 한 일 |
 |---|---|
 | 2026-10-03 | 작업물을 `old/`로 옮김. 문서를 주제별로 나눔. 최상위를 `frontend/`(TS)·`backend/`(C#)로 나누고 ESLint·Prettier는 `frontend/`에 둠 |
+| 2026-10-05 | **Stage 1 코드·테스트 끝, 크롬 확인 남음.** `backend/src/Daiso.Host`(net10.0-windows): 보안 미들웨어, `server.json`, 부모 감시, `/api/health`·OpenAPI·`/ws`, 옛 앱의 서비스 등록. 보안 테스트 48개. 하다가 SQLite 취약점(CVE-2025-6965) 때문에 `Infrastructure`의 SQLitePCLRaw를 2.1.13으로 올림 |
 | 2026-10-05 | **Stage 0 완료.** `backend/`에 `Daiso.sln`·`Directory.Build.props`·`global.json`. 솔루션은 `old/src` 백엔드 7개와 `old/tests` 세 벌, 테스트가 참조하는 `old/tools/adapters/Daiso.Adapter.Claude`를 담는다. 하다가 빨갛던 옛 테스트 하나(어댑터가 일찍 끝나면 파이프 쓰기에서 던짐)을 고침 |
 
-다음은 [ROADMAP.md](ROADMAP.md)의 Stage 1이다. **새 코드는 아직 없다.** `frontend/`에는 ESLint·Prettier 설정과 탭 README, `backend/`에는 솔루션 뼈대와 탭 README만 있다.
+다음은 [ROADMAP.md](ROADMAP.md) Stage 1의 남은 완료 기준(크롬에서 토큰 주소로 열어 health 확인)이다. 띄우는 법은 [backend/src/Daiso.Host/README.md](../backend/src/Daiso.Host/README.md)에 있다. `frontend/`에는 아직 ESLint·Prettier 설정과 탭 README뿐이다.
 
 ### 이어받는 사람이 먼저 볼 것
 
@@ -59,4 +60,4 @@ WinUI 3 앱을 **Electron + 웹 화면 + C# 서버**로 옮기는 작업의 문�
 
 ## 이 문서를 덮고 할 일
 
-[ROADMAP.md](ROADMAP.md)를 열고 Stage 1부터 한다.
+[ROADMAP.md](ROADMAP.md)를 열고 Stage 1의 남은 확인부터 한다.

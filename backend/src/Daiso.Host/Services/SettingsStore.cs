@@ -1,0 +1,132 @@
+using System.Text;
+using System.Text.Json;
+using Daiso.Infrastructure;
+
+namespace Daiso.Host.Services;
+
+/// <summary>설정 파일 읽기·쓰기.</summary>
+public interface ISettingsStore
+{
+    AppSettings Current { get; }
+
+    /// <summary>설정이 저장될 때마다 발생한다. 단가표 변경 즉시 재계산에 쓴다.</summary>
+    event EventHandler? Changed;
+
+    /// <summary>지금 값을 디스크에 쓴다.</summary>
+    void Save();
+
+    /// <summary>
+    /// 마지막 저장이 실패한 까닭. 성공했으면 null.
+    /// 저장은 실패해도 서버를 멈추지 않지만, <b>말은 해야 한다</b> —
+    /// 읽기 전용 폴더나 동기화 도구가 파일을 잡고 있으면 설정이 다음 실행에 사라진다.
+    /// </summary>
+    string? LastSaveError { get; }
+}
+
+/// <summary>
+/// 자료 폴더의 <c>settings.json</c> 기반 설정 저장소. 옛 앱(old/src/Daiso.App/Services/SettingsStore.cs)에서 옮겨 왔다.
+/// 다른 점은 파일 경로를 받는 것 하나다 — 테스트가 진짜 사용자 폴더를 건드리지 않게.
+/// <para>
+/// 옛 앱처럼 <b>시작할 때 한 번 읽고 저장할 때 통째로 쓴다.</b> 옛 앱과 동시에 띄워 둔 채 양쪽에서 설정을 바꾸면
+/// 나중에 저장한 쪽만 남는다. 그래서 설정은 한쪽에서만 바꾼다 (docs/DECISIONS.md "자료 폴더").
+/// </para>
+/// </summary>
+public sealed class SettingsStore : ISettingsStore
+{
+    /// <summary>자료 폴더 안의 파일 이름.</summary>
+    public const string FileName = "settings.json";
+
+    private static readonly JsonSerializerOptions Options = new()
+    {
+        WriteIndented = true,
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+    };
+
+    private static readonly UTF8Encoding Utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
+
+    public SettingsStore(string path)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+
+        Path = path;
+        Current = Load(Path);
+    }
+
+    /// <inheritdoc />
+    public event EventHandler? Changed;
+
+    /// <inheritdoc />
+    public AppSettings Current { get; private set; }
+
+    /// <inheritdoc />
+    public string? LastSaveError { get; private set; }
+
+    /// <summary>설정 파일 경로.</summary>
+    public string Path { get; }
+
+    /// <inheritdoc />
+    public void Save()
+    {
+        try
+        {
+            var directory = System.IO.Path.GetDirectoryName(Path);
+            if (!string.IsNullOrEmpty(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            // 임시 파일에 다 쓰고 나서 자리를 바꾼다. 쓰는 도중에 죽어도 기존 설정이 반쪽으로 남지 않는다
+            var temporary = Path + ".tmp";
+            File.WriteAllText(temporary, JsonSerializer.Serialize(Current, Options), Utf8NoBom);
+            File.Move(temporary, Path, overwrite: true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            LastSaveError = SensitiveTextMasker.MaskSensitive(ex.Message);
+            Changed?.Invoke(this, EventArgs.Empty);
+
+            return;
+        }
+
+        LastSaveError = null;
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// 역직렬화가 지운 사전 비교자를 되살린다.
+    /// <c>Prices</c>는 필드 초기값에서 <see cref="StringComparer.OrdinalIgnoreCase"/>로 만들지만,
+    /// System.Text.Json은 set 가능한 사전 속성을 채울 때 사전을 **새로** 만들어 기본(대소문자 구분) 비교자를 쓴다.
+    /// </summary>
+    private static AppSettings Normalize(AppSettings settings)
+    {
+        var prices = new Dictionary<string, ModelPrice>(StringComparer.OrdinalIgnoreCase);
+
+        // 대소문자만 다른 키가 둘 있으면 나중 것을 남긴다. 생성자로 옮기면 그 경우 예외가 난다
+        foreach (var entry in settings.Prices)
+        {
+            prices[entry.Key] = entry.Value;
+        }
+
+        settings.Prices = prices;
+
+        return settings;
+    }
+
+    private static AppSettings Load(string path)
+    {
+        try
+        {
+            if (!File.Exists(path))
+            {
+                return new AppSettings();
+            }
+
+            var json = File.ReadAllText(path, Encoding.UTF8);
+            return Normalize(JsonSerializer.Deserialize<AppSettings>(json, Options) ?? new AppSettings());
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
+        {
+            return new AppSettings();
+        }
+    }
+}

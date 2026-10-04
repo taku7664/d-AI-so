@@ -19,7 +19,7 @@ Electron 전환을 Stage 0~8로 나누고, 단계마다 할 일과 완료 기준
 - `backend/src/Daiso.Host/` (ASP.NET Core minimal API). DI 구성과 UI 의존 없는 서비스를 옮긴다 ([MIGRATION_MAP.md](MIGRATION_MAP.md))
 - [SECURITY.md](SECURITY.md)의 일곱 가지 전부, 그리고 서버를 띄우는 순서
 - **Electron 없이 혼자 뜰 수 있어야 한다.** Stage 1에는 Electron이 없다. 토큰 환경 변수가 없으면 Host가 직접 토큰을 만들고, 열 주소를 표준 출력과 `server.json`에 남긴다 ([SECURITY.md](SECURITY.md))
-- 자료 폴더는 옛 앱과 같은 `%LOCALAPPDATA%\DAIso`를 쓴다 ([DECISIONS.md](DECISIONS.md) "정한 것"). 옛 앱의 인덱스는 쓰기 잠금이 프로세스 안에만 있다(`SqliteSessionIndex`의 `_writeGate`). 두 앱이 동시에 인덱스를 고칠 때 어떻게 되는지 이 단계에서 확인한다
+- 자료 폴더는 옛 앱과 같은 `%LOCALAPPDATA%\DAIso`를 쓴다 ([DECISIONS.md](DECISIONS.md) "정한 것"). 옛 앱의 인덱스는 쓰기 잠금이 프로세스 안에만 있다(`SqliteSessionIndex`의 `_writeGate`). 두 인스턴스가 같은 파일을 동시에 다시 만들어도 깨지지 않는 것을 테스트로 확인했다(2026-10-05). 테스트 자료가 작아 잠금이 짧은 경우만 봤으므로, 실제 크기 인덱스는 Stage 4에서 다시 본다
 - `GET /api/health`, OpenAPI 문서, 공용 WebSocket `/ws`
 - `backend/tests/Daiso.Host.Tests/`: 보안 규칙을 하나씩 깨 보는 테스트
 - **완료 기준:** 보안 테스트 초록. 크롬에서 토큰 주소로 열면 health가 보이고, 토큰 없이 열면 거절된다
@@ -43,6 +43,7 @@ Electron 전환을 Stage 0~8로 나누고, 단계마다 할 일과 완료 기준
 ## Stage 4 — 사용량 탭
 
 - 첫 수직 조각이다. 읽기만 하는 화면이라 서버·타입 생성·캐시·알림 흐름을 처음 끝까지 꿰기 좋다
+- 인덱스를 처음 여는 탭이다. 옛 앱과 Host를 동시에 띄우고 실제 크기 인덱스로 둘이 같이 갱신할 때 한쪽이 실패하지 않는지 본다 (Stage 1에서는 작은 테스트 자료로만 봤다)
 - **완료 기준:** 옛 사용량 화면과 숫자가 같다 (같은 인덱스로 나란히 띄워 비교)
 - **여기서 C# 서버를 계속 갈지 판단한다** ([DECISIONS.md](DECISIONS.md) "정한 것"의 버린 안)
 
