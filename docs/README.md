@@ -8,15 +8,16 @@ WinUI 3 앱을 **Electron + 웹 화면 + C# 서버**로 옮기는 작업의 문�
 | 날짜 | 한 일 |
 |---|---|
 | 2026-10-03 | 작업물을 `old/`로 옮김. 문서를 주제별로 나눔. 최상위를 `frontend/`(TS)·`backend/`(C#)로 나누고 ESLint·Prettier는 `frontend/`에 둠 |
+| 2026-10-05 | **Stage 0 완료.** `backend/`에 `Daiso.sln`·`Directory.Build.props`·`global.json`. 솔루션은 `old/src` 백엔드 7개와 `old/tests` 세 벌, 테스트가 참조하는 `old/tools/adapters/Daiso.Adapter.Claude`를 담는다. 하다가 빨갛던 옛 테스트 하나(어댑터가 일찍 끝나면 파이프 쓰기에서 던짐)을 고침 |
 
-다음은 [ROADMAP.md](ROADMAP.md)의 Stage 0이다. **코드는 아직 한 줄도 없다.** `frontend/`에는 ESLint·Prettier 설정과 탭 README, `backend/`에는 탭 README만 있다.
+다음은 [ROADMAP.md](ROADMAP.md)의 Stage 1이다. **새 코드는 아직 없다.** `frontend/`에는 ESLint·Prettier 설정과 탭 README, `backend/`에는 솔루션 뼈대와 탭 README만 있다.
 
 ### 이어받는 사람이 먼저 볼 것
 
 - Stage 1을 시작하기 전에 정해야 할 것이 둘 있다: Host TFM, 옛 앱과 자료 폴더를 같이 쓸 때의 규칙 ([DECISIONS.md](DECISIONS.md) "미정")
 - `old/` 안 문서에 적힌 경로(`src/...`, `docs/...`, `tools/...`)는 **`old/` 기준**이다. 옮기면서 고치지 않았다
 - 화면 시안 링크는 저장소 주인 계정의 비공개 아티팩트다. 열리지 않으면 주인에게 공유를 부탁한다
-- 확인 명령: 옛 앱은 `old/`에서 `dotnet build Daiso.sln`·`dotnet test Daiso.sln`, 프런트 설정은 `frontend/`에서 `npm ci` 뒤 `npm run lint`·`npm run format:check`
+- 확인 명령: 옛 앱은 `old/`에서 `dotnet build Daiso.sln`·`dotnet test Daiso.sln`, 새 백엔드는 `backend/`에서 `dotnet build`·`dotnet test`, 프런트 설정은 `frontend/`에서 `npm ci` 뒤 `npm run lint`·`npm run format:check`
 
 ## 문서 목록
 
@@ -58,4 +59,4 @@ WinUI 3 앱을 **Electron + 웹 화면 + C# 서버**로 옮기는 작업의 문�
 
 ## 이 문서를 덮고 할 일
 
-[ROADMAP.md](ROADMAP.md)를 열고 Stage 0부터 한다.
+[ROADMAP.md](ROADMAP.md)를 열고 Stage 1부터 한다. 그 전에 "미정"의 두 가지를 정한다.

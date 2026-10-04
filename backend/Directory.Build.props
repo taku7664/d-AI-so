@@ -1,0 +1,17 @@
+<Project>
+
+  <!--
+    backend/ 아래 새 프로젝트에만 걸린다. old/src 프로젝트는 자기 위쪽의 old/Directory.Build.props 를 따른다.
+    판 번호(Version)는 Stage 8 까지 old/Directory.Build.props 하나가 정본이라 여기 두지 않는다
+  -->
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <NeutralLanguage>en</NeutralLanguage>
+  </PropertyGroup>
+
+</Project>
