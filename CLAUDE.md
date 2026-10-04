@@ -6,7 +6,7 @@
   - `frontend/`: TypeScript 전부(Electron `desktop/`, 화면 `web/`). npm 하나만 쓰고 `frontend/` 안에서만 돈다
   - `backend/`: C# 전부(`Daiso.Host` 프로세스, 탭 엔드포인트, 테스트). dotnet 은 `backend/` 안에서만 돈다
   - `docs/`: 여러 모듈에 걸친 문서. 한 모듈 것은 그 모듈 폴더의 `README.md`에 둔다
-- `old/`: 2026-10-03 까지의 WinUI 앱 전부(소스·테스트·도구·문서). 0.2.0 배포판이 여기서 나왔다. 새 구조를 만들 때 참고하고, 백엔드 프로젝트는 새 서버가 그대로 가져다 쓴다
+- `old/`: 2026-10-03 까지의 WinUI 앱 전부(소스·테스트·도구·문서). 0.2.0 배포판이 여기서 나왔다. 새 구조를 만들 때 참고하고, 백엔드 프로젝트(Core·Providers·Infrastructure)는 `Daiso.Host`가 그대로 참조한다. `old/src/Daiso.App`은 얼려 둔다
 
 ## 문서
 - **Electron 전환 (진행 중)**: `docs/README.md` 부터 읽는다. 진행 상황·일하는 방식·문서 목록이 있다. 단계는 `docs/ROADMAP.md`, 결정은 `docs/DECISIONS.md`
@@ -19,9 +19,15 @@
 
 ## 빌드·실행 확인
 
-옛 앱(`old/`)을 띄워 확인할 때는 `old/tools/run-app.ps1`을 쓴다. 빌드한 바로 그 산출물을 실행한다.
+**옛 앱 (`old/`)**
+옛 앱을 띄워 확인할 때는 `old/tools/run-app.ps1`을 쓴다. 빌드한 바로 그 산출물을 실행한다.
 `dotnet build`(솔루션)와 프로젝트 단독 빌드의 산출물 폴더는 같아야 하며(csproj의 기본 Platform x64), 손으로 적은 경로로 실행하지 않는다.
-문구 키를 지우거나 바꾸면 `Daiso.Core.Tests`의 `StringResourceKeysTests`가 잡는다. 테스트가 빨간데 눈으로 넘기지 않는다.
+문구 키를 지우거나 바꾸면 `old/tests/Daiso.Core.Tests`의 `StringResourceKeysTests`가 잡는다. 테스트가 빨간데 눈으로 넘기지 않는다.
+`old/src`의 백엔드를 고쳤으면 `old/`에서 `dotnet build Daiso.sln`·`dotnet test Daiso.sln`도 초록이어야 한다.
+
+**새 구조**
+- 프런트: `frontend/`에서 `npm run lint`·`npm run format:check`
+- 백엔드: `backend/`에서 `dotnet build`·`dotnet test` (Stage 0부터)
 
 ## 커밋
 

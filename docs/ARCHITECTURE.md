@@ -41,6 +41,7 @@ backend/                       C# 전부. dotnet 은 여기서만 돈다
   src/Daiso.Host/              C# 프로세스: 보안 미들웨어, /ws, DI (Stage 1)
     Tabs/{Id}/                 탭마다 엔드포인트 묶음
   tests/                       새 테스트
+tools/                         빌드·실행 스크립트 (Stage 2에서 새 run-app.ps1). 언어에 묶이지 않는 PowerShell
 .editorconfig                  들여쓰기·줄 끝. old/ 에도 걸리므로 C# 분석기 규칙은 넣지 않는다
 PROJECT_RULES.daiso            코딩 규칙 정본 (C#·TS 공통)
 old/                           2026-10-03 까지의 WinUI 앱 전부

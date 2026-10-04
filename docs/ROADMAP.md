@@ -3,17 +3,23 @@
 Electron 전환을 Stage 0~8로 나누고, 단계마다 할 일과 완료 기준을 정한다.
 왜 이렇게 하는지는 [DECISIONS.md](DECISIONS.md), 일하는 방식과 진행 상황은 [README.md](README.md)에 있다.
 
-## Stage 0 — 루트 솔루션 뼈대
+## Stage 0 — backend 솔루션 뼈대
 
-- `backend/`에 `Daiso.sln`, `Directory.Build.props`, `global.json`(옛 값 그대로)을 만든다
+- `backend/`에 `Daiso.sln`, `Directory.Build.props`, `global.json`을 만든다
+  - `global.json`은 `old/global.json` 값을 그대로 쓴다 (SDK 10.0.400, `latestMinor`). dotnet은 **현재 폴더**에서 `global.json`을 찾으므로 명령은 `backend/` 안에서 돌린다
+  - `Directory.Build.props`는 `old/Directory.Build.props`의 `Nullable`·`TreatWarningsAsErrors`·`InvariantGlobalization` 등을 그대로 가져온다. **`Version`은 Stage 8까지 `old/Directory.Build.props` 하나가 정본이다** (`old/tools/make-installer.ps1`이 거기서 읽는다)
+  - `old/src`의 프로젝트는 자기 위쪽의 `old/Directory.Build.props`를 따른다. 새 props는 `backend/` 아래 새 프로젝트에만 걸린다
 - 새 솔루션이 `old/src`의 백엔드 프로젝트와 `old/tests`의 백엔드 테스트 세 벌을 참조한다. `Daiso.App`은 넣지 않는다
 - `old/tools/run-app.ps1`로 옛 앱이 여전히 뜨는지 확인한다
 - **완료 기준:** `backend/`에서 `dotnet build` · `dotnet test` 초록, `old/`에서도 초록
 
 ## Stage 1 — 서버 뼈대와 보안
 
+- 시작 전에 Host의 TFM을 정한다 ([DECISIONS.md](DECISIONS.md) "미정"). 어느 쪽이든 `Infrastructure`가 `net8.0-windows`라서 Host도 `-windows` TFM이어야 참조할 수 있다
 - `backend/src/Daiso.Host/` (ASP.NET Core minimal API). DI 구성과 UI 의존 없는 서비스를 옮긴다 ([MIGRATION_MAP.md](MIGRATION_MAP.md))
 - [SECURITY.md](SECURITY.md)의 일곱 가지 전부, 그리고 서버를 띄우는 순서
+- **Electron 없이 혼자 뜰 수 있어야 한다.** Stage 1에는 Electron이 없다. 토큰 환경 변수가 없으면 Host가 직접 토큰을 만들고, 열 주소를 표준 출력과 `server.json`에 남긴다 ([SECURITY.md](SECURITY.md))
+- 자료 폴더는 옛 앱과 같은 `%LOCALAPPDATA%\DAIso`를 쓴다. 옛 앱과 동시에 띄울 때의 규칙을 시작 전에 정한다 ([DECISIONS.md](DECISIONS.md) "미정")
 - `GET /api/health`, OpenAPI 문서, 공용 WebSocket `/ws`
 - `backend/tests/Daiso.Host.Tests/`: 보안 규칙을 하나씩 깨 보는 테스트
 - **완료 기준:** 보안 테스트 초록. 크롬에서 토큰 주소로 열면 health가 보이고, 토큰 없이 열면 거절된다
@@ -77,4 +83,5 @@ Electron 전환을 Stage 0~8로 나누고, 단계마다 할 일과 완료 기준
 | 서버 프로세스가 고아로 남는다 | 서버가 부모 프로세스를 지켜보다 스스로 끝난다. Stage 2 완료 기준에 넣었다 |
 | C# 서버에서 막힌다 | Stage 4에서 판단한다 |
 | 새 서버를 위해 백엔드를 고치다 옛 앱이 깨진다 | 백엔드를 고친 커밋은 `old/` 솔루션 빌드·테스트도 돌린다 |
+| 옛 앱과 새 앱이 같은 자료 폴더(`index.db`, `settings.json`)를 동시에 쓴다 | 나란히 비교할 때는 한쪽만 쓰게 한다. 규칙은 Stage 1 전에 정한다 |
 | 되돌리기 | Stage 7까지 `old/`가 그대로 있으므로 언제든 멈출 수 있다. Stage 8이 되돌리기 어려운 단계다 |

@@ -32,6 +32,8 @@ export const tab: TabModule = {
 
 ## 기본 탭
 
+2026-10-03에 제안한 값이다. Stage 3을 시작하기 전에 확정한다 ([docs/DECISIONS.md](../../../../docs/DECISIONS.md) "미정"). 확정한 뒤에는 바꾸지 않는다.
+
 | id | 제목 | order |
 |---|---|---|
 | `dashboard` | 요약 | 10 |

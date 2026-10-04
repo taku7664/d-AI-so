@@ -56,3 +56,6 @@
 | 규칙·프롬프트 폴더가 겹칠 때 우선순위 (사용자 폴더 vs 프로젝트 폴더) | Stage 7 시작 전 |
 | 설치 프로그램 도구 (Inno 유지 / electron-builder NSIS). 둘 다 관리자 권한 없이 사용자 폴더에 깔려야 한다 | Stage 8 시작 전 |
 | 라이트 테마. 시안은 어두운 테마만 있다 | Stage 3에서 CSS 변수로 자리만 만든다 |
+| `Daiso.Host` TFM. `net10.0-windows`(LTS, OpenAPI 문서 생성 내장)를 권한다. `net8.0-windows`로 가면 OpenAPI에 Swashbuckle 같은 별도 패키지가 필요하다. 어느 쪽이든 `-windows`여야 `Infrastructure`(ConPTY)를 참조할 수 있다 | Stage 1 시작 전 |
+| 옛 앱과 새 앱이 자료 폴더 `%LOCALAPPDATA%\DAIso`(`index.db`, `settings.json`, `profiles` 등)를 같이 쓸 때의 규칙. 같이 쓰면 숫자를 나란히 비교할 수 있지만, 동시에 쓰면 설정을 서로 덮어쓸 수 있다 | Stage 1 시작 전 |
+| 기본 탭 id 7개(`frontend/web/src/tabs/README.md`의 표). 2026-10-03에 제안만 해 뒀다. 바꾸기 어려운 값이다 | Stage 3 시작 전 |
