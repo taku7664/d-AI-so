@@ -115,10 +115,28 @@ public sealed class AdapterChannel : IDisposable
                 yield break;
             }
 
-            await process.StandardInput
-                .WriteLineAsync(JsonSerializer.Serialize(request, AdapterProtocol.Json).AsMemory(), ct)
-                .ConfigureAwait(false);
-            await process.StandardInput.FlushAsync(ct).ConfigureAwait(false);
+            // 요청을 읽기도 전에 끝나 버리는 어댑터가 있다. 그러면 파이프가 닫혀 쓰기에서 던진다 — 그 도구만 오류로 내린다
+            var sent = true;
+
+            try
+            {
+                await process.StandardInput
+                    .WriteLineAsync(JsonSerializer.Serialize(request, AdapterProtocol.Json).AsMemory(), ct)
+                    .ConfigureAwait(false);
+                await process.StandardInput.FlushAsync(ct).ConfigureAwait(false);
+            }
+            catch (IOException ex)
+            {
+                Fail($"어댑터가 요청을 받기 전에 닫혔다: {ex.Message}");
+                Kill();
+                sent = false;
+            }
+
+            if (!sent)
+            {
+                finished = true;
+                yield break;
+            }
 
             while (true)
             {
