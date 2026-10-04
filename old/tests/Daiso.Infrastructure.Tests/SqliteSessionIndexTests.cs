@@ -449,6 +449,44 @@ public sealed class SqliteSessionIndexTests : IDisposable
 
     // ── 도우미 ───────────────────────────────────────────────────────────
 
+    // ── 옛 앱과 새 서버가 같은 파일을 쓴다 (docs/DECISIONS.md "자료 폴더") ──────
+
+    [Fact]
+    public async Task Two_indexes_on_one_file_can_write_at_the_same_time()
+    {
+        // 쓰기 차례(_writeGate)는 인스턴스 안에서만 걸린다. 인스턴스 둘은 프로세스 둘과 같다 —
+        // 옛 앱과 Host 가 같은 index.db 를 동시에 고치는 경우다
+        var home = Path.Combine(_directory, "home");
+        Directory.CreateDirectory(home);
+        Fixtures.CreateClaudeHome(home);
+        Fixtures.CreateCodexHome(home);
+        var path = DatabasePath();
+
+        SqliteSessionIndex Open() => new(
+            [
+                new ClaudeProvider(new ProviderHome(home), new FakeProcessProbe()),
+                new CodexProvider(new ProviderHome(home)),
+            ],
+            path);
+
+        using var first = Open();
+        using var second = Open();
+
+        async Task WriteAsync(SqliteSessionIndex index)
+        {
+            for (var round = 0; round < 10; round++)
+            {
+                await index.RebuildAsync(new Progress<IndexProgress>(), default);
+                await index.RefreshAsync(default);
+            }
+        }
+
+        await Task.WhenAll(Task.Run(() => WriteAsync(first)), Task.Run(() => WriteAsync(second)));
+
+        (await first.ListAsync(SessionFilter.All, default)).Should().HaveCount(5);
+        (await second.ListAsync(SessionFilter.All, default)).Should().HaveCount(5);
+    }
+
     private string DatabasePath() => Path.Combine(_directory, $"index-{Guid.NewGuid():N}.db");
 
     private SqliteSessionIndex CreateWithRealProviders()
