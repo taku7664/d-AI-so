@@ -86,6 +86,7 @@ internal static class ClaudeRecordParser
         }
 
         var hasToolResult = false;
+        var failed = false;
         var builder = new StringBuilder();
 
         foreach (var block in content.Items())
@@ -94,6 +95,7 @@ internal static class ClaudeRecordParser
             {
                 case "tool_result":
                     hasToolResult = true;
+                    failed |= block.Prop("is_error").Boolean() ?? false;
                     break;
                 case "text" when block.Prop("text").Text() is { } text:
                     Append(builder, text);
@@ -105,7 +107,7 @@ internal static class ClaudeRecordParser
 
         if (hasToolResult)
         {
-            return [new SessionMessage(at, MessageRole.Tool, ToolResultText(root), isSidechain)];
+            return [new SessionMessage(at, MessageRole.Tool, ToolResultText(root), isSidechain, IsError: failed)];
         }
 
         return builder.Length == 0
@@ -131,7 +133,7 @@ internal static class ClaudeRecordParser
 
         var messages = new List<SessionMessage>(2);
         var text = new StringBuilder();
-        var tools = new List<string>();
+        var tools = new List<(string Name, string Text)>();
 
         foreach (var block in message?.Prop("content").Items() ?? [])
         {
@@ -141,7 +143,7 @@ internal static class ClaudeRecordParser
                     Append(text, chunk);
                     break;
                 case "tool_use":
-                    tools.Add(ToolUseText(block));
+                    tools.Add((block.Prop("name").Text() ?? "tool_use", ToolUseText(block)));
                     break;
                 default:
                     break;
@@ -153,9 +155,9 @@ internal static class ClaudeRecordParser
             messages.Add(new SessionMessage(at, MessageRole.Assistant, text.ToString(), isSidechain));
         }
 
-        foreach (var tool in tools)
+        foreach (var (name, line) in tools)
         {
-            messages.Add(new SessionMessage(at, MessageRole.Tool, tool, isSidechain));
+            messages.Add(new SessionMessage(at, MessageRole.Tool, line, isSidechain, ToolName: name));
         }
 
         return record with

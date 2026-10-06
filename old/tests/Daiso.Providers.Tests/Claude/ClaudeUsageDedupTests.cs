@@ -44,6 +44,26 @@ public sealed class ClaudeUsageDedupTests : IDisposable
         days.Should().ContainSingle().Which.Usage.Should().Be(new TokenUsage(10, 2, 3, 100, "claude-opus-5"));
     }
 
+    [Fact]
+    public async Task Tool_lines_carry_the_tool_name_and_whether_the_result_failed()
+    {
+        File.WriteAllText(_path, Line("msg_1", Tool) + ResultLine(isError: true));
+
+        var messages = new List<SessionMessage>();
+        await foreach (var message in _provider.ReadMessagesAsync(_path, 0, default))
+        {
+            messages.Add(message);
+        }
+
+        messages.Should().HaveCount(2);
+        messages[0].ToolName.Should().Be("Read");
+        messages[1].Should().Match<SessionMessage>(m => m.Role == MessageRole.Tool && m.ToolName == null && m.IsError);
+    }
+
+    private static string ResultLine(bool isError) =>
+        "{\"sessionId\":\"s\",\"type\":\"user\",\"timestamp\":\"2026-09-01T00:02:00.000Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"tool_use_id\":\"t1\",\"is_error\":"
+        + (isError ? "true" : "false") + ",\"content\":\"no\"}]}}\n";
+
     private static async Task<List<UsageDay>> ListAsync(IAsyncEnumerable<UsageDay> source)
     {
         var list = new List<UsageDay>();

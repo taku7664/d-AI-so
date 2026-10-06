@@ -40,7 +40,9 @@ public sealed record TokenUsage(long Input, long Output, long CacheCreate, long 
 }
 
 /// <summary>세션 안의 메시지 한 건.</summary>
-public sealed record SessionMessage(DateTimeOffset At, MessageRole Role, string Text, bool IsSidechain);
+/// <param name="ToolName">도구 호출 줄이면 도구 이름. 도구 결과·그 밖의 줄은 null. 아는 도구만 채운다(Claude).</param>
+/// <param name="IsError">도구 결과가 실패라고 적혀 있다. 아는 도구만 채운다(Claude).</param>
+public sealed record SessionMessage(DateTimeOffset At, MessageRole Role, string Text, bool IsSidechain, string? ToolName = null, bool IsError = false);
 
 /// <summary>메시지 분류. (ARCHITECTURE §2.2 분류 원칙)</summary>
 public enum MessageRole
