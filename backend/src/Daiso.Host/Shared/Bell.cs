@@ -165,8 +165,10 @@ public static class BellEndpoints
     internal static async Task<RecentSession> WithLastPromptAsync(ISessionIndex index, SessionRow row, CancellationToken ct)
     {
         var messages = await index.GetLatestUserMessagesAsync(row.Path, PromptLookback, ct).ConfigureAwait(false);
-        var last = messages.FirstOrDefault(message => !PromptNoise.IsNoise(message.Text));
-        return new RecentSession(row, last is null ? null : SessionTitle.Clean(last.Text), last?.At);
+        var last = messages
+            .Select(message => (message.At, Text: PromptNoise.Body(message.Text)))
+            .FirstOrDefault(message => !PromptNoise.IsNoise(message.Text));
+        return new RecentSession(row, last.Text is null ? null : SessionTitle.Clean(last.Text), last.Text is null ? null : last.At);
     }
 
     private static string TrimEnd(string path) =>

@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Daiso.Core;
 using Daiso.Host.Services;
+using Daiso.Host.Shared;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Daiso.Host.Tabs.Terminal;
@@ -17,7 +18,11 @@ namespace Daiso.Host.Tabs.Terminal;
 /// <param name="StartedAt">연 때.</param>
 /// <param name="DoneAt">마지막으로 답이 끝난 때.</param>
 /// <param name="ExitCode">프로세스가 끝났으면 종료 코드.</param>
-public sealed record RoomInfo(string Id, string Tool, string Folder, string Name, string State, bool Unseen, DateTimeOffset StartedAt, DateTimeOffset? DoneAt, int? ExitCode);
+/// <param name="Project">
+/// 이 방이 속한 프로젝트 경로. 워크트리·Claude 임시 폴더는 원래 프로젝트다(<see cref="ProjectGroups"/>).
+/// 방을 연 폴더에 세션이 아직 없어도 프로젝트 방 목록에 묶인다.
+/// </param>
+public sealed record RoomInfo(string Id, string Tool, string Folder, string Name, string State, bool Unseen, DateTimeOffset StartedAt, DateTimeOffset? DoneAt, int? ExitCode, string Project);
 
 /// <summary>이름을 바꾸는 요청.</summary>
 public sealed record RoomNameRequest(string Name);
@@ -37,7 +42,7 @@ public sealed class TerminalEndpoints : ITabEndpoints
     {
         ArgumentNullException.ThrowIfNull(group);
 
-        group.MapGet("/rooms", (RoomService rooms) => rooms.Rooms.Select(Info).ToList()).WithName("ListRooms");
+        group.MapGet("/rooms", ListAsync).WithName("ListRooms");
         group.MapPost("/rooms", OpenAsync).WithName("OpenRoom");
         group.MapPost("/rooms/{id}/close", (string id, RoomService rooms) => rooms.Close(id) ? Results.NoContent() : Results.NotFound()).WithName("CloseRoom");
         group.MapPost("/rooms/{id}/seen", Seen).WithName("MarkRoomSeen");
@@ -48,22 +53,40 @@ public sealed class TerminalEndpoints : ITabEndpoints
         group.MapPost("/open-folder", OpenFolder).WithName("OpenFolder");
     }
 
-    internal static RoomInfo Info(Room room) => new(
-        room.Id,
-        room.Provider.Kind.Id,
-        room.Folder,
-        room.Name,
-        room.State.ToString().ToLowerInvariant(),
-        room.Unseen,
-        room.StartedAt,
-        room.DoneAt,
-        room.ExitCode);
+    private static async Task<List<RoomInfo>> ListAsync(RoomService rooms, ProjectCatalog catalog, CancellationToken ct)
+    {
+        var known = await KnownProjectsAsync(catalog, ct).ConfigureAwait(false);
+        return [.. rooms.Rooms.Select(room => Info(room, known))];
+    }
+
+    private static async Task<IReadOnlyList<string>> KnownProjectsAsync(ProjectCatalog catalog, CancellationToken ct) =>
+        [.. (await catalog.ListAsync(ct).ConfigureAwait(false)).Select(project => project.Path)];
+
+    internal static RoomInfo Info(Room room, IReadOnlyList<string> knownProjects)
+    {
+        // Codex 워크트리는 같은 이름의 프로젝트를 찾아 묶으므로 아는 프로젝트들과 같이 넘긴다
+        var folder = ProjectGroups.Trim(room.Folder);
+        var project = ProjectGroups.Map(knownProjects.Append(folder)).GetValueOrDefault(folder, folder);
+
+        return new(
+            room.Id,
+            room.Provider.Kind.Id,
+            room.Folder,
+            room.Name,
+            room.State.ToString().ToLowerInvariant(),
+            room.Unseen,
+            room.StartedAt,
+            room.DoneAt,
+            room.ExitCode,
+            project);
+    }
 
     private static async Task<Results<Ok<RoomInfo>, ProblemHttpResult>> OpenAsync(
         OpenRoomRequest request,
         RoomService rooms,
         IServiceProvider services,
         ISettingsStore settings,
+        ProjectCatalog catalog,
         CancellationToken ct)
     {
         SessionInfo? resume = null;
@@ -82,7 +105,7 @@ public sealed class TerminalEndpoints : ITabEndpoints
             var room = rooms.Open(request, resume);
             AppSettings.Remember(settings.Current.RecentFolders, request.Folder);
             settings.Save();
-            return TypedResults.Ok(Info(room));
+            return TypedResults.Ok(Info(room, await KnownProjectsAsync(catalog, ct).ConfigureAwait(false)));
         }
         catch (Exception ex) when (ex is ArgumentException or IOException or System.ComponentModel.Win32Exception or InvalidOperationException)
         {

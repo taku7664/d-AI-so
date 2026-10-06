@@ -27,6 +27,30 @@ public sealed class SummaryPartsTests
     public void What_a_person_typed_is_not_noise(string text) => PromptNoise.IsNoise(text).Should().BeFalse();
 
     [Fact]
+    public void Codex_wrapping_is_peeled_off_and_a_cut_off_wrapping_is_noise()
+    {
+        const string Wrapped = """
+            # Context from my IDE setup:
+
+            ## Open tabs:
+            - a.cs
+
+            ## My request for Codex:
+            이거 왜 안 돼?
+            """;
+        const string CutOff = """
+            # Context from my IDE setup:
+
+            ## Open tabs:
+            - a.cs (200자에서 잘림)
+            """;
+
+        PromptNoise.Body(Wrapped).Should().Be("이거 왜 안 돼?");
+        PromptNoise.Body("그냥 질문").Should().Be("그냥 질문");
+        PromptNoise.IsNoise(PromptNoise.Body(CutOff)).Should().BeTrue();
+    }
+
+    [Fact]
     public void Worktree_listing_is_parsed_block_by_block()
     {
         var entries = WorktreeReader.ParseList(

@@ -124,8 +124,9 @@ export function clearPendingFolder(): void {
 /** 방이 이 프로젝트 것인가. 워크트리 등 묶인 폴더까지 본다 */
 export function inProject(room: Room, members: readonly string[] | null): boolean {
   if (!members) return true;
-  const folder = room.folder.replace(/[\\/]+$/, '').toLowerCase();
-  return members.some((member) => member.replace(/[\\/]+$/, '').toLowerCase() === folder);
+  // 서버가 정한 방의 프로젝트(워크트리면 원래 저장소)도 본다. 워크트리 폴더에 세션이 아직 없어도 묶인다
+  const mine = [room.folder, room.project].map((path) => path.replace(/[\\/]+$/, '').toLowerCase());
+  return members.some((member) => mine.includes(member.replace(/[\\/]+$/, '').toLowerCase()));
 }
 
 /**

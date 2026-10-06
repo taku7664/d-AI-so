@@ -88,6 +88,21 @@ public sealed class TerminalTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_room_in_a_claude_worktree_belongs_to_its_repository()
+    {
+        var tree = Path.Combine(_folder, ".claude", "worktrees", "fix-1");
+        Directory.CreateDirectory(tree);
+
+        using var response = await PostOpenAsync(new OpenRoomRequest("shell", tree, Arguments: "/d /q /k prompt $g"));
+        response.EnsureSuccessStatusCode();
+        var room = (await response.Content.ReadFromJsonAsync<RoomInfo>())!;
+
+        room.Folder.Should().Be(tree);
+        room.Project.Should().Be(_folder, because: "워크트리 폴더에 세션이 없어도 원래 저장소의 방이다");
+        (await RoomsAsync()).Should().ContainSingle(r => r.Id == room.Id && r.Project == _folder);
+    }
+
+    [Fact]
     public async Task Closing_a_room_ends_it()
     {
         var room = await OpenAsync();

@@ -332,8 +332,7 @@ public sealed class SessionsEndpoints : ITabEndpoints
                 session.FilePath,
                 session.Tool.Id,
                 session.Id,
-                // 첫 줄이 도구가 끼워 넣은 알림·이어 붙인 요약이면 제목이 아니다. 화면이 "제목 없음"을 쓴다
-                name ?? (PromptNoise.IsNoise(session.FirstPrompt) ? string.Empty : SessionTitle.Clean(session.FirstPrompt)),
+                name ?? Title(session.FirstPrompt),
                 name is not null,
                 session.ProjectPath,
                 session.ProjectPath is { } key && labels.TryGetValue(key, out var label) ? label : SessionLabels.Unknown,
@@ -346,6 +345,13 @@ public sealed class SessionsEndpoints : ITabEndpoints
                 session.IsArchived,
                 orphan);
         })];
+    }
+
+    /// <summary>첫 질문으로 만든 제목. 도구가 감싼 머리말은 벗기고, 사람이 친 글이 아니면 빈 문자열(화면이 "첫 질문 없음"을 쓴다).</summary>
+    private static string Title(string? firstPrompt)
+    {
+        var body = firstPrompt is null ? null : PromptNoise.Body(firstPrompt);
+        return PromptNoise.IsNoise(body) ? string.Empty : SessionTitle.Clean(body);
     }
 
     /// <summary>프로젝트 이름. 폴더 이름이 겹치면 상위 폴더까지 붙인다(옛 화면 <c>PathLabels</c> 와 같다).</summary>

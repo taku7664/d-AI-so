@@ -213,19 +213,23 @@ function RecentBox({ data, toolOf }: { data: Dashboard; toolOf: (id: string) => 
         {!data.recent.length && <div className="faint pad">{t('dashboard.noSessions')}</div>}
         {data.recent.map(({ session, lastPrompt }) => {
           const tool = toolOf(session.tool);
+          // 이어 붙인 세션은 첫 줄이 앞 대화 요약이라 제목이 없다. 그때는 마지막 질문을 제목 자리에 둔다
+          const title = session.title || lastPrompt;
           return (
             <div className="srow3" key={session.path}>
               {tool ? <ToolBadge tool={tool} /> : <span />}
               <span className="t">
                 <span className="ptag">{session.projectLabel}</span>
-                <span className="ell" title={session.title}>
-                  {session.title || <span className="faint">{t('sessions.noPrompt')}</span>}
+                <span className="ell" title={title ?? undefined}>
+                  {title || <span className="faint">{t('sessions.noPrompt')}</span>}
                 </span>
               </span>
-              <span className="q ell" title={lastPrompt ?? undefined}>
-                <b>{t('dashboard.lastPrompt')}</b>
-                {lastPrompt ?? t('dashboard.noLastPrompt')}
-              </span>
+              {session.title && (
+                <span className="q ell" title={lastPrompt ?? undefined}>
+                  <b>{t('dashboard.lastPrompt')}</b>
+                  {lastPrompt ?? t('dashboard.noLastPrompt')}
+                </span>
+              )}
               <small className="num">
                 {when(session.modifiedAt)} · {t('dashboard.turns', { count: session.userMessages })} ·{' '}
                 {bytes(session.sizeBytes)}

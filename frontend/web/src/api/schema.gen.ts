@@ -869,6 +869,11 @@ export interface components {
              * @description 프로세스가 끝났으면 종료 코드.
              */
             exitCode: null | number;
+            /**
+             * @description 이 방이 속한 프로젝트 경로. 워크트리·Claude 임시 폴더는 원래 프로젝트다(ProjectGroups).
+             *     방을 연 폴더에 세션이 아직 없어도 프로젝트 방 목록에 묶인다.
+             */
+            project: string;
         };
         /** @description 이름을 바꾸는 요청. */
         RoomNameRequest: {
