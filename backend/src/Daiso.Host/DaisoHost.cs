@@ -6,6 +6,7 @@ using Daiso.Host.Security;
 using Daiso.Host.Shared;
 using Daiso.Host.Services;
 using Daiso.Host.Tabs;
+using Daiso.Host.Tabs.Sessions;
 using Daiso.Host.Tabs.Usage;
 
 namespace Daiso.Host;
@@ -61,6 +62,8 @@ public static class DaisoHost
         builder.Services.AddHostedService<LimitsWatcher>();
         builder.Services.AddHostedService<IndexRefreshOnStart>();
         builder.Services.AddSingleton<ITabEndpoints, UsageEndpoints>();
+        builder.Services.AddSingleton<ITabEndpoints, SessionsEndpoints>();
+        builder.Services.AddSingleton<SessionNames>();
 
         configureServices?.Invoke(builder.Services);
 

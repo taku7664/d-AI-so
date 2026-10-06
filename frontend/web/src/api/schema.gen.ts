@@ -164,10 +164,165 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListSessions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["SearchSessions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetSessionMessages"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ExportSession"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/name": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["RenameSession"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["DeleteSessions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ResumeSession"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/cleanup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["SetCleanupRule"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description 정리 기준. "골라 체크"와 요약의 "손볼 것"이 같은 값을 쓴다. */
+        CleanupRule: {
+            /**
+             * Format: int32
+             * @description 이 일수보다 오래 안 쓴 세션.
+             */
+            olderThanDays: number;
+            /**
+             * Format: int32
+             * @description 이 크기를 넘는 세션.
+             */
+            largerThanMegabytes: number;
+        };
+        /** @description 세션을 지우는 요청. */
+        DeleteRequest: {
+            /** @description 세션 파일 경로들. */
+            paths: string[];
+            /** @description 휴지통을 거치지 않고 바로 지울지. */
+            permanent: boolean;
+        };
+        /** @description 지운 결과. */
+        DeleteResponse: {
+            /** @description 지운 경로. */
+            deleted: string[];
+            /** @description 못 지운 것과 까닭. 실행 중 세션은 늘 여기 온다. */
+            skipped: components["schemas"]["SkippedSession"][];
+        };
         /** @description 헬스 체크 응답. */
         HealthResponse: {
             /** @description 살아 있으면 `ok`. */
@@ -219,6 +374,25 @@ export interface components {
         LimitsResponse: {
             tools: components["schemas"]["ToolLimits"][];
         };
+        /** @description 대화 한 줄. */
+        MessageRow: {
+            /** @description `user` · `assistant` · `tool` · `system`. */
+            role: string;
+            /**
+             * Format: date-time
+             * @description 시각.
+             */
+            at: string;
+            /** @description 본문. 화면이 1500자에서 접는다. */
+            text: string;
+        };
+        /** @description 대화 보기. */
+        MessagesResponse: {
+            /** @description 처음부터. 2000개까지. */
+            messages: components["schemas"]["MessageRow"][];
+            /** @description 2000개를 넘어 뒤를 잘랐는가. */
+            truncated: boolean;
+        };
         /** @description 프로젝트 하나. 위 줄 프로젝트 선택기와 "모든 프로젝트" 요약이 쓴다. */
         ProjectItem: {
             /** @description 폴더 이름. */
@@ -245,6 +419,101 @@ export interface components {
             /** @description 지금 프로젝트의 경로. null 이면 "모든 프로젝트". */
             current: null | string;
         };
+        /** @description 세션 이름을 붙이거나 떼는 요청. */
+        RenameRequest: {
+            /** @description 세션 파일 경로. */
+            path: string;
+            /** @description 이름. 비우면 뗀다. */
+            name: null | string;
+        };
+        /** @description 검색에 걸린 세션 하나와 그 안의 메시지들. */
+        SearchGroup: {
+            /** @description 세션. */
+            session: components["schemas"]["SessionRow"];
+            /** @description 최대 20개. */
+            matches: components["schemas"]["SearchMatch"][];
+        };
+        /** @description 검색에 걸린 메시지 하나. */
+        SearchMatch: {
+            /** @description `user` · `assistant` · `tool` · `system`. */
+            role: string;
+            /**
+             * Format: date-time
+             * @description 메시지 시각.
+             */
+            at: string;
+            /** @description 찾은 말 앞뒤를 자른 것. */
+            snippet: string;
+        };
+        /** @description 검색 결과. */
+        SearchResponse: {
+            /** @description 세션마다 묶었다. 세션이 최근에 바뀐 것부터. */
+            groups: components["schemas"]["SearchGroup"][];
+            /**
+             * Format: int32
+             * @description 걸린 메시지 수. 서버가 200개에서 끊는다.
+             */
+            total: number;
+        };
+        /** @description 세션 하나를 가리키는 요청. */
+        SessionRequest: {
+            path: string;
+        };
+        /** @description 세션 한 줄. */
+        SessionRow: {
+            /** @description 세션 파일 경로. 세션을 가리키는 열쇠로 쓴다. */
+            path: string;
+            /** @description 도구 id. */
+            tool: string;
+            /** @description 도구가 붙인 세션 id. */
+            id: string;
+            /** @description 붙인 이름. 없으면 첫 질문을 다듬은 것. 둘 다 없으면 빈 문자열. */
+            title: string;
+            /** @description 사람이 이름을 붙였는가. */
+            named: boolean;
+            /** @description 프로젝트 폴더. 모르면 null. */
+            projectPath: null | string;
+            /** @description 보여 줄 프로젝트 이름. 이름이 겹치면 상위 폴더까지 붙인다. */
+            projectLabel: string;
+            /**
+             * Format: date-time
+             * @description 시작한 때.
+             */
+            startedAt: string;
+            /**
+             * Format: date-time
+             * @description 마지막으로 바뀐 때.
+             */
+            modifiedAt: string;
+            /**
+             * Format: int64
+             * @description 파일 크기.
+             */
+            sizeBytes: number;
+            /**
+             * Format: int32
+             * @description 사람이 보낸 메시지 수.
+             */
+            userMessages: number;
+            /**
+             * Format: int32
+             * @description 모델이 보낸 메시지 수.
+             */
+            assistantMessages: number;
+            /** @description 지금 실행 중인가. 실행 중이면 지울 수 없다. Claude 만 안다. */
+            active: boolean;
+            /** @description Codex 가 보관함으로 옮긴 세션인가. */
+            archived: boolean;
+            /** @description 프로젝트 폴더가 없거나 사라졌는가. */
+            orphan: boolean;
+        };
+        /** @description 세션 목록. */
+        SessionsResponse: {
+            /** @description 마지막으로 바뀐 것부터. */
+            sessions: components["schemas"]["SessionRow"][];
+            /** @description 정리 기준. */
+            cleanup: components["schemas"]["CleanupRule"];
+        };
         /** @description 지금 프로젝트를 바꾸는 요청. */
         SetCurrentProjectRequest: {
             /** @description 목록에 있는 경로. null 이면 "모든 프로젝트". */
@@ -254,6 +523,11 @@ export interface components {
         SetStatusLineRequest: {
             /** @description 켤지. */
             enabled: boolean;
+        };
+        /** @description 못 지운 세션. */
+        SkippedSession: {
+            path: string;
+            reason: string;
         };
         /** @description 도구 하나. 화면이 도구 칩과 글자 표시를 그린다. */
         ToolItem: {
@@ -570,6 +844,211 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UsageResponse"];
+                };
+            };
+        };
+    };
+    ListSessions: {
+        parameters: {
+            query?: {
+                tool?: string;
+                project?: string;
+                days?: number;
+                minMegabytes?: number;
+                orphans?: boolean;
+                archived?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionsResponse"];
+                };
+            };
+        };
+    };
+    SearchSessions: {
+        parameters: {
+            query?: {
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchResponse"];
+                };
+            };
+        };
+    };
+    GetSessionMessages: {
+        parameters: {
+            query: {
+                path: string;
+                tools?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessagesResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ExportSession: {
+        parameters: {
+            query: {
+                path: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    RenameSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RenameRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DeleteSessions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeleteResponse"];
+                };
+            };
+        };
+    };
+    ResumeSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SessionRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    SetCleanupRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CleanupRule"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CleanupRule"];
                 };
             };
         };

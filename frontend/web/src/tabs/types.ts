@@ -13,5 +13,7 @@ export interface TabModule {
   shortcut?: string;
   /** 왼쪽 메뉴에 띄울지. 설정만 false 이고 위 줄 톱니로 연다 */
   inMenu: boolean;
+  /** 본문 바탕 모양. 비우면 위에서 아래로 흐르는 페이지. 목록·상세처럼 칸을 나누는 탭은 'fixed sess-page' 같은 클래스를 준다 */
+  pageClass?: string;
   View: ComponentType;
 }

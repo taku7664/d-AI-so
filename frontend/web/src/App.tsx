@@ -43,7 +43,7 @@ export function App() {
       <Nav current={tab.id} />
       <div className="main">
         <TopBar pickerOpen={pickerOpen} onPickerOpenChange={setPickerOpen} settingsOpen={tab.id === 'settings'} />
-        <main className="page">
+        <main className={`page ${tab.pageClass ?? ''}`}>
           <View />
         </main>
         <StatusBar connected={connected} />

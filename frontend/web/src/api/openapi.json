@@ -250,10 +250,350 @@
           }
         }
       }
+    },
+    "/api/sessions": {
+      "get": {
+        "tags": [
+          "sessions"
+        ],
+        "operationId": "ListSessions",
+        "parameters": [
+          {
+            "name": "tool",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "project",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "minMegabytes",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "orphans",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "archived",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sessions/search": {
+      "get": {
+        "tags": [
+          "sessions"
+        ],
+        "operationId": "SearchSessions",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sessions/messages": {
+      "get": {
+        "tags": [
+          "sessions"
+        ],
+        "operationId": "GetSessionMessages",
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tools",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessagesResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/sessions/export": {
+      "get": {
+        "tags": [
+          "sessions"
+        ],
+        "operationId": "ExportSession",
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/sessions/name": {
+      "put": {
+        "tags": [
+          "sessions"
+        ],
+        "operationId": "RenameSession",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenameRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/sessions/delete": {
+      "post": {
+        "tags": [
+          "sessions"
+        ],
+        "operationId": "DeleteSessions",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sessions/resume": {
+      "post": {
+        "tags": [
+          "sessions"
+        ],
+        "operationId": "ResumeSession",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/sessions/cleanup": {
+      "put": {
+        "tags": [
+          "sessions"
+        ],
+        "operationId": "SetCleanupRule",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CleanupRule"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CleanupRule"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "CleanupRule": {
+        "required": [
+          "olderThanDays",
+          "largerThanMegabytes"
+        ],
+        "type": "object",
+        "properties": {
+          "olderThanDays": {
+            "type": "integer",
+            "description": "\uC774 \uC77C\uC218\uBCF4\uB2E4 \uC624\uB798 \uC548 \uC4F4 \uC138\uC158.",
+            "format": "int32"
+          },
+          "largerThanMegabytes": {
+            "type": "integer",
+            "description": "\uC774 \uD06C\uAE30\uB97C \uB118\uB294 \uC138\uC158.",
+            "format": "int32"
+          }
+        },
+        "description": "\uC815\uB9AC \uAE30\uC900. \u0022\uACE8\uB77C \uCCB4\uD06C\u0022\uC640 \uC694\uC57D\uC758 \u0022\uC190\uBCFC \uAC83\u0022\uC774 \uAC19\uC740 \uAC12\uC744 \uC4F4\uB2E4."
+      },
+      "DeleteRequest": {
+        "required": [
+          "paths",
+          "permanent"
+        ],
+        "type": "object",
+        "properties": {
+          "paths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "\uC138\uC158 \uD30C\uC77C \uACBD\uB85C\uB4E4."
+          },
+          "permanent": {
+            "type": "boolean",
+            "description": "\uD734\uC9C0\uD1B5\uC744 \uAC70\uCE58\uC9C0 \uC54A\uACE0 \uBC14\uB85C \uC9C0\uC6B8\uC9C0."
+          }
+        },
+        "description": "\uC138\uC158\uC744 \uC9C0\uC6B0\uB294 \uC694\uCCAD."
+      },
+      "DeleteResponse": {
+        "required": [
+          "deleted",
+          "skipped"
+        ],
+        "type": "object",
+        "properties": {
+          "deleted": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "\uC9C0\uC6B4 \uACBD\uB85C."
+          },
+          "skipped": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SkippedSession"
+            },
+            "description": "\uBABB \uC9C0\uC6B4 \uAC83\uACFC \uAE4C\uB2ED. \uC2E4\uD589 \uC911 \uC138\uC158\uC740 \uB298 \uC5EC\uAE30 \uC628\uB2E4."
+          }
+        },
+        "description": "\uC9C0\uC6B4 \uACB0\uACFC."
+      },
       "HealthResponse": {
         "required": [
           "status"
@@ -358,6 +698,51 @@
         },
         "description": "\uBAA8\uB4E0 \uB3C4\uAD6C\uC758 \uAD6C\uB3C5 \uD55C\uB3C4. \uB3C4\uAD6C \uBAA9\uB85D \uC21C\uC11C."
       },
+      "MessageRow": {
+        "required": [
+          "role",
+          "at",
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "description": "\u0060user\u0060 \u00B7 \u0060assistant\u0060 \u00B7 \u0060tool\u0060 \u00B7 \u0060system\u0060."
+          },
+          "at": {
+            "type": "string",
+            "description": "\uC2DC\uAC01.",
+            "format": "date-time"
+          },
+          "text": {
+            "type": "string",
+            "description": "\uBCF8\uBB38. \uD654\uBA74\uC774 1500\uC790\uC5D0\uC11C \uC811\uB294\uB2E4."
+          }
+        },
+        "description": "\uB300\uD654 \uD55C \uC904."
+      },
+      "MessagesResponse": {
+        "required": [
+          "messages",
+          "truncated"
+        ],
+        "type": "object",
+        "properties": {
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MessageRow"
+            },
+            "description": "\uCC98\uC74C\uBD80\uD130. 2000\uAC1C\uAE4C\uC9C0."
+          },
+          "truncated": {
+            "type": "boolean",
+            "description": "2000\uAC1C\uB97C \uB118\uC5B4 \uB4A4\uB97C \uC798\uB790\uB294\uAC00."
+          }
+        },
+        "description": "\uB300\uD654 \uBCF4\uAE30."
+      },
       "ProjectItem": {
         "required": [
           "name",
@@ -420,6 +805,218 @@
         },
         "description": "\uD504\uB85C\uC81D\uD2B8 \uBAA9\uB85D\uACFC \uC9C0\uAE08 \uACE0\uB978 \uD504\uB85C\uC81D\uD2B8."
       },
+      "RenameRequest": {
+        "required": [
+          "path",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "\uC138\uC158 \uD30C\uC77C \uACBD\uB85C."
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "\uC774\uB984. \uBE44\uC6B0\uBA74 \uB5C0\uB2E4."
+          }
+        },
+        "description": "\uC138\uC158 \uC774\uB984\uC744 \uBD99\uC774\uAC70\uB098 \uB5BC\uB294 \uC694\uCCAD."
+      },
+      "SearchGroup": {
+        "required": [
+          "session",
+          "matches"
+        ],
+        "type": "object",
+        "properties": {
+          "session": {
+            "description": "\uC138\uC158.",
+            "$ref": "#/components/schemas/SessionRow"
+          },
+          "matches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchMatch"
+            },
+            "description": "\uCD5C\uB300 20\uAC1C."
+          }
+        },
+        "description": "\uAC80\uC0C9\uC5D0 \uAC78\uB9B0 \uC138\uC158 \uD558\uB098\uC640 \uADF8 \uC548\uC758 \uBA54\uC2DC\uC9C0\uB4E4."
+      },
+      "SearchMatch": {
+        "required": [
+          "role",
+          "at",
+          "snippet"
+        ],
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "description": "\u0060user\u0060 \u00B7 \u0060assistant\u0060 \u00B7 \u0060tool\u0060 \u00B7 \u0060system\u0060."
+          },
+          "at": {
+            "type": "string",
+            "description": "\uBA54\uC2DC\uC9C0 \uC2DC\uAC01.",
+            "format": "date-time"
+          },
+          "snippet": {
+            "type": "string",
+            "description": "\uCC3E\uC740 \uB9D0 \uC55E\uB4A4\uB97C \uC790\uB978 \uAC83."
+          }
+        },
+        "description": "\uAC80\uC0C9\uC5D0 \uAC78\uB9B0 \uBA54\uC2DC\uC9C0 \uD558\uB098."
+      },
+      "SearchResponse": {
+        "required": [
+          "groups",
+          "total"
+        ],
+        "type": "object",
+        "properties": {
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchGroup"
+            },
+            "description": "\uC138\uC158\uB9C8\uB2E4 \uBB36\uC5C8\uB2E4. \uC138\uC158\uC774 \uCD5C\uADFC\uC5D0 \uBC14\uB010 \uAC83\uBD80\uD130."
+          },
+          "total": {
+            "type": "integer",
+            "description": "\uAC78\uB9B0 \uBA54\uC2DC\uC9C0 \uC218. \uC11C\uBC84\uAC00 200\uAC1C\uC5D0\uC11C \uB04A\uB294\uB2E4.",
+            "format": "int32"
+          }
+        },
+        "description": "\uAC80\uC0C9 \uACB0\uACFC."
+      },
+      "SessionRequest": {
+        "required": [
+          "path"
+        ],
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          }
+        },
+        "description": "\uC138\uC158 \uD558\uB098\uB97C \uAC00\uB9AC\uD0A4\uB294 \uC694\uCCAD."
+      },
+      "SessionRow": {
+        "required": [
+          "path",
+          "tool",
+          "id",
+          "title",
+          "named",
+          "projectPath",
+          "projectLabel",
+          "startedAt",
+          "modifiedAt",
+          "sizeBytes",
+          "userMessages",
+          "assistantMessages",
+          "active",
+          "archived",
+          "orphan"
+        ],
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "\uC138\uC158 \uD30C\uC77C \uACBD\uB85C. \uC138\uC158\uC744 \uAC00\uB9AC\uD0A4\uB294 \uC5F4\uC1E0\uB85C \uC4F4\uB2E4."
+          },
+          "tool": {
+            "type": "string",
+            "description": "\uB3C4\uAD6C id."
+          },
+          "id": {
+            "type": "string",
+            "description": "\uB3C4\uAD6C\uAC00 \uBD99\uC778 \uC138\uC158 id."
+          },
+          "title": {
+            "type": "string",
+            "description": "\uBD99\uC778 \uC774\uB984. \uC5C6\uC73C\uBA74 \uCCAB \uC9C8\uBB38\uC744 \uB2E4\uB4EC\uC740 \uAC83. \uB458 \uB2E4 \uC5C6\uC73C\uBA74 \uBE48 \uBB38\uC790\uC5F4."
+          },
+          "named": {
+            "type": "boolean",
+            "description": "\uC0AC\uB78C\uC774 \uC774\uB984\uC744 \uBD99\uC600\uB294\uAC00."
+          },
+          "projectPath": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "\uD504\uB85C\uC81D\uD2B8 \uD3F4\uB354. \uBAA8\uB974\uBA74 null."
+          },
+          "projectLabel": {
+            "type": "string",
+            "description": "\uBCF4\uC5EC \uC904 \uD504\uB85C\uC81D\uD2B8 \uC774\uB984. \uC774\uB984\uC774 \uACB9\uCE58\uBA74 \uC0C1\uC704 \uD3F4\uB354\uAE4C\uC9C0 \uBD99\uC778\uB2E4."
+          },
+          "startedAt": {
+            "type": "string",
+            "description": "\uC2DC\uC791\uD55C \uB54C.",
+            "format": "date-time"
+          },
+          "modifiedAt": {
+            "type": "string",
+            "description": "\uB9C8\uC9C0\uB9C9\uC73C\uB85C \uBC14\uB010 \uB54C.",
+            "format": "date-time"
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "description": "\uD30C\uC77C \uD06C\uAE30.",
+            "format": "int64"
+          },
+          "userMessages": {
+            "type": "integer",
+            "description": "\uC0AC\uB78C\uC774 \uBCF4\uB0B8 \uBA54\uC2DC\uC9C0 \uC218.",
+            "format": "int32"
+          },
+          "assistantMessages": {
+            "type": "integer",
+            "description": "\uBAA8\uB378\uC774 \uBCF4\uB0B8 \uBA54\uC2DC\uC9C0 \uC218.",
+            "format": "int32"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "\uC9C0\uAE08 \uC2E4\uD589 \uC911\uC778\uAC00. \uC2E4\uD589 \uC911\uC774\uBA74 \uC9C0\uC6B8 \uC218 \uC5C6\uB2E4. Claude \uB9CC \uC548\uB2E4."
+          },
+          "archived": {
+            "type": "boolean",
+            "description": "Codex \uAC00 \uBCF4\uAD00\uD568\uC73C\uB85C \uC62E\uAE34 \uC138\uC158\uC778\uAC00."
+          },
+          "orphan": {
+            "type": "boolean",
+            "description": "\uD504\uB85C\uC81D\uD2B8 \uD3F4\uB354\uAC00 \uC5C6\uAC70\uB098 \uC0AC\uB77C\uC84C\uB294\uAC00."
+          }
+        },
+        "description": "\uC138\uC158 \uD55C \uC904."
+      },
+      "SessionsResponse": {
+        "required": [
+          "sessions",
+          "cleanup"
+        ],
+        "type": "object",
+        "properties": {
+          "sessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SessionRow"
+            },
+            "description": "\uB9C8\uC9C0\uB9C9\uC73C\uB85C \uBC14\uB010 \uAC83\uBD80\uD130."
+          },
+          "cleanup": {
+            "description": "\uC815\uB9AC \uAE30\uC900.",
+            "$ref": "#/components/schemas/CleanupRule"
+          }
+        },
+        "description": "\uC138\uC158 \uBAA9\uB85D."
+      },
       "SetCurrentProjectRequest": {
         "required": [
           "path"
@@ -448,6 +1045,22 @@
           }
         },
         "description": "Claude \uC0C1\uD0DC\uC904 \uB4F1\uB85D\uC744 \uCF1C\uACE0 \uB044\uB294 \uC694\uCCAD."
+      },
+      "SkippedSession": {
+        "required": [
+          "path",
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "description": "\uBABB \uC9C0\uC6B4 \uC138\uC158."
       },
       "ToolItem": {
         "required": [
@@ -710,6 +1323,9 @@
     },
     {
       "name": "usage"
+    },
+    {
+      "name": "sessions"
     }
   ]
 }

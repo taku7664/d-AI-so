@@ -1,10 +1,6 @@
-import { Placeholder } from '../../layout/Placeholder';
 import { t } from '../../strings';
 import type { TabModule } from '../types';
-
-function SessionsView() {
-  return <Placeholder id="sessions" stage="Stage 5" />;
-}
+import { SessionsView } from './SessionsView';
 
 export const tab: TabModule = {
   id: 'sessions',
@@ -13,5 +9,6 @@ export const tab: TabModule = {
   order: 30,
   shortcut: 'Ctrl+3',
   inMenu: true,
+  pageClass: 'fixed sess-page',
   View: SessionsView,
 };

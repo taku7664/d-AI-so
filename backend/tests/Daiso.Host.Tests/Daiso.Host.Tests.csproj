@@ -20,6 +20,11 @@
     <ProjectReference Include="..\..\src\Daiso.Host\Daiso.Host.csproj" />
   </ItemGroup>
 
+  <!-- 옛 시험의 세션 fixture 를 같이 쓴다 (세션 탭 시험) -->
+  <ItemGroup>
+    <Content Include="../../../old/tests/fixtures/claude/session-basic.jsonl" Link="fixtures/claude/session-basic.jsonl" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <ItemGroup>
     <Using Include="Xunit" />
     <Using Include="FluentAssertions" />
