@@ -8,6 +8,7 @@ WinUI 3 앱을 **Electron + 웹 화면 + C# 서버**로 옮기는 작업의 문�
 | 날짜 | 한 일 |
 |---|---|
 | 2026-10-03 | 작업물을 `old/`로 옮김. 문서를 주제별로 나눔. 최상위를 `frontend/`(TS)·`backend/`(C#)로 나누고 ESLint·Prettier는 `frontend/`에 둠 |
+| 2026-10-07 | **요약을 다시 정함 (Stage 5d).** Stage 5 의 요약이 D안과 달랐고, D안 요약도 실제 데이터로는 폴더 44개 목록이었다. 실제 데이터로 다섯 갈래를 그려 보고 "타일 넷 · 최근 세션 5 · 워크트리, 마지막으로 하던 것은 종 팝업"으로 정함. 같은 날 Claude 토큰이 응답마다 2~3배로 세지던 것을 고침(7일 19B → 9.5B) |
 | 2026-10-06 | **Stage 6a(진짜 터미널) 코드 끝.** 방(ConPTY) 열기·닫기·이름, xterm 화면, 상태 훅(Claude `--settings` hooks, Codex notify)으로 작업 중·답 끝남·허락 기다림, 위 줄 종, 요약의 열린 터미널, "이어서"가 앱 안 방으로. Codex 방에서 상태와 종 숫자까지 확인. 하다가 동봉 ConPTY 가 안 쓰이던 것을 고침 |
 | 2026-10-06 | **Stage 5 완료.** 프로젝트 목록 다듬기: 워크트리·Claude 임시 폴더를 묶어 프로젝트 65 → 43. Claude 세션의 프로젝트를 앞 20줄에서만 찾던 버그(데스크톱 앱 세션은 23번째 줄)를 고쳐 프로젝트 모름 29 → 2. 인덱스 다시 만듦 |
 | 2026-10-06 | **Stage 5b(요약·계정) 끝.** 프로젝트 첫 화면(최근 세션·숫자·손볼 것)과 모든 프로젝트 카드, 위 줄 계정 단추(로그인 상태·다시 로그인·저장한 계정). 실제 데이터로 계정 넷·손볼 것 둘·카드 65개 확인 |
@@ -22,7 +23,7 @@ WinUI 3 앱을 **Electron + 웹 화면 + C# 서버**로 옮기는 작업의 문�
 | 2026-10-05 | **Stage 1 코드·테스트 끝, 크롬 확인 남음.** `backend/src/Daiso.Host`(net10.0-windows): 보안 미들웨어, `server.json`, 부모 감시, `/api/health`·OpenAPI·`/ws`, 옛 앱의 서비스 등록. 보안 테스트 48개. 하다가 SQLite 취약점(CVE-2025-6965) 때문에 `Infrastructure`의 SQLitePCLRaw를 2.1.13으로 올림 |
 | 2026-10-05 | **Stage 0 완료.** `backend/`에 `Daiso.sln`·`Directory.Build.props`·`global.json`. 솔루션은 `old/src` 백엔드 7개와 `old/tests` 세 벌, 테스트가 참조하는 `old/tools/adapters/Daiso.Adapter.Claude`를 담는다. 하다가 빨갛던 옛 테스트 하나(어댑터가 일찍 끝나면 파이프 쓰기에서 던짐)을 고침 |
 
-다음은 [ROADMAP.md](ROADMAP.md) Stage 6a 의 남은 확인(트레이로 숨겼다 다시 열기)과 6b(말풍선 보기)다. 새 앱은 루트에서 `tools/run-app.ps1`로 띄운다 ([frontend/web/README.md](../frontend/web/README.md)).
+다음은 [ROADMAP.md](ROADMAP.md) Stage 5d(요약 다시)다. 그 뒤에 Stage 6a 의 남은 확인(트레이로 숨겼다 다시 열기)과 6b(말풍선 보기). 새 앱은 루트에서 `tools/run-app.ps1`로 띄운다 ([frontend/web/README.md](../frontend/web/README.md)).
 
 ### 이어받는 사람이 먼저 볼 것
 

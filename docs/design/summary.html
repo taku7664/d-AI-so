@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>요약 시안 고른 것 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@400;500;600;700&family=Hahmlet:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --ground: #eceee7; --surface: #f7f8f4; --raise: #ffffff; --line: #d8dcd1; --line-soft: #e6e9e1;
+  --ink: #1d211d; --muted: #5b635b; --faint: #8a9289; --hl: #f4c63d; --hl-soft: #fbecb8;
+  --codex: #2c8a73; --claude: #c96b3c; --anti: #7a5bc2; --ok: #2f8650; --warn: #b07a0a; --bad: #c0412c;
+  --shadow: 0 1px 0 rgba(29, 33, 29, .04), 0 12px 32px rgba(29, 33, 29, .10);
+  --f-ui: "Gothic A1", "Malgun Gothic", sans-serif; --f-title: "Hahmlet", "Batang", serif; --f-mono: "JetBrains Mono", Consolas, monospace;
+  --t-xs: .75rem; --t-sm: .84375rem; --t-md: .9375rem; --t-lg: 1.125rem; --t-xl: 1.5rem;
+}
+:root[data-theme="dark"] {
+  --ground: #121411; --surface: #191c18; --raise: #20241f; --line: #30352e; --line-soft: #272b25;
+  --ink: #eceee8; --muted: #a2a99f; --faint: #737a70; --hl: #e9bd38; --hl-soft: #3a3320;
+  --codex: #4bb398; --claude: #e08a5c; --anti: #a287e0; --ok: #5cbb7e; --warn: #dcaa3c; --bad: #e66a52;
+  --shadow: 0 1px 0 rgba(0, 0, 0, .3), 0 12px 32px rgba(0, 0, 0, .45); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ground); color: var(--ink); font: 400 var(--t-sm)/1.5 var(--f-ui); }
+button { font: inherit; color: inherit; cursor: pointer; }
+.i { width: 1em; height: 1em; fill: currentColor; flex: none; vertical-align: -.125em; }
+.num { font-variant-numeric: tabular-nums; }
+.ell { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+
+/* 시안 고르기 (앱 바깥) */
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 16px 20px 12px; }
+.bar h1 { font: 700 var(--t-lg) var(--f-title); margin: 0; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; background: var(--raise); }
+.seg button { border: 0; background: transparent; border-radius: 999px; padding: 5px 12px; font-weight: 600; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--hl); color: var(--ink); }
+.desc { width: 100%; color: var(--muted); margin: 0; }
+.desc b { color: var(--ink); }
+
+/* 앱 틀: 실제 창 크기 */
+.frame { margin: 0 20px 24px; width: 1280px; height: 820px; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; display: grid; grid-template-columns: 200px minmax(0, 1fr); grid-template-rows: 52px minmax(0, 1fr); background: var(--surface); box-shadow: var(--shadow); }
+.frame.narrow { width: 960px; }
+.nav { grid-row: 1 / 3; border-right: 1px solid var(--line-soft); padding: 14px 10px; display: flex; flex-direction: column; gap: 2px; }
+.brand { display: flex; align-items: center; gap: 8px; font-weight: 700; padding: 2px 8px 14px; }
+.brand span { width: 22px; height: 22px; border-radius: 6px; background: var(--ink); color: var(--surface); display: grid; place-items: center; font-size: 12px; }
+.nav a { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; color: var(--muted); font-weight: 600; text-decoration: none; }
+.nav a.on { background: var(--hl); color: var(--ink); }
+.top { display: flex; align-items: center; gap: 10px; padding: 0 16px; border-bottom: 1px solid var(--line-soft); }
+.pick { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--raise); border-radius: 10px; padding: 5px 10px; font-weight: 600; }
+.top .r { margin-left: auto; display: flex; align-items: center; gap: 14px; color: var(--muted); }
+.main { overflow: auto; padding: 22px 26px 30px; min-width: 0; }
+
+/* 공통 조각 */
+.tool { width: 22px; height: 22px; border-radius: 6px; display: inline-grid; place-items: center; color: #fff; font: 700 11px var(--f-ui); flex: none; }
+.tool.claude { background: var(--claude); } .tool.codex { background: var(--codex); }
+.tool.sm { width: 18px; height: 18px; border-radius: 5px; font-size: 10px; }
+.ptag { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 999px; background: var(--ground); color: var(--muted); font-size: var(--t-xs); font-weight: 600; white-space: nowrap; flex: none; }
+.btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--raise); border-radius: 999px; padding: 5px 12px; font-weight: 600; white-space: nowrap; }
+.btn.primary { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.btn.big { padding: 9px 18px; font-size: var(--t-md); }
+.faint { color: var(--faint); } .muted { color: var(--muted); }
+.card { background: var(--raise); border: 1px solid var(--line-soft); border-radius: 16px; }
+h2.t { font: 700 var(--t-xl)/1.2 var(--f-title); margin: 0; }
+.sub { color: var(--faint); font-size: var(--t-xs); font-weight: 600; }
+
+/* A 타임라인 */
+.A { max-width: 760px; margin: 0 auto; }
+.A .status { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--muted); font-size: var(--t-xs); margin: 8px 0 18px; }
+.A .status b { color: var(--ink); }
+.A .status .w { color: var(--warn); font-weight: 700; }
+.A .day { display: flex; align-items: baseline; gap: 10px; margin: 18px 0 6px; }
+.A .day h3 { margin: 0; font: 700 var(--t-md) var(--f-ui); }
+.A .line { position: relative; padding-left: 74px; }
+.A .line::before { content: ""; position: absolute; left: 58px; top: 6px; bottom: 6px; width: 2px; background: var(--line-soft); }
+.A .ev { position: relative; display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 2px 10px; align-items: center; padding: 7px 10px; border-radius: 10px; }
+.A .ev:hover { background: var(--raise); }
+.A .ev .tm { position: absolute; left: -74px; width: 46px; text-align: right; color: var(--faint); font-size: var(--t-xs); top: 9px; }
+.A .ev::before { content: ""; position: absolute; left: -20px; top: 14px; width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
+.A .ev.sys::before { background: var(--warn); }
+.A .ev .tt { display: flex; gap: 8px; align-items: center; min-width: 0; }
+.A .ev small { grid-column: 2; color: var(--faint); font-size: var(--t-xs); }
+.A .ev .go { grid-column: 3; grid-row: 1 / 3; opacity: 0; }
+.A .ev:hover .go { opacity: 1; }
+.A .more { margin: 4px 0 0 0; }
+
+/* B 브리핑 글 */
+.B { max-width: 700px; margin: 6px auto 0; }
+.B .date { color: var(--faint); font-weight: 700; font-size: var(--t-xs); letter-spacing: .04em; }
+.B h2 { font: 700 1.9rem/1.35 var(--f-title); margin: 6px 0 22px; letter-spacing: -.01em; }
+.B h2 em { font-style: normal; background: linear-gradient(transparent 62%, var(--hl-soft) 62%); }
+.B p { font-size: 1.02rem; line-height: 1.85; margin: 0 0 18px; color: var(--muted); }
+.B p b { color: var(--ink); }
+.B .inl { display: inline-flex; vertical-align: 1px; margin-left: 4px; padding: 1px 10px; font-size: var(--t-xs); }
+.B .rule { border: 0; border-top: 1px solid var(--line-soft); margin: 22px 0; }
+.B .lbl { font-weight: 700; color: var(--ink); font-size: var(--t-xs); margin-bottom: 6px; display: block; letter-spacing: .04em; }
+
+/* C 할 일 */
+.C { max-width: 860px; margin: 0 auto; }
+.C .head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; }
+.C .head .n { font: 700 var(--t-xl) var(--f-title); color: var(--faint); }
+.C .task { display: grid; grid-template-columns: 6px 36px minmax(0, 1fr) auto auto; gap: 14px; align-items: center; padding: 14px 16px 14px 0; margin-bottom: 10px; overflow: hidden; }
+.C .task .rail { align-self: stretch; background: var(--line); }
+.C .task.urgent .rail { background: var(--warn); }
+.C .ico { width: 36px; height: 36px; border-radius: 10px; background: var(--ground); display: grid; place-items: center; font-size: 17px; color: var(--muted); }
+.C .task b { display: block; font-size: var(--t-md); }
+.C .task small { display: block; color: var(--faint); font-size: var(--t-xs); margin-top: 2px; }
+.C .skip { border: 0; background: transparent; color: var(--faint); font-size: var(--t-xs); text-decoration: underline; }
+.C .done-all { color: var(--faint); text-align: center; padding: 14px; font-size: var(--t-xs); }
+
+/* D 계기판 */
+.D .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: 168px; gap: 14px; }
+.frame.narrow .D .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.D .tile { padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; text-align: left; position: relative; overflow: hidden; }
+.D .tile:hover { border-color: var(--line); }
+.D .tile .k { color: var(--faint); font-size: var(--t-xs); font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.D .tile .v { font: 700 2.6rem/1.05 var(--f-title); margin-top: auto; }
+.D .tile .v small { font: 600 var(--t-sm) var(--f-ui); color: var(--faint); margin-left: 4px; }
+.D .tile .s { color: var(--muted); font-size: var(--t-xs); }
+.D .tile.w2 { grid-column: span 2; }
+.D .tile.has-ring .s { padding-right: 100px; white-space: nowrap; }
+.frame.narrow .D .ring { width: 64px; height: 64px; }
+.frame.narrow .D .tile.has-ring .s { padding-right: 72px; }
+.D .tile.warn .v { color: var(--warn); }
+.D .ring { position: absolute; right: 16px; top: 50%; transform: translateY(-40%); }
+.D .bars { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; align-items: end; height: 70px; margin-top: auto; }
+.D .bars span { border-radius: 4px; background: color-mix(in srgb, var(--ink) 16%, var(--surface)); }
+.D .bars span.today { background: var(--hl); }
+.D .bl { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; text-align: center; font-size: 10px; color: var(--faint); }
+
+/* E 이어서 */
+.E .hero { padding: 26px 28px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px 24px; align-items: end; }
+.E .hero .k { color: var(--faint); font-weight: 700; font-size: var(--t-xs); display: flex; align-items: center; gap: 8px; }
+.E .hero h2 { font: 700 1.75rem/1.3 var(--f-title); margin: 10px 0 8px; }
+.E .hero .meta { color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: var(--t-xs); }
+.E .hero .acts { display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+.E .row-h { display: flex; align-items: baseline; gap: 10px; margin: 24px 0 10px; }
+.E .row-h h3 { margin: 0; font-size: var(--t-md); }
+.E .row-h .r { margin-left: auto; }
+.E .row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.frame.narrow .E .row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.E .mini { padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; text-align: left; min-height: 150px; }
+.E .mini:hover { border-color: var(--ink); }
+.E .mini .q { font-weight: 600; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.45; word-break: break-all; }
+.E .mini small { margin-top: auto; color: var(--faint); font-size: var(--t-xs); }
+.E .strip { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center; padding: 12px 16px; border-radius: 12px; border: 1px dashed var(--line); color: var(--muted); font-size: var(--t-xs); }
+.E .strip b { color: var(--ink); }
+.E .strip .w { color: var(--warn); font-weight: 700; }
+.link { border: 0; background: transparent; padding: 0; font-weight: 600; font-size: var(--t-xs); text-decoration: underline; text-decoration-color: var(--hl); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true"><!-- Bootstrap Icons 1.11.3, MIT License, https://icons.getbootstrap.com -->
+<symbol id="bi-arrow-clockwise" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"/>
+  <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"/></symbol>
+<symbol id="bi-arrow-down" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1"/></symbol>
+<symbol id="bi-arrow-left-right" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 11.5a.5.5 0 0 0 .5.5h11.793l-3.147 3.146a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 11H1.5a.5.5 0 0 0-.5.5m14-7a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 1 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 4H14.5a.5.5 0 0 1 .5.5"/></symbol>
+<symbol id="bi-arrow-left" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"/></symbol>
+<symbol id="bi-arrow-repeat" viewBox="0 0 16 16"><path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41m-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9"/>
+  <path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5 5 0 0 0 8 3M3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9z"/></symbol>
+<symbol id="bi-arrow-right" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/></symbol>
+<symbol id="bi-arrow-up" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5"/></symbol>
+<symbol id="bi-bar-chart-line" viewBox="0 0 16 16"><path d="M11 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12h.5a.5.5 0 0 1 0 1H.5a.5.5 0 0 1 0-1H1v-3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3h1V7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7h1zm1 12h2V2h-2zm-3 0V7H7v7zm-5 0v-3H2v3z"/></symbol>
+<symbol id="bi-bookmark-star" viewBox="0 0 16 16"><path d="M7.84 4.1a.178.178 0 0 1 .32 0l.634 1.285a.18.18 0 0 0 .134.098l1.42.206c.145.021.204.2.098.303L9.42 6.993a.18.18 0 0 0-.051.158l.242 1.414a.178.178 0 0 1-.258.187l-1.27-.668a.18.18 0 0 0-.165 0l-1.27.668a.178.178 0 0 1-.257-.187l.242-1.414a.18.18 0 0 0-.05-.158l-1.03-1.001a.178.178 0 0 1 .098-.303l1.42-.206a.18.18 0 0 0 .134-.098z"/>
+  <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5zm2-1a1 1 0 0 0-1 1v12.566l4.723-2.482a.5.5 0 0 1 .554 0L13 14.566V2a1 1 0 0 0-1-1z"/></symbol>
+<symbol id="bi-box-arrow-in-right" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M6 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 0-1 0v2A1.5 1.5 0 0 0 6.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-8A1.5 1.5 0 0 0 5 3.5v2a.5.5 0 0 0 1 0z"/>
+  <path fill-rule="evenodd" d="M11.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H1.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z"/></symbol>
+<symbol id="bi-box-arrow-up-right" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5"/>
+  <path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"/></symbol>
+<symbol id="bi-chat-dots" viewBox="0 0 16 16"><path d="M5 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0m4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2"/>
+  <path d="m2.165 15.803.02-.004c1.83-.363 2.948-.842 3.468-1.105A9 9 0 0 0 8 15c4.418 0 8-3.134 8-7s-3.582-7-8-7-8 3.134-8 7c0 1.76.743 3.37 1.97 4.6a10.4 10.4 0 0 1-.524 2.318l-.003.011a11 11 0 0 1-.244.637c-.079.186.074.394.273.362a22 22 0 0 0 .693-.125m.8-3.108a1 1 0 0 0-.287-.801C1.618 10.83 1 9.468 1 8c0-3.192 3.004-6 7-6s7 2.808 7 6-3.004 6-7 6a8 8 0 0 1-2.088-.272 1 1 0 0 0-.711.074c-.387.196-1.24.57-2.634.893a11 11 0 0 0 .398-2"/></symbol>
+<symbol id="bi-chat-left-text" viewBox="0 0 16 16"><path d="M14 1a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4.414A2 2 0 0 0 3 11.586l-2 2V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12.793a.5.5 0 0 0 .854.353l2.853-2.853A1 1 0 0 1 4.414 12H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/>
+  <path d="M3 3.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5M3 6a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 6m0 2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5"/></symbol>
+<symbol id="bi-chat-square-quote" viewBox="0 0 16 16"><path d="M14 1a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-2.5a2 2 0 0 0-1.6.8L8 14.333 6.1 11.8a2 2 0 0 0-1.6-.8H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2.5a1 1 0 0 1 .8.4l1.9 2.533a1 1 0 0 0 1.6 0l1.9-2.533a1 1 0 0 1 .8-.4H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/>
+  <path d="M7.066 4.76A1.665 1.665 0 0 0 4 5.668a1.667 1.667 0 0 0 2.561 1.406c-.131.389-.375.804-.777 1.22a.417.417 0 1 0 .6.58c1.486-1.54 1.293-3.214.682-4.112zm4 0A1.665 1.665 0 0 0 8 5.668a1.667 1.667 0 0 0 2.561 1.406c-.131.389-.375.804-.777 1.22a.417.417 0 1 0 .6.58c1.486-1.54 1.293-3.214.682-4.112z"/></symbol>
+<symbol id="bi-check-circle-fill" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></symbol>
+<symbol id="bi-check2-square" viewBox="0 0 16 16"><path d="M3 14.5A1.5 1.5 0 0 1 1.5 13V3A1.5 1.5 0 0 1 3 1.5h8a.5.5 0 0 1 0 1H3a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5h10a.5.5 0 0 0 .5-.5V8a.5.5 0 0 1 1 0v5a1.5 1.5 0 0 1-1.5 1.5z"/>
+  <path d="m8.354 10.354 7-7a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0"/></symbol>
+<symbol id="bi-check2" viewBox="0 0 16 16"><path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/></symbol>
+<symbol id="bi-chevron-down" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708"/></symbol>
+<symbol id="bi-chevron-left" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0"/></symbol>
+<symbol id="bi-chevron-right" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/></symbol>
+<symbol id="bi-clipboard" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z"/>
+  <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z"/></symbol>
+<symbol id="bi-clock" viewBox="0 0 16 16"><path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/>
+  <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/></symbol>
+<symbol id="bi-cpu" viewBox="0 0 16 16"><path d="M5 0a.5.5 0 0 1 .5.5V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2A2.5 2.5 0 0 1 14 4.5h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14a2.5 2.5 0 0 1-2.5 2.5v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14A2.5 2.5 0 0 1 2 11.5H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2A2.5 2.5 0 0 1 4.5 2V.5A.5.5 0 0 1 5 0m-.5 3A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13h7a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 11.5 3zM5 6.5A1.5 1.5 0 0 1 6.5 5h3A1.5 1.5 0 0 1 11 6.5v3A1.5 1.5 0 0 1 9.5 11h-3A1.5 1.5 0 0 1 5 9.5zM6.5 6a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5z"/></symbol>
+<symbol id="bi-download" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+  <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/></symbol>
+<symbol id="bi-eraser" viewBox="0 0 16 16"><path d="M8.086 2.207a2 2 0 0 1 2.828 0l3.879 3.879a2 2 0 0 1 0 2.828l-5.5 5.5A2 2 0 0 1 7.879 15H5.12a2 2 0 0 1-1.414-.586l-2.5-2.5a2 2 0 0 1 0-2.828zm2.121.707a1 1 0 0 0-1.414 0L4.16 7.547l5.293 5.293 4.633-4.633a1 1 0 0 0 0-1.414zM8.746 13.547 3.453 8.254 1.914 9.793a1 1 0 0 0 0 1.414l2.5 2.5a1 1 0 0 0 .707.293H7.88a1 1 0 0 0 .707-.293z"/></symbol>
+<symbol id="bi-exclamation-circle-fill" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/></symbol>
+<symbol id="bi-exclamation-triangle-fill" viewBox="0 0 16 16"><path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/></symbol>
+<symbol id="bi-eye" viewBox="0 0 16 16"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8M1.173 8a13 13 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5s3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5s-3.879-1.168-5.168-2.457A13 13 0 0 1 1.172 8z"/>
+  <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0"/></symbol>
+<symbol id="bi-file-earmark-text" viewBox="0 0 16 16"><path d="M5.5 7a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1zM5 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5"/>
+  <path d="M9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.5zm0 1v2A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z"/></symbol>
+<symbol id="bi-folder-plus" viewBox="0 0 16 16"><path d="m.5 3 .04.87a2 2 0 0 0-.342 1.311l.637 7A2 2 0 0 0 2.826 14H9v-1H2.826a1 1 0 0 1-.995-.91l-.637-7A1 1 0 0 1 2.19 4h11.62a1 1 0 0 1 .996 1.09L14.54 8h1.005l.256-2.819A2 2 0 0 0 13.81 3H9.828a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 6.172 1H2.5a2 2 0 0 0-2 2m5.672-1a1 1 0 0 1 .707.293L7.586 3H2.19q-.362.002-.683.12L1.5 2.98a1 1 0 0 1 1-.98z"/>
+  <path d="M13.5 9a.5.5 0 0 1 .5.5V11h1.5a.5.5 0 1 1 0 1H14v1.5a.5.5 0 1 1-1 0V12h-1.5a.5.5 0 0 1 0-1H13V9.5a.5.5 0 0 1 .5-.5"/></symbol>
+<symbol id="bi-folder" viewBox="0 0 16 16"><path d="M.54 3.87.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.826a2 2 0 0 1-1.991-1.819l-.637-7a2 2 0 0 1 .342-1.31zM2.19 4a1 1 0 0 0-.996 1.09l.637 7a1 1 0 0 0 .995.91h10.348a1 1 0 0 0 .995-.91l.637-7A1 1 0 0 0 13.81 4zm4.69-1.707A1 1 0 0 0 6.172 2H2.5a1 1 0 0 0-1 .981l.006.139q.323-.119.684-.12h5.396z"/></symbol>
+<symbol id="bi-folder2-open" viewBox="0 0 16 16"><path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v.64c.57.265.94.876.856 1.546l-.64 5.124A2.5 2.5 0 0 1 12.733 15H3.266a2.5 2.5 0 0 1-2.481-2.19l-.64-5.124A1.5 1.5 0 0 1 1 6.14zM2 6h12v-.5a.5.5 0 0 0-.5-.5H9c-.964 0-1.71-.629-2.174-1.154C6.374 3.334 5.82 3 5.264 3H2.5a.5.5 0 0 0-.5.5zm-.367 1a.5.5 0 0 0-.496.562l.64 5.124A1.5 1.5 0 0 0 3.266 14h9.468a1.5 1.5 0 0 0 1.489-1.314l.64-5.124A.5.5 0 0 0 14.367 7z"/></symbol>
+<symbol id="bi-funnel" viewBox="0 0 16 16"><path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5zm1 .5v1.308l4.372 4.858A.5.5 0 0 1 7 8.5v5.306l2-.666V8.5a.5.5 0 0 1 .128-.334L13.5 3.308V2z"/></symbol>
+<symbol id="bi-gear" viewBox="0 0 16 16"><path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/>
+  <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"/></symbol>
+<symbol id="bi-hdd" viewBox="0 0 16 16"><path d="M4.5 11a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1M3 10.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0"/>
+  <path d="M16 11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V9.51c0-.418.105-.83.305-1.197l2.472-4.531A1.5 1.5 0 0 1 4.094 3h7.812a1.5 1.5 0 0 1 1.317.782l2.472 4.53c.2.368.305.78.305 1.198zM3.655 4.26 1.592 8.043Q1.79 8 2 8h12q.21 0 .408.042L12.345 4.26a.5.5 0 0 0-.439-.26H4.094a.5.5 0 0 0-.44.26zM1 10v1a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1"/></symbol>
+<symbol id="bi-hourglass-split" viewBox="0 0 16 16"><path d="M2.5 15a.5.5 0 1 1 0-1h1v-1a4.5 4.5 0 0 1 2.557-4.06c.29-.139.443-.377.443-.59v-.7c0-.213-.154-.451-.443-.59A4.5 4.5 0 0 1 3.5 3V2h-1a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-1v1a4.5 4.5 0 0 1-2.557 4.06c-.29.139-.443.377-.443.59v.7c0 .213.154.451.443.59A4.5 4.5 0 0 1 12.5 13v1h1a.5.5 0 0 1 0 1zm2-13v1c0 .537.12 1.045.337 1.5h6.326c.216-.455.337-.963.337-1.5V2zm3 6.35c0 .701-.478 1.236-1.011 1.492A3.5 3.5 0 0 0 4.5 13s.866-1.299 3-1.48zm1 0v3.17c2.134.181 3 1.48 3 1.48a3.5 3.5 0 0 0-1.989-3.158C8.978 9.586 8.5 9.052 8.5 8.351z"/></symbol>
+<symbol id="bi-house-door" viewBox="0 0 16 16"><path d="M8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4.5a.5.5 0 0 0 .5-.5v-4h2v4a.5.5 0 0 0 .5.5H14a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293zM2.5 14V7.707l5.5-5.5 5.5 5.5V14H10v-4a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5v4z"/></symbol>
+<symbol id="bi-info-circle" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+  <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/></symbol>
+<symbol id="bi-journal-check" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M10.854 6.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 8.793l2.646-2.647a.5.5 0 0 1 .708 0"/>
+  <path d="M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-1h1v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v1H1V2a2 2 0 0 1 2-2"/>
+  <path d="M1 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1z"/></symbol>
+<symbol id="bi-journal-plus" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 5.5a.5.5 0 0 1 .5.5v1.5H10a.5.5 0 0 1 0 1H8.5V10a.5.5 0 0 1-1 0V8.5H6a.5.5 0 0 1 0-1h1.5V6a.5.5 0 0 1 .5-.5"/>
+  <path d="M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-1h1v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v1H1V2a2 2 0 0 1 2-2"/>
+  <path d="M1 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1z"/></symbol>
+<symbol id="bi-journal-text" viewBox="0 0 16 16"><path d="M5 10.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5m0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5"/>
+  <path d="M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-1h1v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v1H1V2a2 2 0 0 1 2-2"/>
+  <path d="M1 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1z"/></symbol>
+<symbol id="bi-keyboard" viewBox="0 0 16 16"><path d="M14 5a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM2 4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
+  <path d="M13 10.25a.25.25 0 0 1 .25-.25h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5a.25.25 0 0 1-.25-.25zm0-2a.25.25 0 0 1 .25-.25h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5a.25.25 0 0 1-.25-.25zm-5 0A.25.25 0 0 1 8.25 8h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 8 8.75zm2 0a.25.25 0 0 1 .25-.25h1.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-1.5a.25.25 0 0 1-.25-.25zm1 2a.25.25 0 0 1 .25-.25h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5a.25.25 0 0 1-.25-.25zm-5-2A.25.25 0 0 1 6.25 8h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 6 8.75zm-2 0A.25.25 0 0 1 4.25 8h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 4 8.75zm-2 0A.25.25 0 0 1 2.25 8h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 2 8.75zm11-2a.25.25 0 0 1 .25-.25h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5a.25.25 0 0 1-.25-.25zm-2 0a.25.25 0 0 1 .25-.25h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5a.25.25 0 0 1-.25-.25zm-2 0A.25.25 0 0 1 9.25 6h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 9 6.75zm-2 0A.25.25 0 0 1 7.25 6h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 7 6.75zm-2 0A.25.25 0 0 1 5.25 6h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 5 6.75zm-3 0A.25.25 0 0 1 2.25 6h1.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-1.5A.25.25 0 0 1 2 6.75zm0 4a.25.25 0 0 1 .25-.25h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5a.25.25 0 0 1-.25-.25zm2 0a.25.25 0 0 1 .25-.25h5.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-5.5a.25.25 0 0 1-.25-.25z"/></symbol>
+<symbol id="bi-layout-sidebar" viewBox="0 0 16 16"><path d="M0 3a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm5-1v12h9a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1zM4 2H2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h2z"/></symbol>
+<symbol id="bi-lightning-charge" viewBox="0 0 16 16"><path d="M11.251.068a.5.5 0 0 1 .227.58L9.677 6.5H13a.5.5 0 0 1 .364.843l-8 8.5a.5.5 0 0 1-.842-.49L6.323 9.5H3a.5.5 0 0 1-.364-.843l8-8.5a.5.5 0 0 1 .615-.09zM4.157 8.5H7a.5.5 0 0 1 .478.647L6.11 13.59l5.732-6.09H9a.5.5 0 0 1-.478-.647L9.89 2.41z"/></symbol>
+<symbol id="bi-link-45deg" viewBox="0 0 16 16"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/>
+  <path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></symbol>
+<symbol id="bi-palette" viewBox="0 0 16 16"><path d="M8 5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3m4 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3M5.5 7a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m.5 6a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3"/>
+  <path d="M16 8c0 3.15-1.866 2.585-3.567 2.07C11.42 9.763 10.465 9.473 10 10c-.603.683-.475 1.819-.351 2.92C9.826 14.495 9.996 16 8 16a8 8 0 1 1 8-8m-8 7c.611 0 .654-.171.655-.176.078-.146.124-.464.07-1.119-.014-.168-.037-.37-.061-.591-.052-.464-.112-1.005-.118-1.462-.01-.707.083-1.61.704-2.314.369-.417.845-.578 1.272-.618.404-.038.812.026 1.16.104.343.077.702.186 1.025.284l.028.008c.346.105.658.199.953.266.653.148.904.083.991.024C14.717 9.38 15 9.161 15 8a7 7 0 1 0-7 7"/></symbol>
+<symbol id="bi-paperclip" viewBox="0 0 16 16"><path d="M4.5 3a2.5 2.5 0 0 1 5 0v9a1.5 1.5 0 0 1-3 0V5a.5.5 0 0 1 1 0v7a.5.5 0 0 0 1 0V3a1.5 1.5 0 1 0-3 0v9a2.5 2.5 0 0 0 5 0V5a.5.5 0 0 1 1 0v7a3.5 3.5 0 1 1-7 0z"/></symbol>
+<symbol id="bi-pencil-square" viewBox="0 0 16 16"><path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+  <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/></symbol>
+<symbol id="bi-people" viewBox="0 0 16 16"><path d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1zm-7.978-1L7 12.996c.001-.264.167-1.03.76-1.72C8.312 10.629 9.282 10 11 10c1.717 0 2.687.63 3.24 1.276.593.69.758 1.457.76 1.72l-.008.002-.014.002zM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4m3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0M6.936 9.28a6 6 0 0 0-1.23-.247A7 7 0 0 0 5 9c-4 0-5 3-5 4q0 1 1 1h4.216A2.24 2.24 0 0 1 5 13c0-1.01.377-2.042 1.09-2.904.243-.294.526-.569.846-.816M4.92 10A5.5 5.5 0 0 0 4 13H1c0-.26.164-1.03.76-1.724.545-.636 1.492-1.256 3.16-1.275ZM1.5 5.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0m3-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4"/></symbol>
+<symbol id="bi-person" viewBox="0 0 16 16"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"/></symbol>
+<symbol id="bi-play-fill" viewBox="0 0 16 16"><path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393"/></symbol>
+<symbol id="bi-plug" viewBox="0 0 16 16"><path d="M6 0a.5.5 0 0 1 .5.5V3h3V.5a.5.5 0 0 1 1 0V3h1a.5.5 0 0 1 .5.5v3A3.5 3.5 0 0 1 8.5 10c-.002.434-.01.845-.04 1.22-.041.514-.126 1.003-.317 1.424a2.08 2.08 0 0 1-.97 1.028C6.725 13.9 6.169 14 5.5 14c-.998 0-1.61.33-1.974.718A1.92 1.92 0 0 0 3 16H2c0-.616.232-1.367.797-1.968C3.374 13.42 4.261 13 5.5 13c.581 0 .962-.088 1.218-.219.241-.123.4-.3.514-.55.121-.266.193-.621.23-1.09.027-.34.035-.718.037-1.141A3.5 3.5 0 0 1 4 6.5v-3a.5.5 0 0 1 .5-.5h1V.5A.5.5 0 0 1 6 0M5 4v2.5A2.5 2.5 0 0 0 7.5 9h1A2.5 2.5 0 0 0 11 6.5V4z"/></symbol>
+<symbol id="bi-plus-lg" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/></symbol>
+<symbol id="bi-save" viewBox="0 0 16 16"><path d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H9.5a1 1 0 0 0-1 1v7.293l2.646-2.647a.5.5 0 0 1 .708.708l-3.5 3.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L7.5 9.293V2a2 2 0 0 1 2-2H14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h2.5a.5.5 0 0 1 0 1z"/></symbol>
+<symbol id="bi-search" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/></symbol>
+<symbol id="bi-send-fill" viewBox="0 0 16 16"><path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 3.178 4.995.002.002.26.41a.5.5 0 0 0 .886-.083zm-1.833 1.89L6.637 10.07l-.215-.338a.5.5 0 0 0-.154-.154l-.338-.215 7.494-7.494 1.178-.471z"/></symbol>
+<symbol id="bi-shield-check" viewBox="0 0 16 16"><path d="M5.338 1.59a61 61 0 0 0-2.837.856.48.48 0 0 0-.328.39c-.554 4.157.726 7.19 2.253 9.188a10.7 10.7 0 0 0 2.287 2.233c.346.244.652.42.893.533q.18.085.293.118a1 1 0 0 0 .101.025 1 1 0 0 0 .1-.025q.114-.034.294-.118c.24-.113.547-.29.893-.533a10.7 10.7 0 0 0 2.287-2.233c1.527-1.997 2.807-5.031 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C9.552 1.29 8.531 1.067 8 1.067c-.53 0-1.552.223-2.662.524zM5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.8 11.8 0 0 1-2.517 2.453 7 7 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7 7 0 0 1-1.048-.625 11.8 11.8 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 63 63 0 0 1 5.072.56"/>
+  <path d="M10.854 5.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 7.793l2.646-2.647a.5.5 0 0 1 .708 0"/></symbol>
+<symbol id="bi-sliders" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M11.5 2a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M9.05 3a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0V3zM4.5 7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M2.05 8a2.5 2.5 0 0 1 4.9 0H16v1H6.95a2.5 2.5 0 0 1-4.9 0H0V8zm9.45 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3m-2.45 1a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0v-1z"/></symbol>
+<symbol id="bi-square" viewBox="0 0 16 16"><path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/></symbol>
+<symbol id="bi-stars" viewBox="0 0 16 16"><path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.593 5.69l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.69A1.73 1.73 0 0 0 2.31 4.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.407 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.16 1.16 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.16 1.16 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z"/></symbol>
+<symbol id="bi-terminal" viewBox="0 0 16 16"><path d="M6 9a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3A.5.5 0 0 1 6 9M3.854 4.146a.5.5 0 1 0-.708.708L4.793 6.5 3.146 8.146a.5.5 0 1 0 .708.708l2-2a.5.5 0 0 0 0-.708z"/>
+  <path d="M2 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zm12 1a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/></symbol>
+<symbol id="bi-three-dots" viewBox="0 0 16 16"><path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3"/></symbol>
+<symbol id="bi-trash3" viewBox="0 0 16 16"><path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5"/></symbol>
+<symbol id="bi-window-plus" viewBox="0 0 16 16"><path d="M2.5 5a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1M4 5a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1m2-.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0"/>
+  <path d="M0 4a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v4a.5.5 0 0 1-1 0V7H1v5a1 1 0 0 0 1 1h5.5a.5.5 0 0 1 0 1H2a2 2 0 0 1-2-2zm1 2h13V4a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1z"/>
+  <path d="M16 12.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0m-3.5-2a.5.5 0 0 0-.5.5v1h-1a.5.5 0 0 0 0 1h1v1a.5.5 0 0 0 1 0v-1h1a.5.5 0 0 0 0-1h-1v-1a.5.5 0 0 0-.5-.5"/></symbol>
+<symbol id="bi-x-circle-fill" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293z"/></symbol>
+<symbol id="bi-x-lg" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/></symbol>
+<symbol id="bi-bell" viewBox="0 0 16 16"><path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2M8 1.918l-.797.161A4 4 0 0 0 4 6c0 .628-.134 2.197-.459 3.742-.16.767-.376 1.566-.663 2.258h10.244c-.287-.692-.502-1.49-.663-2.258C12.134 8.197 12 6.628 12 6a4 4 0 0 0-3.203-3.92zM14.22 12c.223.447.481.801.78 1H1c.299-.199.557-.553.78-1C2.68 10.2 3 6.88 3 6c0-2.42 1.72-4.44 4.005-4.901a1 1 0 1 1 1.99 0A5 5 0 0 1 13 6c0 .88.32 4.2 1.22 6"/></symbol>
+<symbol id="bi-bell-fill" viewBox="0 0 16 16"><path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2m.995-14.901a1 1 0 1 0-1.99 0A5 5 0 0 0 3 6c0 1.098-.5 6-2 7h14c-1.5-1-2-5.902-2-7 0-2.42-1.72-4.44-4.005-4.901"/></symbol>
+<symbol id="bi-check2-circle" viewBox="0 0 16 16"><path d="M2.5 8a5.5 5.5 0 0 1 8.25-4.764.5.5 0 0 0 .5-.866A6.5 6.5 0 1 0 14.5 8a.5.5 0 0 0-1 0 5.5 5.5 0 1 1-11 0"/>
+  <path d="M15.354 3.354a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0z"/></symbol>
+<symbol id="bi-pencil" viewBox="0 0 16 16"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325"/></symbol>
+<symbol id="bi-grid" viewBox="0 0 16 16"><path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5zM2.5 2a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5zm6.5.5A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5zM1 10.5A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5zm6.5.5A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5z"/></symbol>
+</svg>
+<div class="bar">
+  <h1>요약 시안 · 타일 + 최근 세션 + 워크트리, E 는 알림 팝업</h1>
+  <div class="seg" role="group" aria-label="창 너비"><button type="button" data-w="1280" aria-pressed="true">앱 창 1280</button><button type="button" data-w="960" aria-pressed="false">좁은 창 960</button></div>
+  <div class="seg" role="group" aria-label="알림 팝업"><button type="button" data-bell="1" aria-pressed="true">알림 팝업 열기</button><button type="button" data-bell="0" aria-pressed="false">닫기</button></div>
+  <div class="seg" role="group" aria-label="테마"><button type="button" data-th="light" aria-pressed="true">밝게</button><button type="button" data-th="dark" aria-pressed="false">어둡게</button></div>
+  <p class="desc">위: 타일 넷. 아래 왼쪽: 최근 세션 최대 5개(마지막 활동 순, 마지막으로 친 질문을 같이). 아래 오른쪽: 워크트리 현황(메인 작업 폴더 말고 따로 뽑아 둔 작업 폴더). 종 팝업은 지난 시안 그대로. <span class="faint">세션은 인덱스 기준(마지막 갱신 21:36, 앱이 꺼져 있어 그 뒤로 안 읽음). 워크트리는 지금 git 에서 읽은 실제 값입니다.</span></p>
+</div>
+<div class="frame" id="frame">
+  <nav class="nav">
+    <div class="brand"><span>D</span>DAIso</div>
+    <a class="on"><svg class="i"><use href="#bi-house-door"/></svg>요약</a>
+    <a><svg class="i"><use href="#bi-terminal"/></svg>터미널</a>
+    <a><svg class="i"><use href="#bi-chat-left-text"/></svg>세션</a>
+    <a><svg class="i"><use href="#bi-journal-check"/></svg>지침</a>
+    <a><svg class="i"><use href="#bi-lightning-charge"/></svg>프롬프트</a>
+    <a><svg class="i"><use href="#bi-bar-chart-line"/></svg>사용량</a>
+  </nav>
+  <div class="top">
+    <span class="pick"><svg class="i"><use href="#bi-grid"/></svg>모든 프로젝트<svg class="i"><use href="#bi-chevron-down"/></svg></span>
+    <span class="r"><span class="anchor"><button class="bellbtn" type="button" id="bell" aria-expanded="true" title="알림"><svg class="i"><use href="#bi-bell"/></svg></button><div class="bell-pop" id="pop"></div></span><span class="tool sm codex">X</span><span class="tool sm claude">C</span><svg class="i"><use href="#bi-gear"/></svg></span>
+  </div>
+  <main class="main P" id="main"></main>
+</div>
+<style>
+/* 이번 시안 */
+.P .lower { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 12px; }
+.frame.narrow .P { overflow: auto; }
+.frame.narrow .P .lower { grid-template-columns: minmax(0, 1fr); flex: none; }
+.P .box { display: flex; flex-direction: column; min-height: 0; }
+.P .box-h { display: flex; align-items: baseline; gap: 10px; padding: 14px 16px 8px; }
+.P .box-h h3 { margin: 0; font-size: var(--t-md); }
+.P .box-h .r { margin-left: auto; }
+.P .box-b { overflow-y: auto; min-height: 0; padding: 0 8px 10px; }
+.frame.narrow .P .box-b { overflow: visible; }
+.P .srow { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 2px 10px; align-items: center; padding: 8px; border-radius: 10px; }
+.P .srow:hover { background: var(--surface); }
+.P .srow .t { display: flex; gap: 8px; align-items: center; min-width: 0; font-weight: 600; }
+.P .srow .q { grid-column: 2; color: var(--muted); font-size: var(--t-xs); }
+.P .srow .q b { color: var(--faint); font-weight: 600; margin-right: 4px; }
+.P .srow small { grid-column: 2; color: var(--faint); font-size: var(--t-xs); }
+.P .srow .go { grid-column: 3; grid-row: 1 / 4; display: flex; gap: 4px; opacity: .5; }
+.P .srow:hover .go { opacity: 1; }
+.P .wrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; padding: 9px 8px; border-radius: 10px; border-top: 1px solid var(--line-soft); }
+.P .wrow:first-child { border-top: 0; }
+.P .wrow:hover { background: var(--surface); }
+.P .wrow .br { display: flex; gap: 8px; align-items: center; min-width: 0; font: 500 var(--t-xs) var(--f-mono); color: var(--ink); }
+.P .wrow .path, .P .wrow .cm { grid-column: 1; color: var(--faint); font-size: var(--t-xs); }
+.P .wrow .path { font-family: var(--f-mono); font-size: 11px; }
+.P .wrow .side { grid-column: 2; grid-row: 1 / 4; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.pill { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 999px; font-size: var(--t-xs); font-weight: 700; white-space: nowrap; background: var(--ground); color: var(--muted); }
+.pill.warn { background: color-mix(in srgb, var(--warn) 16%, transparent); color: var(--warn); }
+.pill.ok { background: color-mix(in srgb, var(--ok) 14%, transparent); color: var(--ok); }
+.P .ab { color: var(--faint); font-size: var(--t-xs); white-space: nowrap; }
+
+.top { position: relative; z-index: 5; }
+.anchor { position: relative; display: inline-flex; }
+.bellbtn { border: 0; background: transparent; padding: 6px; border-radius: 8px; display: inline-grid; place-items: center; color: var(--muted); }
+.bellbtn[aria-expanded="true"] { background: var(--ground); color: var(--ink); }
+.bell-pop { position: absolute; right: -60px; top: calc(100% + 8px); width: 440px; max-width: calc(100vw - 40px); background: var(--raise); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); padding: 12px; display: flex; flex-direction: column; gap: 10px; color: var(--ink); }
+.bell-pop[hidden] { display: none; }
+.bell-pop .ph { display: flex; align-items: baseline; gap: 8px; font-weight: 700; padding: 0 4px; }
+.bell-pop .ph .r { margin-left: auto; }
+.bell-pop .none { border: 1px dashed var(--line); border-radius: 10px; padding: 8px 12px; color: var(--muted); font-size: var(--t-xs); }
+.bell-pop .last { background: var(--surface); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+.bell-pop .last .k { color: var(--faint); font-size: var(--t-xs); font-weight: 700; }
+.bell-pop .last b { font: 700 var(--t-md)/1.4 var(--f-title); }
+.bell-pop .last .meta { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: var(--t-xs); }
+.bell-pop .last .acts { display: flex; gap: 6px; margin-top: 2px; }
+.bell-pop .orow { display: grid; grid-template-columns: 18px auto minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 6px 4px; border-radius: 8px; }
+.bell-pop .orow:hover { background: var(--surface); }
+.bell-pop .orow small { color: var(--faint); font-size: var(--t-xs); }
+.bell-pop .sep { border-top: 1px solid var(--line-soft); }
+.icon-btn { border: 1px solid var(--line); background: var(--raise); border-radius: 999px; width: 28px; height: 28px; display: inline-grid; place-items: center; }
+
+.P { display: flex; flex-direction: column; gap: 14px; overflow: hidden; }
+.P .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; flex: none; }
+.P .tile { padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; text-align: left; position: relative; overflow: hidden; height: 128px; }
+.P .tile:hover { border-color: var(--line); }
+.P .tile .k { color: var(--faint); font-size: var(--t-xs); font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.P .tile .v { font: 700 2.2rem/1.05 var(--f-title); margin-top: auto; }
+.P .tile .v small { font: 600 var(--t-sm) var(--f-ui); color: var(--faint); margin-left: 4px; }
+.P .tile .s { color: var(--muted); font-size: var(--t-xs); white-space: nowrap; }
+.P .tile.has-ring .s { padding-right: 84px; }
+.P .ring { position: absolute; right: 14px; top: 50%; transform: translateY(-38%); width: 76px; height: 76px; }
+.P .bars { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; align-items: end; height: 52px; margin-top: auto; }
+.P .bars span { border-radius: 3px; background: color-mix(in srgb, var(--ink) 16%, var(--surface)); }
+.P .bars span.today { background: var(--hl); }
+.frame.narrow .P .tile .v { font-size: 1.8rem; }
+.P .v.alt { display: none; }
+.frame.narrow .P .ring { display: none; }
+.frame.narrow .P .v.alt { display: block; color: var(--warn); }
+.frame.narrow .P .tile.has-ring .s { padding-right: 0; margin-top: 0 !important; }
+
+.P .feed { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.P .feed-h { display: flex; align-items: baseline; gap: 10px; padding: 14px 18px 8px; border-bottom: 1px solid var(--line-soft); }
+.P .feed-h h3 { margin: 0; font-size: var(--t-md); }
+.P .feed-h .r { margin-left: auto; }
+.P .scroll { overflow-y: auto; padding: 6px 18px 18px; flex: 1; min-height: 0; scrollbar-gutter: stable; }
+.P .day { display: flex; align-items: baseline; gap: 10px; margin: 12px 0 4px; position: sticky; top: -6px; background: var(--raise); padding: 6px 0; z-index: 1; }
+.P .day h4 { margin: 0; font-size: var(--t-sm); }
+.P .line { position: relative; padding-left: 70px; }
+.P .line::before { content: ""; position: absolute; left: 56px; top: 6px; bottom: 6px; width: 2px; background: var(--line-soft); }
+.P .ev { position: relative; display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 2px 10px; align-items: center; padding: 6px 10px; border-radius: 10px; }
+.P .ev:hover { background: var(--surface); }
+.P .ev .tm { position: absolute; left: -70px; width: 44px; text-align: right; color: var(--faint); font-size: var(--t-xs); top: 8px; }
+.P .ev::before { content: ""; position: absolute; left: -18px; top: 13px; width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
+.P .ev.sys::before { background: var(--warn); }
+.P .ev .tt { display: flex; gap: 8px; align-items: center; min-width: 0; }
+.P .ev small { grid-column: 2; color: var(--faint); font-size: var(--t-xs); }
+.P .ev .go { grid-column: 3; grid-row: 1 / 3; opacity: 0; }
+.P .ev:hover .go, .P .ev.sys .go { opacity: 1; }
+</style>
+<script>
+(() => {
+  const ic = (n) => `<svg class="i"><use href="#bi-${n}"/></svg>`;
+  const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+  const T = { claude: 'C', codex: 'X' };
+  const tool = (t, sm) => `<span class="tool ${t}${sm ? ' sm' : ''}">${T[t]}</span>`;
+
+  // ── 이 PC 의 실제 데이터 (2026-10-06 21:40 기준) ──
+  // [끝난 시각, 도구, 프로젝트, 첫 질문(없으면 ''), 주고받음, 크기 MB]
+  const TODAY = [
+    ['21:36', 'claude', 'd-AI-so', '문서읽어봐. 일렉트론으로 리팩터링하는거 보여?', 61, 18.3],
+    ['21:33', 'claude', 'JBroEngine', '에디터 호버툴팁 딜레이가 왜 없지ㅣ? 분명 넣어달라한거ㅓㅓ같음데', 65, 20.4],
+    ['21:30', 'claude', 'Cobblemon-Mods', '배틀캠 엔티티 포커싱도 있었으면 좋겠다. 플레이어랑', 80, 49.4],
+    ['21:30', 'claude', 'Claude 임시 작업 공간', '', 9, 1.9],
+    ['21:30', 'claude', 'Claude 임시 작업 공간', '', 1, 5.3],
+    ['21:22', 'claude', 'JBroEngine', '너는 에디터 디자이너! 앞으로 에디터 레이아웃이나 테마, 스타일 등을 관리할 거야.', 16, 4.7],
+    ['20:44', 'codex', 'd-AI-so', '1 더하기 1의 답만 숫자로 말해. 도구는 쓰지 마', 1, 0.2],
+    ['20:41', 'claude', 'd-AI-so', '1 더하기 1의 답만 숫자로', 1, 0.1],
+    ['20:37', 'claude', 'JBroEngine', '넌 에디터 UI 컴포넌트 오너야. 지금부터 이벤트 바인딩 타임라인을 만들건데', 1, 0.8],
+    ['18:29', 'claude', 'JBroEngine', '', 28, 8.2],
+    ['17:36', 'codex', 'Cobblemon-Mods', '개발 서버 기준으로 배포해서 호스팅한다하면 10명정도면 5만원선에서 어떤 호스팅 서비스를', 7, 0.9],
+    ['15:00', 'claude', 'JBroEngine', '인풋 담당자. 마우스 엄지 버튼 추가 부탁', 4, 1.3],
+    ['14:54', 'claude', 'Cobblemon-Mods', '이 서버를 24시간 호스팅 원격에 돌릴건데 상세 스펙 어떻게 계산하는게 좋을까?', 7, 0.9],
+    ['14:38', 'claude', 'JBroEngine', '야. 기존엔진 비교해보면 레이어 선택이 되야하는데 왜 지금 엔진은 레이어 선택이 안되냐', 18, 15.0],
+    ['12:40', 'claude', 'JBroEngine', '기존 엔진은 캔버스 뷰에서 더블클릭하면 해당 오브젝트가 카메라 줌 포커스하고', 46, 10.5],
+    ['09:46', 'claude', 'Cobblemon-Mods', '픽셀몬의 울트라스페이스처럼 직접 차원을 만드는게 어렵나?', 48, 21.9],
+    ['07:13', 'claude', 'Claude 임시 작업 공간', '', 5, 0.6],
+    ['06:34', 'claude', 'Cobblemon-Mods', 'mcc 리그챌린지 애드온에서 하드난천 테스트하는데 이거 맞냐? 왜 브금이 난천브금이 안들림', 17, 3.4],
+    ['06:34', 'claude', 'Cobblemon-Mods', 'mcc 리그챌린지 애드온에서 하드난천 테스트하는데 이거 맞냐? 왜 브금이 난천브금이 안들림', 15, 2.9],
+    ['06:34', 'claude', 'JBroEngine', '내 엔진에서 부트스트랩이나 그런거 아이콘 가져와서 못쓰나?', 24, 8.2],
+    ['02:57', 'claude', 'JBroEngine', '내 엔진에서 부트스트랩이나 그런거 아이콘 가져와서 못쓰나?', 23, 5.7],
+    ['02:19', 'claude', 'JBroEngine', '내 엔진에서 부트스트랩이나 그런거 아이콘 가져와서 못쓰나?', 12, 3.9],
+    ['02:09', 'claude', 'WasmTtsEngine', '@"C:\\Users\\박주형\\AppData\\Roaming\\Codex\\web\\Codex\\Was…', 3, 0.5],
+    ['01:55', 'claude', 'JBroEngine', '지금 엔진에 네트워크 모듈 & 서비스 부착되어있어?', 13, 8.0],
+    ['01:26', 'claude', 'JBroEngine', 'tasks/todo.md의 TaskManager를 맡아라. 읽도록', 9, 14.9],
+    ['01:26', 'claude', 'JBroEngine', '내 엔진에서 부트스트랩이나 그런거 아이콘 가져와서 못쓰나?', 4, 0.5],
+    ['01:10', 'codex', 'HGM', '나한테 온 Task 브리핑', 1, 1.7],
+    ['01:07', 'claude', 'Cobblemon-Mods', '지금 개발 서버랑 클라에 가방모드가 없니??', 4, 0.5],
+    ['00:25', 'claude', 'Cobblemon-Mods', 'This session is being continued from a previous co…', 28, 5.8],
+    ['00:14', 'claude', 'Cobblemon-Mods', '지금 MCC 배틀타워랑 배틀팩토리 승수나 일반모드 클리어 뭐 그런거 강제로 설정하는 명령어', 1, 0.5],
+  ];
+  const YESTERDAY = [
+    ['23:23', 'claude', 'Cobblemon-Mods', 'Cobblemon-UI랑 Cobblemon-NPC모드 관련해서, UI에서 대화창 API가', 4, 1.2],
+    ['22:52', 'claude', 'Cobblemon-Mods', 'This session is being continued from a previous co…', 21, 5.1],
+    ['22:52', 'claude', 'Cobblemon-Mods', 'This session is being continued from a previous co…', 22, 5.1],
+    ['22:50', 'claude', 'Cobblemon-Mods', 'This session is being continued from a previous co…', 22, 5.3],
+    ['22:03', 'claude', 'JBroEngine', 'String 타입같은거 보면, 새로운 컨테이너 안에 문자열을 나열하는거잔아. 이렇게 만들잔', 20, 5.3],
+    ['21:41', 'claude', 'JBroEngine', 'This session is being continued from a previous co…', 22, 3.4],
+    ['21:19', 'claude', 'Cobblemon-Mods', '@"C:\\Users\\박주형\\Documents\\GitHub\\Cobblemon-Mods\\dev…', 1, 0.4],
+    ['21:17', 'codex', 'Cobblemon-Mods', 'Xaero모드에서 웨이포인트에 아이콘 넣는 방법이 있어?', 14, 3.3],
+    ['20:25', 'claude', 'JBroEngine', '기존엔진과 비교해서 오디오모듈 없는거로 아는데 이식할거야. 기존 구조보다 좋은 구조가 있으', 30, 22.9],
+    ['20:23', 'claude', 'JBroEngine', '에디터 튜토리얼같은거 보면 반투명렉트에 해당 위젯부분만 마스킹해서 포커스두잔아? 그거 구현', 40, 21.5],
+  ];
+  // 최근 세션 (인덱스 기준 21:36): [시각, 도구, 프로젝트, 첫 질문, 마지막 질문, 주고받음, MB]
+  const RECENT = [
+    ['오늘 21:36', 'claude', 'd-AI-so', '문서읽어봐. 일렉트론으로 리팩터링하는거 보여?', '야이씨 장난하냐', 61, 18.3],
+    ['오늘 21:33', 'claude', 'JBroEngine', '에디터 호버툴팁 딜레이가 왜 없지ㅣ? 분명 넣어달라한거ㅓㅓ같음데', '해봐', 65, 20.4],
+    ['오늘 21:30', 'claude', 'Cobblemon-Mods', '배틀캠 엔티티 포커싱도 있었으면 좋겠다. 플레이어랑', 'ㄴㄴ그럼  그냥 여기서 스탑', 80, 49.4],
+    ['오늘 21:30', 'claude', 'Claude 임시 작업 공간', '', '여전한데?', 9, 1.9],
+    ['오늘 21:30', 'claude', 'Claude 임시 작업 공간', '', '', 1, 5.3],
+  ];
+  // 워크트리 (지금 git worktree list 로 읽음). ab: main 대비 앞·뒤 커밋 수 (main 이 없는 저장소는 비움)
+  const WT = [
+    { repo: 'JBroEngine', branch: 'claude/component-ui-layer-improvements-cfbe29', path: 'C:\\Users\\박주형\\Documents\\GitHub\\JBroEngine\\.claude\\worktrees\\component-ui-layer-improvements-cfbe29', at: '10-06 23:01', msg: 'test: count the hidden drawSequence field in the builtin tables (D-296)', dirty: 30, ab: 'main보다 10 뒤' },
+    { repo: 'Cobblemon-Mods', branch: 'codex/dev-webmap-maplink', path: 'C:\\Users\\박주형\\.codex\\worktrees\\b6db\\Cobblemon-Mods', at: '10-05 16:01', msg: 'feat: embed public server maps in the wiki reference section', dirty: 0, ab: '2 앞 · 99 뒤' },
+    { repo: 'JBroEngine', branch: 'ide', path: 'F:\\AI\\wt\\JBroEngine-ide', at: '09-30 13:29', msg: 'refactor: separate scripts from components (D-271 stage 2)', dirty: 0, ab: '26 앞 · 63 뒤' },
+    { repo: 'as-r', branch: 'agent/TASK-1', path: 'C:\\Temp\\as-r\\repo\\.aiwork\\worktrees\\TASK-1', at: '09-06 15:47', msg: 'TASK-1: Source/Item.h 의 Item 구조체에 int Weight 필드를 추가해라', dirty: 1, ab: '' },
+    { repo: 'as-95', branch: 'agent/TASK-2', path: 'C:\\Temp\\as-95\\repo\\.aiwork\\worktrees\\TASK-2', at: '09-06 01:21', msg: 'TASK-2: Source/Item.h 의 Item 구조체에 int Durability 필드를 추가해라', dirty: 1, ab: '' },
+    { repo: 'as-95', branch: 'agent/TASK-1', path: 'C:\\Temp\\as-95\\repo\\.aiwork\\worktrees\\TASK-1', at: '09-06 01:20', msg: 'init', dirty: 0, ab: '' },
+    { repo: 'as-m1', branch: 'agent/TASK-1', path: 'C:\\Temp\\as-m1\\repo\\.aiwork\\worktrees\\TASK-1', at: '09-05 02:43', msg: 'TASK-1: Add a Clamp(int value, int min, int max) method. Put it in a NEW file Clamp.cs, not in Calculator.cs.', dirty: 1, ab: '' },
+  ];
+  const YESTERDAY_N = 41;
+  const WEEK = [['09-30', 1.20], ['10-01', 1.37], ['10-02', 1.77], ['10-03', 2.06], ['10-04', 0.57], ['10-05', 1.35], ['10-06', 1.21]];
+  const CODEX = { used: 63, reset: '10-10 09:58', at: '10-05 16:03' };
+  const LOGIN = { tool: 'Claude Code', until: '10-08 21:00', days: 2 };
+
+  const title = (q) => (q ? esc(q) : '<span class="faint">제목 없음</span>');
+  const ev = (r) => `<div class="ev"><span class="tm num">${r[0]}</span>${tool(r[1])}<span class="tt"><span class="ptag">${esc(r[2])}</span><span class="ell">${title(r[3])}</span></span><small class="num">주고받음 ${r[4]}회 · ${r[5]} MB</small><span class="go"><button class="btn" type="button">${ic('arrow-repeat')}이어서</button></span></div>`;
+  function ring(p, label) {
+    const r = 30, c = 2 * Math.PI * r, on = (p / 100) * c;
+    return `<svg class="ring" viewBox="0 0 80 80"><circle cx="40" cy="40" r="${r}" fill="none" stroke="var(--line-soft)" stroke-width="9"/><circle cx="40" cy="40" r="${r}" fill="none" stroke="${p >= 80 ? 'var(--bad)' : p >= 50 ? 'var(--warn)' : 'var(--ink)'}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${on} ${c}" transform="rotate(-90 40 40)"/><text x="40" y="45" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)">${label}</text></svg>`;
+  }
+
+  function page() {
+    const max = Math.max(...WEEK.map((w) => w[1]));
+    const sum = WEEK.reduce((x, w) => x + w[1], 0);
+    return `<div class="tiles">
+        <button class="tile card" type="button"><span class="k">${ic('terminal')}열린 터미널</span><span class="v num">0</span><span class="s">돌고 있는 방 없음</span></button>
+        <button class="tile card" type="button"><span class="k">${ic('chat-left-text')}오늘 세션</span><span class="v num">${TODAY.length}<small>개</small></span><span class="s">프로젝트 6곳 · 어제 ${YESTERDAY_N}개</span></button>
+        <button class="tile card has-ring" type="button"><span class="k">${tool('codex', 1)}Codex 7일 한도</span>${ring(CODEX.used, CODEX.used + '%')}<span class="v alt num">${CODEX.used}<small>%</small></span><span class="s" style="margin-top:auto">${CODEX.reset} 초기화</span><span class="s faint">${CODEX.at} 기준</span></button>
+        <button class="tile card" type="button"><span class="k">${ic('bar-chart-line')}이번 주 토큰<b class="num" style="margin-left:auto;color:var(--ink);font-size:var(--t-md)">${sum.toFixed(2)}B</b></span>
+          <span class="bars">${WEEK.map((w, i) => `<span class="${i === 6 ? 'today' : ''}" style="height:${Math.max(6, (w[1] / max) * 100)}%" title="${w[0]} ${w[1]}B"></span>`).join('')}</span></button>
+      </div>
+      <div class="lower">
+        <section class="box card"><div class="box-h"><h3>최근 세션</h3><span class="sub">마지막 활동 순 · 최대 5개</span><span class="r"><button class="link" type="button">세션 탭에서 모두 보기</button></span></div>
+          <div class="box-b">${RECENT.map((r) => `<div class="srow">${tool(r[1])}<span class="t"><span class="ptag">${esc(r[2])}</span><span class="ell">${title(r[3])}</span></span>
+            <span class="q ell">${r[4] ? `<b>마지막 질문</b>${esc(r[4])}` : '<b>마지막 질문</b>없음'}</span><small class="num">${r[0]} · 주고받음 ${r[5]}회 · ${r[6]} MB</small>
+            <span class="go"><button class="btn" type="button">${ic('arrow-repeat')}이어서</button></span></div>`).join('')}</div></section>
+        <section class="box card"><div class="box-h"><h3>워크트리</h3><span class="sub">${WT.length}개 · 변경 있는 곳 ${WT.filter((w) => w.dirty).length}</span><span class="r sub">최근 커밋 순</span></div>
+          <div class="box-b">${WT.map((w) => `<div class="wrow"><span class="br"><span class="ptag" style="font-family:var(--f-ui)">${esc(w.repo)}</span><span class="ell" title="${esc(w.branch)}">${esc(w.branch)}</span></span>
+            <span class="path ell" title="${esc(w.path)}">${esc(w.path)}</span><span class="cm ell" title="${esc(w.msg)}">${w.at} · ${esc(w.msg)}</span>
+            <span class="side">${w.dirty ? `<span class="pill warn">변경 ${w.dirty}</span>` : '<span class="pill ok">깨끗함</span>'}${w.ab ? `<span class="ab">${w.ab}</span>` : ''}<button class="icon-btn" type="button" title="이 폴더에서 새 터미널">${ic('terminal')}</button></span></div>`).join('')}</div></section>
+      </div>`;
+  }
+
+  // 종 팝업 = E: 열린 터미널, 마지막으로 하던 것, 다른 프로젝트에서 하던 것
+  function pop() {
+    const [h] = TODAY.filter((r) => r[3]);
+    const others = [];
+    for (const r of TODAY) if (r[3] && r[2] !== h[2] && !others.some((o) => o[2] === r[2]) && others.length < 4) others.push(r);
+    return `<div class="ph">열린 터미널 <span class="faint num">0</span><span class="r"><button class="link" type="button">터미널 탭</button></span></div>
+      <div class="none">돌고 있는 방이 없습니다</div>
+      <div class="sep"></div>
+      <div class="last"><span class="k">마지막으로 하던 것 · 오늘 ${h[0]}</span><b>${esc(h[3])}</b>
+        <span class="meta">${tool(h[1], 1)}<span class="ptag">${esc(h[2])}</span><span>주고받음 ${h[4]}회</span></span>
+        <span class="acts"><button class="btn primary" type="button">${ic('arrow-repeat')}이어서 하기</button><button class="btn" type="button">${ic('eye')}대화 보기</button></span></div>
+      <div class="ph" style="font-size:var(--t-xs)">다른 프로젝트에서 하던 것<span class="r sub">프로젝트마다 가장 최근 것</span></div>
+      ${others.map((r) => `<div class="orow">${tool(r[1], 1)}<span class="ptag">${esc(r[2])}</span><span class="ell" title="${esc(r[3])}">${esc(r[3])}<br><small class="num">오늘 ${r[0]} · 주고받음 ${r[4]}회</small></span><button class="icon-btn" type="button" title="이어서">${ic('arrow-repeat')}</button></div>`).join('')}`;
+  }
+
+  document.getElementById('main').innerHTML = page();
+  const popEl = document.getElementById('pop');
+  popEl.innerHTML = pop();
+  const setBell = (open) => {
+    popEl.hidden = !open;
+    document.getElementById('bell').setAttribute('aria-expanded', String(open));
+    document.querySelectorAll('[data-bell]').forEach((b) => b.setAttribute('aria-pressed', String((b.dataset.bell === '1') === open)));
+  };
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.id === 'bell') setBell(popEl.hidden);
+    if (b.dataset.bell) setBell(b.dataset.bell === '1');
+    if (b.dataset.w) { document.getElementById('frame').classList.toggle('narrow', b.dataset.w === '960'); b.parentElement.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); }
+    if (b.dataset.th) { document.documentElement.dataset.theme = b.dataset.th; b.parentElement.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); }
+  });
+  // 주소로 상태 고르기: ?w=960&bell=0&th=dark
+  const q = new URLSearchParams(location.search);
+  if (q.get('bell') === '0') setBell(false);
+  for (const [k, sel] of [['w', 'data-w'], ['th', 'data-th']]) if (q.get(k)) document.querySelector(`[${sel}="${q.get(k)}"]`)?.click();
+})();
+</script>
+</body>
+</html>
