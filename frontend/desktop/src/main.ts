@@ -20,7 +20,11 @@ function hostExe(): string {
 }
 
 function showWindow(): void {
-  if (!win) return;
+  // 창이 어떤 까닭으로든 없어졌으면(페이지가 window.close() 를 부르는 등) 새로 만든다. 트레이만 남고 창을 못 여는 일이 없게
+  if (!win || win.isDestroyed()) {
+    if (host) createWindow(host);
+    return;
+  }
   if (win.isMinimized()) win.restore();
   win.show();
   win.focus();
@@ -61,6 +65,9 @@ function createWindow(h: RunningHost): void {
     if (quitting) return;
     e.preventDefault();
     win?.hide();
+  });
+  win.on('closed', () => {
+    win = null;
   });
 
   // 창은 Host 출처 안에서만 움직인다. 바깥 링크는 기본 브라우저로 넘긴다
