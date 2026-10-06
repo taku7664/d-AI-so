@@ -23,6 +23,7 @@ Electron 전환을 Stage 0~8로 나누고, 단계마다 할 일과 완료 기준
 - `GET /api/health`, OpenAPI 문서, 공용 WebSocket `/ws`
 - `backend/tests/Daiso.Host.Tests/`: 보안 규칙을 하나씩 깨 보는 테스트
 - **완료 기준:** 보안 테스트 초록. 크롬에서 토큰 주소로 열면 health가 보이고, 토큰 없이 열면 거절된다
+  - 2026-10-06: 토큰 없이 열면 거절되는 것을 확인했다(`/api/health` 401, 크롬은 오류 화면). 토큰 주소로 여는 쪽은 토큰 값을 다루는 일이라 저장소 주인이 직접 확인한다
 
 ## Stage 2 — Electron 껍데기
 
@@ -34,34 +35,64 @@ Electron 전환을 Stage 0~8로 나누고, 단계마다 할 일과 완료 기준
 
 ## Stage 3 — 화면 뼈대와 탭 계약
 
-- `frontend/web/` (Vite + React + TS). workspace로 묶는다. 시안의 왼쪽 메뉴·색·글꼴을 CSS 변수로 옮긴다. 글꼴 파일은 동봉한다
-- [frontend/web/src/tabs/README.md](../frontend/web/src/tabs/README.md)·[backend/src/Daiso.Host/Tabs/README.md](../backend/src/Daiso.Host/Tabs/README.md)의 탭 약속, 라우팅, `Ctrl+1~7` 단축키
+- `frontend/web/` (Vite + React + TS). workspace로 묶는다. [D안 시안](design/README.md)의 위 줄·왼쪽 메뉴·색·글꼴을 CSS 변수로 옮긴다
+  - 테마는 시스템 · 밝게 · 어둡게. 색은 CSS 변수 한 벌씩
+  - 글꼴(Gothic A1 · Hahmlet · JetBrains Mono)은 파일로 동봉한다. 아이콘은 Bootstrap Icons. 둘 다 라이선스를 RELEASE 문서에 적는다
+- 위 줄: 프로젝트 선택기(`Ctrl+P`), 종, 계정 단추, 톱니. 이 단계에서는 프로젝트 선택기만 실제로 돌고 나머지는 자리만 둔다
+- 공용 경로 `/api/projects` ([ARCHITECTURE.md](ARCHITECTURE.md) "탭에 속하지 않는 공용 경로"). 마지막에 고른 프로젝트를 설정에 남긴다
+- [frontend/web/src/tabs/README.md](../frontend/web/src/tabs/README.md)·[backend/src/Daiso.Host/Tabs/README.md](../backend/src/Daiso.Host/Tabs/README.md)의 탭 약속, 라우팅, `Ctrl+1~6` 단축키. 설정은 메뉴에 없고 톱니로 연다
 - OpenAPI → TS 클라이언트 생성, `/ws` 알림 → 캐시 무효화(TanStack Query)
 - 문구를 `frontend/web/src/strings/ko.json`으로 옮기고 키 검사 vitest를 만든다
-- **완료 기준:** 일곱 탭이 빈 화면으로 뜨고 메뉴·단축키로 오간다. 크롬 탭과 Electron 창에서 똑같이 보인다
+- **완료 기준:** 여섯 탭과 설정이 빈 화면으로 뜨고 메뉴·단축키·톱니로 오간다. 프로젝트를 바꾸면 위 줄과 탭이 따라 바뀐다. 크롬 탭과 Electron 창에서 똑같이 보인다
 
 ## Stage 4 — 사용량 탭
 
 - 첫 수직 조각이다. 읽기만 하는 화면이라 서버·타입 생성·캐시·알림 흐름을 처음 끝까지 꿰기 좋다
 - 인덱스를 처음 여는 탭이다. 옛 앱과 Host를 동시에 띄우고 실제 크기 인덱스로 둘이 같이 갱신할 때 한쪽이 실패하지 않는지 본다 (Stage 1에서는 작은 테스트 자료로만 봤다)
-- **완료 기준:** 옛 사용량 화면과 숫자가 같다 (같은 인덱스로 나란히 띄워 비교)
+- 토큰만 보여 준다. 단가표와 $ 추정은 옮기지 않는다 ([DECISIONS.md](DECISIONS.md) "사용량은 토큰과 구독 한도만")
+- "이 프로젝트 / 모든 프로젝트"로 바꿔 본다
+- 구독 한도 (`/api/limits`). 탭을 열 때 비동기로 읽고, 파일이 바뀌면 `/ws`로 알려 바로 반영하고, 기준 시각을 붙인다
+  - Codex: 세션 기록의 `rate_limits`(`primary`·`secondary`의 `used_percent`·`window_minutes`·`resets_at`)를 `Providers.Codex`에서 읽는다. 백엔드 공용 코드라 `old/` 솔루션 테스트도 돌린다
+  - Claude: 상태줄 입력의 `rate_limits`(`five_hour`·`seven_day`)를 파일로 남기는 DAIso 상태줄 스크립트. "한도 보기 켜기"로 동의를 받아 `~/.claude/settings.json`에 등록하고, 끄면 원래대로 돌린다. 쓰던 상태줄이 있으면 감싸서 그대로 보이게 한다
+  - 초기화 시각이 지나면 화면에서 "초기화됨 · 0%"로 보여 준다
+- **완료 기준:** 옛 사용량 화면과 토큰 수가 같다 (같은 인덱스로 나란히 띄워 비교). Codex 한도가 세션 기록 값과 같다. Claude 한도 보기를 켜고 끄면 `~/.claude/settings.json`이 원래대로 돌아온다
 - **여기서 C# 서버를 계속 갈지 판단한다** ([DECISIONS.md](DECISIONS.md) "정한 것"의 버린 안)
 
 ## Stage 5 — 요약 · 세션 탭
 
-- 세션: 검색(FTS5), 필터, 대화 보기, 이어서 열기, Markdown 내보내기, 휴지통으로 보내기, 실행 중 세션 지우기 차단
+- 요약: 고른 프로젝트의 열린 터미널, 최근 세션(줄에서 바로 "이어서"), 손볼 것, 숫자. "모든 프로젝트"면 프로젝트 카드
+- 계정 단추(`/api/accounts`): 로그인 상태, 다시 로그인, 저장한 계정. 옛 요약의 계정 카드가 여기로 온다
+- 세션: 검색(FTS5), 필터, 대화 보기, 이어서 열기, Markdown 내보내기, 휴지통으로 보내기(영구 삭제는 체크박스), 실행 중 세션 지우기 차단
+- 세션 이름 붙이기. DAIso 인덱스에 따로 둔다
+- 정리 기준(며칠·몇 MB)은 "골라 체크" 안에서 바꾼다. 요약의 "손볼 것"도 같은 값을 쓴다
 - **완료 기준:** 옛 세션 화면의 기능 목록을 하나씩 대조해 빠진 것이 없다
 
 ## Stage 6 — 터미널 탭
 
+시작 전에 방의 "허락 기다림"을 알아낼 수 있는지 조사한다 ([DECISIONS.md](DECISIONS.md) "미정").
+
+### 6a — 진짜 터미널
+
 - 서버 `/ws/pty/{room}` ↔ xterm.js. 방 목록, 새 터미널 단계 카드, 설치 버튼, 외부 터미널로 열기
+- 방 이름. 고른 프로젝트의 방만 보이고, 새 터미널은 폴더가 지금 프로젝트로 채워져 있다
+- 위 줄 종: 모든 프로젝트의 방 상태(작업 중 · 답 끝남 · 허락 기다림). 누르면 그 방으로 간다
 - Electron 창에서는 파일 끌어 놓기 → 경로 입력, 클립보드 이미지 붙여넣기
 - **옛 터미널 쪽 fix 커밋(30개)을 훑어 같은 문제가 다시 나지 않는지 하나씩 확인한다**
 - **완료 기준:** Claude·Codex 방을 열고, 앱을 트레이로 숨겼다 다시 열어도 출력이 이어진다
 
+### 6b — 말풍선 보기
+
+- 같은 방을 말풍선으로 본다. 세션 기록을 읽어 그리고(옛 `SessionTail`), CLI는 뒤에서 그대로 돈다
+- 입력칸의 글은 그 방의 CLI 입력 줄로 보낸다. `/`를 치면 명령·스킬 목록. 옛 `SlashCommandReader`가 못 읽는 프로젝트 스킬·플러그인 스킬·`user-invocable` 표시를 더한다
+- 화면 없이는 안 되는 명령(`/login`·`/permissions` 등)은 고르면 터미널 보기로 넘긴다
+- **완료 기준:** 말풍선 보기에서 보낸 글과 `/` 명령이 터미널 보기에서 친 것과 같은 결과를 낸다
+
 ## Stage 7 — 내 규칙 · 내 프롬프트 · 설정
 
 - 규칙·프롬프트는 **폴더가 원본**이다. 서버가 FileSystemWatcher로 감시하고 바뀌면 `/ws`로 알린다
+- 지침은 지금 프로젝트의 것을 연다. 폴더를 따로 고르지 않는다. 지침을 읽는 도구를 보여 주고, 못 읽는 도구가 있으면 "읽게 하기"로 불러오는 줄을 넣는다
+- 프롬프트는 "{프로젝트}에 넣기" 한 번으로 넣고, 넣은 뒤 "새 터미널에서 시작"으로 잇는다
+- 설정은 톱니로 연다. 단가표와 정리 기준은 없다
 - 폴더 위치를 설정에서 고를 수 있게 한다. 기본값은 옛 `AppPaths`의 `presets`·`prompts`다
 - 시작 전에 폴더가 겹칠 때의 우선순위를 정한다 ([DECISIONS.md](DECISIONS.md) "미정")
 - **완료 기준:** 탐색기나 AI가 폴더의 파일을 고치면 화면이 저절로 바뀐다

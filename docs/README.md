@@ -8,16 +8,17 @@ WinUI 3 앱을 **Electron + 웹 화면 + C# 서버**로 옮기는 작업의 문�
 | 날짜 | 한 일 |
 |---|---|
 | 2026-10-03 | 작업물을 `old/`로 옮김. 문서를 주제별로 나눔. 최상위를 `frontend/`(TS)·`backend/`(C#)로 나누고 ESLint·Prettier는 `frontend/`에 둠 |
+| 2026-10-06 | **화면 시안을 D안으로 정함.** "지금 프로젝트"가 앱 전체의 기준, 탭 여섯 개(설정은 톱니), 요약은 프로젝트 첫 화면, 단가표·$ 추정을 없애고 구독 한도를 파일로 읽음. 기본 탭 id 확정. 시안 HTML을 `docs/design/`에 넣고 ROADMAP Stage 3~7에 반영. Stage 1 크롬 확인 중 "토큰 없이 열면 거절"은 확인함 |
 | 2026-10-05 | **Stage 1 코드·테스트 끝, 크롬 확인 남음.** `backend/src/Daiso.Host`(net10.0-windows): 보안 미들웨어, `server.json`, 부모 감시, `/api/health`·OpenAPI·`/ws`, 옛 앱의 서비스 등록. 보안 테스트 48개. 하다가 SQLite 취약점(CVE-2025-6965) 때문에 `Infrastructure`의 SQLitePCLRaw를 2.1.13으로 올림 |
 | 2026-10-05 | **Stage 0 완료.** `backend/`에 `Daiso.sln`·`Directory.Build.props`·`global.json`. 솔루션은 `old/src` 백엔드 7개와 `old/tests` 세 벌, 테스트가 참조하는 `old/tools/adapters/Daiso.Adapter.Claude`를 담는다. 하다가 빨갛던 옛 테스트 하나(어댑터가 일찍 끝나면 파이프 쓰기에서 던짐)을 고침 |
 
-다음은 [ROADMAP.md](ROADMAP.md) Stage 1의 남은 완료 기준(크롬에서 토큰 주소로 열어 health 확인)이다. 띄우는 법은 [backend/src/Daiso.Host/README.md](../backend/src/Daiso.Host/README.md)에 있다. `frontend/`에는 아직 ESLint·Prettier 설정과 탭 README뿐이다.
+다음은 [ROADMAP.md](ROADMAP.md) Stage 1의 남은 완료 기준 하나(크롬에서 토큰 주소로 열어 health 확인, 저장소 주인이 직접)와 Stage 2다. 띄우는 법은 [backend/src/Daiso.Host/README.md](../backend/src/Daiso.Host/README.md)에 있다. `frontend/`에는 아직 ESLint·Prettier 설정과 탭 README뿐이다.
 
 ### 이어받는 사람이 먼저 볼 것
 
 - Stage 1 전에 정할 것은 다 정했다: Host TFM은 `net10.0-windows`, 자료 폴더는 옛 앱과 같이 쓴다 ([DECISIONS.md](DECISIONS.md) "정한 것")
 - `old/` 안 문서에 적힌 경로(`src/...`, `docs/...`, `tools/...`)는 **`old/` 기준**이다. 옮기면서 고치지 않았다
-- 화면 시안 링크는 저장소 주인 계정의 비공개 아티팩트다. 열리지 않으면 주인에게 공유를 부탁한다
+- 화면 시안은 `docs/design/daiso-d.html`이다. 같은 내용의 아티팩트 링크는 저장소 주인 계정의 비공개 링크라 열리지 않을 수 있다
 - 확인 명령: 옛 앱은 `old/`에서 `dotnet build Daiso.sln`·`dotnet test Daiso.sln`, 새 백엔드는 `backend/`에서 `dotnet build`·`dotnet test`, 프런트 설정은 `frontend/`에서 `npm ci` 뒤 `npm run lint`·`npm run format:check`
 
 ## 문서 목록
@@ -29,6 +30,7 @@ WinUI 3 앱을 **Electron + 웹 화면 + C# 서버**로 옮기는 작업의 문�
 | [ARCHITECTURE.md](ARCHITECTURE.md) | 프로세스 구성, 저장소 구조, 상태의 주인, 창과 크롬 탭의 차이 | 코드를 어디에 둘지 정할 때 |
 | [SECURITY.md](SECURITY.md) | localhost 서버 보안 규칙 일곱 가지 | 서버 엔드포인트를 만들 때 |
 | [MIGRATION_MAP.md](MIGRATION_MAP.md) | 옛 `Daiso.App` 코드가 서버·Electron·웹 중 어디로 가는지 | 옛 화면을 옮길 때 |
+| [design/README.md](design/README.md) | 화면 시안(D안)과 시안에서 정한 화면 규칙 | 화면을 만들 때 |
 
 한 모듈에만 해당하는 약속은 그 모듈 폴더의 `README.md`에 있다.
 
@@ -45,7 +47,7 @@ WinUI 3 앱을 **Electron + 웹 화면 + C# 서버**로 옮기는 작업의 문�
 | `old/docs/RELEASE.md` | 배포 원칙. Stage 8에서 `docs/`로 옮겨 고친다 |
 | `old/docs/PLUGIN_PLAN.md` | 도구 플러그인(매니페스트·어댑터). 탭 플러그인과는 다른 것이다 |
 
-화면 시안: https://claude.ai/artifact/DDRz5Lv416wn35na37WCPS (요약 · 터미널 · 세션)
+화면 시안: [design/README.md](design/README.md) (D안. 저장소 안에 HTML이 있다)
 
 ## 일하는 방식
 

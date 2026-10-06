@@ -29,6 +29,10 @@ public interface ITabEndpoints
 
 무엇이 바뀌었는지만 알린다. 바뀐 데이터는 싣지 않는다. 화면이 다시 요청해서 받는다.
 
+## 탭에 속하지 않는 경로
+
+프로젝트 목록·계정·구독 한도처럼 여러 탭이 같이 쓰는 데이터는 `Tabs/`가 아니라 `Shared/`에 둔다. 목록은 [docs/ARCHITECTURE.md](../../../../docs/ARCHITECTURE.md) "탭에 속하지 않는 공용 경로"에 있다.
+
 ## 도구 플러그인과 다른 것
 
 지금 있는 **도구 플러그인**(`Providers.Manifest`, 어댑터 프로세스, `old/docs/PLUGIN_PLAN.md`)은 AI CLI를 하나 더 붙이는 길이다. 탭과 상관없이 서버가 그대로 읽는다.

@@ -1,0 +1,1580 @@
+<title>DAIso 새 화면 D안</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@400;500;600;700&family=Hahmlet:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* 레이아웃: 위 줄에서 프로젝트를 고르면 왼쪽 탭 여섯 개가 모두 그 프로젝트 기준이 된다. 터미널 현황은 종, 계정은 그 옆, 설정은 톱니. 제목 줄에는 이름과 상태만, 설명은 툴팁. 저장·삭제 같은 확정 버튼은 늘 아래 같은 자리. 고른 것은 형광펜 노랑 */
+:root {
+  --ground: #eceee7;
+  --surface: #f7f8f4;
+  --raise: #ffffff;
+  --line: #d8dcd1;
+  --line-soft: #e6e9e1;
+  --ink: #1d211d;
+  --muted: #5b635b;
+  --faint: #8a9289;
+  --hl: #f4c63d;
+  --hl-soft: #fbecb8;
+  --hl-ink: #1d211d;
+  --term-bg: #171a16;
+  --term-fg: #dfe3da;
+  --term-dim: #81897f;
+  --codex: #2c8a73;
+  --claude: #c96b3c;
+  --anti: #7a5bc2;
+  --ok: #2f8650;
+  --warn: #b07a0a;
+  --bad: #c0412c;
+  --shadow: 0 1px 0 rgba(29, 33, 29, .04), 0 12px 32px rgba(29, 33, 29, .10);
+
+  --f-ui: "Gothic A1", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  --f-title: "Hahmlet", "Batang", serif;
+  --f-mono: "JetBrains Mono", "D2Coding", Consolas, monospace;
+  --t-xs: .75rem;
+  --t-sm: .84375rem;
+  --t-md: .9375rem;
+  --t-lg: 1.125rem;
+  --t-xl: 1.5rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #121411; --surface: #191c18; --raise: #20241f; --line: #30352e; --line-soft: #272b25;
+    --ink: #eceee8; --muted: #a2a99f; --faint: #737a70;
+    --hl: #e9bd38; --hl-soft: #3a3320; --hl-ink: #181a15;
+    --term-bg: #0f110e; --term-fg: #dfe3da; --term-dim: #737a70;
+    --codex: #4bb398; --claude: #e08a5c; --anti: #a287e0;
+    --ok: #5cbb7e; --warn: #dcaa3c; --bad: #e66a52;
+    --shadow: 0 1px 0 rgba(0, 0, 0, .3), 0 12px 32px rgba(0, 0, 0, .45);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #121411; --surface: #191c18; --raise: #20241f; --line: #30352e; --line-soft: #272b25;
+  --ink: #eceee8; --muted: #a2a99f; --faint: #737a70;
+  --hl: #e9bd38; --hl-soft: #3a3320; --hl-ink: #181a15;
+  --term-bg: #0f110e; --term-fg: #dfe3da; --term-dim: #737a70;
+  --codex: #4bb398; --claude: #e08a5c; --anti: #a287e0;
+  --ok: #5cbb7e; --warn: #dcaa3c; --bad: #e66a52;
+  --shadow: 0 1px 0 rgba(0, 0, 0, .3), 0 12px 32px rgba(0, 0, 0, .45);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--ground); color: var(--ink); font-family: var(--f-ui); font-size: var(--t-sm); line-height: 1.5; margin: 0; padding: 24px 20px 40px; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--hl); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+.mono { font-family: var(--f-mono); }
+.muted { color: var(--muted); }
+.faint { color: var(--faint); }
+.i { width: 1em; height: 1em; fill: currentColor; flex: none; vertical-align: -.125em; }
+.ell { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+
+/* 메모 */
+.memo { max-width: 1280px; margin: 0 auto 16px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 10px 24px; }
+.memo h1 { font: 700 var(--t-xl)/1.25 var(--f-title); margin: 0; }
+.memo p { margin: 4px 0 0; color: var(--muted); max-width: 70ch; }
+
+/* 공용 */
+.seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 99px; background: var(--ground); border: 1px solid var(--line); flex: none; }
+.seg button { border: 0; background: transparent; border-radius: 99px; padding: 3px 12px; color: var(--muted); font-size: var(--t-xs); font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+.seg button[aria-pressed="true"] { background: var(--hl); color: var(--hl-ink); }
+.btn { border: 1px solid var(--line); background: var(--raise); border-radius: 99px; padding: 6px 13px; font-weight: 600; white-space: nowrap; display: inline-flex; align-items: center; gap: 7px; }
+.btn:hover { border-color: var(--ink); }
+.btn.primary { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.btn.danger { background: var(--bad); color: #fff; border-color: var(--bad); }
+.btn.small { padding: 3px 10px; font-size: var(--t-xs); }
+.btn.quiet { border-color: transparent; background: transparent; color: var(--muted); }
+.btn.quiet:hover { color: var(--ink); background: var(--raise); border-color: var(--line); }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
+.icon-btn { border: 1px solid transparent; background: transparent; border-radius: 8px; width: 32px; height: 32px; display: inline-grid; place-items: center; color: var(--muted); flex: none; font-size: 15px; }
+.icon-btn:hover { background: var(--raise); border-color: var(--line); color: var(--ink); }
+.icon-btn[aria-pressed="true"] { background: var(--hl); color: var(--hl-ink); }
+.icon-btn[disabled] { visibility: hidden; }
+.chip { border: 1px solid var(--line); background: var(--raise); border-radius: 99px; padding: 4px 12px; font-weight: 600; font-size: var(--t-xs); display: inline-flex; align-items: center; gap: 6px; color: var(--muted); white-space: nowrap; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.card { background: var(--raise); border: 1px solid var(--line-soft); border-radius: 14px; }
+.input, .select { border: 1px solid var(--line); background: var(--raise); border-radius: 10px; padding: 6px 11px; min-width: 0; width: 100%; }
+.select { appearance: none; padding-right: 30px; background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: right 15px center, right 10px center; background-size: 5px 5px; background-repeat: no-repeat; }
+.input:focus, .select:focus { border-color: var(--ink); outline: none; }
+.lbl-row { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 10px; align-items: center; }
+.lbl-row > label, .lbl-row > span:first-child { color: var(--muted); font-weight: 600; font-size: var(--t-xs); }
+.pill { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
+.pill.ok { background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok); }
+.pill.warn { background: color-mix(in srgb, var(--warn) 17%, transparent); color: var(--warn); }
+.pill.bad { background: color-mix(in srgb, var(--bad) 14%, transparent); color: var(--bad); }
+.pill.plain { background: var(--ground); color: var(--muted); }
+.tool { width: 22px; height: 22px; border-radius: 7px; display: inline-grid; place-items: center; font: 700 11px/1 var(--f-mono); color: #fff; flex: none; position: relative; }
+.tool.sm { width: 18px; height: 18px; border-radius: 5px; font-size: 10px; }
+.tool.lg { width: 36px; height: 36px; border-radius: 10px; font-size: 15px; }
+.tool.codex { background: var(--codex); } .tool.claude { background: var(--claude); } .tool.anti { background: var(--anti); }
+.tool .st { position: absolute; right: -3px; bottom: -3px; width: 11px; height: 11px; border-radius: 50%; border: 2px solid var(--raise); }
+.st.ok, .dot.ok { background: var(--ok); } .st.warn, .dot.warn { background: var(--warn); } .st.bad, .dot.bad { background: var(--bad); }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
+.pop { position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; background: var(--raise); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 6px; min-width: 220px; }
+.pop.right { left: auto; right: 0; }
+.anchor { position: relative; display: inline-flex; }
+.menu-item { width: 100%; border: 0; background: transparent; text-align: left; border-radius: 8px; padding: 7px 10px; display: flex; align-items: center; gap: 9px; white-space: nowrap; }
+.menu-item:hover { background: var(--hl-soft); }
+.menu-item small { margin-left: auto; color: var(--faint); font-size: var(--t-xs); }
+.menu-sep { height: 1px; background: var(--line-soft); margin: 4px 6px; }
+.empty { border: 1px dashed var(--line); border-radius: 12px; padding: 14px 16px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+/* 창 */
+.window { max-width: 1280px; height: 820px; margin: 0 auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); display: grid; grid-template-columns: 196px minmax(0, 1fr); overflow: hidden; position: relative; }
+.nav { background: var(--ground); border-right: 1px solid var(--line); display: flex; flex-direction: column; padding: 10px 10px 12px; gap: 12px; min-height: 0; }
+.nav-top { display: flex; align-items: center; gap: 2px; }
+.nav-top .icon-btn { width: 28px; height: 28px; font-size: 13px; }
+.logo { display: flex; align-items: center; gap: 8px; margin-left: 6px; font-weight: 700; }
+.logo i { width: 20px; height: 20px; border-radius: 6px; background: var(--ink); color: var(--surface); display: grid; place-items: center; font: 700 11px/1 var(--f-title); font-style: normal; }
+.menu { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.menu button { width: 100%; display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; align-items: center; gap: 10px; border: 0; background: transparent; border-radius: 10px; padding: 8px 10px; text-align: left; font-weight: 500; color: var(--muted); font-size: var(--t-sm); }
+.menu button .i { font-size: 16px; }
+.menu button:hover { background: var(--surface); color: var(--ink); }
+.menu button[aria-current="page"] { background: var(--hl); color: var(--hl-ink); font-weight: 700; }
+.menu .new { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+.main { min-width: 0; min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; container-type: inline-size; }
+.page { min-height: 0; overflow: auto; padding: 20px 26px 28px; display: flex; flex-direction: column; gap: 16px; }
+.page.fixed { overflow: hidden; padding: 0; gap: 0; display: grid; }
+.phead { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.phead h2 { font: 700 var(--t-xl)/1.2 var(--f-title); margin: 0; letter-spacing: -.01em; }
+.phead .state { color: var(--faint); font-size: var(--t-xs); font-weight: 600; }
+.phead .acts { margin-left: auto; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.filters { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.statusbar { display: flex; align-items: center; gap: 12px; padding: 6px 16px; border-top: 1px solid var(--line); font-size: var(--t-xs); color: var(--muted); background: var(--surface); }
+.statusbar.err { color: var(--bad); }
+.statusbar .bar { width: 160px; height: 4px; border-radius: 4px; background: var(--line); overflow: hidden; margin-left: auto; }
+.statusbar .bar span { display: block; height: 100%; width: 40%; background: var(--ink); border-radius: 4px; animation: slide 1.1s ease-in-out infinite; }
+@keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
+@media (prefers-reduced-motion: reduce) { .statusbar .bar span { animation: none; } }
+.foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 10px 20px; border-top: 1px solid var(--line); background: var(--surface); }
+.foot .msg { margin-left: auto; color: var(--muted); font-size: var(--t-xs); max-width: 60%; }
+.foot .why { display: inline-flex; align-items: center; gap: 6px; color: var(--warn); font-size: var(--t-xs); font-weight: 600; }
+
+/* 요약 */
+.strip-wrap { position: relative; }
+.strip { position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: 100%; gap: 14px; overflow-x: auto; scroll-behavior: smooth; scroll-snap-type: x mandatory; scrollbar-width: none; padding: 2px 25%; }
+.strip .tcard { scroll-snap-align: center; transition: opacity .2s, transform .2s; }
+.strip .tcard:not(.center) { opacity: .5; transform: scale(.97); }
+.strip .tcard:not(.center):hover { opacity: .8; }
+@media (prefers-reduced-motion: reduce) { .strip { scroll-behavior: auto; } .strip .tcard { transition: none; } }
+.strip::-webkit-scrollbar { display: none; }
+.arrow { position: absolute; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line); background: var(--raise); box-shadow: var(--shadow); display: grid; place-items: center; z-index: 3; }
+.arrow.l { left: calc(25% - 22px); } .arrow.r { right: calc(25% - 22px); }
+.tcard { min-width: 0; text-align: left; cursor: pointer; border: 1px solid var(--line-soft); background: var(--raise); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.tcard:focus-within, .tcard:hover { border-color: var(--line); }
+.tcard-top { display: flex; align-items: center; gap: 12px; }
+.tcard-top b { font-size: var(--t-md); }
+.tcard-top .pill { margin-left: auto; }
+.lines { display: flex; flex-direction: column; gap: 3px; }
+.lines div { display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--muted); }
+.lines div:first-child { color: var(--ink); font-weight: 600; }
+.lines .i { color: var(--faint); }
+.lines .none { color: var(--faint); font-style: italic; }
+.tcard-acts { display: flex; flex-wrap: wrap; gap: 6px; border-top: 1px solid var(--line-soft); padding-top: 12px; }
+.acct-pop { width: 420px; max-width: calc(100vw - 80px); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.acct-pop p { margin: 0; color: var(--muted); font-size: var(--t-xs); }
+.prof { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 2px 8px; align-items: center; padding: 8px 4px; border-top: 1px solid var(--line-soft); }
+.prof small { grid-column: 1; color: var(--faint); font-size: var(--t-xs); }
+.prof .btn { grid-row: 1 / 3; }
+.extra-pop { width: 380px; max-width: calc(100vw - 80px); max-height: 300px; overflow: auto; padding: 10px 12px; }
+.extra-pop li { padding: 4px 0; border-bottom: 1px solid var(--line-soft); }
+.extra-pop ul { margin: 0; padding: 0; list-style: none; }
+.sum2 { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.box { padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+.box-head { display: flex; align-items: baseline; gap: 10px; }
+.box-head h3 { margin: 0; font-size: var(--t-md); }
+.box-head .r { margin-left: auto; display: flex; gap: 12px; }
+.link { border: 0; background: transparent; padding: 0; color: var(--ink); font-weight: 600; font-size: var(--t-xs); text-decoration: underline; text-decoration-color: var(--hl); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.rrow { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 7px 8px; border-radius: 10px; cursor: context-menu; }
+.rrow:hover { background: var(--surface); }
+.rrow b { font-weight: 600; }
+.rrow small { color: var(--faint); font-size: var(--t-xs); }
+.ctx-menu { position: absolute; z-index: 40; }
+.stats3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.stats3 div span { display: block; color: var(--faint); font-size: var(--t-xs); font-weight: 600; }
+.stats3 div b { font: 700 1.35rem/1.2 var(--f-title); }
+
+/* 사용량 */
+.cost { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; padding: 16px 18px; }
+.cost b { font: 700 2rem/1 var(--f-title); }
+.cost .note { display: flex; align-items: center; gap: 8px; color: var(--warn); font-weight: 600; font-size: var(--t-xs); margin-left: auto; }
+.chart text { fill: var(--faint); font: 10.5px var(--f-ui); }
+.chart rect.b:hover { fill: var(--hl); }
+.tbl { width: 100%; border-collapse: collapse; }
+.tbl th { text-align: left; font-size: var(--t-xs); color: var(--faint); font-weight: 600; padding: 0 10px 8px 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.tbl td { padding: 8px 10px 8px 0; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
+.tbl .r { text-align: right; }
+.tbl-wrap { overflow-x: auto; }
+.share { display: inline-block; width: 60px; height: 6px; background: var(--ground); border-radius: 6px; overflow: hidden; vertical-align: middle; margin-right: 6px; }
+.share span { display: block; height: 100%; background: var(--ink); }
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+
+/* 터미널 */
+.term-page { grid-template-rows: auto minmax(0, 1fr); }
+.rooms { display: flex; align-items: center; gap: 6px; padding: 10px 14px; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: thin; }
+.room { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--raise); border-radius: 12px; padding: 5px 6px 5px 6px; font-weight: 600; white-space: nowrap; flex: none; }
+.room .name { max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
+.room[aria-pressed="true"] { background: var(--hl); border-color: var(--hl); color: var(--hl-ink); }
+.room .x { border: 0; background: transparent; color: inherit; opacity: .55; width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; }
+.room .x:hover { opacity: 1; background: color-mix(in srgb, var(--ink) 10%, transparent); }
+.room .new-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 25%, transparent); }
+.room-plus { width: 36px; height: 36px; border-radius: 12px; border: 1.5px dashed var(--line); background: transparent; display: grid; place-items: center; font-size: 16px; color: var(--muted); flex: none; }
+.room-plus[aria-pressed="true"] { border-style: solid; border-color: var(--ink); background: var(--raise); color: var(--ink); }
+.roombody { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
+.rtools { display: flex; align-items: center; gap: 2px; padding: 6px 12px; border-bottom: 1px solid var(--line); background: var(--surface); min-width: 0; }
+.rtools .sep { width: 1px; height: 18px; background: var(--line); margin: 0 6px; }
+.rtools .title { margin-left: auto; color: var(--faint); font-size: var(--t-xs); padding-left: 10px; }
+.findbar { display: flex; align-items: center; gap: 6px; flex: 1; }
+.findbar .input { max-width: 320px; padding: 4px 10px; }
+.chat { display: grid; grid-template-rows: minmax(0, 1fr) auto; min-height: 0; background: var(--surface); }
+.msgs { overflow: auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 12px; }
+.msg { max-width: min(760px, 92%); display: flex; flex-direction: column; gap: 6px; }
+.msg.me { align-self: flex-end; background: var(--hl-soft); border-radius: 16px 16px 4px 16px; padding: 10px 14px; }
+.msg.ai { align-self: flex-start; }
+.msg.ai .body { background: var(--raise); border: 1px solid var(--line-soft); border-radius: 4px 16px 16px 16px; padding: 10px 14px; }
+.msg .who { font-size: 11px; font-weight: 700; color: var(--faint); display: flex; align-items: center; gap: 6px; }
+.msg ol { margin: 4px 0 0; padding-left: 20px; }
+.toolcall { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line-soft); background: var(--raise); border-radius: 10px; padding: 4px 10px; font: 400 12px var(--f-mono); color: var(--muted); align-self: flex-start; }
+.toolcall .ok { color: var(--ok); } .toolcall .add { color: var(--ok); }
+.ask { align-self: stretch; border: 1.5px solid var(--warn); background: color-mix(in srgb, var(--warn) 8%, var(--raise)); border-radius: 14px; padding: 12px 14px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.ask .i { color: var(--warn); font-size: 18px; }
+.ask div { flex: 1; min-width: 200px; }
+.ask code { font: 12px var(--f-mono); }
+.composer { border-top: 1px solid var(--line); padding: 10px 16px 14px; background: var(--surface); position: relative; }
+.compose-box { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 6px; align-items: end; border: 1.5px solid var(--line); background: var(--raise); border-radius: 16px; padding: 6px; }
+.compose-box:focus-within { border-color: var(--ink); }
+.compose-box textarea { border: 0; background: transparent; resize: none; padding: 6px 4px; min-height: 34px; max-height: 160px; line-height: 1.5; outline: none; }
+.send { width: 34px; height: 34px; border-radius: 12px; border: 0; background: var(--ink); color: var(--surface); display: grid; place-items: center; }
+.compose-hint { display: flex; gap: 14px; margin-top: 6px; font-size: 11px; color: var(--faint); }
+.cmdpop { position: absolute; left: 16px; right: 16px; bottom: calc(100% - 4px); max-width: 620px; background: var(--raise); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 6px; max-height: 340px; overflow: auto; z-index: 10; }
+.cmdgroup { font-size: 11px; font-weight: 700; color: var(--faint); padding: 8px 10px 4px; display: flex; align-items: center; gap: 6px; }
+.cmd { width: 100%; border: 0; background: transparent; text-align: left; border-radius: 10px; padding: 7px 10px; display: grid; grid-template-columns: auto auto minmax(0, 1fr); gap: 10px; align-items: baseline; }
+.cmd.on, .cmd:hover { background: var(--hl-soft); }
+.cmd b { font: 600 13px var(--f-mono); white-space: nowrap; }
+.cmd em { font: 400 11px var(--f-mono); color: var(--faint); font-style: normal; white-space: nowrap; }
+.cmd span { color: var(--muted); font-size: var(--t-xs); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cmd.tui b, .cmd.tui span { color: var(--faint); }
+.term { background: var(--term-bg); color: var(--term-fg); min-height: 0; display: flex; position: relative; }
+.term pre { margin: 0; padding: 18px 22px; font: 400 13px/1.7 var(--f-mono); overflow: auto; white-space: pre-wrap; word-break: break-word; flex: 1; }
+.term .d { color: var(--term-dim); } .term .c { color: var(--claude); } .term .x { color: var(--codex); }
+.term .g { color: #7fcf8f; } .term .y { color: #ebc35a; } .term .u { color: #a6c2ff; } .term .q { background: #3b3410; color: #ffe08a; }
+.caret { display: inline-block; width: .6em; background: var(--term-fg); animation: blink 1.1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .caret { animation: none; } }
+
+/* 새 터미널 */
+.nt { display: grid; grid-template-rows: minmax(0, 1fr) auto; min-height: 0; }
+.nt-steps { overflow: auto; padding: 22px 28px; display: flex; flex-direction: column; gap: 6px; }
+.step { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 4px 12px; padding: 10px 0; }
+.step.later { opacity: .4; }
+.step .mark { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; border: 1.5px solid var(--line); color: var(--faint); background: var(--raise); margin-top: 1px; }
+.step.done .mark { background: var(--ink); border-color: var(--ink); color: var(--surface); }
+.step.now .mark { border-color: var(--ink); color: var(--ink); box-shadow: 0 0 0 3px var(--hl); }
+.step h4 { margin: 0; font-size: var(--t-md); height: 26px; display: flex; align-items: center; gap: 8px; }
+.step h4 small { color: var(--faint); font-weight: 600; font-size: var(--t-xs); }
+.step .sbody { grid-column: 2; display: flex; flex-direction: column; gap: 8px; max-width: 720px; }
+.tools3 { display: flex; flex-wrap: wrap; gap: 8px; }
+.toolpick { width: 150px; border: 1.5px solid var(--line); background: var(--raise); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 8px; text-align: left; }
+.toolpick[aria-pressed="true"] { border-color: var(--ink); box-shadow: 0 0 0 3px var(--hl); }
+.toolpick small { color: var(--faint); font-size: var(--t-xs); }
+.toolpick .miss { color: var(--warn); }
+.picker { position: relative; width: 100%; }
+.picker > button { width: 100%; display: flex; align-items: center; gap: 8px; text-align: left; border: 1px solid var(--line); background: var(--raise); border-radius: 10px; padding: 7px 11px; }
+.picker > button .ph { color: var(--faint); }
+.picker > button .i:last-child { margin-left: auto; color: var(--faint); }
+.picker .pop { left: 0; right: 0; padding: 6px; }
+.picker .plist { max-height: 200px; overflow: auto; margin-top: 6px; }
+.prow { width: 100%; border: 0; background: transparent; text-align: left; border-radius: 8px; padding: 6px 9px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 10px; align-items: baseline; }
+.prow:hover, .prow[aria-selected="true"] { background: var(--hl-soft); }
+.prow small { color: var(--faint); font-size: var(--t-xs); white-space: nowrap; }
+.prow .sub { grid-column: 1 / -1; color: var(--faint); font-size: 11px; }
+.with-btn { display: flex; gap: 6px; }
+.nt-foot { border-top: 1px solid var(--line); background: var(--raise); padding: 12px 22px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 14px; align-items: center; }
+.nt-foot .sentence { font-weight: 600; }
+.nt-foot .left-hint { color: var(--warn); font-weight: 600; }
+.cmdline { display: flex; align-items: center; gap: 8px; grid-column: 1; min-width: 0; }
+.cmdline code { font: 12px var(--f-mono); background: var(--term-bg); color: var(--term-fg); border-radius: 8px; padding: 5px 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.nt-foot .go { grid-column: 2; grid-row: 1 / span 2; display: flex; gap: 8px; }
+
+/* 세션 */
+.sess-page { grid-template-rows: auto minmax(0, 1fr) auto; }
+.sess-top { padding: 18px 22px 12px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--line); }
+.searchbox { display: flex; gap: 6px; align-items: center; flex: 1 1 320px; min-width: 0; max-width: 560px; }
+.searchbox .input { border-radius: 99px; padding-left: 34px; background-image: none; }
+.searchbox .wrap { position: relative; flex: 1; min-width: 0; }
+.searchbox .wrap .i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--faint); }
+.split { display: grid; grid-template-columns: 360px minmax(0, 1fr); min-height: 0; }
+.list-pane { border-right: 1px solid var(--line); display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
+.list-head { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--line-soft); min-height: 46px; }
+.list-head.sel { background: var(--hl-soft); }
+.list-head .grow { flex: 1; }
+.slist { overflow: auto; list-style: none; margin: 0; padding: 4px 6px; }
+.srow { display: grid; grid-template-columns: 18px 22px minmax(0, 1fr); gap: 2px 10px; align-items: center; padding: 8px 8px; border-radius: 10px; cursor: pointer; }
+.srow:hover { background: var(--raise); }
+.srow[aria-selected="true"] { background: var(--raise); box-shadow: inset 3px 0 0 var(--hl); }
+.srow input { margin: 0; accent-color: var(--ink); }
+.srow .t { font-weight: 600; }
+.srow .m { grid-column: 3; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; color: var(--faint); font-size: var(--t-xs); }
+.tree { list-style: none; margin: 0; padding: 4px 8px; overflow: auto; }
+.tree .proj { font-weight: 700; padding: 8px 6px 4px; display: flex; gap: 8px; align-items: center; }
+.tree .tsess { padding: 6px 6px 6px 22px; border-radius: 8px; cursor: pointer; display: flex; gap: 8px; align-items: center; }
+.tree .tsess:hover { background: var(--raise); }
+.tree .hit { padding: 3px 6px 3px 48px; font-size: var(--t-xs); color: var(--muted); cursor: pointer; }
+.tree .hit mark { background: var(--hl); color: var(--hl-ink); border-radius: 3px; padding: 0 2px; }
+.detail { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
+.dtools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 18px; border-bottom: 1px solid var(--line-soft); }
+.dtools label { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: var(--t-xs); font-weight: 600; margin-left: auto; }
+.timeline { overflow: auto; padding: 16px 22px; display: flex; flex-direction: column; gap: 10px; }
+.tl { display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 10px; }
+.tl .role { font-size: 11px; font-weight: 700; color: var(--faint); padding-top: 2px; }
+.tl .role small { display: block; font-weight: 500; }
+.tl .txt { white-space: pre-wrap; }
+.tl.me .txt { border-left: 3px solid var(--hl); padding-left: 10px; font-weight: 500; }
+.tl.tool .txt { font: 12px var(--f-mono); color: var(--muted); background: var(--surface); border-radius: 8px; padding: 6px 10px; }
+.centered { display: grid; place-items: center; color: var(--muted); padding: 40px; text-align: center; }
+
+/* 지침 · 프롬프트 */
+.ed-page { grid-template-rows: auto minmax(0, 1fr) auto; }
+.ed-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 14px 20px; border-bottom: 1px solid var(--line); }
+.ed-top h2 { font: 700 var(--t-xl)/1.2 var(--f-title); margin: 0; }
+.ed-top .acts { margin-left: auto; display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.ed-split { display: grid; grid-template-columns: 280px minmax(0, 1fr); min-height: 0; }
+.ed-split.nolist { grid-template-columns: minmax(0, 1fr); }
+.ed-split.nolist .lib { display: none; }
+.lib { border-right: 1px solid var(--line); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; }
+.lib-filter { padding: 10px 12px; display: flex; gap: 4px; flex-wrap: wrap; }
+.lib ul { list-style: none; margin: 0; padding: 0 8px 8px; overflow: auto; }
+.lib-item { width: 100%; border: 0; background: transparent; text-align: left; border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; gap: 1px; }
+.lib-item:hover { background: var(--raise); }
+.lib-item[aria-current="true"] { background: var(--hl); color: var(--hl-ink); }
+.lib-item .badge { font-size: 10.5px; font-weight: 700; opacity: .6; }
+.lib-item b { font-weight: 600; }
+.lib-item small { font-size: var(--t-xs); opacity: .7; }
+.lib-sep { font-size: 11px; font-weight: 700; color: var(--faint); padding: 10px 10px 4px; }
+.lib-foot { padding: 10px 12px; border-top: 1px solid var(--line-soft); }
+.ed-main { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); min-height: 0; }
+.ed-form { overflow: auto; padding: 18px 22px 28px; display: flex; flex-direction: column; gap: 14px; }
+.ed-preview { border-left: 1px solid var(--line); background: var(--surface); overflow: auto; padding: 18px 22px; }
+.ed-preview h5 { margin: 0 0 10px; font-size: var(--t-xs); color: var(--faint); font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.md { font: 400 12.5px/1.65 var(--f-mono); white-space: pre-wrap; }
+.md .h { font-weight: 700; color: var(--ink); }
+.fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 10px; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field > span { font-size: var(--t-xs); color: var(--muted); font-weight: 600; }
+.link-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 12px; border-radius: 12px; background: var(--raise); border: 1px solid var(--line-soft); }
+.link-row .input { flex: 1 1 260px; width: auto; font: 12px var(--f-mono); }
+.readers { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
+.reader { display: inline-flex; align-items: center; gap: 6px; font-size: var(--t-xs); color: var(--muted); }
+.section-title { display: flex; align-items: center; gap: 8px; }
+.section-title h3 { margin: 0; font-size: var(--t-md); }
+.section-title .grow { flex: 1; }
+.acts-list { display: flex; flex-direction: column; gap: 4px; }
+.arow { display: grid; grid-template-columns: 74px minmax(0, 1fr) auto; gap: 8px; align-items: start; }
+.arow textarea { border: 1px solid transparent; background: transparent; border-radius: 8px; padding: 4px 8px; resize: none; overflow: hidden; width: 100%; line-height: 1.5; display: block; }
+.arow textarea:hover { border-color: var(--line); background: var(--raise); }
+.arow textarea:focus { border-color: var(--ink); background: var(--raise); outline: none; }
+.arow .mv { display: flex; opacity: .35; }
+.arow:hover .mv, .arow:focus-within .mv { opacity: 1; }
+.arow .mv .icon-btn { width: 26px; height: 28px; font-size: 12px; }
+.prio { appearance: none; border: 0; border-radius: 7px; padding: 5px 8px; font: 700 10.5px/1.2 var(--f-mono); letter-spacing: .03em; text-align: center; margin-top: 2px; cursor: pointer; }
+.prio.MUST { background: color-mix(in srgb, var(--bad) 15%, transparent); color: var(--bad); }
+.prio.SHOULD { background: color-mix(in srgb, var(--warn) 17%, transparent); color: var(--warn); }
+.prio.MAY { background: var(--ground); color: var(--muted); }
+.rule { border: 1px solid var(--line-soft); background: var(--raise); border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+.rule-head { display: flex; align-items: center; gap: 8px; font-size: var(--t-xs); color: var(--faint); font-weight: 700; }
+.rule-head .grow { flex: 1; }
+.group { border: 1.5px dashed var(--line); border-radius: 12px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+.group .ghead { display: flex; align-items: center; gap: 6px; }
+.opbtn { border: 0; border-radius: 6px; padding: 3px 9px; font-weight: 700; font-size: 11px; background: var(--hl-soft); color: var(--ink); }
+.leaf { display: flex; gap: 4px; align-items: center; }
+.leaf .input { border-radius: 99px; padding: 4px 12px; }
+.expr { font: 12px var(--f-mono); color: var(--muted); background: var(--surface); border-radius: 8px; padding: 6px 10px; }
+.expr b { color: var(--faint); font-family: var(--f-ui); font-size: 11px; margin-right: 8px; }
+.add { border: 0; background: transparent; color: var(--muted); font-size: var(--t-xs); font-weight: 600; padding: 4px 6px; border-radius: 6px; display: inline-flex; align-items: center; gap: 5px; }
+.add:hover { color: var(--ink); background: var(--surface); }
+.pbody { width: 100%; min-height: 260px; flex: 1; border: 1px solid var(--line); background: var(--raise); border-radius: 12px; padding: 14px 16px; font: 13px/1.7 var(--f-mono); resize: vertical; }
+.starter { border: 1px solid var(--ok); background: color-mix(in srgb, var(--ok) 7%, var(--raise)); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+.starter code { font: 12px var(--f-mono); }
+
+/* 지침: 문서 한 장 */
+.rdoc-wrap { overflow: auto; min-height: 0; padding: 18px 24px 36px; }
+.rdoc { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 26px; }
+.readers-bar { max-width: 760px; margin: 0 auto 18px; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; font-size: var(--t-xs); padding: 8px 12px; border-radius: 12px; background: var(--raise); border: 1px solid var(--line-soft); }
+.readers-bar.warn { border-color: color-mix(in srgb, var(--bad) 45%, transparent); }
+.readers-bar .rd { display: inline-flex; align-items: center; gap: 5px; }
+.readers-bar .ok { color: var(--ok); } .readers-bar .no { color: var(--bad); }
+.readers-bar .btn { margin-left: auto; }
+.doc-title { border: 0; background: transparent; font: 700 1.6rem/1.25 var(--f-title); padding: 0; width: 100%; outline: none; }
+.doc-desc { border: 0; background: transparent; color: var(--muted); width: 100%; padding: 2px 0 0; outline: none; }
+.rdoc h3 { margin: 0 0 6px; font-size: var(--t-xs); color: var(--faint); font-weight: 700; letter-spacing: .06em; }
+.dlist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.ditem { display: grid; grid-template-columns: 74px minmax(0, 1fr) 32px; gap: 8px; align-items: start; padding: 3px 0; border-bottom: 1px solid var(--line-soft); }
+.ditem textarea { border: 0; background: transparent; resize: none; overflow: hidden; width: 100%; padding: 5px 6px; line-height: 1.55; font-size: var(--t-md); display: block; }
+.ditem textarea:focus { outline: none; background: var(--raise); border-radius: 8px; box-shadow: 0 0 0 1.5px var(--ink); }
+.ditem .more { opacity: 0; }
+.ditem:hover .more, .ditem:focus-within .more, .ditem .more:has(.pop) { opacity: 1; }
+.pw { border: 0; border-radius: 99px; padding: 4px 0; font-weight: 700; font-size: var(--t-xs); margin-top: 4px; white-space: nowrap; }
+.pw.MUST { background: color-mix(in srgb, var(--bad) 15%, transparent); color: var(--bad); }
+.pw.SHOULD { background: color-mix(in srgb, var(--warn) 17%, transparent); color: var(--warn); }
+.pw.MAY { background: var(--ground); color: var(--muted); }
+.rcard { border: 1px solid var(--line-soft); background: var(--raise); border-radius: 16px; padding: 10px 14px 8px; display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.when-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding-bottom: 8px; border-bottom: 1px dashed var(--line); }
+.when-line .grow { flex: 1; }
+.when-lbl { font-weight: 700; font-size: var(--t-xs); background: var(--hl); color: var(--hl-ink); border-radius: 6px; padding: 2px 8px; }
+.cchip { display: inline-flex; align-items: center; border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 0 3px 0 11px; }
+.cchip input { border: 0; background: transparent; padding: 4px 0; outline: none; font-weight: 600; max-width: 340px; }
+.cchip .cx { border: 0; background: transparent; color: var(--faint); width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; font-size: 10px; opacity: 0; }
+.cchip:hover .cx, .cchip:focus-within .cx { opacity: 1; }
+.cgroup { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; border: 1.5px dashed var(--line); border-radius: 14px; padding: 3px 4px 3px 8px; }
+.opword { border: 0; background: transparent; font-weight: 700; font-size: var(--t-xs); color: var(--muted); padding: 2px 4px; border-radius: 6px; text-decoration: underline dotted; text-underline-offset: 3px; }
+.opword:hover { background: var(--hl-soft); color: var(--ink); }
+.add.big { border: 1.5px dashed var(--line); border-radius: 14px; padding: 10px; justify-content: center; width: 100%; }
+.tpl { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 320px; border: 1px solid var(--line-soft); border-radius: 12px; overflow: hidden; }
+.tpl-l { border-right: 1px solid var(--line-soft); overflow: auto; max-height: 380px; padding: 4px 6px; }
+.tpl-r { padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; overflow: auto; max-height: 380px; }
+.tpl-item { display: grid; grid-template-columns: 18px auto minmax(0, 1fr); gap: 8px; align-items: center; padding: 6px 4px; border-bottom: 1px solid var(--line-soft); cursor: pointer; }
+.tpl-item input { accent-color: var(--ink); margin: 0; }
+@container (max-width: 520px) { .strip { padding: 2px 12%; } .arrow.l { left: calc(12% - 22px); } .arrow.r { right: calc(12% - 22px); } }
+@container (max-width: 700px) { .tpl { grid-template-columns: minmax(0, 1fr); } .tpl-l { max-height: 160px; border-right: 0; border-bottom: 1px solid var(--line-soft); } .ditem { grid-template-columns: 62px minmax(0, 1fr) 32px; } .rdoc-wrap { padding: 14px; } }
+
+/* 설정 */
+.set { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: start; }
+.set .card { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+.set .wide { grid-column: 1 / -1; }
+.set h3 { margin: 0; font-size: var(--t-md); display: flex; align-items: center; gap: 8px; }
+.set h3 .i { color: var(--faint); }
+.sfield { display: flex; flex-direction: column; gap: 4px; }
+.sfield > span { font-size: var(--t-xs); font-weight: 600; color: var(--muted); }
+.sfield small { color: var(--faint); font-size: 11px; }
+.inline { display: flex; gap: 6px; align-items: center; }
+.num-in { width: 110px; }
+.themes { display: flex; gap: 8px; flex-wrap: wrap; }
+.themecard { border: 1.5px solid var(--line); background: var(--raise); border-radius: 12px; padding: 7px; width: 108px; display: flex; flex-direction: column; gap: 6px; text-align: left; }
+.themecard[aria-pressed="true"] { border-color: var(--ink); box-shadow: 0 0 0 3px var(--hl); }
+.themecard .sw { height: 40px; border-radius: 7px; display: grid; grid-template-columns: 30% 1fr; overflow: hidden; border: 1px solid var(--line); }
+.themecard b { font-size: var(--t-xs); padding: 0 3px; }
+.plug { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 2px 10px; padding: 8px 0; border-top: 1px solid var(--line-soft); }
+.plug .i { margin-top: 3px; }
+.plug small { grid-column: 2; color: var(--faint); font-size: var(--t-xs); }
+.plug .err { grid-column: 2; color: var(--bad); font-size: var(--t-xs); }
+.keys { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 14px; margin: 0; }
+.keys dt kbd { font: 600 11px var(--f-mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; background: var(--raise); }
+.keys dd { margin: 0; color: var(--muted); }
+.price input { width: 76px; text-align: right; padding: 3px 6px; border: 1px solid var(--line); background: var(--raise); border-radius: 6px; }
+
+/* 프로젝트 줄 */
+.topbar { display: flex; align-items: center; gap: 10px; padding: 8px 12px 8px 14px; border-bottom: 1px solid var(--line); background: var(--surface); min-width: 0; }
+.projbtn { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--raise); border-radius: 12px; padding: 6px 10px 6px 12px; font-weight: 700; font-size: var(--t-md); max-width: 280px; }
+.projbtn:hover, .projbtn[aria-expanded="true"] { border-color: var(--ink); }
+.projbtn .i:first-child { color: var(--faint); }
+.projbtn .i:last-child { color: var(--faint); font-size: 12px; }
+.topbar .path { font-size: 11.5px; color: var(--faint); }
+.topbar .grow { flex: 1; min-width: 0; }
+.proj-pop { width: 340px; }
+.proj-pop .menu-item b { font-weight: 600; }
+.proj-pop .menu-item[aria-current="true"] { background: var(--hl); color: var(--hl-ink); }
+.proj-pop .menu-item[aria-current="true"] small { color: inherit; opacity: .7; }
+.bell { position: relative; }
+.bell .badge { position: absolute; top: 1px; right: 0; min-width: 16px; height: 16px; border-radius: 99px; background: var(--bad); color: #fff; font: 700 10px/16px var(--f-ui); padding: 0 4px; text-align: center; }
+.bell-pop { width: 360px; padding: 6px; }
+.pop-head { display: flex; align-items: center; gap: 8px; padding: 6px 8px 8px; font-size: var(--t-xs); color: var(--faint); font-weight: 700; }
+.pop-head .link { margin-left: auto; }
+.troom { width: 100%; border: 0; background: transparent; text-align: left; border-radius: 10px; padding: 8px; display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 2px 10px; align-items: center; }
+.troom:hover { background: var(--hl-soft); }
+.troom small { grid-column: 2; color: var(--faint); font-size: var(--t-xs); }
+.troom .pill { grid-column: 3; grid-row: 1 / 3; }
+.acctbtn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid transparent; background: transparent; border-radius: 10px; padding: 4px 8px; color: var(--muted); font-weight: 600; font-size: var(--t-xs); }
+.acctbtn:hover, .acctbtn[aria-expanded="true"] { background: var(--raise); border-color: var(--line); color: var(--ink); }
+.acctbtn .tools { display: inline-flex; gap: 5px; }
+.acct-list { width: 440px; max-width: calc(100vw - 60px); padding: 6px; }
+.arow2 { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 2px 12px; align-items: center; padding: 10px 8px; border-top: 1px solid var(--line-soft); }
+.arow2:first-of-type { border-top: 0; }
+.arow2 .meta { grid-column: 2; color: var(--muted); font-size: var(--t-xs); }
+.arow2 .acts { grid-column: 3; grid-row: 1 / 3; display: flex; gap: 4px; }
+.arow2 .sub { grid-column: 1 / -1; margin-top: 8px; display: flex; flex-direction: column; gap: 8px; background: var(--surface); border-radius: 12px; padding: 10px; }
+.arow2 .sub p { margin: 0; color: var(--muted); font-size: var(--t-xs); }
+.gearbtn[aria-pressed="true"] { background: var(--hl); color: var(--hl-ink); }
+
+/* 프로젝트 첫 화면 */
+.home { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.home .col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.trow { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 8px; border-radius: 10px; }
+.trow:hover { background: var(--surface); }
+.trow b { font-weight: 600; }
+.attn { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 4px; border-top: 1px solid var(--line-soft); }
+.attn:first-of-type { border-top: 0; }
+.attn > .i { color: var(--warn); }
+.attn.bad > .i { color: var(--bad); }
+.attn small { display: block; color: var(--faint); font-size: var(--t-xs); }
+.allgood { display: flex; align-items: center; gap: 8px; color: var(--ok); font-weight: 600; padding: 4px; }
+.srow2 { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 2px 10px; align-items: center; padding: 8px; border-radius: 10px; }
+.srow2:hover { background: var(--surface); }
+.srow2 .t { font-weight: 600; }
+.srow2 small { grid-column: 2; color: var(--faint); font-size: var(--t-xs); }
+.srow2 .acts { grid-column: 3; grid-row: 1 / 3; display: flex; gap: 4px; opacity: .55; }
+.srow2:hover .acts, .srow2:focus-within .acts { opacity: 1; }
+.pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+.pcard { border: 1px solid var(--line-soft); background: var(--raise); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; text-align: left; }
+.pcard:hover { border-color: var(--ink); }
+.pcard .top { display: flex; align-items: center; gap: 8px; }
+.pcard .top b { font-size: var(--t-md); }
+.pcard .top .pill { margin-left: auto; }
+.pcard .path { font: 11px var(--f-mono); color: var(--faint); }
+.pcard .live { display: flex; flex-wrap: wrap; gap: 6px; min-height: 22px; }
+.pcard .foot2 { display: flex; gap: 12px; color: var(--muted); font-size: var(--t-xs); border-top: 1px solid var(--line-soft); padding-top: 8px; }
+.pcard.add { border-style: dashed; align-items: center; justify-content: center; color: var(--muted); min-height: 140px; font-weight: 600; }
+.cards3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.cards3 .card { padding: 14px 16px; }
+.cards3 span { display: block; color: var(--faint); font-size: var(--t-xs); font-weight: 600; }
+.cards3 b { font: 700 1.6rem/1.2 var(--f-title); }
+.cards3 small { color: var(--faint); font-size: var(--t-xs); }
+.thr { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px 4px; border-top: 1px solid var(--line-soft); margin-top: 4px; font-size: var(--t-xs); color: var(--muted); }
+.thr input { width: 56px; padding: 2px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--raise); text-align: right; }
+.choose { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 40px 20px; text-align: center; color: var(--muted); }
+.choose .pgrid { width: min(720px, 100%); text-align: left; }
+@container (max-width: 760px) { .home, .cards3 { grid-template-columns: minmax(0, 1fr); } .topbar .path { display: none; } .acctbtn .lbl { display: none; } }
+
+/* 구독 한도 */
+.limits { padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
+.lrow { display: grid; grid-template-columns: 22px 92px minmax(0, 1fr); gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line-soft); }
+.lrow:first-of-type { border-top: 0; }
+.lrow .name { font-weight: 600; }
+.lbars { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 18px; }
+@container (max-width: 560px) { .lbars { grid-template-columns: minmax(0, 1fr); } .lrow { grid-template-columns: 22px minmax(0, 1fr); } .lrow .lbars, .lrow > .lnote, .lrow > .with-btn { grid-column: 1 / -1; } }
+.lbar { display: flex; flex-direction: column; gap: 4px; }
+.lbar .head { display: flex; align-items: baseline; gap: 8px; font-size: var(--t-xs); color: var(--muted); }
+.lbar .head b { font: 700 var(--t-md) var(--f-ui); color: var(--ink); }
+.lbar .head small { margin-left: auto; color: var(--faint); }
+.track { height: 8px; border-radius: 8px; background: var(--ground); overflow: hidden; }
+.track span { display: block; height: 100%; border-radius: 8px; background: var(--ink); }
+.track.warn span { background: var(--warn); } .track.bad span { background: var(--bad); }
+.lnote { color: var(--faint); font-size: var(--t-xs); }
+
+/* 대화상자 */
+.modal-bg { position: absolute; inset: 0; background: color-mix(in srgb, var(--ink) 35%, transparent); display: grid; place-items: center; z-index: 50; padding: 20px; }
+.modal { width: min(520px, 100%); background: var(--raise); border-radius: 18px; box-shadow: var(--shadow); display: flex; flex-direction: column; max-height: 100%; }
+.modal.wide { width: min(700px, 100%); }
+.modal header { padding: 18px 20px 6px; }
+.modal header h3 { margin: 0; font: 700 var(--t-lg)/1.3 var(--f-title); }
+.modal .mbody { padding: 8px 20px 14px; display: flex; flex-direction: column; gap: 10px; overflow: auto; }
+.modal footer { padding: 12px 20px 16px; display: flex; justify-content: flex-end; gap: 8px; }
+.check { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; cursor: pointer; }
+.check input { margin: 3px 0 0; accent-color: var(--bad); }
+.check small { display: block; color: var(--faint); font-size: var(--t-xs); }
+.diff { font: 12px/1.6 var(--f-mono); background: var(--surface); border-radius: 10px; padding: 8px 10px; max-height: 260px; overflow: auto; white-space: pre; }
+.diff .m { color: var(--bad); } .diff .p { color: var(--ok); }
+.toast { position: absolute; left: 50%; bottom: 46px; transform: translateX(-50%); background: var(--ink); color: var(--surface); border-radius: 99px; padding: 8px 16px; font-size: var(--t-xs); font-weight: 600; box-shadow: var(--shadow); z-index: 60; white-space: nowrap; display: flex; gap: 8px; align-items: center; }
+
+/* 본문 폭에 맞춘다 */
+@container (max-width: 980px) {
+  .ed-main { grid-template-columns: minmax(0, 1fr); }
+  .ed-preview { display: none; }
+  .split { grid-template-columns: 300px minmax(0, 1fr); }
+  .set { grid-template-columns: minmax(0, 1fr); }
+}
+@container (max-width: 760px) {
+  .sum2, .two { grid-template-columns: minmax(0, 1fr); }
+  .split { grid-template-columns: minmax(0, 1fr); }
+  .split.has-sel .list-pane { display: none; }
+  .split:not(.has-sel) .detail { display: none; }
+  .ed-split { grid-template-columns: minmax(0, 1fr); }
+  .ed-split .lib { display: none; }
+  .fields { grid-template-columns: minmax(0, 1fr); }
+  .rtools .title { display: none; }
+  .nt-foot { grid-template-columns: minmax(0, 1fr); }
+  .nt-foot .go { grid-column: 1; grid-row: auto; }
+  .page { padding: 16px; }
+}
+@media (max-width: 860px) {
+  .window { grid-template-columns: 60px minmax(0, 1fr); }
+  .nav { padding: 10px 6px; align-items: center; }
+  .logo span, .menu .lbl, .menu kbd, .nav-top .icon-btn { display: none; }
+  .menu button { grid-template-columns: 18px; justify-content: center; position: relative; padding: 10px; }
+  .menu .new { position: absolute; top: 6px; right: 6px; }
+}
+@media (max-width: 560px) {
+  body { padding: 16px 16px 32px; }
+  .window { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); height: 780px; }
+  .nav { flex-direction: row; border-right: 0; border-bottom: 1px solid var(--line); overflow-x: auto; }
+  .logo { display: none; }
+  .menu { flex-direction: row; }
+}
+</style>
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true"><!-- Bootstrap Icons 1.11.3, MIT License, https://icons.getbootstrap.com -->
+<symbol id="bi-arrow-clockwise" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"/>
+  <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"/></symbol>
+<symbol id="bi-arrow-down" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1"/></symbol>
+<symbol id="bi-arrow-left-right" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 11.5a.5.5 0 0 0 .5.5h11.793l-3.147 3.146a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 11H1.5a.5.5 0 0 0-.5.5m14-7a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 1 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 4H14.5a.5.5 0 0 1 .5.5"/></symbol>
+<symbol id="bi-arrow-left" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"/></symbol>
+<symbol id="bi-arrow-repeat" viewBox="0 0 16 16"><path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41m-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9"/>
+  <path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5 5 0 0 0 8 3M3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9z"/></symbol>
+<symbol id="bi-arrow-right" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/></symbol>
+<symbol id="bi-arrow-up" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5"/></symbol>
+<symbol id="bi-bar-chart-line" viewBox="0 0 16 16"><path d="M11 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12h.5a.5.5 0 0 1 0 1H.5a.5.5 0 0 1 0-1H1v-3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3h1V7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7h1zm1 12h2V2h-2zm-3 0V7H7v7zm-5 0v-3H2v3z"/></symbol>
+<symbol id="bi-bookmark-star" viewBox="0 0 16 16"><path d="M7.84 4.1a.178.178 0 0 1 .32 0l.634 1.285a.18.18 0 0 0 .134.098l1.42.206c.145.021.204.2.098.303L9.42 6.993a.18.18 0 0 0-.051.158l.242 1.414a.178.178 0 0 1-.258.187l-1.27-.668a.18.18 0 0 0-.165 0l-1.27.668a.178.178 0 0 1-.257-.187l.242-1.414a.18.18 0 0 0-.05-.158l-1.03-1.001a.178.178 0 0 1 .098-.303l1.42-.206a.18.18 0 0 0 .134-.098z"/>
+  <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5zm2-1a1 1 0 0 0-1 1v12.566l4.723-2.482a.5.5 0 0 1 .554 0L13 14.566V2a1 1 0 0 0-1-1z"/></symbol>
+<symbol id="bi-box-arrow-in-right" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M6 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 0-1 0v2A1.5 1.5 0 0 0 6.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-8A1.5 1.5 0 0 0 5 3.5v2a.5.5 0 0 0 1 0z"/>
+  <path fill-rule="evenodd" d="M11.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H1.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z"/></symbol>
+<symbol id="bi-box-arrow-up-right" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5"/>
+  <path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"/></symbol>
+<symbol id="bi-chat-dots" viewBox="0 0 16 16"><path d="M5 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0m4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2"/>
+  <path d="m2.165 15.803.02-.004c1.83-.363 2.948-.842 3.468-1.105A9 9 0 0 0 8 15c4.418 0 8-3.134 8-7s-3.582-7-8-7-8 3.134-8 7c0 1.76.743 3.37 1.97 4.6a10.4 10.4 0 0 1-.524 2.318l-.003.011a11 11 0 0 1-.244.637c-.079.186.074.394.273.362a22 22 0 0 0 .693-.125m.8-3.108a1 1 0 0 0-.287-.801C1.618 10.83 1 9.468 1 8c0-3.192 3.004-6 7-6s7 2.808 7 6-3.004 6-7 6a8 8 0 0 1-2.088-.272 1 1 0 0 0-.711.074c-.387.196-1.24.57-2.634.893a11 11 0 0 0 .398-2"/></symbol>
+<symbol id="bi-chat-left-text" viewBox="0 0 16 16"><path d="M14 1a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4.414A2 2 0 0 0 3 11.586l-2 2V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12.793a.5.5 0 0 0 .854.353l2.853-2.853A1 1 0 0 1 4.414 12H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/>
+  <path d="M3 3.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5M3 6a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 6m0 2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5"/></symbol>
+<symbol id="bi-chat-square-quote" viewBox="0 0 16 16"><path d="M14 1a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-2.5a2 2 0 0 0-1.6.8L8 14.333 6.1 11.8a2 2 0 0 0-1.6-.8H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2.5a1 1 0 0 1 .8.4l1.9 2.533a1 1 0 0 0 1.6 0l1.9-2.533a1 1 0 0 1 .8-.4H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/>
+  <path d="M7.066 4.76A1.665 1.665 0 0 0 4 5.668a1.667 1.667 0 0 0 2.561 1.406c-.131.389-.375.804-.777 1.22a.417.417 0 1 0 .6.58c1.486-1.54 1.293-3.214.682-4.112zm4 0A1.665 1.665 0 0 0 8 5.668a1.667 1.667 0 0 0 2.561 1.406c-.131.389-.375.804-.777 1.22a.417.417 0 1 0 .6.58c1.486-1.54 1.293-3.214.682-4.112z"/></symbol>
+<symbol id="bi-check-circle-fill" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></symbol>
+<symbol id="bi-check2-square" viewBox="0 0 16 16"><path d="M3 14.5A1.5 1.5 0 0 1 1.5 13V3A1.5 1.5 0 0 1 3 1.5h8a.5.5 0 0 1 0 1H3a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5h10a.5.5 0 0 0 .5-.5V8a.5.5 0 0 1 1 0v5a1.5 1.5 0 0 1-1.5 1.5z"/>
+  <path d="m8.354 10.354 7-7a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0"/></symbol>
+<symbol id="bi-check2" viewBox="0 0 16 16"><path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/></symbol>
+<symbol id="bi-chevron-down" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708"/></symbol>
+<symbol id="bi-chevron-left" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0"/></symbol>
+<symbol id="bi-chevron-right" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/></symbol>
+<symbol id="bi-clipboard" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z"/>
+  <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z"/></symbol>
+<symbol id="bi-clock" viewBox="0 0 16 16"><path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/>
+  <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/></symbol>
+<symbol id="bi-cpu" viewBox="0 0 16 16"><path d="M5 0a.5.5 0 0 1 .5.5V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2A2.5 2.5 0 0 1 14 4.5h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14a2.5 2.5 0 0 1-2.5 2.5v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14A2.5 2.5 0 0 1 2 11.5H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2A2.5 2.5 0 0 1 4.5 2V.5A.5.5 0 0 1 5 0m-.5 3A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13h7a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 11.5 3zM5 6.5A1.5 1.5 0 0 1 6.5 5h3A1.5 1.5 0 0 1 11 6.5v3A1.5 1.5 0 0 1 9.5 11h-3A1.5 1.5 0 0 1 5 9.5zM6.5 6a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5z"/></symbol>
+<symbol id="bi-download" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+  <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/></symbol>
+<symbol id="bi-eraser" viewBox="0 0 16 16"><path d="M8.086 2.207a2 2 0 0 1 2.828 0l3.879 3.879a2 2 0 0 1 0 2.828l-5.5 5.5A2 2 0 0 1 7.879 15H5.12a2 2 0 0 1-1.414-.586l-2.5-2.5a2 2 0 0 1 0-2.828zm2.121.707a1 1 0 0 0-1.414 0L4.16 7.547l5.293 5.293 4.633-4.633a1 1 0 0 0 0-1.414zM8.746 13.547 3.453 8.254 1.914 9.793a1 1 0 0 0 0 1.414l2.5 2.5a1 1 0 0 0 .707.293H7.88a1 1 0 0 0 .707-.293z"/></symbol>
+<symbol id="bi-exclamation-circle-fill" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/></symbol>
+<symbol id="bi-exclamation-triangle-fill" viewBox="0 0 16 16"><path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/></symbol>
+<symbol id="bi-eye" viewBox="0 0 16 16"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8M1.173 8a13 13 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5s3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5s-3.879-1.168-5.168-2.457A13 13 0 0 1 1.172 8z"/>
+  <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0"/></symbol>
+<symbol id="bi-file-earmark-text" viewBox="0 0 16 16"><path d="M5.5 7a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1zM5 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5"/>
+  <path d="M9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.5zm0 1v2A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z"/></symbol>
+<symbol id="bi-folder-plus" viewBox="0 0 16 16"><path d="m.5 3 .04.87a2 2 0 0 0-.342 1.311l.637 7A2 2 0 0 0 2.826 14H9v-1H2.826a1 1 0 0 1-.995-.91l-.637-7A1 1 0 0 1 2.19 4h11.62a1 1 0 0 1 .996 1.09L14.54 8h1.005l.256-2.819A2 2 0 0 0 13.81 3H9.828a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 6.172 1H2.5a2 2 0 0 0-2 2m5.672-1a1 1 0 0 1 .707.293L7.586 3H2.19q-.362.002-.683.12L1.5 2.98a1 1 0 0 1 1-.98z"/>
+  <path d="M13.5 9a.5.5 0 0 1 .5.5V11h1.5a.5.5 0 1 1 0 1H14v1.5a.5.5 0 1 1-1 0V12h-1.5a.5.5 0 0 1 0-1H13V9.5a.5.5 0 0 1 .5-.5"/></symbol>
+<symbol id="bi-folder" viewBox="0 0 16 16"><path d="M.54 3.87.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.826a2 2 0 0 1-1.991-1.819l-.637-7a2 2 0 0 1 .342-1.31zM2.19 4a1 1 0 0 0-.996 1.09l.637 7a1 1 0 0 0 .995.91h10.348a1 1 0 0 0 .995-.91l.637-7A1 1 0 0 0 13.81 4zm4.69-1.707A1 1 0 0 0 6.172 2H2.5a1 1 0 0 0-1 .981l.006.139q.323-.119.684-.12h5.396z"/></symbol>
+<symbol id="bi-folder2-open" viewBox="0 0 16 16"><path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v.64c.57.265.94.876.856 1.546l-.64 5.124A2.5 2.5 0 0 1 12.733 15H3.266a2.5 2.5 0 0 1-2.481-2.19l-.64-5.124A1.5 1.5 0 0 1 1 6.14zM2 6h12v-.5a.5.5 0 0 0-.5-.5H9c-.964 0-1.71-.629-2.174-1.154C6.374 3.334 5.82 3 5.264 3H2.5a.5.5 0 0 0-.5.5zm-.367 1a.5.5 0 0 0-.496.562l.64 5.124A1.5 1.5 0 0 0 3.266 14h9.468a1.5 1.5 0 0 0 1.489-1.314l.64-5.124A.5.5 0 0 0 14.367 7z"/></symbol>
+<symbol id="bi-funnel" viewBox="0 0 16 16"><path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5zm1 .5v1.308l4.372 4.858A.5.5 0 0 1 7 8.5v5.306l2-.666V8.5a.5.5 0 0 1 .128-.334L13.5 3.308V2z"/></symbol>
+<symbol id="bi-gear" viewBox="0 0 16 16"><path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/>
+  <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"/></symbol>
+<symbol id="bi-hdd" viewBox="0 0 16 16"><path d="M4.5 11a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1M3 10.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0"/>
+  <path d="M16 11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V9.51c0-.418.105-.83.305-1.197l2.472-4.531A1.5 1.5 0 0 1 4.094 3h7.812a1.5 1.5 0 0 1 1.317.782l2.472 4.53c.2.368.305.78.305 1.198zM3.655 4.26 1.592 8.043Q1.79 8 2 8h12q.21 0 .408.042L12.345 4.26a.5.5 0 0 0-.439-.26H4.094a.5.5 0 0 0-.44.26zM1 10v1a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1"/></symbol>
+<symbol id="bi-hourglass-split" viewBox="0 0 16 16"><path d="M2.5 15a.5.5 0 1 1 0-1h1v-1a4.5 4.5 0 0 1 2.557-4.06c.29-.139.443-.377.443-.59v-.7c0-.213-.154-.451-.443-.59A4.5 4.5 0 0 1 3.5 3V2h-1a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-1v1a4.5 4.5 0 0 1-2.557 4.06c-.29.139-.443.377-.443.59v.7c0 .213.154.451.443.59A4.5 4.5 0 0 1 12.5 13v1h1a.5.5 0 0 1 0 1zm2-13v1c0 .537.12 1.045.337 1.5h6.326c.216-.455.337-.963.337-1.5V2zm3 6.35c0 .701-.478 1.236-1.011 1.492A3.5 3.5 0 0 0 4.5 13s.866-1.299 3-1.48zm1 0v3.17c2.134.181 3 1.48 3 1.48a3.5 3.5 0 0 0-1.989-3.158C8.978 9.586 8.5 9.052 8.5 8.351z"/></symbol>
+<symbol id="bi-house-door" viewBox="0 0 16 16"><path d="M8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4.5a.5.5 0 0 0 .5-.5v-4h2v4a.5.5 0 0 0 .5.5H14a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293zM2.5 14V7.707l5.5-5.5 5.5 5.5V14H10v-4a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5v4z"/></symbol>
+<symbol id="bi-info-circle" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+  <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/></symbol>
+<symbol id="bi-journal-check" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M10.854 6.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 8.793l2.646-2.647a.5.5 0 0 1 .708 0"/>
+  <path d="M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-1h1v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v1H1V2a2 2 0 0 1 2-2"/>
+  <path d="M1 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1z"/></symbol>
+<symbol id="bi-journal-plus" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 5.5a.5.5 0 0 1 .5.5v1.5H10a.5.5 0 0 1 0 1H8.5V10a.5.5 0 0 1-1 0V8.5H6a.5.5 0 0 1 0-1h1.5V6a.5.5 0 0 1 .5-.5"/>
+  <path d="M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-1h1v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v1H1V2a2 2 0 0 1 2-2"/>
+  <path d="M1 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1z"/></symbol>
+<symbol id="bi-journal-text" viewBox="0 0 16 16"><path d="M5 10.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5m0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5"/>
+  <path d="M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-1h1v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v1H1V2a2 2 0 0 1 2-2"/>
+  <path d="M1 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1z"/></symbol>
+<symbol id="bi-keyboard" viewBox="0 0 16 16"><path d="M14 5a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM2 4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
+  <path d="M13 10.25a.25.25 0 0 1 .25-.25h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5a.25.25 0 0 1-.25-.25zm0-2a.25.25 0 0 1 .25-.25h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5a.25.25 0 0 1-.25-.25zm-5 0A.25.25 0 0 1 8.25 8h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 8 8.75zm2 0a.25.25 0 0 1 .25-.25h1.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-1.5a.25.25 0 0 1-.25-.25zm1 2a.25.25 0 0 1 .25-.25h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5a.25.25 0 0 1-.25-.25zm-5-2A.25.25 0 0 1 6.25 8h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 6 8.75zm-2 0A.25.25 0 0 1 4.25 8h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 4 8.75zm-2 0A.25.25 0 0 1 2.25 8h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 2 8.75zm11-2a.25.25 0 0 1 .25-.25h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5a.25.25 0 0 1-.25-.25zm-2 0a.25.25 0 0 1 .25-.25h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5a.25.25 0 0 1-.25-.25zm-2 0A.25.25 0 0 1 9.25 6h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 9 6.75zm-2 0A.25.25 0 0 1 7.25 6h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 7 6.75zm-2 0A.25.25 0 0 1 5.25 6h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 5 6.75zm-3 0A.25.25 0 0 1 2.25 6h1.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-1.5A.25.25 0 0 1 2 6.75zm0 4a.25.25 0 0 1 .25-.25h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5a.25.25 0 0 1-.25-.25zm2 0a.25.25 0 0 1 .25-.25h5.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-5.5a.25.25 0 0 1-.25-.25z"/></symbol>
+<symbol id="bi-layout-sidebar" viewBox="0 0 16 16"><path d="M0 3a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm5-1v12h9a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1zM4 2H2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h2z"/></symbol>
+<symbol id="bi-lightning-charge" viewBox="0 0 16 16"><path d="M11.251.068a.5.5 0 0 1 .227.58L9.677 6.5H13a.5.5 0 0 1 .364.843l-8 8.5a.5.5 0 0 1-.842-.49L6.323 9.5H3a.5.5 0 0 1-.364-.843l8-8.5a.5.5 0 0 1 .615-.09zM4.157 8.5H7a.5.5 0 0 1 .478.647L6.11 13.59l5.732-6.09H9a.5.5 0 0 1-.478-.647L9.89 2.41z"/></symbol>
+<symbol id="bi-link-45deg" viewBox="0 0 16 16"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/>
+  <path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></symbol>
+<symbol id="bi-palette" viewBox="0 0 16 16"><path d="M8 5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3m4 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3M5.5 7a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m.5 6a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3"/>
+  <path d="M16 8c0 3.15-1.866 2.585-3.567 2.07C11.42 9.763 10.465 9.473 10 10c-.603.683-.475 1.819-.351 2.92C9.826 14.495 9.996 16 8 16a8 8 0 1 1 8-8m-8 7c.611 0 .654-.171.655-.176.078-.146.124-.464.07-1.119-.014-.168-.037-.37-.061-.591-.052-.464-.112-1.005-.118-1.462-.01-.707.083-1.61.704-2.314.369-.417.845-.578 1.272-.618.404-.038.812.026 1.16.104.343.077.702.186 1.025.284l.028.008c.346.105.658.199.953.266.653.148.904.083.991.024C14.717 9.38 15 9.161 15 8a7 7 0 1 0-7 7"/></symbol>
+<symbol id="bi-paperclip" viewBox="0 0 16 16"><path d="M4.5 3a2.5 2.5 0 0 1 5 0v9a1.5 1.5 0 0 1-3 0V5a.5.5 0 0 1 1 0v7a.5.5 0 0 0 1 0V3a1.5 1.5 0 1 0-3 0v9a2.5 2.5 0 0 0 5 0V5a.5.5 0 0 1 1 0v7a3.5 3.5 0 1 1-7 0z"/></symbol>
+<symbol id="bi-pencil-square" viewBox="0 0 16 16"><path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+  <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/></symbol>
+<symbol id="bi-people" viewBox="0 0 16 16"><path d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1zm-7.978-1L7 12.996c.001-.264.167-1.03.76-1.72C8.312 10.629 9.282 10 11 10c1.717 0 2.687.63 3.24 1.276.593.69.758 1.457.76 1.72l-.008.002-.014.002zM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4m3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0M6.936 9.28a6 6 0 0 0-1.23-.247A7 7 0 0 0 5 9c-4 0-5 3-5 4q0 1 1 1h4.216A2.24 2.24 0 0 1 5 13c0-1.01.377-2.042 1.09-2.904.243-.294.526-.569.846-.816M4.92 10A5.5 5.5 0 0 0 4 13H1c0-.26.164-1.03.76-1.724.545-.636 1.492-1.256 3.16-1.275ZM1.5 5.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0m3-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4"/></symbol>
+<symbol id="bi-person" viewBox="0 0 16 16"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"/></symbol>
+<symbol id="bi-play-fill" viewBox="0 0 16 16"><path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393"/></symbol>
+<symbol id="bi-plug" viewBox="0 0 16 16"><path d="M6 0a.5.5 0 0 1 .5.5V3h3V.5a.5.5 0 0 1 1 0V3h1a.5.5 0 0 1 .5.5v3A3.5 3.5 0 0 1 8.5 10c-.002.434-.01.845-.04 1.22-.041.514-.126 1.003-.317 1.424a2.08 2.08 0 0 1-.97 1.028C6.725 13.9 6.169 14 5.5 14c-.998 0-1.61.33-1.974.718A1.92 1.92 0 0 0 3 16H2c0-.616.232-1.367.797-1.968C3.374 13.42 4.261 13 5.5 13c.581 0 .962-.088 1.218-.219.241-.123.4-.3.514-.55.121-.266.193-.621.23-1.09.027-.34.035-.718.037-1.141A3.5 3.5 0 0 1 4 6.5v-3a.5.5 0 0 1 .5-.5h1V.5A.5.5 0 0 1 6 0M5 4v2.5A2.5 2.5 0 0 0 7.5 9h1A2.5 2.5 0 0 0 11 6.5V4z"/></symbol>
+<symbol id="bi-plus-lg" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/></symbol>
+<symbol id="bi-save" viewBox="0 0 16 16"><path d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H9.5a1 1 0 0 0-1 1v7.293l2.646-2.647a.5.5 0 0 1 .708.708l-3.5 3.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L7.5 9.293V2a2 2 0 0 1 2-2H14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h2.5a.5.5 0 0 1 0 1z"/></symbol>
+<symbol id="bi-search" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/></symbol>
+<symbol id="bi-send-fill" viewBox="0 0 16 16"><path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 3.178 4.995.002.002.26.41a.5.5 0 0 0 .886-.083zm-1.833 1.89L6.637 10.07l-.215-.338a.5.5 0 0 0-.154-.154l-.338-.215 7.494-7.494 1.178-.471z"/></symbol>
+<symbol id="bi-shield-check" viewBox="0 0 16 16"><path d="M5.338 1.59a61 61 0 0 0-2.837.856.48.48 0 0 0-.328.39c-.554 4.157.726 7.19 2.253 9.188a10.7 10.7 0 0 0 2.287 2.233c.346.244.652.42.893.533q.18.085.293.118a1 1 0 0 0 .101.025 1 1 0 0 0 .1-.025q.114-.034.294-.118c.24-.113.547-.29.893-.533a10.7 10.7 0 0 0 2.287-2.233c1.527-1.997 2.807-5.031 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C9.552 1.29 8.531 1.067 8 1.067c-.53 0-1.552.223-2.662.524zM5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.8 11.8 0 0 1-2.517 2.453 7 7 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7 7 0 0 1-1.048-.625 11.8 11.8 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 63 63 0 0 1 5.072.56"/>
+  <path d="M10.854 5.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 7.793l2.646-2.647a.5.5 0 0 1 .708 0"/></symbol>
+<symbol id="bi-sliders" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M11.5 2a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M9.05 3a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0V3zM4.5 7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M2.05 8a2.5 2.5 0 0 1 4.9 0H16v1H6.95a2.5 2.5 0 0 1-4.9 0H0V8zm9.45 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3m-2.45 1a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0v-1z"/></symbol>
+<symbol id="bi-square" viewBox="0 0 16 16"><path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/></symbol>
+<symbol id="bi-stars" viewBox="0 0 16 16"><path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.593 5.69l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.69A1.73 1.73 0 0 0 2.31 4.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.407 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.16 1.16 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.16 1.16 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z"/></symbol>
+<symbol id="bi-terminal" viewBox="0 0 16 16"><path d="M6 9a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3A.5.5 0 0 1 6 9M3.854 4.146a.5.5 0 1 0-.708.708L4.793 6.5 3.146 8.146a.5.5 0 1 0 .708.708l2-2a.5.5 0 0 0 0-.708z"/>
+  <path d="M2 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zm12 1a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/></symbol>
+<symbol id="bi-three-dots" viewBox="0 0 16 16"><path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3"/></symbol>
+<symbol id="bi-trash3" viewBox="0 0 16 16"><path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5"/></symbol>
+<symbol id="bi-window-plus" viewBox="0 0 16 16"><path d="M2.5 5a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1M4 5a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1m2-.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0"/>
+  <path d="M0 4a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v4a.5.5 0 0 1-1 0V7H1v5a1 1 0 0 0 1 1h5.5a.5.5 0 0 1 0 1H2a2 2 0 0 1-2-2zm1 2h13V4a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1z"/>
+  <path d="M16 12.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0m-3.5-2a.5.5 0 0 0-.5.5v1h-1a.5.5 0 0 0 0 1h1v1a.5.5 0 0 0 1 0v-1h1a.5.5 0 0 0 0-1h-1v-1a.5.5 0 0 0-.5-.5"/></symbol>
+<symbol id="bi-x-circle-fill" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293z"/></symbol>
+<symbol id="bi-x-lg" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/></symbol>
+<symbol id="bi-bell" viewBox="0 0 16 16"><path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2M8 1.918l-.797.161A4 4 0 0 0 4 6c0 .628-.134 2.197-.459 3.742-.16.767-.376 1.566-.663 2.258h10.244c-.287-.692-.502-1.49-.663-2.258C12.134 8.197 12 6.628 12 6a4 4 0 0 0-3.203-3.92zM14.22 12c.223.447.481.801.78 1H1c.299-.199.557-.553.78-1C2.68 10.2 3 6.88 3 6c0-2.42 1.72-4.44 4.005-4.901a1 1 0 1 1 1.99 0A5 5 0 0 1 13 6c0 .88.32 4.2 1.22 6"/></symbol>
+<symbol id="bi-bell-fill" viewBox="0 0 16 16"><path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2m.995-14.901a1 1 0 1 0-1.99 0A5 5 0 0 0 3 6c0 1.098-.5 6-2 7h14c-1.5-1-2-5.902-2-7 0-2.42-1.72-4.44-4.005-4.901"/></symbol>
+<symbol id="bi-check2-circle" viewBox="0 0 16 16"><path d="M2.5 8a5.5 5.5 0 0 1 8.25-4.764.5.5 0 0 0 .5-.866A6.5 6.5 0 1 0 14.5 8a.5.5 0 0 0-1 0 5.5 5.5 0 1 1-11 0"/>
+  <path d="M15.354 3.354a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0z"/></symbol>
+<symbol id="bi-pencil" viewBox="0 0 16 16"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325"/></symbol>
+<symbol id="bi-grid" viewBox="0 0 16 16"><path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5zM2.5 2a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5zm6.5.5A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5zM1 10.5A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5zm6.5.5A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5z"/></symbol>
+</svg>
+
+<header class="memo">
+  <div>
+    <h1>D안 · 프로젝트가 뼈대</h1>
+    <p>위 줄에서 프로젝트를 고르면 요약·터미널·세션·지침·프롬프트·사용량이 모두 그 프로젝트 기준으로 바뀝니다. 폴더를 다시 고를 일이 없습니다. 돌고 있는 터미널은 오른쪽 위 종, 계정은 그 옆에 있습니다. 단가표와 $ 추정은 뺐습니다. 수치와 목록은 예시입니다.</p>
+  </div>
+  <div class="seg" role="group" aria-label="테마">
+    <button type="button" data-theme-set="system" aria-pressed="true">시스템</button>
+    <button type="button" data-theme-set="light" aria-pressed="false">밝게</button>
+    <button type="button" data-theme-set="dark" aria-pressed="false">어둡게</button>
+  </div>
+</header>
+
+<div class="window" id="app">
+  <nav class="nav" aria-label="탭">
+    <div class="nav-top">
+      <button class="icon-btn" type="button" id="back" title="뒤로 (마우스 엄지 버튼)"></button>
+      <button class="icon-btn" type="button" id="fwd" title="앞으로 (마우스 엄지 버튼)"></button>
+      <div class="logo"><i>D</i><span>DAIso</span></div>
+    </div>
+    <ul class="menu" id="menu"></ul>
+  </nav>
+  <div class="main">
+    <div class="topbar" id="topbar"></div>
+    <div id="page" class="page"></div>
+    <div id="status" class="statusbar" hidden></div>
+  </div>
+  <div id="overlay"></div>
+  <div class="toast" id="toast" hidden></div>
+</div>
+
+<script>
+(() => {
+  const ic = (n, cls = '') => `<svg class="i ${cls}"><use href="#bi-${n}"/></svg>`;
+  const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+  const $ = (id) => document.getElementById(id);
+
+  // 설정은 탭이 아니라 오른쪽 위 톱니로 연다. 탭은 모두 고른 프로젝트 기준이다
+  const TABS = [
+    ['summary', '요약', 'house-door'], ['terminal', '터미널', 'terminal'], ['sessions', '세션', 'chat-left-text'],
+    ['rules', '지침', 'journal-check'], ['prompts', '프롬프트', 'lightning-charge'], ['usage', '사용량', 'bar-chart-line'],
+  ];
+  // 도구 순서는 옛 앱과 같다: Codex → Claude → Antigravity
+  const TOOLS = ['codex', 'claude', 'anti'];
+  const TN = { codex: 'Codex', claude: 'Claude', anti: 'Antigravity' };
+  const TG = { codex: 'X', claude: 'C', anti: 'A' };
+  const tool = (t, cls = '', st = '') => `<span class="tool ${t} ${cls}" title="${TN[t]}">${TG[t]}${st ? `<i class="st ${st}"></i>` : ''}</span>`;
+
+  // ── 예시 자료 ──
+  const accounts = {
+    codex: { state: 'warn', stateText: '곧 만료', installed: true, lines: ['juhyeong', 'juhyeong7664@…', '요금제: ChatGPT Plus', '2026-10-11까지 · 6일 남음'], files: true,
+      extras: ['인증 방식: ChatGPT 로그인', '마지막 갱신: 2026-10-04 21:12', 'API 키: 없음'], profiles: [{ n: '회사 계정', d: 'jh.park@work… · 저장 2026-09-20 10:02' }] },
+    claude: { state: 'ok', stateText: '로그인됨', installed: true, lines: ['박주형', null, '요금제: Max', '2026-12-01까지 · 57일 남음'], files: true,
+      extras: ['사용량 등급: default_claude_max_20x', '권한: user:inference user:profile', 'MCP 커넥터: Gmail, Google Drive', '계정 이메일: CLI가 파일에 남기지 않습니다'], profiles: [] },
+    anti: { state: 'bad', stateText: '로그인 정보 없음', installed: true, lines: [null, null, null, null], files: false,
+      extras: ['로그인 보관: Windows 자격 증명 관리자 — 앱은 값을 읽지 않습니다', '설정 파일: 없음'], profiles: [] },
+  };
+  const recent = [
+    { t: 'claude', p: 'd-AI-so', when: '2026-10-05 14:20', size: '4.1 MB' },
+    { t: 'codex', p: 'd-AI-so', when: '2026-10-05 13:05', size: '0.4 MB' },
+    { t: 'claude', p: 'guigu-mod-ko', when: '2026-10-04 22:10', size: '2.6 MB' },
+    { t: 'codex', p: 'blog', when: '2026-09-30 19:44', size: '1.9 MB' },
+    { t: 'claude', p: 'sonmat', when: '2026-09-29 11:02', size: '3.3 MB' },
+  ];
+  // 방마다 이름을 붙인다. 같은 폴더에 방이 둘이어도 이름으로 가른다
+  const rooms = [
+    { t: 'claude', dir: 'd-AI-so', name: 'Stage 2 Electron', st: 'ask', since: '2분 전', view: 'chat', unseen: false },
+    { t: 'codex', dir: 'd-AI-so', name: '보안 리뷰', st: 'done', since: '14분 전', view: 'term', unseen: true },
+    { t: 'claude', dir: 'guigu-mod-ko', name: '번역 검수', st: 'run', since: '6분째', view: 'chat', unseen: false },
+  ];
+  const ROOM_ST = { run: ['작업 중', 'plain', 'arrow-repeat'], done: ['답 끝남', 'ok', 'check2-circle'], ask: ['허락 기다림', 'warn', 'hourglass-split'], idle: ['입력 기다림', 'plain', 'keyboard'] };
+  const roomTitle = (r) => `${TN[r.t]} · ${r.dir} — ${r.name}`;
+  const roomPill = (r) => { const [l, c, i] = ROOM_ST[r.st]; return `<span class="pill ${c}">${ic(i)}${l}</span>`; };
+  // 종에 숫자를 다는 기준: 사람이 봐야 하는 방 (허락 기다림, 아직 안 본 끝난 답)
+  const needsMe = () => rooms.filter((r) => r.st === 'ask' || (r.st === 'done' && r.unseen));
+  const chat = [
+    { k: 'me', t: 'Stage 2 시작해. frontend/desktop 에 Electron 메인이랑 preload' },
+    { k: 'ai', t: 'docs/ROADMAP.md 의 Stage 2 를 읽었습니다. 완료 기준은 셋입니다.', list: ['빌드한 Electron 앱이 서버를 띄우고 빈 화면을 보여 준다', '앱을 끄면 서버 프로세스가 남지 않는다', 'npm run lint 초록'] },
+    { k: 'tool', t: 'Read backend/src/Daiso.Host/README.md', ok: true },
+    { k: 'tool', t: 'Write frontend/desktop/src/main.ts', add: '+142' },
+    { k: 'tool', t: 'Write frontend/desktop/src/preload.ts', add: '+38' },
+    { k: 'tool', t: 'Bash npm run lint', ok: true, out: '0 problems' },
+    { k: 'ai', t: 'Host 를 자식 프로세스로 띄우고 DAISO_LISTENING 줄을 기다렸다가 토큰을 붙여 창에 엽니다. 창을 닫으면 트레이로 숨깁니다. 이제 Electron 을 개발 의존성으로 넣겠습니다.' },
+    { k: 'ask', t: 'Bash: npm install --save-dev electron@38' },
+  ];
+  const COMMANDS = [
+    ['기본 명령', 'box', [['/compact', '', '대화를 요약해 컨텍스트를 줄입니다'], ['/clear', '', '새 대화로 비웁니다'], ['/model', '<모델 이름>', '모델을 바꿉니다'], ['/effort', '<low|medium|high>', '생각하는 양을 바꿉니다'], ['/rename', '<이름>', '이 세션 이름을 바꿉니다']]],
+    ['내 명령 · ~/.claude/commands', 'person', [['/commit', '', '커밋 규칙대로 커밋하고 push']]],
+    ['이 프로젝트 · .claude/commands', 'folder', [['/stage', '[번호]', '다음 Stage 이어 하기']]],
+    ['스킬', 'stars', [['/better-kor', '[report|docs|pr]', '한국어로 제대로 쓴다'], ['/code-review', '[low|high|max]', '지금 변경을 리뷰'], ['/security-review', '', '보안 리뷰'], ['/sonmat:devil', '', '반론을 찾는다']]],
+    ['터미널 보기에서만', 'terminal', [['/login', '', '고르면 터미널 보기로 넘어갑니다', true], ['/permissions', '', '고르면 터미널 보기로 넘어갑니다', true]]],
+  ];
+  const sessions = [
+    { id: 1, t: 'claude', title: 'Stage 1 시작해. Host 뼈대랑 보안 일곱 가지', proj: 'd-AI-so', when: '2026-10-05 14:20', size: 4.1, u: 38, a: 112, run: true, age: 0 },
+    { id: 2, t: 'codex', title: 'LocalOnlyMiddleware 를 보안 관점에서 검토해 줘', proj: 'd-AI-so', when: '2026-10-05 13:05', size: 0.4, u: 6, a: 9, run: true, age: 0 },
+    { id: 3, t: 'claude', title: '문서읽어봐. 일렉트론으로 리팩터링하는거 보여?', proj: 'd-AI-so', when: '2026-10-05 10:41', size: 1.2, u: 12, a: 30, age: 0 },
+    { id: 4, t: 'claude', title: '번역 안 된 줄만 골라서 표로 보여 줘', proj: 'guigu-mod-ko', when: '2026-10-04 22:10', size: 2.6, u: 21, a: 40, age: 1 },
+    { id: 5, t: 'claude', title: '최상위를 frontend backend 로 나누자', proj: 'd-AI-so', when: '2026-10-03 16:12', size: 9.8, u: 54, a: 160, age: 2 },
+    { id: 6, t: 'codex', title: '옛 터미널 fix 커밋 30개 훑어서 패턴 정리', proj: 'd-AI-so', when: '2026-10-02 09:30', size: 0.7, u: 9, a: 14, archived: true, age: 3 },
+    { id: 7, t: 'codex', title: '블로그 빌드가 왜 깨지는지 봐 줘', proj: 'blog', when: '2026-09-30 19:44', size: 1.9, u: 14, a: 22, age: 5 },
+    { id: 8, t: 'claude', title: 'WinUI 레이아웃이 왜 이렇게 자꾸 깨져', proj: 'd-AI-so', when: '2026-09-28 20:05', size: 18.3, u: 77, a: 240, age: 7 },
+    { id: 9, t: 'claude', title: '옛 폴더에서 쓰던 스크립트 정리', proj: 'old-scripts', when: '2026-08-19 13:40', size: 42.0, u: 31, a: 88, orphan: true, age: 47 },
+    { id: 10, t: 'anti', title: '리포 구조 설명해 줘', proj: 'sonmat', when: '2026-08-02 08:15', size: 0.9, u: 3, a: 5, age: 64 },
+  ];
+  const projects = [['d-AI-so', 'C:\\Users\\박주형\\Documents\\GitHub\\d-AI-so', 41, '312 MB'], ['guigu-mod-ko', 'D:\\mods\\guigu-mod-ko', 18, '64 MB'], ['sonmat', 'C:\\Users\\박주형\\.claude\\plugins\\marketplaces\\sonmat', 9, '21 MB'], ['blog', 'C:\\work\\blog', 5, '3 MB'], ['old-scripts', 'C:\\Temp\\old-scripts', 2, '44 MB', true]];
+  const projOf = (n) => projects.find((p) => p[0] === n);
+  const LAST = { 'd-AI-so': '오늘 14:20', 'guigu-mod-ko': '어제 22:10', sonmat: '08-02', blog: '09-30', 'old-scripts': '08-19' };
+  const BUILTIN_RULES = [['작업 방식', 'git', 'Git 커밋·브랜치 습관'], ['작업 방식', 'testing', '테스트를 먼저 붙인다'], ['작업 방식', 'review', '리뷰 받을 준비'], ['작업 방식', 'refactor', '동작은 그대로, 구조만'], ['작업 방식', 'security', '비밀값과 입력 검증'], ['작업 방식', 'docs', '문서와 주석'], ['작업 방식', 'api', '공개 API 바꿀 때'],
+    ['언어', 'csharp', 'C# 습관'], ['언어', 'cpp', 'C++ 습관'], ['언어', 'python', 'Python 습관'], ['언어', 'typescript', 'TypeScript 습관'], ['언어', 'rust', 'Rust 습관'], ['언어', 'unity', 'Unity 습관'], ['소통', 'communication', '한국어로, 결론 먼저']];
+  const MY_RULES = [['C# / TypeScript 코딩 규칙', 'C# 서버와 TypeScript 화면에 공통으로 지킬 습관'], ['블로그 글 규칙', '글 쓸 때 번역투 걷어내기']];
+  const preset = {
+    name: 'C# / TypeScript 코딩 규칙', desc: 'C# 서버와 TypeScript 화면에 공통으로 지킬 습관', folder: 'C:\\Users\\박주형\\Documents\\GitHub\\d-AI-so',
+    global: [['MUST', 'Nullable 참조 형식을 켠 상태로 경고 없이 컴파일되게 한다'], ['MUST', '기존 코드 스타일을 따른다. .editorconfig가 있으면 그것이 우선이다']],
+    rules: [
+      { when: { leaf: '비동기 메서드를 만들 때' }, then: [['SHOULD', '이름을 Async로 끝내고 CancellationToken을 받는다'], ['MUST', 'async void를 쓰지 않는다. 이벤트 핸들러만 예외다']] },
+      { when: { op: 'and', items: [{ leaf: 'C# 파일을 수정할 때' }, { op: 'or', items: [{ leaf: 'public API 변경' }, { leaf: 'DB 스키마 변경' }] }] }, then: [['MUST', '마이그레이션 계획을 먼저 작성한다']] },
+      { when: { op: 'or', items: [{ leaf: '파일을 읽거나 쓸 때' }, { leaf: '네트워크 응답을 문자열로 다룰 때' }] }, then: [['MUST', '인코딩을 UTF-8로 명시한다']] },
+    ],
+  };
+  const readers = { claude: 'ok', codex: 'bad', anti: 'ok' };
+  const BUILTIN_PROMPTS = [['기획', '소규모 프로젝트 기획 인터뷰', 'planning-interview'], ['기획', '기능 제안서', 'feature-proposal'], ['기획', '기능 계획', 'feature-plan'], ['파악', '코드베이스 둘러보기', 'codebase-tour'], ['파악', 'API 명세 정리', 'api-spec'], ['수정', '버그 재현 절차', 'bug-repro'], ['수정', '코드 리뷰', 'code-review'], ['수정', '리팩터링 계획', 'refactor-plan'], ['수정', '성능 다듬기', 'performance-tune'], ['수정', '테스트 묶음', 'test-suite'], ['배포', '배포 전 점검', 'release-check'], ['기타', '작업 회고', 'retro']];
+  const MY_PROMPTS = [['수정', '고치기 전에 영향 범위', 'impact-first', 'docs/IMPACT.md'], ['기타', '다음 Stage 이어 하기', 'next-stage', '']];
+  const prompt = { name: '고치기 전에 영향 범위', desc: '고치기 전에 부르는 곳을 먼저 모은다', cat: '수정', out: 'docs/IMPACT.md', id: 'impact-first',
+    body: '# 고치기 전에 영향 범위\n\n1. 고칠 대상을 부르는 곳을 전부 찾는다. 이름을 감싼 래퍼와 다른 이름으로 부르는 자리까지 본다\n2. 같은 값을 따로 들고 있는 곳을 찾는다\n3. 찾은 것을 파일:줄 목록으로 docs/IMPACT.md 에 쓴다\n4. 내가 목록을 확인하기 전에는 고치지 않는다' };
+
+  // ── 상태 ──
+  const state = {
+    proj: 'd-AI-so', acctOpen: null, limitsOn: true, usageAll: false, days: 30, mb: 20,
+    tab: 'summary', hist: ['summary'], hpos: 0, pop: null, ctx: null, modal: null,
+    sumFilter: 'all', usageFilter: 'all', grain: 'day',
+    room: 0, newTerm: false, find: false, cmdOpen: false, cmdIdx: 0, draft: '',
+    nt: { tool: null, folder: null, conv: null, prompt: null, model: null, args: '' }, picker: null, pickQ: '',
+    sTool: 'all', sQ: '', sSearch: '', sPeriod: 'all', sProj: null, sel: new Set(), cur: 3, showTools: false, permanent: false,
+    rview: 'edit', previewMode: 'md', dirty: false, tpl: 'git', tplPicks: new Set(),
+    promptFilter: 'all', promptCur: 'my0', inserted: false,
+    theme: 'system', settingsDirty: false, stripIndex: null,
+  };
+
+  function toast(text, icon = 'check2') { const t = $('toast'); t.innerHTML = ic(icon) + esc(text); t.hidden = false; clearTimeout(toast.k); toast.k = setTimeout(() => { t.hidden = true; }, 2300); }
+  function status(text, busy, err) {
+    const s = $('status');
+    if (!text) { s.hidden = true; return; }
+    s.hidden = false; s.className = 'statusbar' + (err ? ' err' : '');
+    s.innerHTML = `${err ? ic('exclamation-circle-fill') : ''}<span>${esc(text)}</span>${busy ? '<span class="bar"><span></span></span>' : ''}`;
+  }
+  function reload(label) { status(`${label} 다시 읽는 중…`, true); setTimeout(() => status(''), 1300); }
+
+  // ── 메뉴 · 이동 ──
+  function renderNav() {
+    $('back').innerHTML = ic('arrow-left'); $('fwd').innerHTML = ic('arrow-right');
+    $('back').disabled = state.hpos === 0; $('fwd').disabled = state.hpos >= state.hist.length - 1;
+    const unseen = rooms.some((r) => r.unseen);
+    renderTop();
+    $('menu').innerHTML = TABS.map(([id, t, i], n) => `<li><button type="button" data-go="${id}" ${state.tab === id ? 'aria-current="page"' : ''} title="${t} (Ctrl+${n + 1})">${ic(i)}<span class="lbl">${t}</span>${id === 'terminal' && unseen ? '<span class="new" title="안 본 답이 있습니다"></span>' : '<span></span>'}</button></li>`).join('');
+  }
+  function renderTop() {
+    const p = state.proj ? projOf(state.proj) : null;
+    const need = needsMe().length;
+    $('topbar').innerHTML = `
+      <span class="anchor"><button class="projbtn" type="button" data-pop="proj" aria-expanded="${state.pop === 'proj'}" title="모든 탭이 이 프로젝트 기준으로 바뀝니다">${ic(p ? 'folder' : 'grid')}<span class="ell">${p ? esc(p[0]) : '모든 프로젝트'}</span>${ic('chevron-down')}</button>
+        ${state.pop === 'proj' ? `<div class="pop proj-pop"><button class="menu-item" type="button" data-proj="" aria-current="${!p}">${ic('grid')}<b>모든 프로젝트</b><small>${projects.length}개</small></button><div class="menu-sep"></div>
+          ${projects.map(([n, path, c, sz, orphan]) => { const live = rooms.filter((r) => r.dir === n).length; return `<button class="menu-item" type="button" data-proj="${esc(n)}" aria-current="${p && p[0] === n}" title="${esc(path)}">${ic('folder')}<b>${esc(n)}</b>${live ? `<span class="dot ok" title="열린 터미널 ${live}개"></span>` : ''}<small>${orphan ? '폴더 없음' : LAST[n]}</small></button>`; }).join('')}
+          <div class="menu-sep"></div><button class="menu-item" type="button" data-toast="폴더 고르기 창을 열었습니다">${ic('folder-plus')}폴더 추가…</button></div>` : ''}</span>
+      ${p ? `<span class="path mono ell" title="${esc(p[1])}">${esc(p[1])}</span>` : ''}
+      <span class="grow"></span>
+      <span class="anchor bell"><button class="icon-btn" type="button" data-pop="bell" aria-pressed="${state.pop === 'bell'}" title="돌고 있는 터미널">${ic(need ? 'bell-fill' : 'bell')}</button>${need ? `<span class="badge">${need}</span>` : ''}
+        ${state.pop === 'bell' ? `<div class="pop right bell-pop"><div class="pop-head">열린 터미널 ${rooms.length}개<button class="link" type="button" data-go="terminal">터미널 탭</button></div>
+          ${rooms.length ? rooms.map((r, i) => `<button class="troom" type="button" data-jump="${i}">${tool(r.t)}<span class="ell"><b>${esc(r.name)}</b>${r.unseen ? ' <span class="dot ok"></span>' : ''}</span><small class="ell">${esc(r.dir)} · ${r.since}</small>${roomPill(r)}</button>`).join('') : '<div class="empty" style="margin:4px">열린 터미널이 없습니다</div>'}</div>` : ''}</span>
+      <span class="anchor"><button class="acctbtn" type="button" data-pop="acct" aria-expanded="${state.pop === 'acct'}" title="도구 계정">${'<span class="tools">' + TOOLS.map((t) => tool(t, 'sm', accounts[t].state)).join('') + '</span>'}<span class="lbl">계정</span></button>
+        ${state.pop === 'acct' ? acctList() : ''}</span>
+      <button class="icon-btn gearbtn" type="button" data-go="settings" aria-pressed="${state.tab === 'settings'}" title="설정">${ic('gear')}</button>`;
+  }
+  function acctList() {
+    return `<div class="pop right acct-list">${TOOLS.map((t) => { const a = accounts[t]; return `<div class="arow2">${tool(t, 'lg', a.state)}<span><b>${TN[t]}</b> <span class="pill ${a.state}">${a.stateText}</span></span>
+      <span class="meta ell">${a.lines[2] ? esc(a.lines[2]) + ' · ' + esc(a.lines[3]) : '로그인 정보가 없습니다'}</span>
+      <span class="acts">${a.installed ? `<button class="btn small ${a.state !== 'ok' ? 'primary' : ''}" type="button" data-toast="새 터미널에서 ${TN[t]} 로그인을 시작했습니다" title="새 터미널을 열어 로그인합니다. 앱은 토큰을 다루지 않습니다">${ic('box-arrow-in-right')}${a.state === 'bad' ? '로그인' : '다시 로그인'}</button>` : ''}
+        <button class="icon-btn" type="button" data-acct-open="${t}" aria-pressed="${state.acctOpen === t}" title="저장한 계정 · 부가 정보">${ic('people')}</button></span>
+      ${state.acctOpen === t ? `<div class="sub">${acctPop(t)}<ul style="margin:0;padding-left:18px;color:var(--muted);font-size:var(--t-xs)">${a.extras.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>` : ''}</div>`; }).join('')}</div>`;
+  }
+  function go(tab, push = true) {
+    if (state.tab === tab) return;
+    if (push) { state.hist = state.hist.slice(0, state.hpos + 1); state.hist.push(tab); state.hpos++; }
+    state.tab = tab; state.pop = null; state.ctx = null; state.picker = null; state.cmdOpen = false;
+    render();
+  }
+
+  // ── 요약 ──
+  function attnItems(p) {
+    const a = [];
+    if (p && p[0] === 'd-AI-so' && readers.codex !== 'ok') a.push(['bad', 'journal-check', 'Codex가 이 프로젝트 지침을 못 읽습니다', 'AGENTS.md 가 없습니다', `<button class="btn small primary" type="button" data-link>${ic('link-45deg')}읽게 하기</button>`]);
+    TOOLS.filter((t) => accounts[t].state !== 'ok').forEach((t) => a.push([accounts[t].state, 'clock', `${TN[t]} ${accounts[t].state === 'warn' ? '로그인이 6일 뒤 끝납니다' : '로그인 정보가 없습니다'}`, accounts[t].state === 'warn' ? accounts[t].lines[3] : '이 도구로는 터미널을 열 수 없습니다', `<button class="btn small" type="button" data-toast="새 터미널에서 ${TN[t]} 로그인을 시작했습니다">${ic('box-arrow-in-right')}${accounts[t].state === 'warn' ? '다시 로그인' : '로그인'}</button>`]));
+    const old = sessions.filter((s) => (!p || s.proj === p[0]) && (s.age > state.days || s.size > state.mb));
+    if (old.length) a.push(['warn', 'hdd', `정리할 만한 세션 ${old.length}건 · ${old.reduce((x, s) => x + s.size, 0).toFixed(1)} MB`, `${state.days}일 넘었거나 ${state.mb} MB 넘는 것`, `<button class="btn small" type="button" data-tidy>${ic('check2-square')}골라 보기</button>`]);
+    if (!p) a.push(['bad', 'plug', 'my-agent 도구 플러그인이 답하지 않습니다', '어댑터가 답을 끝내기 전에 닫혔다', `<button class="btn small" type="button" data-go="settings">${ic('gear')}설정에서 보기</button>`]);
+    return a;
+  }
+  function attnBox(p) {
+    const a = attnItems(p);
+    return `<section class="card box"><div class="box-head"><h3>손볼 것</h3>${a.length ? `<span class="faint num" style="font-size:var(--t-xs)">${a.length}</span>` : ''}</div>
+      ${a.length ? a.map(([lv, i, t, sub, btn]) => `<div class="attn ${lv}">${ic(i)}<span><b>${esc(t)}</b><small>${esc(sub)}</small></span>${btn}</div>`).join('') : `<div class="allgood">${ic('check-circle-fill')}손볼 것이 없습니다</div>`}</section>`;
+  }
+  function summary() {
+    const p = state.proj ? projOf(state.proj) : null;
+    if (!p) return allProjects();
+    const live = rooms.map((r, i) => [r, i]).filter(([r]) => r.dir === p[0]);
+    const rec = sessions.filter((s) => s.proj === p[0]).slice(0, 5);
+    const mb = sessions.filter((s) => s.proj === p[0]).reduce((x, s) => x + s.size, 0);
+    return `<div class="phead"><h2>${esc(p[0])}</h2><span class="state">마지막 작업 ${LAST[p[0]]}</span>
+        <div class="acts"><button class="btn" type="button" data-reload="요약" title="다시 읽기 (F5)">${ic('arrow-clockwise')}</button><button class="btn primary" type="button" data-new-here>${ic('plus-lg')}새 터미널</button></div></div>
+      <div class="home">
+        <div class="col">
+          <section class="card box"><div class="box-head"><h3>열린 터미널</h3><span class="faint num" style="font-size:var(--t-xs)">${live.length}</span></div>
+            ${live.length ? live.map(([r, i]) => `<div class="trow">${tool(r.t)}<span class="ell"><b>${esc(r.name)}</b> <small class="faint">${r.since}</small></span>${roomPill(r)}<button class="btn small" type="button" data-jump="${i}">${ic('terminal')}열기</button></div>`).join('')
+              : `<div class="empty">${ic('info-circle')}이 프로젝트에 열린 터미널이 없습니다<button class="btn small" type="button" data-new-here>${ic('plus-lg')}새 터미널</button></div>`}</section>
+          <section class="card box"><div class="box-head"><h3>최근 세션</h3><span class="r"><button class="link" type="button" data-go="sessions">모두 보기</button></span></div>
+            ${rec.map((x) => `<div class="srow2">${tool(x.t)}<span class="t ell" title="${esc(x.title)}">${esc(x.title)}</span><small class="num">${x.when} · ${x.size} MB · 주고받음 ${x.u}회</small>
+              <span class="acts"><button class="btn small" type="button" data-resume title="앱 안 터미널 방으로 이어서 엽니다">${ic('arrow-repeat')}이어서</button><button class="icon-btn" type="button" data-see="${x.id}" title="대화 보기">${ic('eye')}</button></span></div>`).join('')}</section>
+        </div>
+        <div class="col">
+          ${attnBox(p)}
+          <section class="card box"><div class="box-head"><h3>이 프로젝트</h3><span class="r"><button class="link" type="button" data-go="usage">사용량</button></span></div>
+            <div class="stats3 num"><div><span>세션</span><b>${p[2]}</b></div><div><span>용량</span><b>${mb.toFixed(0)} MB</b></div><div title="1,342,118"><span>최근 7일 토큰</span><b>1.3M</b></div></div>
+            <div class="lbl-row" style="grid-template-columns:auto minmax(0,1fr)"><span>지침</span><span style="display:inline-flex;gap:8px;align-items:center">${TOOLS.map((t) => `${tool(t, 'sm')}${readers[t] === 'ok' ? `<b style="color:var(--ok);font-size:11px">읽음</b>` : `<b style="color:var(--bad);font-size:11px">못 읽음</b>`}`).join(' ')}</span></div></section>
+        </div>
+      </div>`;
+  }
+  function allProjects() {
+    return `<div class="phead"><h2>모든 프로젝트</h2><span class="state">${projects.length}개 · 열린 터미널 ${rooms.length}개</span>
+        <div class="acts"><button class="btn" type="button" data-reload="요약" title="다시 읽기 (F5)">${ic('arrow-clockwise')}</button></div></div>
+      <div class="pgrid">${projects.map(([n, path, c, sz, orphan]) => { const live = rooms.filter((r) => r.dir === n); return `<button class="pcard" type="button" data-proj="${esc(n)}">
+          <span class="top">${ic('folder', 'faint')}<b class="ell">${esc(n)}</b>${orphan ? '<span class="pill bad">폴더 없음</span>' : n === 'd-AI-so' && readers.codex !== 'ok' ? '<span class="pill bad">지침 1</span>' : ''}</span>
+          <span class="path ell" title="${esc(path)}">${esc(path)}</span>
+          <span class="live">${live.map((r) => `<span class="pill ${ROOM_ST[r.st][1]}" title="${esc(roomTitle(r))}">${TG[r.t]} · ${ROOM_ST[r.st][0]}</span>`).join('') || '<span class="faint" style="font-size:var(--t-xs)">열린 터미널 없음</span>'}</span>
+          <span class="foot2 num"><span>${ic('clock')} ${LAST[n]}</span><span>세션 ${c}</span><span>${sz}</span></span></button>`; }).join('')}
+        <button class="pcard add" type="button" data-toast="폴더 고르기 창을 열었습니다">${ic('folder-plus')}폴더 추가</button></div>
+      ${attnBox(null)}`;
+  }
+  function acctPop(t) {
+    const a = accounts[t];
+    return `<div style="display:flex;flex-direction:column;gap:8px">
+      <p>지금 로그인 상태를 이름 붙여 두면 나중에 그 계정으로 바로 바꿀 수 있습니다. 저장한 로그인은 이 Windows 사용자만 풀 수 있게 암호화됩니다.</p>
+      ${a.files ? `<div class="with-btn"><input class="input" id="prof-name-${t}" placeholder="프로필 이름 (예: 회사 계정)"><button class="btn small primary" type="button" data-save-prof="${t}">지금 로그인 저장</button></div>`
+        : `<div class="empty" style="padding:10px">${ic('shield-check')}이 도구는 로그인을 Windows 자격 증명 관리자에 둡니다. 저장할 수 없으니 터미널에서 직접 다시 로그인하세요.</div>`}
+      ${a.profiles.length ? a.profiles.map((p, i) => `<div class="prof"><b>${esc(p.n)}</b><button class="btn small" type="button" data-use-prof="${t}:${i}">이 계정으로</button><button class="icon-btn" type="button" data-del-prof="${t}:${i}" title="삭제">${ic('trash3')}</button><small>${esc(p.d)}</small></div>`).join('')
+        : (a.files ? '<p>저장한 프로필이 없습니다.</p>' : '')}
+      <p id="prof-status-${t}"></p></div>`;
+  }
+  function filterChips(key) {
+    return [['all', '전체'], ...TOOLS.map((t) => [t, TN[t]])].map(([k, l]) => `<button class="chip" type="button" data-filter="${key}:${k}" aria-pressed="${state[key] === k}">${k === 'all' ? '' : tool(k, 'sm')}${l}</button>`).join('');
+  }
+  // ── 사용량 ──
+  // 한도는 계정 단위라 프로젝트를 골라도 그대로다. Claude 는 상태줄 입력의 rate_limits, Codex 는 세션 기록의 rate_limits 에서 읽는다
+  const LIMITS = {
+    claude: { at: '오늘 14:20', bars: [['5시간', 23.5, '2시간 10분 뒤 초기화'], ['7일', 41.2, '10-09 (목) 09:00 초기화']] },
+    codex: { at: '10-03 17:40', bars: [['5시간', null, '기록에 없습니다'], ['7일', 12.0, '10-10 (금) 17:40 초기화']] },
+  };
+  function limitsBox() {
+    const f = state.usageFilter;
+    const rows = TOOLS.filter((t) => f === 'all' || f === t).map((t) => {
+      if (t === 'claude' && !state.limitsOn) return `<div class="lrow">${tool(t)}<span class="name">${TN[t]}</span><span class="with-btn" style="align-items:center;flex-wrap:wrap"><span class="muted" style="flex:1;min-width:200px">Claude 한도는 상태줄로 받습니다. 켜면 Claude 설정 파일에 상태줄 한 줄을 넣습니다. 쓰던 상태줄이 있으면 그대로 보이게 감쌉니다.</span><button class="btn small primary" type="button" data-limits="on">${ic('eye')}한도 보기 켜기</button></span></div>`;
+      const L = LIMITS[t];
+      if (!L) return `<div class="lrow">${tool(t)}<span class="name">${TN[t]}</span><span class="lnote">한도를 알 수 없는 도구입니다. 아래 토큰만 셉니다</span></div>`;
+      return `<div class="lrow">${tool(t)}<span class="name">${TN[t]}<br><small class="lnote" title="그 도구를 마지막으로 쓴 때의 값입니다. 쓰는 동안만 새로 고쳐집니다">${L.at} 기준</small></span><span class="lbars">${L.bars.map(([w, p, r]) => p === null ? `<span class="lbar"><span class="head"><span>${w}</span><small>${r}</small></span><span class="track" style="opacity:.5"></span></span>` : `<span class="lbar"><span class="head"><span>${w}</span><b class="num">${p.toFixed(0)}%</b><small>${r}</small></span><span class="track ${p >= 80 ? 'bad' : p >= 50 ? 'warn' : ''}"><span style="width:${p}%"></span></span></span>`).join('')}</span></div>`;
+    }).join('');
+    return `<section class="card limits"><div class="box-head"><h3>구독 한도</h3><span class="lnote">계정 단위 · 프로젝트와 상관없습니다</span>${state.limitsOn && (f === 'all' || f === 'claude') ? `<span class="r"><button class="link" type="button" data-limits="off" title="Claude 설정 파일에서 DAIso 상태줄을 빼고 원래대로 돌립니다">Claude 한도 보기 끄기</button></span>` : ''}</div>${rows}</section>`;
+  }
+  function usage() {
+    const f = state.usageFilter;
+    const p = state.proj && !state.usageAll ? state.proj : null;
+    const share = p ? .61 : 1;
+    const mult = (f === 'all' ? 1 : f === 'claude' ? .72 : f === 'codex' ? .28 : 0) * share;
+    const daily = [3.1, 2.2, 4.8, 1.0, 0, 2.7, 5.9, 3.3, 2.1, 3.4, 1.2, 5.6, 4.0, 0.8, 4.1, 2.5, 3.9, 1.8, 0.6, 2.2, 4.4, 3.0, 2.8, 5.1, 1.4, 0.9, 3.6, 4.7, 2.0, 4.12];
+    const grains = { day: daily.map((v) => v / 6), week: [12.4, 18.9, 22.3, 15.0, 9.7, 21.2, 26.0, 19.3, 14.8, 23.6, 17.1, 21.2].map((v) => v / 6), month: [18.2, 44.0, 61.9, 70.3, 88.1, 79.4, 95.0, 102.3, 84.7, 21.2].map((v) => v / 6) };
+    const data = grains[state.grain].map((v) => +(v * mult).toFixed(2));
+    const labels = state.grain === 'day' ? data.map((_, i) => (i % 5 === 4 || i === data.length - 1 ? (i === data.length - 1 ? '오늘' : `${(i + 6) % 30 + 1}일`) : '')) : state.grain === 'week' ? data.map((_, i) => (i % 2 ? '' : `${7 + Math.floor(i / 4)}월`)) : ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10'].map((m) => `${m}월`);
+    const total = data.reduce((a, b) => a + b, 0);
+    const max = Math.max(.1, ...data) * 1.1;
+    const W = 760, H = 210, pl = 44, pb = 24, pt = 10;
+    const step = (W - pl - 8) / data.length, bw = Math.min(40, step * .66);
+    const y = (v) => H - pb - (v / max) * (H - pb - pt);
+    const ticks = [0, max / 2, max].map((v) => `<line x1="${pl}" x2="${W - 8}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line-soft)"/><text x="${pl - 6}" y="${y(v) + 4}" text-anchor="end">${v.toFixed(1)}M</text>`).join('');
+    const bars = data.map((v, i) => { const x = pl + i * step + (step - bw) / 2; const last = i === data.length - 1;
+      return `<rect class="b" x="${x}" y="${y(v)}" width="${bw}" height="${Math.max(0, H - pb - y(v))}" rx="4" fill="${last ? 'var(--hl)' : 'color-mix(in srgb, var(--ink) 18%, var(--surface))'}" ${last ? 'stroke="var(--ink)" stroke-width="1.2"' : ''}><title>${labels[i] || ''} ${v.toFixed(2)}M 토큰</title></rect>${labels[i] ? `<text x="${x + bw / 2}" y="${H - 6}" text-anchor="middle">${labels[i]}</text>` : ''}`; }).join('');
+    const tk = (v) => (v * mult).toFixed(1) + 'M';
+    const projectsTop = [['d-AI-so', 9.8, 61.2], ['guigu-mod-ko', 3.1, 19.4], ['sonmat', 1.6, 10.0], ['blog', 1.0, 6.3], ['old-scripts', 0.5, 3.1]];
+    return `<div class="phead"><h2>사용량</h2>
+        ${state.proj ? `<span class="seg"><button type="button" data-uall="0" aria-pressed="${!state.usageAll}">${ic('folder')}${esc(state.proj)}</button><button type="button" data-uall="1" aria-pressed="${state.usageAll}">모든 프로젝트</button></span>` : ''}
+        <div class="acts"><button class="btn" type="button" data-reload="사용량" title="다시 읽기 (F5)">${ic('arrow-clockwise')}</button></div></div>
+      <div class="filters">${filterChips('usageFilter')}</div>
+      ${limitsBox()}
+      ${total === 0 ? `<div class="empty">${ic('info-circle')}이 도구에는 기록된 사용량이 없습니다.<button class="btn small" type="button" data-filter="usageFilter:all">전체 보기</button></div>` : `
+      <div class="cards3 num">
+        <div class="card"><span>오늘</span><b>${tk(.69)}</b><small>토큰</small></div>
+        <div class="card"><span>최근 7일</span><b>${tk(2.2)}</b><small title="입력 1,920,114 · 출력 184,302 · 캐시 쓰기 82,986">입력 ${tk(1.9)} · 출력 ${tk(.18)}</small></div>
+        <div class="card"><span>최근 30일</span><b>${tk(16.0)}</b><small>캐시 읽기 ${tk(14.1)}는 따로 셉니다</small></div>
+      </div>
+      <section class="card box"><div class="box-head"><h3>${p ? esc(p) + ' · ' : ''}토큰 추이</h3><span class="r"><span class="seg">${[['day', '일별'], ['week', '주별'], ['month', '월별']].map(([k, l]) => `<button type="button" data-grain="${k}" aria-pressed="${state.grain === k}" title="${k === 'day' ? '최근 30칸' : '최근 12칸'}">${l}</button>`).join('')}</span></span></div>
+        <svg class="chart" viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="기간별 토큰">${ticks}${bars}</svg></section>
+      <div class="two">
+        ${p ? '' : `<section class="card box"><div class="box-head"><h3>프로젝트별</h3></div><div class="tbl-wrap"><table class="tbl num"><thead><tr><th>프로젝트</th><th class="r">토큰</th><th class="r">비중</th></tr></thead><tbody>
+          ${projectsTop.map(([n, t, pc]) => `<tr><td><button class="link" type="button" data-proj="${esc(n)}" title="이 프로젝트로 바꿉니다">${esc(n)}</button></td><td class="r">${(t * mult).toFixed(1)}M</td><td class="r"><span class="share"><span style="width:${pc}%"></span></span>${pc}%</td></tr>`).join('')}</tbody></table></div></section>`}
+        <section class="card box"><div class="box-head"><h3>모델별</h3></div><div class="tbl-wrap"><table class="tbl num"><thead><tr><th>모델</th><th class="r">토큰</th><th class="r">비중</th></tr></thead><tbody>
+          ${[['claude', 'claude-opus-5-5', 11.2, 70], ['claude', 'claude-sonnet-5-5', 1.6, 10], ['codex', 'gpt-5.2-codex', 3.2, 20]].filter((r) => f === 'all' || r[0] === f).map(([t, m, n, pc]) => `<tr><td>${tool(t, 'sm')} <span class="mono" style="font-size:12px">${m}</span></td><td class="r">${(n * share).toFixed(1)}M</td><td class="r"><span class="share"><span style="width:${pc}%"></span></span>${pc}%</td></tr>`).join('')}</tbody></table></div></section>
+      </div>`}`;
+  }
+
+  // ── 터미널 ──
+  function terminal() {
+    const vis = rooms.map((x, i) => [x, i]).filter(([x]) => !state.proj || x.dir === state.proj);
+    if (!vis.some(([, i]) => i === state.room)) state.room = vis.length ? vis[0][1] : -1;
+    const r = rooms[state.room];
+    const others = rooms.length - vis.length;
+    const showNew = state.newTerm || !r;
+    return `<div class="rooms" role="tablist">
+        <button class="room-plus" type="button" data-new-term aria-pressed="${showNew}" title="새 터미널을 열 준비 화면으로 갑니다. 열린 방은 그대로 남습니다">${ic('plus-lg')}</button>
+        ${vis.map(([x, i]) => `<span class="room" role="tab" aria-pressed="${!showNew && i === state.room}" title="${esc(roomTitle(x))} · ${ROOM_ST[x.st][0]}"><button type="button" data-room="${i}" style="border:0;background:transparent;display:inline-flex;align-items:center;gap:8px;padding:0 0 0 2px;font-weight:inherit;color:inherit">${tool(x.t, 'sm')}<span class="name">${esc(state.proj ? x.name : x.dir + ' · ' + x.name)}</span>${x.st === 'ask' ? `<span title="허락 기다림" style="color:var(--warn);display:inline-flex">${ic('hourglass-split')}</span>` : ''}${x.unseen ? '<span class="new-dot" title="안 본 답이 있습니다"></span>' : ''}</button><button class="x" type="button" data-close-room="${i}" title="이 방을 닫고 프로세스를 끝냅니다">${ic('x-lg')}</button></span>`).join('')}
+        ${others ? `<span class="faint" style="font-size:var(--t-xs);margin-left:auto;white-space:nowrap;padding-left:10px" title="종을 누르면 모든 방이 보입니다">다른 프로젝트 방 ${others}개</span>` : ''}
+      </div>
+      ${showNew ? newTerm() : roomBody(r)}`;
+  }
+  function roomBody(r) {
+    const chatView = r.view === 'chat';
+    return `<div class="roombody">
+      <div class="rtools">
+        ${state.find ? `<div class="findbar">${ic('search', 'faint')}<input class="input" id="find-q" placeholder="터미널에서 찾기" autocomplete="off"><button class="icon-btn" type="button" title="이전 찾기 (Shift+Enter)">${ic('arrow-up')}</button><button class="icon-btn" type="button" title="다음 찾기 (Enter)">${ic('arrow-down')}</button><button class="icon-btn" type="button" data-find title="찾기 닫기 (Esc)">${ic('x-lg')}</button></div>` : `
+        <span class="seg" style="margin-right:8px"><button type="button" data-view="chat" aria-pressed="${chatView}" title="세션 기록을 말풍선으로 봅니다. CLI는 뒤에서 그대로 돕니다">${ic('chat-dots')}말풍선</button><button type="button" data-view="term" aria-pressed="${!chatView}" title="CLI 화면을 그대로 봅니다">${ic('terminal')}터미널</button></span>
+        <button class="icon-btn" type="button" data-find title="찾기 — Ctrl+F">${ic('search')}</button>
+        <span class="sep"></span>
+        <span class="anchor"><button class="icon-btn" type="button" data-pop="room-prompt" title="내 프롬프트를 이 폴더에 넣고 시작 메시지를 입력합니다. Enter는 직접 칩니다">${ic('lightning-charge')}</button>${state.pop === 'room-prompt' ? `<div class="pop" style="width:280px">${[...MY_PROMPTS.map((p) => [p[1], false]), ['코드 리뷰', true], ['버그 재현 절차', false], ['작업 회고', false]].map(([n, done]) => `<button class="menu-item" type="button" data-toast="docs/prompts 에 넣고 시작 메시지를 입력했습니다">${done ? ic('check2') : ic('square', 'faint')}${esc(n)}${done ? '<small>이미 넣음</small>' : ''}</button>`).join('')}</div>` : ''}</span>
+        <button class="icon-btn" type="button" data-toast="파일 두 개를 붙였습니다 · [Image #1]" title="파일을 골라 CLI에 줍니다. 그림은 첨부로, 나머지는 경로로 붙습니다. 끌어다 놓아도 됩니다">${ic('paperclip')}</button>
+        <span class="sep"></span>
+        <button class="icon-btn" type="button" data-toast="탐색기로 열었습니다" title="이 방의 프로젝트 폴더를 탐색기로 엽니다">${ic('folder2-open')}</button>
+        <span class="anchor"><button class="icon-btn" type="button" data-pop="room-more" title="더보기">${ic('three-dots')}</button>${state.pop === 'room-more' ? `<div class="pop" style="width:230px">
+          <button class="menu-item" type="button" data-toast="입력 줄을 비웠습니다">${ic('eraser')}입력 비우기<small>Ctrl+U</small></button>
+          <button class="menu-item" type="button" data-same-folder>${ic('window-plus')}같은 폴더로 새 터미널</button>
+          <div class="menu-sep"></div>
+          <button class="menu-item" type="button" data-toast="화면 412줄을 복사했습니다">${ic('clipboard')}화면 복사</button>
+          <button class="menu-item" type="button" data-toast="화면을 저장했습니다: d-AI-so-20261005-1432.txt">${ic('download')}화면 저장…</button>
+          <div class="menu-sep"></div>
+          <button class="menu-item" type="button" data-go="rules">${ic('journal-check')}이 프로젝트 지침 고치기</button></div>` : ''}</span>
+        <span class="title ell">${esc(roomTitle(r))}</span><button class="icon-btn" type="button" data-toast="방 이름을 바꿨습니다" title="방 이름 바꾸기">${ic('pencil')}</button>`}
+      </div>
+      ${chatView ? chatHtml(r) : termHtml(r)}
+    </div>`;
+  }
+  function chatHtml(r) {
+    return `<div class="chat"><div class="msgs" id="msgs">
+      ${chat.map((m, i) => m.k === 'me' ? `<div class="msg me">${esc(m.t)}</div>`
+        : m.k === 'ai' ? `<div class="msg ai"><span class="who">${tool(r.t, 'sm')}${TN[r.t]}</span><div class="body">${esc(m.t)}${m.list ? `<ol>${m.list.map((x) => `<li>${esc(x)}</li>`).join('')}</ol>` : ''}</div></div>`
+        : m.k === 'tool' ? `<span class="toolcall" title="${esc(m.out || '')}">${m.ok ? ic('check2', 'ok') : ic('pencil-square')}${esc(m.t)}${m.add ? ` <span class="add">${m.add}</span>` : ''}${m.out ? ` · ${esc(m.out)}` : ''}</span>`
+        : `<div class="ask">${ic('hourglass-split')}<div><b>${TN[r.t]}가 허락을 기다립니다</b><br><code>${esc(m.t)}</code></div><button class="btn primary small" type="button" data-view="term">${ic('terminal')}터미널에서 답하기</button></div>`).join('')}
+      </div>
+      <div class="composer">
+        ${state.cmdOpen ? cmdPop() : ''}
+        <div class="compose-box">
+          <button class="icon-btn" type="button" data-toast="파일을 붙였습니다" title="파일 첨부">${ic('paperclip')}</button>
+          <textarea id="draft" rows="1" placeholder="${TN[r.t]}에게 보낼 말 · / 를 치면 명령과 스킬" aria-label="보낼 말">${esc(state.draft)}</textarea>
+          <button class="send" type="button" data-send title="보내기 (Enter)">${ic('send-fill')}</button>
+        </div>
+        <div class="compose-hint"><span>Enter 보내기 · Shift+Enter 줄바꿈</span><span>보낸 글은 이 방의 ${TN[r.t]} 입력 줄로 들어갑니다</span></div>
+      </div></div>`;
+  }
+  function cmdMatches() {
+    const q = state.draft.startsWith('/') ? state.draft.slice(1).split(' ')[0].toLowerCase() : '';
+    return COMMANDS.map(([g, i, items]) => [g, i, items.filter(([n, , d]) => !q || n.slice(1).toLowerCase().includes(q) || d.includes(q))]).filter(([, , items]) => items.length);
+  }
+  function cmdPop() {
+    let n = 0;
+    const groups = cmdMatches();
+    const flat = groups.flatMap(([, , items]) => items);
+    state.cmdIdx = Math.min(state.cmdIdx, Math.max(0, flat.length - 1));
+    return `<div class="cmdpop" role="listbox">${groups.length ? groups.map(([g, i, items]) => `<div class="cmdgroup">${ic(i)}${esc(g)}</div>${items.map(([name, arg, d, tui]) => { const k = n++; return `<button class="cmd ${tui ? 'tui' : ''} ${k === state.cmdIdx ? 'on' : ''}" type="button" role="option" data-cmd="${esc(name)}" data-tui="${tui ? 1 : ''}"><b>${esc(name)}</b><em>${esc(arg)}</em><span>${esc(d)}</span></button>`; }).join('')}`).join('') : '<div class="cmdgroup">맞는 명령이 없습니다. 그대로 보내면 일반 메시지가 됩니다</div>'}</div>`;
+  }
+  function termHtml(r) {
+    const lines = r.t === 'codex' ? ['<span class="x">◆</span> <span class="d">codex · sandbox read-only</span>', '', '<span class="u">user</span>  LocalOnlyMiddleware 를 보안 관점에서 검토해 줘', '', '<span class="x">codex</span> Host 헤더를 쿠키보다 먼저 보는 순서가 맞습니다.', '      <span class="y">-</span> 쿠키는 포트를 가리지 않아 같은 PC 의 다른 로컬 서버도 받습니다.', '      <span class="y">-</span> OPTIONS 는 쿠키 없이 와서 401 이 납니다. 의도한 동작이면 괜찮습니다.', '', '<span class="g">✓ 작업 끝</span>  <span class="d">3분 12초</span>', '', '<span class="u">user</span>  <span class="caret">&nbsp;</span>']
+      : ['<span class="c">●</span> <span class="d">Claude Code · ~/Documents/GitHub/d-AI-so · main</span>', '', '<span class="c">●</span> <span class="d">Bash</span> npm run lint   <span class="g">✓ 0 problems</span>', '', '<span class="c">●</span> 이제 Electron 을 개발 의존성으로 넣겠습니다.', '', '<span class="q"> Bash command                                                   </span>', '<span class="q">   npm install --save-dev electron@38                           </span>', '<span class="q"> Do you want to proceed?                                        </span>', '<span class="q"> ❯ 1. Yes                                                       </span>', '<span class="q">   2. Yes, and don\'t ask again for npm install in this project </span>', '<span class="q">   3. No, and tell Claude what to do differently                </span>'];
+    return `<div class="term"><pre>${lines.join('\n')}</pre></div>`;
+  }
+
+  // ── 새 터미널 ──
+  const FOLDERS = projects.filter((p) => !p[4]).map((p) => [p[0], p[1]]);
+  const CONVS = [['new', '새로 시작', '새로운 대화로 시작합니다', ''], ['s3', '문서읽어봐. 일렉트론으로 리팩터링하는거 보여?', '오늘 10:41', '주고받음 12회'], ['s5', '최상위를 frontend backend 로 나누자', '10-03 16:12', '주고받음 54회'], ['s8', 'WinUI 레이아웃이 왜 이렇게 자꾸 깨져', '09-28 20:05', '주고받음 77회']];
+  const MODELS = { claude: [['', '도구 설정대로'], ['opus', 'Opus 5.5 · claude-opus-5-5'], ['sonnet', 'Sonnet 5.5 · claude-sonnet-5-5'], ['haiku', 'Haiku 4.5 · claude-haiku-4-5']], codex: [['', '도구 설정대로'], ['gpt-5.2-codex', 'gpt-5.2-codex'], ['gpt-5.2', 'gpt-5.2']], anti: [['', '도구 설정대로']] };
+  function picker(id, value, ph, items, render) {
+    const open = state.picker === id;
+    const q = state.pickQ.toLowerCase();
+    const list = items.filter((it) => !q || JSON.stringify(it).toLowerCase().includes(q));
+    return `<div class="picker"><button type="button" data-picker="${id}" aria-expanded="${open}">${value ? `<span class="ell">${value}</span>` : `<span class="ph">${ph}</span>`}${ic('chevron-down')}</button>
+      ${open ? `<div class="pop"><input class="input" id="pick-q" placeholder="찾기" value="${esc(state.pickQ)}" autocomplete="off"><div class="plist">${list.map(render).join('') || '<div class="faint" style="padding:8px">없습니다</div>'}</div></div>` : ''}</div>`;
+  }
+  function newTerm() {
+    const nt = state.nt;
+    if (state.proj && !nt.folder && projOf(state.proj) && !projOf(state.proj)[4]) nt.folder = projOf(state.proj)[1];
+    const s1 = !!nt.tool, s2 = !!nt.folder, s3 = !!nt.conv;
+    const installed = nt.tool !== 'anti';
+    const cur = !s1 ? 1 : !s2 ? 2 : !s3 ? 3 : 4;
+    const mark = (n, done) => `<span class="mark">${done ? ic('check2') : n === cur ? '●' : ''}</span>`;
+    const cls = (n, done) => `step ${done ? 'done' : n === cur ? 'now' : n > cur ? 'later' : ''}`;
+    const conv = CONVS.find((c) => c[0] === nt.conv);
+    const model = nt.model ? MODELS[nt.tool]?.find((m) => m[0] === nt.model) : null;
+    const exe = nt.tool === 'codex' ? 'codex' : nt.tool === 'anti' ? 'agy' : 'claude';
+    const cmd = !nt.tool ? '' : !installed ? 'Antigravity 공식 설치 안내를 브라우저로 엽니다' : `${exe}${conv && conv[0] !== 'new' ? (nt.tool === 'codex' ? ' resume 019a…3be' : ' --resume 7f3c…a91') : ''}${model && model[0] ? ` --model ${model[0]}` : ''}${nt.args ? ' ' + nt.args : ''}${nt.prompt ? ' "docs/prompts/' + nt.prompt + '.md 파일을 읽고 그 절차대로 진행해 주세요."' : ''}`;
+    const left = !s1 ? '아직 AI를 안 골랐어요' : !installed ? '' : !s2 ? '아직 폴더를 안 골랐어요' : !s3 ? '아직 이어서 열 대화를 안 골랐어요' : '';
+    const folderName = nt.folder ? FOLDERS.find((f) => f[1] === nt.folder)?.[0] : '';
+    const sentence = !s1 ? '' : !installed ? `${TN[nt.tool]}가 설치돼 있지 않습니다. 누르면 설치 안내를 엽니다` : left ? '' : conv[0] === 'new' ? `${TN[nt.tool]}를 ${folderName} 폴더에서 새로 시작합니다` : `${TN[nt.tool]}로 ${folderName} 폴더에서 ${conv[2]} 하던 대화를 이어서 엽니다`;
+    return `<div class="nt"><div class="nt-steps">
+      <div class="${cls(1, s1)}">${mark(1, s1)}<h4>어떤 AI로 시작할까요? <small>필수</small></h4><div class="sbody"><div class="tools3">
+        ${TOOLS.map((t) => `<button class="toolpick" type="button" data-nt-tool="${t}" aria-pressed="${nt.tool === t}">${tool(t, 'lg')}<span><b>${TN[t]}</b><br><small>${t === 'codex' ? 'OpenAI' : t === 'claude' ? 'Anthropic' : 'Google'}</small><br><small class="${t === 'anti' ? 'miss' : ''}">${t === 'anti' ? '설치 안 됨' : '준비됨'}</small></span></button>`).join('')}</div></div></div>
+      ${s1 && installed ? `
+      <div class="${cls(2, s2)}">${mark(2, s2)}<h4>어떤 폴더에서 작업할까요? <small>${state.proj && nt.folder === projOf(state.proj)?.[1] ? '지금 프로젝트' : '필수'}</small></h4><div class="sbody"><div class="lbl-row"><span>폴더</span><div class="with-btn">
+        ${picker('folder', nt.folder ? `<b>${esc(folderName)}</b> <span class="faint mono" style="font-size:11px">${esc(nt.folder)}</span>` : '', '폴더를 선택해주세요', FOLDERS, ([n, p]) => `<button class="prow" type="button" data-pick="folder:${esc(p)}"><span><b>${esc(n)}</b></span><small class="mono">${esc(p)}</small></button>`)}
+        <button class="btn" type="button" data-toast="폴더 고르기 창을 열었습니다" title="목록에 없는 폴더를 직접 고릅니다">${ic('folder2-open')}찾아보기</button></div></div></div></div>` : ''}
+      ${s2 ? `
+      <div class="${cls(3, s3)}">${mark(3, s3)}<h4>대화를 선택해주세요 <small>필수</small></h4><div class="sbody"><div class="lbl-row"><span>대화</span>
+        ${picker('conv', conv ? esc(conv[1]) : '', '이어서 할 대화를 고르세요', CONVS, ([id, t, w, c]) => `<button class="prow" type="button" data-pick="conv:${id}"><span class="ell"><b>${esc(t)}</b></span><small>${esc(w)}</small>${c ? `<span class="sub">${c}</span>` : `<span class="sub">새로운 대화로 시작합니다</span>`}</button>`)}</div></div></div>` : ''}
+      ${s3 ? `
+      <div class="step ${cur === 4 ? 'now' : ''}"><span class="mark">${ic('sliders')}</span><h4>세부 설정 <small>선택</small></h4><div class="sbody">
+        <div class="lbl-row"><span>지침</span><div class="with-btn" style="align-items:center">${ic('check-circle-fill')}<span style="color:var(--ok);font-weight:600">이 폴더에 지침 파일이 있습니다</span><button class="btn small" type="button" data-go="rules">${ic('pencil-square')}편집</button></div></div>
+        <div class="lbl-row"><span>프롬프트</span>${picker('prompt', nt.prompt ? esc([...MY_PROMPTS, ...BUILTIN_PROMPTS].find((p) => p[2] === nt.prompt)[1]) : '', '프롬프트 없음', [['', '프롬프트 없음'], ...MY_PROMPTS.map((p) => [p[2], p[1]]), ...BUILTIN_PROMPTS.map((p) => [p[2], p[1]])], ([id, n]) => `<button class="prow" type="button" data-pick="prompt:${id}"><span>${esc(n)}</span></button>`)}</div>
+        <div class="lbl-row"><span>모델</span>${picker('model', model ? esc(model[1]) : '', '도구 설정대로', MODELS[nt.tool], ([id, n]) => `<button class="prow" type="button" data-pick="model:${id}"><span>${esc(n)}</span></button>`)}</div>
+        <div class="lbl-row"><span>옵션 인자</span><input class="input mono" id="nt-args" placeholder="잘 모르면 비워 두세요" value="${esc(nt.args)}" title="실행 파일 뒤에 그대로 붙는 인자입니다. 도구마다 따로 기억합니다" style="font-size:12px"></div>
+      </div></div>` : ''}
+    </div>
+    <div class="nt-foot">
+      ${sentence ? `<span class="sentence">${esc(sentence)}</span>` : left ? `<span class="left-hint">${ic('info-circle')} ${left}</span>` : '<span></span>'}
+      ${cmd ? `<div class="cmdline"><code title="${esc(cmd)}">${esc(cmd)}</code><button class="btn small" type="button" data-toast="명령을 복사했습니다">${ic('clipboard')}복사</button></div>` : ''}
+      <div class="go">${nt.tool && installed ? `<button class="btn" type="button" data-toast="Windows Terminal 새 창으로 열었습니다" ${left ? 'disabled' : ''}>${ic('box-arrow-up-right')}새 창에서 열기</button>` : ''}
+        <button class="btn primary" type="button" data-start ${!nt.tool || (installed && left) ? 'disabled' : ''}>${nt.tool && !installed ? ic('download') + 'Antigravity 설치 안내 열기' : (conv && conv[0] !== 'new' ? ic('arrow-repeat') + '이어서 열기' : ic('play-fill') + '시작하기')}</button></div>
+    </div></div>`;
+  }
+
+  // ── 세션 ──
+  function sessionList() {
+    return sessions.filter((s) => (state.sTool === 'all' || s.t === state.sTool) && (!state.proj || s.proj === state.proj)
+      && (state.sPeriod === 'all' || s.age <= +state.sPeriod));
+  }
+  function sessionsPage() {
+    const list = sessionList();
+    const searching = state.sSearch.length >= 2;
+    const cur = sessions.find((s) => s.id === state.cur);
+    const nsel = state.sel.size;
+    const totalMb = sessions.reduce((a, s) => a + s.size, 0);
+    return `<div class="sess-top">
+        <div class="phead"><h2>세션</h2><span class="state num">${state.proj ? esc(state.proj) + ' · ' : `프로젝트 ${projects.length}개 · `}세션 ${list.length}건 · ${list.reduce((a, s) => a + s.size, 0).toFixed(1)} MB</span>
+          <div class="acts"><button class="btn" type="button" data-reload="세션 목록" title="목록 다시 읽기 (F5)">${ic('arrow-clockwise')}다시 읽기</button></div></div>
+        <div class="filters">${filterChips('sTool')}</div>
+        <div class="filters">
+          <div class="searchbox"><span class="wrap">${ic('search')}<input class="input" id="s-q" placeholder="대화 본문 검색 (2글자 이상)" value="${esc(state.sQ)}" autocomplete="off"></span>
+            <button class="btn primary small" type="button" data-search title="검색 (Enter)">검색</button>${state.sQ ? `<button class="icon-btn" type="button" data-clear-search title="검색 지우기 (Esc)">${ic('x-lg')}</button>` : ''}</div>
+          ${state.proj && searching ? `<span class="faint" style="font-size:var(--t-xs)">검색은 모든 프로젝트에서 합니다</span>` : ''}
+          <select class="select" id="s-period" style="width:auto;border-radius:99px;font-size:var(--t-xs);font-weight:600;padding:4px 30px 4px 12px">${[['all', '전체 기간'], ['7', '최근 7일'], ['30', '최근 30일'], ['90', '최근 90일']].map(([v, l]) => `<option value="${v}" ${state.sPeriod === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
+          <span class="anchor"><button class="chip" type="button" data-pop="s-filter">${ic('funnel')}필터</button>${state.pop === 's-filter' ? `<div class="pop" style="width:260px;padding:12px;display:flex;flex-direction:column;gap:10px">
+            <label class="sfield"><span>최소 크기 (MB)</span><input class="input num-in" type="number" min="0" value="0" id="s-min"></label>
+            <label class="inline"><input type="checkbox" id="s-orphan"> 폴더가 없어진 것만</label>
+            <label class="inline"><input type="checkbox" id="s-archive" checked> 아카이브 포함</label>
+            <button class="btn small" type="button" data-reset-filter>필터 초기화</button></div>` : ''}</span>
+        </div>
+      </div>
+      <div class="split ${cur ? 'has-sel' : ''}">
+        <div class="list-pane">
+          ${nsel ? `<div class="list-head sel"><button class="icon-btn" type="button" data-clear-sel title="선택 해제">${ic('x-lg')}</button><b>${nsel}건 선택됨</b><span class="grow"></span><button class="btn small danger" type="button" data-delete>${ic('trash3')}삭제</button></div>`
+            : `<div class="list-head"><label class="inline" title="보이는 세션을 모두 체크하거나 해제합니다"><input type="checkbox" id="s-all"></label><b>${searching ? `검색 결과` : '세션 목록'}</b><span class="faint num" style="font-size:var(--t-xs)">${searching ? '결과 7건' : `${list.length}건`}</span><span class="grow"></span>
+              <span class="anchor"><button class="btn small quiet" type="button" data-pop="s-pick" title="조건에 맞는 세션만 골라 체크합니다">${ic('check2-square')}골라 체크${ic('chevron-down')}</button>${state.pop === 's-pick' ? `<div class="pop right" style="width:250px"><button class="menu-item" type="button" data-pick-sel="old">${ic('clock')}${state.days}일 넘은 것</button><button class="menu-item" type="button" data-pick-sel="orphan">${ic('folder')}폴더가 없어진 것</button><button class="menu-item" type="button" data-pick-sel="big">${ic('hdd')}${state.mb} MB 넘는 것</button>
+                <div class="thr"><span>기준 바꾸기 · 요약의 ‘손볼 것’도 이 값을 씁니다</span><span class="inline"><input type="number" min="1" id="thr-days" value="${state.days}">일 <input type="number" min="1" id="thr-mb" value="${state.mb}">MB</span></div></div>` : ''}</span></div>`}
+          ${searching ? searchTree() : `<ul class="slist">${list.length ? list.map((s) => `<li class="srow" data-open="${s.id}" aria-selected="${s.id === state.cur}">
+              <input type="checkbox" data-check="${s.id}" ${state.sel.has(s.id) ? 'checked' : ''} aria-label="체크">${tool(s.t)}
+              <span class="t ell" title="${esc(s.title)}">${esc(s.title)}</span>
+              <span class="m num"><span>${s.when}</span><span>${s.size} MB</span><span title="사용자 ${s.u} · 어시스턴트 ${s.a}">${ic('chat-left-text')} ${s.u}</span>${s.run ? '<span class="pill ok">실행 중</span>' : ''}${s.archived ? '<span class="pill plain">아카이브</span>' : ''}${s.orphan ? '<span class="pill bad">폴더 없음</span>' : ''}</span></li>`).join('')
+            : `<li class="centered">조건에 맞는 세션이 없습니다.<br><button class="btn small" type="button" data-reset-filter style="margin-top:10px">필터 초기화</button></li>`}</ul>`}
+        </div>
+        <div class="detail">${cur ? detailHtml(cur) : '<div class="centered">왼쪽에서 세션을 고르면 대화가 여기 보입니다</div>'}</div>
+      </div>`;
+  }
+  function searchTree() {
+    const q = esc(state.sSearch);
+    const mk = (t) => esc(t).replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), `<mark>${q}</mark>`);
+    return `<ul class="tree">
+      <li class="proj">${ic('folder')}d-AI-so <span class="faint" style="font-weight:500;font-size:var(--t-xs)">· 2개 세션</span></li>
+      <li class="tsess" data-open="5">${tool('claude', 'sm')}<span class="ell"><b>최상위를 frontend backend 로 나누자</b></span><small class="faint">10-03 · 4건</small></li>
+      <li class="hit" data-open="5">[사용자] ${mk(`${state.sSearch} 쪽은 backend 에 두자`)}</li>
+      <li class="hit" data-open="5">[어시스턴트] ${mk(`${state.sSearch} 프로세스 이름을 Daiso.Host 로`)}</li>
+      <li class="tsess" data-open="1">${tool('claude', 'sm')}<span class="ell"><b>Stage 1 시작해. Host 뼈대랑 보안 일곱 가지</b></span><small class="faint">10-05 · 3건</small></li>
+      <li class="proj">${ic('folder')}blog <span class="faint" style="font-weight:500;font-size:var(--t-xs)">· 1개 세션</span></li>
+      <li class="tsess" data-open="7">${tool('codex', 'sm')}<span class="ell"><b>블로그 빌드가 왜 깨지는지 봐 줘</b></span><small class="faint">09-30 · 1건</small></li></ul>`;
+  }
+  function detailHtml(s) {
+    const rows = [['me', '사용자', '14:20', s.title], ['ai', '어시스턴트', '14:20', 'docs/README.md 부터 읽겠습니다. 전환 계획이 일곱 문서로 나뉘어 있고, 지금은 Stage 0 이 끝난 상태입니다. Stage 1 완료 기준은 보안 테스트 초록, 그리고 크롬에서 토큰 주소로 열면 health 가 보이고 토큰 없이 열면 거절되는 것입니다.'],
+      ['tool', '도구', '14:21', 'Read docs/SECURITY.md (64줄)'], ['tool', '도구', '14:22', 'Bash dotnet build → 경고 0개 · 오류 0개'], ['ai', '어시스턴트', '14:31', '보안 검사를 미들웨어 한 곳에 두고, 규칙 일곱 가지를 하나씩 깨 보는 테스트 48개를 붙였습니다.'], ['me', '사용자', '14:40', '좋아 커밋해']];
+    return `<div class="dtools">
+        <button class="link" type="button" data-back-list style="display:none">${ic('chevron-left')}목록</button>
+        ${tool(s.t)}<b class="ell" style="max-width:340px" title="${esc(s.title)}">${esc(s.title)}</b><button class="icon-btn" type="button" data-toast="세션 이름을 바꿨습니다. 첫 질문 대신 이 이름이 보입니다" title="이름 붙이기">${ic('pencil')}</button>
+        <button class="btn small primary" type="button" data-resume title="앱 안 터미널 방으로 엽니다">${ic('arrow-repeat')}이어서 열기</button>
+        <button class="btn small" type="button" data-toast="${TN[s.t].toLowerCase()}-${s.id}.md 로 내보냈습니다">${ic('file-earmark-text')}Markdown 내보내기</button>
+        <label><input type="checkbox" id="show-tools" ${state.showTools ? 'checked' : ''}> 도구 호출 보기</label></div>
+      <div class="timeline">${rows.filter((r) => state.showTools || r[0] !== 'tool').map(([k, role, time, t]) => `<div class="tl ${k}"><span class="role">${role}<small class="num">${time}</small></span><span class="txt">${esc(t)}</span></div>`).join('')}</div>`;
+  }
+
+  // ── 지침 ──
+  function exprOf(n) { if (n.leaf !== undefined) return n.leaf || '…'; const parts = n.items.map(exprOf); return parts.length === 1 ? parts[0] : `(${parts.join(n.op === 'and' ? ' & ' : ' | ')})`; }
+  const PRIOS = ['MUST', 'SHOULD', 'MAY'];
+  // 사람에게는 말로 보여 준다. 파일에는 MUST · SHOULD · MAY 로 쓴다
+  const PW = { MUST: '꼭', SHOULD: '되도록', MAY: '가능하면' };
+  function condHtml(n, path, top) {
+    if (n.leaf !== undefined) return `<span class="cchip"><input data-leaf="${path}" value="${esc(n.leaf)}" placeholder="조건" size="${Math.max(6, n.leaf.length + 2)}" aria-label="조건"><button class="cx" type="button" data-del-leaf="${path}" title="이 조건 빼기">${ic('x-lg')}</button></span>`;
+    const word = n.op === 'and' ? '그리고' : '또는';
+    const inner = n.items.map((c, i) => (i ? `<button class="opword" type="button" data-flip="${path}" title="눌러서 그리고 ↔ 또는">${word}</button>` : '') + condHtml(c, `${path}.${i}`, false)).join('');
+    return top ? `${inner}<button class="add" type="button" data-add-leaf="${path}">${ic('plus-lg')}${word}</button>`
+      : `<span class="cgroup">${inner}<button class="add" type="button" data-add-leaf="${path}" title="${word} 조건 더하기">${ic('plus-lg')}</button></span>`;
+  }
+  function itemsHtml(list, key) {
+    return `<ul class="dlist">${list.map(([p, t], i) => `<li class="ditem"><button class="pw ${p}" type="button" data-cycle="${key}.${i}" title="${p} · 눌러서 바꾸기">${PW[p]}</button>
+      <textarea rows="1" data-act="${key}.${i}" placeholder="AI가 할 일을 한 문장으로" aria-label="할 일">${esc(t)}</textarea>
+      <span class="anchor more"><button class="icon-btn" type="button" data-pop="act-${key}.${i}" title="더보기">${ic('three-dots')}</button>${state.pop === `act-${key}.${i}` ? `<div class="pop right" style="min-width:150px"><button class="menu-item" type="button" data-move="${key}.${i}:-1">${ic('arrow-up')}위로</button><button class="menu-item" type="button" data-move="${key}.${i}:1">${ic('arrow-down')}아래로</button><div class="menu-sep"></div><button class="menu-item" type="button" data-del-act="${key}.${i}" style="color:var(--bad)">${ic('trash3')}지우기</button></div>` : ''}</span></li>`).join('')}</ul>
+      <button class="add" type="button" data-add-act="${key}">${ic('plus-lg')}할 일 추가</button>`;
+  }
+  function libList(kind) {
+    const filter = kind === 'rules' ? state.ruleFilter : state.promptFilter;
+    const cur = kind === 'rules' ? state.ruleCur : state.promptCur;
+    const mine = kind === 'rules' ? MY_RULES.map(([n, d], i) => ['my' + i, '내 지침', n, d]) : MY_PROMPTS.map(([c, n], i) => ['my' + i, `${c} · 내 프롬프트`, n, '']);
+    const built = kind === 'rules' ? BUILTIN_RULES.map(([c, id, d], i) => ['b' + i, `${c} · 기본 제공`, id, d]) : BUILTIN_PROMPTS.map(([c, n], i) => ['b' + i, `${c} · 기본 제공`, n, '']);
+    const show = (arr) => arr.map(([id, badge, n, d]) => `<li><button class="lib-item" type="button" data-lib="${kind}:${id}" aria-current="${id === cur}" title="${esc(d || n)}"><span class="badge">${esc(badge)}</span><b class="ell">${esc(n)}</b>${d ? `<small class="ell">${esc(d)}</small>` : ''}</button></li>`).join('');
+    const word = kind === 'rules' ? '지침' : '프롬프트';
+    return `<div class="lib"><div class="lib-filter">${[['all', '전체'], ['mine', `내 ${word}`], ['built', '기본 제공']].map(([k, l]) => `<button class="chip" type="button" data-libf="${kind}:${k}" aria-pressed="${filter === k}">${l}</button>`).join('')}</div>
+      <ul>${filter !== 'built' ? `${filter === 'all' ? `<li class="lib-sep">내 ${word}</li>` : ''}${show(mine)}` : ''}${filter !== 'mine' ? `${filter === 'all' ? '<li class="lib-sep">기본 제공</li>' : ''}${show(built)}` : ''}</ul>
+      ${kind === 'rules' ? `<div class="lib-foot"><button class="btn small" type="button" data-merge ${state.ruleCur.startsWith('b') ? '' : 'disabled'} title="고른 기본 제공 지침을 지금 편집 중인 지침에 합칩니다">${ic('journal-plus')}지금 지침에 추가</button></div>` : '<div></div>'}</div>`;
+  }
+  function chooseProject(what) {
+    return `<div class="choose">${ic('folder', 'faint')}<b style="color:var(--ink);font-size:var(--t-md)">어느 프로젝트의 ${what}인가요?</b><span>${what}은 프로젝트마다 따로 있습니다. 고르면 위 줄의 프로젝트도 함께 바뀝니다.</span>
+      <div class="pgrid">${projects.filter((p) => !p[4]).map(([n, path]) => `<button class="pcard" type="button" data-proj="${esc(n)}"><span class="top">${ic('folder', 'faint')}<b>${esc(n)}</b></span><span class="path ell">${esc(path)}</span></button>`).join('')}</div></div>`;
+  }
+  function rulesPage() {
+    if (!state.proj) return chooseProject('지침');
+    preset.folder = projOf(state.proj)[1];
+    const canSave = preset.name.trim() && (preset.global.some((x) => x[1].trim()) || preset.rules.length);
+    const folderName = FOLDERS.find((f) => f[1] === preset.folder)?.[0] || '폴더';
+    const bad = TOOLS.filter((t) => readers[t] !== 'ok');
+    return `<div class="ed-top"><h2>지침</h2>
+        <span class="faint mono ell" style="font-size:11px" title="${esc(preset.folder)}\\PROJECT_RULES.daiso">PROJECT_RULES.daiso</span>
+        <span class="phead"><span class="state">${state.dirty ? '● 저장 안 함' : '저장됨'}</span></span>
+        <div class="acts">
+          <button class="btn small" type="button" data-templates>${ic('bookmark-star')}기본 지침에서 가져오기</button>
+          <span class="seg"><button type="button" data-rview="edit" aria-pressed="${state.rview !== 'file'}">${ic('pencil-square')}고치기</button><button type="button" data-rview="file" aria-pressed="${state.rview === 'file'}">${ic('eye')}AI가 보는 모양</button></span>
+          <span class="anchor"><button class="icon-btn" type="button" data-pop="r-more" title="더보기">${ic('three-dots')}</button>${state.pop === 'r-more' ? `<div class="pop right" style="width:300px">
+            <button class="menu-item" type="button" data-guard="새로 만들기">${ic('plus-lg')}새로 만들기</button>
+            <button class="menu-item" type="button" data-guard="열기">${ic('folder2-open')}다른 파일 열기<small>Ctrl+O</small></button>
+            ${['C:\\work\\blog\\PROJECT_RULES.daiso', 'C:\\Users\\박주형\\Documents\\규칙\\unity.daiso'].map((x) => `<button class="menu-item" type="button" data-guard="열기" title="${esc(x)}">${ic('clock')}<span class="ell">${esc(x.split('\\').slice(-2).join('\\'))}</span></button>`).join('')}
+            <div class="menu-sep"></div>
+            <button class="menu-item" type="button" data-toast="다른 이름으로 저장했습니다">${ic('save')}다른 이름으로 저장</button>
+            <button class="menu-item" type="button" data-toast="‘${esc(preset.name)}’를 내 지침에 담았습니다">${ic('bookmark-star')}내 지침으로 담아 두기</button>
+            <div class="menu-sep"></div>
+            <button class="menu-item" type="button" data-migrate title="Claude가 읽는 CLAUDE.md 와 Codex·Antigravity가 읽는 AGENTS.md 의 내용을 같게 맞춥니다">${ic('arrow-left-right')}CLAUDE.md ↔ AGENTS.md 맞추기</button></div>` : ''}</span>
+        </div></div>
+      <div class="rdoc-wrap">
+        <div class="readers-bar ${bad.length ? 'warn' : ''}"><span class="faint">이 지침을 읽는 도구</span>${TOOLS.map((t) => `<span class="rd">${tool(t, 'sm')}${readers[t] === 'ok' ? '<b class="ok">읽음</b>' : '<b class="no">못 읽음</b>'}</span>`).join('')}
+          ${bad.length ? `<button class="btn small primary" type="button" data-link title="AGENTS.md 에 이 파일을 불러오는 줄을 써 넣습니다">${ic('link-45deg')}Codex도 읽게 하기</button>` : ''}</div>
+        ${state.rview === 'file' ? `<div class="rdoc"><div class="seg" style="align-self:flex-start"><button type="button" data-pmode="md" aria-pressed="${state.previewMode === 'md'}">읽기 좋게</button><button type="button" data-pmode="yaml" aria-pressed="${state.previewMode === 'yaml'}">파일 그대로</button></div><div class="card" style="padding:18px 20px"><div class="md" id="r-preview">${previewText()}</div></div></div>` : `
+        <div class="rdoc">
+          <div><input class="doc-title" id="r-name" value="${esc(preset.name)}" placeholder="지침 이름" aria-label="지침 이름"><input class="doc-desc" id="r-desc" value="${esc(preset.desc)}" placeholder="한 줄 설명 (없어도 됩니다)" aria-label="설명"></div>
+          <section><h3>언제나</h3>${itemsHtml(preset.global, 'g')}</section>
+          <section><h3>이럴 때만</h3>
+            ${preset.rules.map((r, ri) => `<div class="rcard"><div class="when-line"><span class="when-lbl">언제</span>${condHtml(r.when, `${ri}`, true)}${r.when.leaf !== undefined ? `<button class="add" type="button" data-wrap="${ri}:and">${ic('plus-lg')}그리고</button><button class="add" type="button" data-wrap="${ri}:or">${ic('plus-lg')}또는</button>` : ''}<span class="grow"></span><button class="icon-btn" type="button" data-del-rule="${ri}" title="이 묶음 지우기">${ic('trash3')}</button></div>
+              ${itemsHtml(r.then, 'r' + ri)}</div>`).join('')}
+            <button class="add big" type="button" data-add-rule>${ic('plus-lg')}조건이 붙은 묶음 추가</button></section>
+        </div>`}
+      </div>
+      <div class="foot">
+        <button class="btn primary" type="button" data-save-rules ${canSave ? '' : 'disabled'} title="Ctrl+S">${ic('save')}저장</button>
+        ${canSave ? '' : `<span class="why">${ic('info-circle')}이름을 적고 할 일을 하나 넣으면 저장할 수 있습니다</span>`}
+        <span class="msg ell" id="r-msg"></span>
+      </div>`;
+  }
+  const TPL = {
+    git: [['SHOULD', '커밋 메시지는 한 줄로, 무엇을 어떻게 했는지 적는다'], ['MUST', '커밋 전에 빌드와 테스트를 돌린다'], ['SHOULD', '한 커밋에는 한 가지 일만 담는다']],
+    testing: [['MUST', '버그를 고치기 전에 그 버그를 재현하는 테스트를 먼저 붙인다'], ['SHOULD', '테스트 이름은 무엇을 확인하는지 문장으로 쓴다']],
+    communication: [['SHOULD', '한국어로 답한다'], ['SHOULD', '결론을 맨 위에 쓴다'], ['MAY', '확인한 것과 추측을 가른다']],
+    csharp: [['MUST', 'Nullable 경고를 남기지 않는다'], ['SHOULD', '비동기 메서드는 Async 로 끝내고 CancellationToken 을 받는다']],
+  };
+  function tplItems(cur) {
+    if (TPL[cur]) return TPL[cur];
+    const b = BUILTIN_RULES.find((x) => x[1] === cur);
+    const name = b ? b[2] : MY_RULES[+cur.slice(2)]?.[0] || '';
+    return [['SHOULD', `${name} · 첫 번째 습관 (예시)`], ['SHOULD', `${name} · 두 번째 습관 (예시)`]];
+  }
+  function tplModal() {
+    const all = [...MY_RULES.map(([n], i) => ['my' + i, '내 지침', n]), ...BUILTIN_RULES.map(([c, id, d]) => [id, c, d])];
+    const cur = state.tpl;
+    const items = tplItems(cur);
+    let last = '';
+    return `<div class="modal wide" role="dialog" aria-label="기본 지침에서 가져오기"><header><h3>기본 지침에서 가져오기</h3></header><div class="mbody">
+      <div class="tpl"><div class="tpl-l">${all.map(([id, g, n]) => { const head = g !== last ? `<div class="lib-sep">${g}</div>` : ''; last = g; return `${head}<button class="lib-item" type="button" data-tpl="${id}" aria-current="${id === cur}"><b class="ell">${esc(n)}</b></button>`; }).join('')}</div>
+        <div class="tpl-r"><span class="faint" style="font-size:var(--t-xs);font-weight:700">넣을 것을 고르세요. ‘언제나’ 아래에 들어갑니다</span>
+          ${items.map(([p, t], i) => `<label class="tpl-item"><input type="checkbox" data-tplpick="${i}" ${state.tplPicks.has(i) ? 'checked' : ''}><span class="pw ${p}" style="padding:2px 8px">${PW[p]}</span><span>${esc(t)}</span></label>`).join('')}</div></div></div>
+      <footer><button class="btn" type="button" data-close-modal>닫기</button><button class="btn primary" type="button" data-tpl-add ${state.tplPicks.size ? '' : 'disabled'}>${ic('plus-lg')}고른 ${state.tplPicks.size}개 넣기</button></footer></div>`;
+  }
+  function previewText() {
+    if (state.previewMode === 'yaml') {
+      const node = (n, ind) => n.leaf !== undefined ? `${ind}- ${n.leaf}` : `${ind}- ${n.op}:\n${n.items.map((c) => node(c, ind + '    ')).join('\n')}`;
+      const when = (n) => n.leaf !== undefined ? `  - when: ${n.leaf}` : `  - when:\n      ${n.op}:\n${n.items.map((c) => node(c, '        ')).join('\n')}`;
+      return esc(`daiso: 1\nname: ${preset.name}\ndescription: ${preset.desc}\nglobal:\n${preset.global.map(([p, t]) => `  - action: ${t}\n    priority: ${p}`).join('\n')}\nrules:\n${preset.rules.map((r) => `${when(r.when)}\n    then:\n${r.then.map(([p, t]) => `      - action: ${t}\n        priority: ${p}`).join('\n')}`).join('\n')}`);
+    }
+    return `<span class="h">## ${esc(preset.name)}</span>\n\n${preset.global.filter((a) => a[1]).map(([p, t]) => `${esc(t)} (${p})`).join('\n')}\n${preset.rules.map((r) => `\n<span class="h">### ${esc(exprOf(r.when).replace(/^\((.*)\)$/, '$1'))}</span>\n${r.then.filter((a) => a[1]).map(([p, t]) => `${esc(t)} (${p})`).join('\n')}`).join('\n')}`;
+  }
+
+  // ── 프롬프트 ──
+  function promptsPage() {
+    const builtin = state.promptCur.startsWith('b');
+    const can = prompt.name.trim() && prompt.body.trim();
+    return `<div class="ed-top"><h2>프롬프트</h2><span class="phead"><span class="state">${builtin ? '기본 제공 · 고쳐서 저장하면 내 프롬프트가 됩니다' : `내 프롬프트 · ${prompt.id}.md`}</span></span>
+        <div class="acts"><button class="btn quiet small" type="button" data-guard="새로 만들기">${ic('plus-lg')}새로 만들기</button>
+          <button class="btn quiet small" type="button" data-del-prompt ${builtin ? 'disabled' : ''} title="${builtin ? '기본 제공은 지울 수 없습니다' : '내 프롬프트 보관함에서 지웁니다'}">${ic('trash3')}삭제</button></div></div>
+      <div class="ed-split">${libList('prompts')}
+        <div style="overflow:auto;min-height:0"><div class="ed-form" style="overflow:visible">
+          <div class="fields"><label class="field"><span>이름</span><input class="input" id="p-name" value="${esc(prompt.name)}"></label><label class="field"><span>설명</span><input class="input" id="p-desc" value="${esc(prompt.desc)}"></label></div>
+          <div class="fields"><label class="field"><span>갈래</span><select class="select" id="p-cat">${['기획', '파악', '수정', '배포', '기타'].map((c) => `<option ${c === prompt.cat ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
+            <label class="field"><span title="절차가 끝나면 만들어지는 파일">결과 파일</span><input class="input mono" id="p-out" value="${esc(prompt.out)}" placeholder="예: docs/PROJECT_PLAN.md" style="font-size:12px"></label></div>
+          <label class="field" style="flex:1"><span>본문</span><textarea class="pbody" id="p-body" spellcheck="false">${esc(prompt.body)}</textarea></label>
+          <div class="link-row" title="프로젝트의 docs/prompts 에 이 프롬프트를 파일로 넣습니다">
+            ${state.proj ? `${ic('folder', 'faint')}<span style="flex:1"><b>${esc(state.proj)}</b> <span class="faint mono" style="font-size:11px">docs\\prompts\\${prompt.id}.md</span></span>
+            <button class="btn small primary" type="button" data-insert-project ${can ? '' : 'disabled'}>${ic('box-arrow-in-right')}${esc(state.proj)}에 넣기</button>`
+              : `${ic('info-circle', 'faint')}<span style="flex:1" class="muted">위 줄에서 프로젝트를 고르면 바로 넣을 수 있습니다</span><button class="btn small" type="button" data-pop="proj">${ic('folder')}프로젝트 고르기</button>`}
+            <button class="btn small" type="button" data-toast="본문을 복사했습니다">${ic('clipboard')}본문 복사</button>
+          </div>
+          ${state.inserted ? `<div class="starter"><span style="font-size:var(--t-xs);font-weight:700;color:var(--ok)">${ic('check-circle-fill')} ${esc(state.proj)}\\docs\\prompts\\${prompt.id}.md 에 넣었습니다</span>
+            <div class="with-btn" style="align-items:center"><code style="flex:1">docs/prompts/${prompt.id}.md 파일을 읽고 그 절차대로 진행해 주세요.${prompt.out ? ` 결과는 ${esc(prompt.out)} 에 씁니다.` : ''}</code><button class="btn small primary" type="button" data-new-here title="이 문장을 첫 메시지로 넣은 새 터미널을 엽니다">${ic('play-fill')}새 터미널에서 시작</button><button class="btn small" type="button" data-toast="복사했습니다">${ic('clipboard')}복사</button></div></div>` : ''}
+        </div></div></div>
+      <div class="foot"><button class="btn primary" type="button" data-save-prompt ${can ? '' : 'disabled'} title="Ctrl+S">${ic('save')}내 프롬프트에 저장</button>${can ? '' : `<span class="why">${ic('info-circle')}이름과 본문이 있어야 저장할 수 있습니다</span>`}<span class="msg" id="p-msg"></span></div>`;
+  }
+
+  // ── 설정 ──
+  function settingsPage() {
+    const sw = (a, b) => `<span class="sw"><span style="background:${a}"></span><span style="background:${b}"></span></span>`;
+    return `<div class="page-inner" style="display:contents">
+      <div class="phead"><button class="icon-btn" type="button" data-back-tab title="돌아가기">${ic('arrow-left')}</button><h2>설정</h2><span class="state" title="세션 루트와 인덱스 경로는 앱을 다시 켜면 적용됩니다. 나머지는 바로 적용됩니다">${state.settingsDirty ? '● 저장 안 함' : '저장됨'}</span></div>
+      <div class="set">
+        <section class="card"><h3>${ic('palette')}화면</h3>
+          <div class="sfield"><span>테마 · 고르면 바로 바뀝니다</span><div class="themes">${[['system', '시스템', sw('#eceee7', '#20241f')], ['light', '밝게', sw('#eceee7', '#f7f8f4')], ['dark', '어둡게', sw('#121411', '#20241f')]].map(([k, l, s]) => `<button class="themecard" type="button" data-theme-set="${k}" aria-pressed="${state.theme === k}">${s}<b>${l}</b></button>`).join('')}</div></div>
+          <label class="sfield"><span>터미널 글자 크기 (px)</span><span class="inline"><input class="input num-in" type="number" min="8" max="28" value="14" id="set-font" data-dirty><small>8 ~ 28 · 터미널에서 Ctrl + 휠로도 바뀝니다</small></span></label>
+        </section>
+        <section class="card"><h3>${ic('folder')}경로 <span class="pill plain" title="이 두 칸은 앱을 다시 켜야 적용됩니다">다시 켜면 적용</span></h3>
+          <label class="sfield"><span>세션 루트 (비우면 기본값)</span><span class="with-btn"><input class="input mono" id="set-root" placeholder="C:\\Users\\박주형" style="font-size:12px" data-dirty><button class="btn small" type="button">${ic('folder2-open')}고르기</button></span><small>기본값: C:\\Users\\박주형</small></label>
+          <label class="sfield"><span>인덱스 DB (비우면 기본값)</span><span class="with-btn"><input class="input mono" id="set-index" placeholder="%LOCALAPPDATA%\\DAIso\\index.db" style="font-size:12px" data-dirty><button class="btn small" type="button">${ic('folder2-open')}고르기</button></span><small>기본값: %LOCALAPPDATA%\\DAIso\\index.db</small></label>
+          <button class="btn small" type="button" data-reload="인덱스를 다시 만들며" style="align-self:flex-start">${ic('arrow-repeat')}인덱스 다시 만들기</button>
+        </section>
+        <section class="card"><h3>${ic('keyboard')}단축키</h3>
+          <dl class="keys"><dt><kbd>Ctrl+1~6</kbd></dt><dd>왼쪽 탭 순서대로 이동</dd><dt><kbd>Ctrl+P</kbd></dt><dd>프로젝트 바꾸기</dd><dt><kbd>F5</kbd></dt><dd>지금 화면 다시 읽기</dd><dt><kbd>Ctrl+F</kbd></dt><dd>세션 검색 · 터미널 찾기</dd><dt><kbd>Esc</kbd></dt><dd>검색 지우기 · 창 닫기</dd><dt><kbd>Ctrl+S</kbd> <kbd>Ctrl+O</kbd></dt><dd>지침·프롬프트 저장 / 지침 열기</dd><dt><kbd>Ctrl+= / -</kbd></dt><dd>터미널 글자 크기</dd></dl>
+        </section>
+        <section class="card wide"><h3>${ic('plug')}도구 플러그인 <span style="margin-left:auto;display:flex;gap:6px"><button class="btn small" type="button" data-toast="폴더를 열었습니다">${ic('folder2-open')}폴더 열기</button><button class="btn small" type="button" data-toast="다시 읽었습니다. 새로 찾은 도구는 앱을 다시 켜야 나옵니다">${ic('arrow-clockwise')}다시 읽기</button></span></h3>
+          <span class="mono faint ell" style="font-size:11.5px" title="이 폴더에 파일을 놓으면 앱이 아는 AI 도구가 늘어납니다">%USERPROFILE%\\.daiso\\tools</span>
+          <div class="plug">${ic('check-circle-fill')}<b style="color:var(--ink)">aider</b><small>지난 대화까지 읽습니다 · aider.yaml</small><small class="mono">daiso-adapter-aider --stdio</small></div>
+          <div class="plug" style="color:var(--bad)">${ic('x-circle-fill')}<b style="color:var(--ink)">my-agent</b><small>지난 대화를 읽는 프로그램이 답하지 않습니다 · my-agent.yaml</small><span class="err">어댑터가 답을 끝내기 전에 닫혔다</span></div>
+        </section>
+        <section class="card wide"><h3>${ic('info-circle')}정보</h3>
+          <span><b>DAIso 0.2.0</b> · 이 앱은 인터넷으로 아무것도 보내지 않습니다. 로그인 정보는 이 Windows 사용자만 풀 수 있게 암호화하고, 토큰 값은 어디에도 쓰지 않습니다.</span>
+          <span class="mono faint" style="font-size:11.5px">%LOCALAPPDATA%\\DAIso\\settings.json · index.db · profiles\\</span>
+        </section>
+      </div></div>`;
+  }
+
+  // ── 대화상자 ──
+  function modalHtml() {
+    if (state.modal === 'delete') {
+      const ids = [...state.sel]; const ss = sessions.filter((s) => ids.includes(s.id));
+      const run = ss.filter((s) => s.run); const go = ss.filter((s) => !s.run);
+      const mb = go.reduce((a, s) => a + s.size, 0);
+      return `<div class="modal" role="dialog" aria-label="세션 삭제"><header><h3>세션 ${go.length}건을 지울까요?</h3></header><div class="mbody">
+        <span class="num">회수 용량 <b>${mb.toFixed(1)} MB</b>${run.length ? ` · 실행 중이라 빼는 세션 <b>${run.length}건</b>` : ''}</span>
+        <label class="check"><input type="checkbox" id="perm" ${state.permanent ? 'checked' : ''}><span><b>휴지통을 거치지 않고 바로 지우기</b><small>체크하면 되돌릴 수 없습니다. 비워 두면 휴지통으로 보냅니다</small></span></label></div>
+        <footer><button class="btn" type="button" data-close-modal>취소</button><button class="btn danger" type="button" data-confirm-delete ${go.length ? '' : 'disabled'}>${ic('trash3')}${state.permanent ? '바로 지우기' : '휴지통으로 보내기'}</button></footer></div>`;
+    }
+    if (state.modal === 'migrate') {
+      return `<div class="modal wide" role="dialog" aria-label="지시 파일 맞추기"><header><h3>CLAUDE.md ↔ AGENTS.md</h3></header><div class="mbody">
+        <label class="sfield"><span>방향</span><select class="select" id="mig-dir"><option>CLAUDE.md → AGENTS.md</option><option>AGENTS.md → CLAUDE.md</option></select></label>
+        <span class="faint" style="font-size:var(--t-xs)">AGENTS.md 가 없습니다. CLAUDE.md 로 새로 만들 수 있습니다 · daiso 표시 블록은 비교에서 뺍니다</span>
+        <div class="diff"><span>   1      # d-AI-so 프로젝트 규칙</span>\n<span>   2      </span>\n<span class="p">   3    + ## 저장소 구조</span>\n<span class="p">   4    + - 루트: 새 구조를 만드는 곳. 언어로 나눈다</span>\n<span class="p">   5    + - frontend/: TypeScript 전부</span>\n<span class="m">   6    - 옛 구조 설명</span></div></div>
+        <footer><button class="btn" type="button" data-close-modal>닫기</button><button class="btn primary" type="button" data-confirm-migrate>${ic('arrow-left-right')}옮기기</button></footer></div>`;
+    }
+    if (state.modal === 'templates') return tplModal();
+    if (state.modal === 'discard') {
+      return `<div class="modal" role="dialog" aria-label="저장하지 않은 변경"><header><h3>저장하지 않은 변경이 있습니다</h3></header><div class="mbody">지금 편집 중인 내용을 버리고 넘어갈까요? 남기려면 취소하고 먼저 저장하세요.</div>
+        <footer><button class="btn" type="button" data-close-modal>취소</button><button class="btn danger" type="button" data-discard>버리고 넘어가기</button></footer></div>`;
+    }
+    if (state.modal === 'del-prompt') {
+      return `<div class="modal" role="dialog"><header><h3>‘${esc(prompt.name)}’ 프롬프트를 지울까요?</h3></header><div class="mbody">내 프롬프트 보관함에서 지웁니다. 프로젝트에 넣어 둔 파일은 그대로입니다.</div>
+        <footer><button class="btn" type="button" data-close-modal>취소</button><button class="btn danger" type="button" data-close-modal data-toast="‘${esc(prompt.name)}’을(를) 지웠습니다">${ic('trash3')}삭제</button></footer></div>`;
+    }
+    return '';
+  }
+
+  // ── 그리기 ──
+  const PAGES = { summary, usage, terminal, sessions: sessionsPage, rules: rulesPage, prompts: promptsPage, settings: settingsPage };
+  function render() {
+    renderNav();
+    const page = $('page');
+    const fixed = { terminal: 'term-page', sessions: 'sess-page', rules: state.proj ? 'ed-page' : null, prompts: 'ed-page' }[state.tab];
+    page.className = 'page' + (fixed ? ` fixed ${fixed}` : '');
+    page.innerHTML = PAGES[state.tab]();
+    $('overlay').innerHTML = (state.modal ? `<div class="modal-bg" data-modal-bg>${modalHtml()}</div>` : '')
+      + (state.ctx ? `<div class="pop ctx-menu" style="left:${state.ctx.x}px;top:${state.ctx.y}px"><button class="menu-item" type="button" data-ctx-open="term">${ic('terminal')}터미널에서 열기</button><button class="menu-item" type="button" data-ctx-open="detail">${ic('chat-left-text')}상세보기</button></div>` : '');
+    if (state.tab === 'rules' && state.proj) autosize();
+    if (state.tab === 'terminal') { const m = $('msgs'); if (m) m.scrollTop = m.scrollHeight; }
+    if (state.picker) { const q = $('pick-q'); if (q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); } }
+  }
+  function autosize() { document.querySelectorAll('.arow textarea, .ditem textarea').forEach((t) => { t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; }); }
+  function refreshPreview() { const p = $('r-preview'); if (p) p.innerHTML = previewText(); }
+  function nodeAt(path) { const parts = path.split('.').map(Number); let n = preset.rules[parts[0]].when; const chain = [n]; for (const i of parts.slice(1)) { n = n.items[i]; chain.push(n); } return { n, chain, parts }; }
+  function actList(key) { return key === 'g' ? preset.global : preset.rules[+key.slice(1)].then; }
+  function markDirty() { if (!state.dirty) { state.dirty = true; const s = document.querySelector('.ed-top .state'); if (s) s.textContent = '● 저장 안 함'; } }
+  let pendingGuard = null;
+
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest('button, [data-open], [data-recent]');
+    if (!e.target.closest('.pop') && !e.target.closest('[data-pop]') && !e.target.closest('[data-picker]') && (state.pop || state.ctx || state.picker)) {
+      const had = state.pop || state.ctx || state.picker; state.pop = null; state.ctx = null; state.picker = null; state.pickQ = '';
+      if (had && !t) { render(); return; }
+    }
+    if (e.target.matches('[data-modal-bg]')) { state.modal = null; render(); return; }
+    if (!t) return;
+    const d = t.dataset;
+    if (t.id === 'back' && state.hpos > 0) { state.hpos--; go(state.hist[state.hpos], false); return; }
+    if (t.id === 'fwd' && state.hpos < state.hist.length - 1) { state.hpos++; go(state.hist[state.hpos], false); return; }
+    if (d.proj !== undefined) { state.proj = d.proj || null; state.pop = null; state.nt.folder = null; state.newTerm = false; state.cur = null; state.sel.clear(); state.inserted = false; state.usageAll = false; render(); return; }
+    if (d.jump) { const r = rooms[+d.jump]; state.proj = r.dir; state.room = +d.jump; r.unseen = false; state.newTerm = false; state.pop = null; state.tab === 'terminal' ? render() : go('terminal'); return; }
+    if (d.newHere !== undefined) { state.newTerm = true; state.nt = { tool: null, folder: null, conv: null, prompt: state.inserted ? prompt.id : null, model: null, args: '' }; state.tab === 'terminal' ? render() : go('terminal'); return; }
+    if (d.see) { state.cur = +d.see; go('sessions'); return; }
+    if (d.tidy !== undefined) { sessionList().filter((s) => s.age > state.days || s.size > state.mb).forEach((s) => state.sel.add(s.id)); go('sessions'); return; }
+    if (d.acctOpen) { state.acctOpen = state.acctOpen === d.acctOpen ? null : d.acctOpen; render(); return; }
+    if (d.limits) { state.limitsOn = d.limits === 'on'; render(); toast(state.limitsOn ? 'Claude 상태줄을 등록했습니다. 다음 응답부터 한도가 들어옵니다' : 'DAIso 상태줄을 빼고 원래 설정으로 돌렸습니다'); return; }
+    if (d.uall !== undefined) { state.usageAll = d.uall === '1'; render(); return; }
+    if (d.backTab !== undefined) { let i = state.hpos - 1; while (i > 0 && state.hist[i] === 'settings') i--; go(state.hist[Math.max(0, i)] || 'summary'); return; }
+    if (d.go) { if (d.go === 'settings' && state.tab === 'settings') return; go(d.go); return; }
+    if (d.themeSet) { setTheme(d.themeSet); return; }
+    if (d.reload) { reload(d.reload); return; }
+    if (d.pop) { state.pop = state.pop === d.pop ? null : d.pop; render(); return; }
+    if (d.filter) { const [k, v] = d.filter.split(':'); state[k] = v; render(); return; }
+    if (d.saveProf) { const inp = $('prof-name-' + d.saveProf); const st = $('prof-status-' + d.saveProf); if (!inp.value.trim()) { st.textContent = '보관할 이름을 적어 주세요'; st.style.color = 'var(--warn)'; return; } accounts[d.saveProf].profiles.push({ n: inp.value.trim(), d: '지금 계정 · 저장 2026-10-05 14:52' }); const n = inp.value.trim(); render(); $('prof-status-' + d.saveProf).textContent = `‘${n}’(으)로 저장했습니다`; return; }
+    if (d.useProf) { const [tl, i] = d.useProf.split(':'); state.pop = null; render(); toast(`‘${accounts[tl].profiles[+i].n}’(으)로 바꿨습니다. 새로 여는 터미널부터 적용됩니다`); return; }
+    if (d.delProf) { const [tl, i] = d.delProf.split(':'); const n = accounts[tl].profiles.splice(+i, 1)[0].n; render(); $('prof-status-' + tl).textContent = `‘${n}’을(를) 지웠습니다`; return; }
+    if (d.recent !== undefined) { const r = t.getBoundingClientRect(), w = $('app').getBoundingClientRect(); state.ctx = { x: e.clientX - w.left, y: e.clientY - w.top, i: +d.recent }; render(); return; }
+    if (d.ctxOpen) { state.ctx = null; if (d.ctxOpen === 'term') { state.newTerm = false; state.room = 0; go('terminal'); toast('이어서 열 준비를 마쳤습니다'); } else { state.cur = 3; go('sessions'); } return; }
+    if (d.grain) { state.grain = d.grain; render(); return; }
+    // 터미널
+    if (d.newTerm !== undefined) { state.newTerm = true; state.find = false; render(); return; }
+    if (d.room) { state.room = +d.room; state.newTerm = false; rooms[state.room].unseen = false; state.find = false; render(); return; }
+    if (d.closeRoom) { rooms.splice(+d.closeRoom, 1); state.room = -1; if (!rooms.some((x) => !state.proj || x.dir === state.proj)) state.newTerm = true; render(); toast('방을 닫고 프로세스를 끝냈습니다'); return; }
+    if (d.view) { rooms[state.room].view = d.view; state.cmdOpen = false; render(); return; }
+    if (d.find !== undefined) { state.find = !state.find; render(); if (state.find) $('find-q').focus(); return; }
+    if (d.sameFolder !== undefined) { state.nt = { tool: rooms[state.room].t, folder: projOf(rooms[state.room].dir)[1], conv: null, prompt: null, model: null, args: '' }; state.newTerm = true; state.pop = null; render(); return; }
+    if (d.cmd) { if (d.tui) { state.draft = ''; state.cmdOpen = false; rooms[state.room].view = 'term'; render(); toast(`${d.cmd} 는 터미널 보기에서 칩니다`, 'terminal'); return; } state.draft = d.cmd + ' '; state.cmdOpen = false; render(); const ta = $('draft'); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); return; }
+    if (d.send !== undefined) { sendDraft(); return; }
+    if (d.ntTool) { if (state.nt.tool !== d.ntTool) { state.nt.tool = d.ntTool; state.nt.conv = null; state.nt.model = null; } render(); return; }
+    if (d.picker) { state.picker = state.picker === d.picker ? null : d.picker; state.pickQ = ''; render(); return; }
+    if (d.pick) { const [k, ...v] = d.pick.split(':'); state.nt[k] = v.join(':') || null; if (k === 'conv' && !state.nt.conv) state.nt.conv = 'new'; state.picker = null; state.pickQ = ''; render(); return; }
+    if (d.start !== undefined) { const nt = state.nt; if (nt.tool === 'anti') { toast('Antigravity 공식 설치 안내를 브라우저로 열었습니다', 'box-arrow-up-right'); return; } const f = FOLDERS.find((x) => x[1] === nt.folder); rooms.push({ t: nt.tool, dir: f[0], name: `새 방 ${rooms.length + 1}`, st: 'idle', since: '방금', view: 'chat', unseen: false }); state.room = rooms.length - 1; state.newTerm = false; state.nt = { tool: null, folder: null, conv: null, prompt: null, model: null, args: '' }; render(); return; }
+    // 세션
+    if (d.search !== undefined) { doSearch(); return; }
+    if (d.clearSearch !== undefined) { state.sQ = ''; state.sSearch = ''; render(); return; }
+    if (d.resetFilter !== undefined) { state.sTool = 'all'; state.sPeriod = 'all'; state.pop = null; render(); return; }
+    if (d.pickSel) { sessionList().filter((s) => d.pickSel === 'old' ? s.age > state.days : d.pickSel === 'orphan' ? s.orphan : s.size > state.mb).forEach((s) => state.sel.add(s.id)); state.pop = null; render(); return; }
+    if (d.clearSel !== undefined) { state.sel.clear(); render(); return; }
+    if (d.delete !== undefined) { state.modal = 'delete'; state.permanent = false; render(); return; }
+    if (d.confirmDelete !== undefined) { const ids = [...state.sel]; const gone = sessions.filter((s) => ids.includes(s.id) && !s.run); gone.forEach((s) => sessions.splice(sessions.indexOf(s), 1)); state.sel.clear(); state.modal = null; if (!sessions.find((s) => s.id === state.cur)) state.cur = null; render(); toast(`${gone.length}건을 ${state.permanent ? '바로 지웠습니다' : '휴지통으로 보냈습니다'}`); return; }
+    if (d.resume !== undefined) { state.room = 0; state.newTerm = false; go('terminal'); toast('이 세션을 터미널 방에서 이어서 열었습니다'); return; }
+    if (d.backList !== undefined) { state.cur = null; render(); return; }
+    if (d.open && !e.target.matches('input')) { state.cur = +d.open; render(); return; }
+    // 지침 · 프롬프트
+    if (d.lib) { const [kind, id] = d.lib.split(':'); const apply = () => { if (kind === 'rules') state.ruleCur = id; else { state.promptCur = id; state.inserted = false; } state.dirty = false; render(); }; if (state.dirty) { pendingGuard = apply; state.modal = 'discard'; render(); } else apply(); return; }
+    if (d.libf) { const [kind, f] = d.libf.split(':'); if (kind === 'rules') state.ruleFilter = f; else state.promptFilter = f; render(); return; }
+    if (d.guard) { const act = () => { state.dirty = false; render(); toast(d.guard === '열기' ? 'PROJECT_RULES.daiso 를 열었습니다' : '새로 만들었습니다'); }; if (state.dirty) { pendingGuard = act; state.modal = 'discard'; render(); } else act(); return; }
+    if (d.discard !== undefined) { state.modal = null; const g = pendingGuard; pendingGuard = null; state.dirty = false; g ? g() : render(); return; }
+    if (d.closeModal !== undefined) { state.modal = null; render(); if (d.toast) toast(d.toast); return; }
+    if (d.migrate !== undefined) { state.modal = 'migrate'; render(); return; }
+    if (d.confirmMigrate !== undefined) { state.modal = null; readers.codex = 'ok'; render(); toast('AGENTS.md 를 만들었습니다 · 경고 없음'); return; }
+    if (d.templates !== undefined) { state.modal = 'templates'; state.tplPicks = new Set(); render(); return; }
+    if (d.tpl) { state.tpl = d.tpl; state.tplPicks = new Set(); render(); return; }
+    if (d.tplAdd !== undefined) { const src = tplItems(state.tpl); const picked = [...state.tplPicks].map((i) => src[i]).filter(Boolean); picked.forEach((x) => preset.global.push([...x])); state.modal = null; markDirty(); render(); toast(`${picked.length}개를 ‘언제나’에 넣었습니다`); return; }
+    if (d.rview) { state.rview = d.rview; render(); return; }
+    if (d.cycle) { const k = d.cycle.slice(0, d.cycle.lastIndexOf('.')), i = +d.cycle.split('.').pop(); const it = actList(k)[i]; it[0] = PRIOS[(PRIOS.indexOf(it[0]) + 1) % 3]; t.className = `pw ${it[0]}`; t.textContent = PW[it[0]]; t.title = `${it[0]} · 눌러서 바꾸기`; markDirty(); return; }
+    if (d.setFolder) { preset.folder = d.setFolder; state.pop = null; markDirty(); render(); return; }
+    if (d.link !== undefined) { readers.codex = 'ok'; render(); toast(`${state.proj || 'd-AI-so'} 의 AGENTS.md 에 불러오는 줄을 넣었습니다`); return; }
+    if (d.addAct) { actList(d.addAct).push(['SHOULD', '']); markDirty(); render(); const all = document.querySelectorAll(`[data-act^="${d.addAct}."]`); all[all.length - 1]?.focus(); return; }
+    if (d.delAct) { const [k, i] = [d.delAct.slice(0, d.delAct.lastIndexOf('.')), +d.delAct.split('.').pop()]; actList(k).splice(i, 1); markDirty(); render(); return; }
+    if (d.move) { const [p, dir] = d.move.split(':'); const k = p.slice(0, p.lastIndexOf('.')), i = +p.split('.').pop(); const l = actList(k); const j = i + +dir; if (j >= 0 && j < l.length) { [l[i], l[j]] = [l[j], l[i]]; markDirty(); render(); } return; }
+    if (d.addRule !== undefined) { preset.rules.push({ when: { leaf: '' }, then: [['SHOULD', '']] }); markDirty(); render(); return; }
+    if (d.delRule) { preset.rules.splice(+d.delRule, 1); markDirty(); render(); return; }
+    if (d.flip) { const { n } = nodeAt(d.flip); n.op = n.op === 'and' ? 'or' : 'and'; markDirty(); render(); return; }
+    if (d.addLeaf) { nodeAt(d.addLeaf).n.items.push({ leaf: '' }); markDirty(); render(); return; }
+    if (d.addGroup) { nodeAt(d.addGroup).n.items.push({ op: 'or', items: [{ leaf: '' }, { leaf: '' }] }); markDirty(); render(); return; }
+    if (d.wrap) { const [ri, op] = d.wrap.split(':'); const r = preset.rules[+ri]; r.when = { op, items: [r.when, { leaf: '' }] }; markDirty(); render(); return; }
+    if (d.delLeaf) { const { parts } = nodeAt(d.delLeaf); if (parts.length === 1) { preset.rules[parts[0]].when = { leaf: '' }; } else { const parent = nodeAt(parts.slice(0, -1).join('.')).n; parent.items.splice(parts[parts.length - 1], 1); if (parent.items.length === 1 && parts.length === 2) preset.rules[parts[0]].when = parent.items[0]; } markDirty(); render(); return; }
+    if (d.pmode) { state.previewMode = d.pmode; refreshPreview(); document.querySelectorAll('[data-pmode]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.pmode === d.pmode))); return; }
+    if (d.saveRules !== undefined) { state.dirty = false; render(); $('r-msg').textContent = `${preset.folder}\\PROJECT_RULES.daiso 에 저장했습니다`; return; }
+    if (d.insertProject !== undefined) { state.inserted = true; render(); return; }
+    if (d.savePrompt !== undefined) { state.dirty = false; render(); $('p-msg').textContent = `‘${prompt.name}’을(를) 내 프롬프트에 저장했습니다`; return; }
+    if (d.delPrompt !== undefined) { state.modal = 'del-prompt'; render(); return; }
+    if (d.toast) { state.pop = null; render(); toast(d.toast); return; }
+  });
+
+  document.addEventListener('change', (e) => {
+    const el = e.target;
+    if (el.dataset.check) { const id = +el.dataset.check; el.checked ? state.sel.add(id) : state.sel.delete(id); render(); }
+    else if (el.id === 's-all') { sessionList().forEach((s) => (el.checked ? state.sel.add(s.id) : state.sel.delete(s.id))); render(); }
+    else if (el.id === 's-period') { state.sPeriod = el.value; render(); }
+    else if (el.id === 'show-tools') { state.showTools = el.checked; render(); }
+    else if (el.dataset.tplpick !== undefined) { const i = +el.dataset.tplpick; el.checked ? state.tplPicks.add(i) : state.tplPicks.delete(i); render(); }
+    else if (el.id === 'perm') { state.permanent = el.checked; render(); }
+    else if (el.dataset.prio) { const k = el.dataset.prio.slice(0, el.dataset.prio.lastIndexOf('.')), i = +el.dataset.prio.split('.').pop(); actList(k)[i][0] = el.value; el.className = `prio ${el.value}`; markDirty(); refreshPreview(); }
+    else if (el.id === 'p-cat') { prompt.cat = el.value; markDirty(); }
+    else if (el.id === 'thr-days' || el.id === 'thr-mb') { state[el.id === 'thr-days' ? 'days' : 'mb'] = Math.max(1, +el.value || 1); render(); }
+  });
+  document.addEventListener('input', (e) => {
+    const el = e.target;
+    if (el.id === 'draft') { state.draft = el.value; el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; const want = el.value.startsWith('/') && !el.value.includes(' '); if (want !== state.cmdOpen || want) { state.cmdOpen = want; state.cmdIdx = 0; const c = document.querySelector('.composer'); const old = c.querySelector('.cmdpop'); if (old) old.remove(); if (want) c.insertAdjacentHTML('afterbegin', cmdPop()); } }
+    else if (el.id === 'pick-q') { state.pickQ = el.value; const pos = el.selectionStart; render(); const q = $('pick-q'); q.setSelectionRange(pos, pos); }
+    else if (el.id === 'nt-args') { state.nt.args = el.value; const code = document.querySelector('.cmdline code'); if (code) { const base = code.textContent.split(' --')[0]; } }
+    else if (el.id === 's-q') { state.sQ = el.value; }
+    else if (el.dataset.act) { actList(el.dataset.act.slice(0, el.dataset.act.lastIndexOf('.')))[+el.dataset.act.split('.').pop()][1] = el.value; el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; markDirty(); refreshPreview(); }
+    else if (el.dataset.leaf) { nodeAt(el.dataset.leaf).n.leaf = el.value; el.size = Math.max(6, el.value.length + 2); markDirty(); }
+    else if (el.id === 'r-name') { preset.name = el.value; markDirty(); refreshPreview(); }
+    else if (el.id === 'r-desc') { preset.desc = el.value; markDirty(); }
+    else if (el.id === 'p-name') { prompt.name = el.value; markDirty(); }
+    else if (el.id === 'p-body') { prompt.body = el.value; markDirty(); if (state.inserted) { state.inserted = false; document.querySelector('.starter')?.remove(); } }
+    else if (el.dataset.dirty !== undefined) { state.settingsDirty = true; const s = document.querySelector('.phead .state'); if (s) s.textContent = '● 저장 안 함'; }
+  });
+  function doSearch() {
+    if (state.sQ.trim().length < 2) { status('검색어는 2글자 이상이어야 합니다', false, true); setTimeout(() => status(''), 2000); return; }
+    state.sSearch = state.sQ.trim(); render();
+  }
+  function sendDraft() {
+    const text = state.draft.trim(); if (!text) return;
+    const r = rooms[state.room];
+    chat.splice(chat.length - 1, 0, { k: 'me', t: text });
+    state.draft = ''; state.cmdOpen = false; render();
+    toast(`${TN[r.t]} 입력 줄로 보냈습니다`, 'send-fill');
+  }
+  document.addEventListener('keydown', (e) => {
+    const el = e.target;
+    if (el.id === 'draft') {
+      const flat = cmdMatches().flatMap(([, , items]) => items);
+      if (state.cmdOpen && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { e.preventDefault(); state.cmdIdx = (state.cmdIdx + (e.key === 'ArrowDown' ? 1 : -1) + flat.length) % flat.length; document.querySelectorAll('.cmd').forEach((b, i) => b.classList.toggle('on', i === state.cmdIdx)); document.querySelector('.cmd.on')?.scrollIntoView({ block: 'nearest' }); return; }
+      if (state.cmdOpen && (e.key === 'Enter' || e.key === 'Tab') && flat.length) { e.preventDefault(); document.querySelectorAll('.cmd')[state.cmdIdx].click(); return; }
+      if (state.cmdOpen && e.key === 'Escape') { state.cmdOpen = false; document.querySelector('.cmdpop')?.remove(); return; }
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendDraft(); return; }
+      return;
+    }
+    if (el.id === 's-q' && e.key === 'Enter') { doSearch(); return; }
+    if (e.ctrlKey && e.key.toLowerCase() === 'p') { e.preventDefault(); state.pop = 'proj'; render(); return; }
+    if (el.id === 's-q' && e.key === 'Escape') { state.sQ = ''; state.sSearch = ''; render(); return; }
+    if (e.ctrlKey && /^[1-6]$/.test(e.key)) { e.preventDefault(); go(TABS[+e.key - 1][0]); return; }
+    if (e.key === 'F5') { e.preventDefault(); reload((TABS.find((x) => x[0] === state.tab) || [0, '설정'])[1]); return; }
+    if (e.ctrlKey && e.key.toLowerCase() === 'f') { if (state.tab === 'sessions') { e.preventDefault(); $('s-q').focus(); } else if (state.tab === 'terminal' && rooms.length && !state.newTerm) { e.preventDefault(); state.find = true; render(); $('find-q').focus(); } return; }
+    if (e.ctrlKey && e.key.toLowerCase() === 's' && (state.tab === 'rules' || state.tab === 'prompts')) { e.preventDefault(); document.querySelector('[data-save-rules],[data-save-prompt]')?.click(); return; }
+    if (e.key === 'Escape') { if (state.modal) { state.modal = null; render(); } else if (state.pop || state.ctx || state.picker) { state.pop = null; state.ctx = null; state.picker = null; render(); } else if (state.find) { state.find = false; render(); } }
+  });
+  document.addEventListener('mouseup', (e) => { if (e.button === 3 && state.hpos > 0) { state.hpos--; go(state.hist[state.hpos], false); } if (e.button === 4 && state.hpos < state.hist.length - 1) { state.hpos++; go(state.hist[state.hpos], false); } });
+  document.addEventListener('contextmenu', (e) => { const r = e.target.closest('[data-recent]'); if (!r) return; e.preventDefault(); const w = $('app').getBoundingClientRect(); state.ctx = { x: e.clientX - w.left, y: e.clientY - w.top, i: +r.dataset.recent }; render(); });
+  window.addEventListener('resize', () => { if (state.tab === 'rules') autosize(); });
+
+  function setTheme(mode) {
+    state.theme = mode;
+    const root = document.documentElement;
+    if (mode === 'system') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', mode);
+    document.querySelectorAll('.memo [data-theme-set]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.themeSet === mode)));
+    if (state.tab === 'settings') render();
+  }
+
+  render();
+})();
+</script>
