@@ -30,6 +30,7 @@ DAISO_OPEN http://127.0.0.1:51234/?token=...
 - Host는 `DAISO_TOKEN`을 읽자마자 자기 환경에서 지운다. Host가 띄우는 터미널(PTY)이 토큰을 물려받지 않게 하려는 것이다
 - Electron은 `DAISO_LISTENING ` 으로 시작하는 줄을 기다렸다가 그 주소에 `/?token=...`을 붙여 창에 연다
 - 토큰이 32자보다 짧거나 PID가 숫자가 아니면 Host는 뜨지 않는다
+- 부모가 Node(Electron)라면 Host를 `detached`로 띄워야 한다. 아니면 부모가 끝날 때 Windows 잡 오브젝트가 Host를 먼저 죽여서 정상 종료(`server.json` 지우기)를 못 한다 ([frontend/desktop/README.md](../../../frontend/desktop/README.md))
 
 ## 경로
 

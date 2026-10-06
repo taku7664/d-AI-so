@@ -8,11 +8,12 @@ WinUI 3 앱을 **Electron + 웹 화면 + C# 서버**로 옮기는 작업의 문�
 | 날짜 | 한 일 |
 |---|---|
 | 2026-10-03 | 작업물을 `old/`로 옮김. 문서를 주제별로 나눔. 최상위를 `frontend/`(TS)·`backend/`(C#)로 나누고 ESLint·Prettier는 `frontend/`에 둠 |
+| 2026-10-06 | **Stage 1·2 완료.** `frontend/desktop`(Electron 44.5.1): Host를 띄워 창에 열기, 두 번째 실행 막기, 트레이, X로 숨기기, 브라우저로 열기. 루트 `tools/run-app.ps1`. 하다가 Electron이 끝날 때 Host가 잡 오브젝트에 묶여 강제로 죽는 바람에 `server.json`이 남는 것을 찾아, Host를 잡 밖에서 띄우게 함 |
 | 2026-10-06 | **화면 시안을 D안으로 정함.** "지금 프로젝트"가 앱 전체의 기준, 탭 여섯 개(설정은 톱니), 요약은 프로젝트 첫 화면, 단가표·$ 추정을 없애고 구독 한도를 파일로 읽음. 기본 탭 id 확정. 시안 HTML을 `docs/design/`에 넣고 ROADMAP Stage 3~7에 반영. Stage 1 크롬 확인 중 "토큰 없이 열면 거절"은 확인함 |
 | 2026-10-05 | **Stage 1 코드·테스트 끝, 크롬 확인 남음.** `backend/src/Daiso.Host`(net10.0-windows): 보안 미들웨어, `server.json`, 부모 감시, `/api/health`·OpenAPI·`/ws`, 옛 앱의 서비스 등록. 보안 테스트 48개. 하다가 SQLite 취약점(CVE-2025-6965) 때문에 `Infrastructure`의 SQLitePCLRaw를 2.1.13으로 올림 |
 | 2026-10-05 | **Stage 0 완료.** `backend/`에 `Daiso.sln`·`Directory.Build.props`·`global.json`. 솔루션은 `old/src` 백엔드 7개와 `old/tests` 세 벌, 테스트가 참조하는 `old/tools/adapters/Daiso.Adapter.Claude`를 담는다. 하다가 빨갛던 옛 테스트 하나(어댑터가 일찍 끝나면 파이프 쓰기에서 던짐)을 고침 |
 
-다음은 [ROADMAP.md](ROADMAP.md) Stage 1의 남은 완료 기준 하나(크롬에서 토큰 주소로 열어 health 확인, 저장소 주인이 직접)와 Stage 2다. 띄우는 법은 [backend/src/Daiso.Host/README.md](../backend/src/Daiso.Host/README.md)에 있다. `frontend/`에는 아직 ESLint·Prettier 설정과 탭 README뿐이다.
+다음은 [ROADMAP.md](ROADMAP.md) Stage 3(화면 뼈대와 탭 계약)이다. 새 앱은 루트에서 `tools/run-app.ps1`로 띄운다 ([frontend/desktop/README.md](../frontend/desktop/README.md)). `frontend/web`은 아직 탭 README뿐이다.
 
 ### 이어받는 사람이 먼저 볼 것
 
@@ -36,6 +37,7 @@ WinUI 3 앱을 **Electron + 웹 화면 + C# 서버**로 옮기는 작업의 문�
 
 | 문서 | 무엇 |
 |---|---|
+| [frontend/desktop/README.md](../frontend/desktop/README.md) | Electron 메인: 띄우기, Host와 주고받는 것, 끌 때 Host가 남지 않는 이유 |
 | [frontend/web/src/tabs/README.md](../frontend/web/src/tabs/README.md) | 탭의 화면 쪽 약속, 기본 탭 id 목록 |
 | [backend/src/Daiso.Host/Tabs/README.md](../backend/src/Daiso.Host/Tabs/README.md) | 탭의 서버 쪽 약속, 알림 보내는 법 |
 

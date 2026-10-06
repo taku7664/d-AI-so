@@ -31,7 +31,7 @@ Core 모델과 파싱 규칙은 여전히 `old/docs/ARCHITECTURE.md`가 정본�
 ```text
 docs/                          여러 모듈에 걸친 문서
 frontend/                      TypeScript 전부. npm 은 여기서만 돈다
-  package.json                 npm workspaces 로 desktop·web 을 묶는다. 지금은 ESLint·Prettier 만
+  package.json                 npm workspaces 로 desktop·web 을 묶는다. 지금은 desktop 만
   eslint.config.mjs            desktop·web 공용 ESLint 설정
   .prettierrc.json             Prettier 설정 (.md 는 건드리지 않는다)
   desktop/                     Electron 메인 + preload (Stage 2)

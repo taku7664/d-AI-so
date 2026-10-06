@@ -26,6 +26,7 @@
 `old/src`의 백엔드를 고쳤으면 `old/`에서 `dotnet build Daiso.sln`·`dotnet test Daiso.sln`도 초록이어야 한다.
 
 **새 구조**
+- 새 앱은 루트에서 `tools/run-app.ps1`로 띄운다. Host와 Electron을 빌드하고 빌드한 바로 그 Host로 띄운다
 - 프런트: `frontend/`에서 `npm run lint`·`npm run format:check`
 - 백엔드: `backend/`에서 `dotnet build`·`dotnet test` (Stage 0부터)
 

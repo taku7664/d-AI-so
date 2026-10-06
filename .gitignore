@@ -2,6 +2,8 @@
 [Bb]in/
 [Oo]bj/
 artifacts/
+# TypeScript 빌드 출력 (frontend/desktop 은 tsc 가 out/ 에 쓴다)
+frontend/**/out/
 
 # Visual Studio / Rider / VS Code
 .vs/

@@ -23,7 +23,7 @@ Electron 전환을 Stage 0~8로 나누고, 단계마다 할 일과 완료 기준
 - `GET /api/health`, OpenAPI 문서, 공용 WebSocket `/ws`
 - `backend/tests/Daiso.Host.Tests/`: 보안 규칙을 하나씩 깨 보는 테스트
 - **완료 기준:** 보안 테스트 초록. 크롬에서 토큰 주소로 열면 health가 보이고, 토큰 없이 열면 거절된다
-  - 2026-10-06: 토큰 없이 열면 거절되는 것을 확인했다(`/api/health` 401, 크롬은 오류 화면). 토큰 주소로 여는 쪽은 토큰 값을 다루는 일이라 저장소 주인이 직접 확인한다
+  - 2026-10-06 완료: 토큰 없이 열면 거절된다(`/api/health` 401, 크롬은 오류 화면). 토큰 주소로 여는 쪽은 Stage 2의 Electron 창(Chromium)으로 확인했다. 토큰 주소로 연 창이 토큰을 쿠키로 바꾼 뒤 토큰 없는 주소에서 첫 화면(`DAIso Host`)을 보여 준다
 
 ## Stage 2 — Electron 껍데기
 
@@ -32,6 +32,7 @@ Electron 전환을 Stage 0~8로 나누고, 단계마다 할 일과 완료 기준
 - 두 번째 실행 막기, 트레이, 창 X → 트레이로 숨기기, 트레이 메뉴 "브라우저로 열기"
 - 새 앱을 띄우는 `tools/run-app.ps1`을 루트에 새로 만든다 (옛 것은 `old/tools/`에 그대로)
 - **완료 기준:** 빌드한 Electron 앱이 서버를 띄우고 빈 화면을 보여 준다. 앱을 끄면 서버 프로세스가 남지 않는다. `npm run lint` 초록
+  - 2026-10-06 완료. Electron 44.5.1. Host를 잡 오브젝트 밖에서 띄워야 끌 때 `server.json`까지 정리된다 ([frontend/desktop/README.md](../frontend/desktop/README.md))
 
 ## Stage 3 — 화면 뼈대와 탭 계약
 
