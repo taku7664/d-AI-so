@@ -261,7 +261,7 @@ h2.t { font: 700 var(--t-xl)/1.2 var(--f-title); margin: 0; }
   <div class="seg" role="group" aria-label="창 너비"><button type="button" data-w="1280" aria-pressed="true">앱 창 1280</button><button type="button" data-w="960" aria-pressed="false">좁은 창 960</button></div>
   <div class="seg" role="group" aria-label="알림 팝업"><button type="button" data-bell="1" aria-pressed="true">알림 팝업 열기</button><button type="button" data-bell="0" aria-pressed="false">닫기</button></div>
   <div class="seg" role="group" aria-label="테마"><button type="button" data-th="light" aria-pressed="true">밝게</button><button type="button" data-th="dark" aria-pressed="false">어둡게</button></div>
-  <p class="desc">위: 타일 넷. 아래 왼쪽: 최근 세션 최대 5개(마지막 활동 순, 마지막으로 친 질문을 같이). 아래 오른쪽: 워크트리 현황(메인 작업 폴더 말고 따로 뽑아 둔 작업 폴더). 종 팝업은 지난 시안 그대로. <span class="faint">세션은 인덱스 기준(마지막 갱신 21:36, 앱이 꺼져 있어 그 뒤로 안 읽음). 워크트리는 지금 git 에서 읽은 실제 값입니다.</span></p>
+  <p class="desc">위: 타일 넷. 아래 왼쪽: 최근 세션 최대 5개(마지막 활동 순, 마지막으로 친 질문을 같이). 아래 오른쪽: 워크트리 현황(메인 작업 폴더 말고 따로 뽑아 둔 작업 폴더). 종 팝업: 맨 위 손볼 것, 그 아래 열린 터미널·마지막으로 하던 것·다른 프로젝트에서 하던 것. 프로젝트를 고르면 같은 틀을 그 프로젝트로 좁힌다. <span class="faint">세션은 인덱스 기준(마지막 갱신 21:36, 앱이 꺼져 있어 그 뒤로 안 읽음). 워크트리는 지금 git 에서 읽은 실제 값입니다.</span></p>
 </div>
 <div class="frame" id="frame">
   <nav class="nav">
@@ -328,6 +328,9 @@ h2.t { font: 700 var(--t-xl)/1.2 var(--f-title); margin: 0; }
 .bell-pop .orow:hover { background: var(--surface); }
 .bell-pop .orow small { color: var(--faint); font-size: var(--t-xs); }
 .bell-pop .sep { border-top: 1px solid var(--line-soft); }
+.bell-pop .fix { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 6px 4px; }
+.bell-pop .fix > .i { color: var(--warn); }
+.bell-pop .fix small { display: block; color: var(--faint); font-size: var(--t-xs); }
 .icon-btn { border: 1px solid var(--line); background: var(--raise); border-radius: 999px; width: 28px; height: 28px; display: inline-grid; place-items: center; }
 
 .P { display: flex; flex-direction: column; gap: 14px; overflow: hidden; }
@@ -478,7 +481,11 @@ h2.t { font: 700 var(--t-xl)/1.2 var(--f-title); margin: 0; }
     const [h] = TODAY.filter((r) => r[3]);
     const others = [];
     for (const r of TODAY) if (r[3] && r[2] !== h[2] && !others.some((o) => o[2] === r[2]) && others.length < 4) others.push(r);
-    return `<div class="ph">열린 터미널 <span class="faint num">0</span><span class="r"><button class="link" type="button">터미널 탭</button></span></div>
+    return `<div class="ph">손볼 것 <span class="faint num">2</span></div>
+      <div class="fix">${ic('clock')}<span class="ell"><b>${LOGIN.tool} 로그인이 ${LOGIN.days}일 뒤 끝납니다</b><small>${LOGIN.until}까지</small></span><button class="btn" type="button">${ic('box-arrow-in-right')}다시 로그인</button></div>
+      <div class="fix">${ic('hdd')}<span class="ell"><b>정리할 만한 세션 248건 · 4.37 GB</b><small>30일 넘었거나 20 MB 넘는 것</small></span><button class="btn" type="button">${ic('check2-square')}골라 보기</button></div>
+      <div class="sep"></div>
+      <div class="ph">열린 터미널 <span class="faint num">0</span><span class="r"><button class="link" type="button">터미널 탭</button></span></div>
       <div class="none">돌고 있는 방이 없습니다</div>
       <div class="sep"></div>
       <div class="last"><span class="k">마지막으로 하던 것 · 오늘 ${h[0]}</span><b>${esc(h[3])}</b>
