@@ -750,8 +750,9 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
     /// 4: `ToolKind.Gemini` → `ToolKind.Antigravity`. tool 열에 도구 이름이 문자열로 들어가므로 옛 행("Gemini")은 Enum.Parse 가 못 읽는다.
     /// 5: ToolKind 가 enum → 문자열 id. tool 열이 "Claude" 에서 "claude" 가 된다 (docs/PLUGIN_PLAN.md Stage 1).
     /// 6: 본문을 messages 로 옮기고 FTS 는 색인만(external content, detail=none).
+    /// 7: Claude usage 를 응답(message.id)마다 한 번만 센다. 한 응답이 여러 줄로 남아 2~3배로 부풀던 것.
     /// </summary>
-    private const int IndexFormatVersion = 6;
+    private const int IndexFormatVersion = 7;
 
     /// <summary>
     /// 표를 만들고, 형식이 옛것이면 <b>표째로 버리고</b> 다시 만든다.

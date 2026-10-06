@@ -194,6 +194,7 @@ public sealed class ClaudeProvider : IProvider, IUsageReader
         var users = 0;
         var assistants = 0;
         var usage = TokenUsage.Zero;
+        var counted = new HashSet<string>(StringComparer.Ordinal);
 
         await foreach (var line in JsonlReader.ReadLinesAsync(filePath, 0, ct).ConfigureAwait(false))
         {
@@ -208,7 +209,7 @@ public sealed class ClaudeProvider : IProvider, IUsageReader
             version ??= record.Version;
             startedAt ??= record.Timestamp;
 
-            if (record.Usage is { } recordUsage)
+            if (record.Usage is { } recordUsage && FirstTime(counted, record))
             {
                 usage = usage.Add(recordUsage);
             }
@@ -288,7 +289,10 @@ public sealed class ClaudeProvider : IProvider, IUsageReader
     }
 
     /// <inheritdoc />
-    /// <remarks>Claude는 메시지마다 usage가 붙으므로 날짜별로 더한다.</remarks>
+    /// <remarks>
+    /// Claude는 응답마다 usage가 붙으므로 날짜별로 더한다.
+    /// 한 응답이 content 블록마다 한 줄씩 여러 줄로 남고 줄마다 같은 usage가 붙는다. <c>message.id</c>로 한 번만 센다.
+    /// </remarks>
     public bool UsageIsAdditive => true;
 
     /// <inheritdoc />
@@ -301,11 +305,12 @@ public sealed class ClaudeProvider : IProvider, IUsageReader
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
 
         var byDay = new Dictionary<DateOnly, TokenUsage>();
+        var counted = await IdsBeforeAsync(filePath, fromByteOffset, ct).ConfigureAwait(false);
 
         await foreach (var line in JsonlReader.ReadLinesAsync(filePath, fromByteOffset, ct).ConfigureAwait(false))
         {
             var record = ClaudeRecordParser.Parse(line);
-            if (record?.Usage is not { } usage)
+            if (record?.Usage is not { } usage || !FirstTime(counted, record))
             {
                 continue;
             }
@@ -323,6 +328,42 @@ public sealed class ClaudeProvider : IProvider, IUsageReader
         {
             yield return new UsageDay(date, usage);
         }
+    }
+
+    /// <summary>이 응답의 usage를 처음 보는가. id 가 없는 줄은 늘 센다.</summary>
+    private static bool FirstTime(HashSet<string> counted, ClaudeRecord record) =>
+        record.MessageId is not { } id || counted.Add(id);
+
+    /// <summary>
+    /// 이어 읽을 때, 이미 센 응답 id. 한 응답의 줄들은 붙어서 남으므로 <paramref name="offset"/> 바로 앞 조각만 본다.
+    /// 조각 첫 줄은 중간부터 잘려 파싱되지 않고 버려진다.
+    /// </summary>
+    private static async Task<HashSet<string>> IdsBeforeAsync(string filePath, long offset, CancellationToken ct)
+    {
+        const int Window = 256 * 1024;
+        var ids = new HashSet<string>(StringComparer.Ordinal);
+        if (offset <= 0)
+        {
+            return ids;
+        }
+
+        var start = Math.Max(0, offset - Window);
+        var buffer = new byte[offset - start];
+        await using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+        {
+            stream.Position = start;
+            await stream.ReadExactlyAsync(buffer, ct).ConfigureAwait(false);
+        }
+
+        foreach (var line in Encoding.UTF8.GetString(buffer).Split('\n'))
+        {
+            if (ClaudeRecordParser.Parse(line) is { Usage: not null, MessageId: { } id })
+            {
+                ids.Add(id);
+            }
+        }
+
+        return ids;
     }
 
     /// <summary>본문을 훑지 않고 파일 앞부분에서만 메타를 읽는다.</summary>

@@ -13,7 +13,8 @@ internal sealed record ClaudeRecord(
     DateTimeOffset? Timestamp,
     bool IsSidechain,
     IReadOnlyList<SessionMessage> Messages,
-    TokenUsage? Usage);
+    TokenUsage? Usage,
+    string? MessageId = null);
 
 /// <summary>jsonl 한 줄을 <see cref="ClaudeRecord"/>로 바꾼다.</summary>
 internal static class ClaudeRecordParser
@@ -161,6 +162,7 @@ internal static class ClaudeRecordParser
         {
             Messages = messages,
             Usage = isSynthetic ? null : Usage(message?.Prop("usage"), model),
+            MessageId = message?.Prop("id").Text(),
         };
     }
 

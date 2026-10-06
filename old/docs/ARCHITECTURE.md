@@ -377,7 +377,7 @@ public sealed record ExportOptions(bool IncludeToolCalls = true, bool IncludeSys
     - 배열이고 `text` 블록만 → **User** (text 이어붙임)
     - 배열에 `tool_result` 포함 → **Tool** (`toolUseResult` 필드가 함께 있음)
     - `isMeta: true` → 제외
-  - `type: "assistant"` → `message.content` 배열의 `text` 블록 → **Assistant**. `tool_use` 블록은 Tool로 분류. `message.usage.{input_tokens, output_tokens, cache_creation_input_tokens, cache_read_input_tokens}`, `message.model` 합산. `model == "<synthetic>"` 은 usage 합산과 ByModel에서 제외
+  - `type: "assistant"` → `message.content` 배열의 `text` 블록 → **Assistant**. `tool_use` 블록은 Tool로 분류. `message.usage.{input_tokens, output_tokens, cache_creation_input_tokens, cache_read_input_tokens}`, `message.model` 합산. `model == "<synthetic>"` 은 usage 합산과 ByModel에서 제외. 한 응답이 content 블록마다 한 줄씩 여러 줄로 남고 줄마다 같은 usage 가 붙으므로 usage 는 `message.id` 마다 한 번만 더한다(id 없는 줄은 그대로 더한다)
   - `type: "system"` → System
   - 그 외 (`attachment`, `queue-operation`, `last-prompt`, `custom-title`, `mode`, `bridge-session`, `atis-latch` 등) → 무시
 - `ProjectPath`: 첫 `cwd`. `StartedAt`: 첫 `timestamp`. `ToolVersion`: 첫 `version`
