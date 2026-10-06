@@ -13,7 +13,12 @@ public sealed class ClaudeProvider : IProvider, IUsageReader
     private const string LocalRulesFile = "CLAUDE.local.md";
     private const string RulesPresetFile = "PROJECT_RULES.daiso";
     private const int FirstPromptLength = 200;
-    private const int MetaScanLines = 20;
+    /// <summary>
+    /// 메타를 찾을 때 앞에서 읽는 최대 줄 수. 넷(id·cwd·판·시각)을 다 찾으면 바로 멈춘다.
+    /// 예전에는 20줄이었는데, 데스크톱 앱에서 연 세션은 제목·모드·파일 스냅숏 줄이 먼저 와서 cwd 가 23번째 줄에야 나왔다.
+    /// 그래서 프로젝트를 모르는 세션이 29개 생겼다(2026-10-06).
+    /// </summary>
+    private const int MetaScanLines = 500;
 
     private readonly ProviderHome _home;
     private readonly IProcessProbe _processProbe;

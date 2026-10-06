@@ -31,7 +31,7 @@ public sealed class ProjectsTests : IAsyncLifetime
 
         response.Current.Should().BeNull(because: "처음에는 모든 프로젝트다");
         response.Projects.Should().ContainSingle()
-            .Which.Should().BeEquivalentTo(new ProjectItem(Path.GetFileName(_project), _project, 0, null, true));
+            .Which.Should().BeEquivalentTo(new ProjectItem(Path.GetFileName(_project), _project, 0, null, true, [_project]));
     }
 
     [Fact]

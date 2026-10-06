@@ -620,13 +620,13 @@ export interface components {
         };
         /** @description 프로젝트 하나. 위 줄 프로젝트 선택기와 "모든 프로젝트" 요약이 쓴다. */
         ProjectItem: {
-            /** @description 폴더 이름. */
+            /** @description 폴더 이름. Claude 임시 폴더 묶음은 정해 둔 이름. */
             name: string;
-            /** @description 전체 경로. */
+            /** @description 전체 경로. 프로젝트를 가리키는 열쇠로 쓴다. */
             path: string;
             /**
              * Format: int32
-             * @description 인덱스에 있는 세션 수. 최근 폴더에만 있으면 0.
+             * @description 인덱스에 있는 세션 수. 묶인 워크트리 것까지 센다. 최근 폴더에만 있으면 0.
              */
             sessionCount: number;
             /**
@@ -636,6 +636,8 @@ export interface components {
             lastActivity: null | string;
             /** @description 폴더가 아직 있는가. 없으면 세션만 남은 것이다. */
             exists: boolean;
+            /** @description 이 프로젝트로 묶은 폴더들(자기 포함). 워크트리·임시 폴더가 여기 들어온다 (ProjectGroups). */
+            members: string[];
         };
         /** @description 프로젝트 목록과 지금 고른 프로젝트. */
         ProjectsResponse: {

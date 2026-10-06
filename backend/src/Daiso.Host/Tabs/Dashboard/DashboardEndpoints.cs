@@ -97,6 +97,7 @@ public sealed class DashboardEndpoints : ITabEndpoints
         string? project = null)
     {
         var scope = string.IsNullOrEmpty(project) ? null : project;
+        var members = await catalog.ScopeAsync(scope, ct).ConfigureAwait(false);
         IReadOnlyList<SessionInfo> sessions = [];
         UsageTokens week = UsageTokens.Zero;
         var attention = new List<Attention>();
@@ -104,10 +105,11 @@ public sealed class DashboardEndpoints : ITabEndpoints
         try
         {
             var sessionIndex = services.GetRequiredService<ISessionIndex>();
-            sessions = await sessionIndex.ListAsync(SessionFilter.All with { ProjectPath = scope }, ct).ConfigureAwait(false);
+            sessions = [.. (await sessionIndex.ListAsync(SessionFilter.All, ct).ConfigureAwait(false))
+                .Where(session => ProjectCatalog.InScope(members, session.ProjectPath))];
 
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
-            var usage = await sessionIndex.GetUsageAsync(today.AddDays(-6), today, null, scope, ct).ConfigureAwait(false);
+            var usage = await UsageReport.ReadAsync(sessionIndex, today.AddDays(-6), today, null, members, ct).ConfigureAwait(false);
             week = UsageTokens.From(usage.Days.Aggregate(TokenUsage.Zero, (sum, day) => sum.Add(day.Usage)));
         }
         catch (Exception ex) when (ex is IOException or InvalidOperationException or System.Data.Common.DbException)
@@ -158,17 +160,17 @@ public sealed class DashboardEndpoints : ITabEndpoints
     {
         var projects = await catalog.ListAsync(ct).ConfigureAwait(false);
         var labels = PathLabels.For([.. projects.Select(project => project.Path)], SessionLabels.Unknown);
-        var size = sessions
-            .Where(session => session.ProjectPath is not null)
-            .GroupBy(session => session.ProjectPath!.TrimEnd('\\', '/'), StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(group => group.Key, group => group.Sum(session => session.SizeBytes), StringComparer.OrdinalIgnoreCase);
 
-        return [.. projects.Select((project, i) => new ProjectCard(
-            project.Path,
-            labels[i],
-            project.Exists,
-            project.SessionCount,
-            size.GetValueOrDefault(project.Path),
-            project.LastActivity))];
+        return [.. projects.Select((project, i) =>
+        {
+            var members = new HashSet<string>(project.Members, StringComparer.OrdinalIgnoreCase);
+            return new ProjectCard(
+                project.Path,
+                ProjectGroups.LabelFor(project.Path) ?? labels[i],
+                project.Exists,
+                project.SessionCount,
+                sessions.Where(session => ProjectCatalog.InScope(members, session.ProjectPath)).Sum(session => session.SizeBytes),
+                project.LastActivity);
+        })];
     }
 }

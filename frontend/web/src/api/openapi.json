@@ -1268,21 +1268,22 @@
           "path",
           "sessionCount",
           "lastActivity",
-          "exists"
+          "exists",
+          "members"
         ],
         "type": "object",
         "properties": {
           "name": {
             "type": "string",
-            "description": "\uD3F4\uB354 \uC774\uB984."
+            "description": "\uD3F4\uB354 \uC774\uB984. Claude \uC784\uC2DC \uD3F4\uB354 \uBB36\uC74C\uC740 \uC815\uD574 \uB454 \uC774\uB984."
           },
           "path": {
             "type": "string",
-            "description": "\uC804\uCCB4 \uACBD\uB85C."
+            "description": "\uC804\uCCB4 \uACBD\uB85C. \uD504\uB85C\uC81D\uD2B8\uB97C \uAC00\uB9AC\uD0A4\uB294 \uC5F4\uC1E0\uB85C \uC4F4\uB2E4."
           },
           "sessionCount": {
             "type": "integer",
-            "description": "\uC778\uB371\uC2A4\uC5D0 \uC788\uB294 \uC138\uC158 \uC218. \uCD5C\uADFC \uD3F4\uB354\uC5D0\uB9CC \uC788\uC73C\uBA74 0.",
+            "description": "\uC778\uB371\uC2A4\uC5D0 \uC788\uB294 \uC138\uC158 \uC218. \uBB36\uC778 \uC6CC\uD06C\uD2B8\uB9AC \uAC83\uAE4C\uC9C0 \uC13C\uB2E4. \uCD5C\uADFC \uD3F4\uB354\uC5D0\uB9CC \uC788\uC73C\uBA74 0.",
             "format": "int32"
           },
           "lastActivity": {
@@ -1296,6 +1297,13 @@
           "exists": {
             "type": "boolean",
             "description": "\uD3F4\uB354\uAC00 \uC544\uC9C1 \uC788\uB294\uAC00. \uC5C6\uC73C\uBA74 \uC138\uC158\uB9CC \uB0A8\uC740 \uAC83\uC774\uB2E4."
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "\uC774 \uD504\uB85C\uC81D\uD2B8\uB85C \uBB36\uC740 \uD3F4\uB354\uB4E4(\uC790\uAE30 \uD3EC\uD568). \uC6CC\uD06C\uD2B8\uB9AC\u00B7\uC784\uC2DC \uD3F4\uB354\uAC00 \uC5EC\uAE30 \uB4E4\uC5B4\uC628\uB2E4 (ProjectGroups)."
           }
         },
         "description": "\uD504\uB85C\uC81D\uD2B8 \uD558\uB098. \uC704 \uC904 \uD504\uB85C\uC81D\uD2B8 \uC120\uD0DD\uAE30\uC640 \u0022\uBAA8\uB4E0 \uD504\uB85C\uC81D\uD2B8\u0022 \uC694\uC57D\uC774 \uC4F4\uB2E4."

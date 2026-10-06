@@ -43,6 +43,7 @@ public sealed class SessionsEndpoints : ITabEndpoints
     /// <param name="services">인덱스를 그때그때 꺼낸다.</param>
     /// <param name="names">붙인 이름.</param>
     /// <param name="settings">정리 기준.</param>
+    /// <param name="catalog">프로젝트 묶음(워크트리 포함).</param>
     /// <param name="ct">요청이 끊기면 멈춘다.</param>
     /// <param name="tool">도구 id. 비우면 모든 도구.</param>
     /// <param name="project">프로젝트 경로. 비우면 모든 프로젝트.</param>
@@ -54,6 +55,7 @@ public sealed class SessionsEndpoints : ITabEndpoints
         IServiceProvider services,
         SessionNames names,
         ISettingsStore settings,
+        Shared.ProjectCatalog catalog,
         CancellationToken ct,
         string? tool = null,
         string? project = null,
@@ -73,16 +75,20 @@ public sealed class SessionsEndpoints : ITabEndpoints
             kind = parsed;
         }
 
+        // 프로젝트는 워크트리까지 묶어 좁힌다. 인덱스는 경로 하나로만 좁히므로 여기서 거른다
+        var scope = await catalog.ScopeAsync(project, ct).ConfigureAwait(false);
         var filter = new SessionFilter(
             kind,
-            string.IsNullOrEmpty(project) ? null : project,
+            null,
             days > 0 ? DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-days) : null,
             null,
             orphans,
             minMegabytes > 0 ? minMegabytes * 1024L * 1024L : null,
             archived);
 
-        var sessions = await services.GetRequiredService<ISessionIndex>().ListAsync(filter, ct).ConfigureAwait(false);
+        var sessions = (await services.GetRequiredService<ISessionIndex>().ListAsync(filter, ct).ConfigureAwait(false))
+            .Where(session => Shared.ProjectCatalog.InScope(scope, session.ProjectPath))
+            .ToList();
         var current = settings.Current;
 
         return TypedResults.Ok(new SessionsResponse(

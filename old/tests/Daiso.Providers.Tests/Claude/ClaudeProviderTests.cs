@@ -52,6 +52,23 @@ public sealed class ClaudeProviderTests : IDisposable
     }
 
     [Fact]
+    public async Task The_project_is_found_even_after_many_header_lines()
+    {
+        // 데스크톱 앱에서 연 세션은 제목·모드·파일 스냅숏 같은 줄이 먼저 온다. cwd 는 23번째 줄에 처음 나온 적이 있다(2026-10-06)
+        var home = Fixtures.CreateClaudeHome(_home);
+        var folder = Path.Combine(_home, ".claude", "projects", "C--Desktop-Project");
+        Directory.CreateDirectory(folder);
+        var headers = Enumerable.Range(0, 40).Select(i => "{\"type\":\"file-history-snapshot\",\"messageId\":\"m" + i + "\"}");
+        File.WriteAllLines(Path.Combine(folder, "desktop.jsonl"), [.. headers, .. File.ReadAllLines(Fixtures.ClaudePath("session-basic.jsonl"))]);
+
+        var session = (await Enumerate(new ClaudeProvider(home, new FakeProcessProbe())))
+            .Single(s => Path.GetFileName(s.FilePath) == "desktop.jsonl");
+
+        session.ProjectPath.Should().Be(@"C:\Fixture\Project");
+        session.ToolVersion.Should().Be("2.0.0");
+    }
+
+    [Fact]
     public async Task A_session_owned_by_a_live_process_is_active()
     {
         var provider = new ClaudeProvider(

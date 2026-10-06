@@ -57,6 +57,65 @@ public static class UsageReport
     /// <summary>칸 수. 일별은 한 달, 주별·월별은 열두 칸. 옛 화면과 같다.</summary>
     public static int BucketCount(UsageGrain grain) => grain == UsageGrain.Day ? 30 : 12;
 
+    /// <summary>
+    /// 사용량을 읽는다. 범위(프로젝트 묶음)가 있으면 폴더마다 읽어 합친다. 인덱스는 경로 하나로만 좁힌다.
+    /// </summary>
+    public static async Task<UsageSummary> ReadAsync(
+        ISessionIndex index,
+        DateOnly from,
+        DateOnly to,
+        ToolKind? tool,
+        IReadOnlySet<string>? scope,
+        CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(index);
+
+        if (scope is null)
+        {
+            return await index.GetUsageAsync(from, to, tool, null, ct).ConfigureAwait(false);
+        }
+
+        var parts = new List<UsageSummary>();
+        foreach (var path in scope)
+        {
+            parts.Add(await index.GetUsageAsync(from, to, tool, path, ct).ConfigureAwait(false));
+        }
+
+        return Merge(parts);
+    }
+
+    /// <summary>요약 여럿을 날짜·프로젝트·모델마다 더한다.</summary>
+    public static UsageSummary Merge(IEnumerable<UsageSummary> parts)
+    {
+        var days = new Dictionary<DateOnly, TokenUsage>();
+        var projects = new Dictionary<string, TokenUsage>(StringComparer.OrdinalIgnoreCase);
+        var models = new Dictionary<string, TokenUsage>(StringComparer.Ordinal);
+
+        foreach (var part in parts)
+        {
+            foreach (var day in part.Days)
+            {
+                days[day.Date] = days.TryGetValue(day.Date, out var sum) ? sum.Add(day.Usage) : day.Usage;
+            }
+
+            Add(projects, part.ByProject);
+            Add(models, part.ByModel);
+        }
+
+        return new UsageSummary(
+            [.. days.OrderBy(pair => pair.Key).Select(pair => new UsageDay(pair.Key, pair.Value))],
+            projects,
+            models);
+
+        static void Add(Dictionary<string, TokenUsage> into, IReadOnlyDictionary<string, TokenUsage> from)
+        {
+            foreach (var (key, usage) in from)
+            {
+                into[key] = into.TryGetValue(key, out var sum) ? sum.Add(usage) : usage;
+            }
+        }
+    }
+
     public static UsageResponse Build(UsageSummary summary, UsageGrain grain, DateOnly today)
     {
         ArgumentNullException.ThrowIfNull(summary);
