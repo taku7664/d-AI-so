@@ -8,14 +8,14 @@ WinUI 3 앱을 **Electron + 웹 화면 + C# 서버**로 옮기는 작업의 문�
 | 날짜 | 한 일 |
 |---|---|
 | 2026-10-03 | 작업물을 `old/`로 옮김. 문서를 주제별로 나눔. 최상위를 `frontend/`(TS)·`backend/`(C#)로 나누고 ESLint·Prettier는 `frontend/`에 둠 |
-| 2026-10-06 | **Stage 3 완료 (크롬 탭은 주인이 틈틈이 확인).** Electron 창을 CDP로 눌러 메뉴·단축키·톱니·프로젝트 바꾸기·다시 켜도 유지를 확인함. 하다가 `Ctrl+P` 방향키 초점 문제와, 인덱스가 깨졌을 때 프로젝트 목록이 500을 내던 것을 고침. **사용자 `index.db-wal`이 깨져 있는 것을 발견**(원인 모름, 손대지 않음) |
+| 2026-10-06 | **Stage 3 완료 (크롬 탭은 주인이 틈틈이 확인).** Electron 창을 CDP로 눌러 메뉴·단축키·톱니·프로젝트 바꾸기·다시 켜도 유지를 확인함. 하다가 `Ctrl+P` 방향키 초점 문제와, 인덱스가 깨졌을 때 프로젝트 목록이 500을 내던 것을 고침. **사용자 `index.db-wal`이 깨져 있는 것을 발견**(원인 모름). 주인 허락으로 깨진 파일을 `index-broken-20261006\`에 옮겨 두고 인덱스를 다시 만듦(세션 570) |
 | 2026-10-06 | **Stage 3 코드 끝.** `frontend/web`(React 19·Vite 8·TanStack Query): 위 줄(프로젝트 선택기, 종·계정 자리, 톱니), 탭 여섯 개와 설정 빈 화면, `Ctrl+1~6`·`Ctrl+P`, D안 색·글꼴·아이콘. Host가 화면 빌드를 내주고 `/api/projects`를 엶. OpenAPI 스냅숏 시험으로 서버와 TS 타입을 맞춤. 하다가 시험 Host가 진짜 사용자 인덱스를 열 수 있던 것을 임시 폴더로 막음 |
 | 2026-10-06 | **Stage 1·2 완료.** `frontend/desktop`(Electron 44.5.1): Host를 띄워 창에 열기, 두 번째 실행 막기, 트레이, X로 숨기기, 브라우저로 열기. 루트 `tools/run-app.ps1`. 하다가 Electron이 끝날 때 Host가 잡 오브젝트에 묶여 강제로 죽는 바람에 `server.json`이 남는 것을 찾아, Host를 잡 밖에서 띄우게 함 |
 | 2026-10-06 | **화면 시안을 D안으로 정함.** "지금 프로젝트"가 앱 전체의 기준, 탭 여섯 개(설정은 톱니), 요약은 프로젝트 첫 화면, 단가표·$ 추정을 없애고 구독 한도를 파일로 읽음. 기본 탭 id 확정. 시안 HTML을 `docs/design/`에 넣고 ROADMAP Stage 3~7에 반영. Stage 1 크롬 확인 중 "토큰 없이 열면 거절"은 확인함 |
 | 2026-10-05 | **Stage 1 코드·테스트 끝, 크롬 확인 남음.** `backend/src/Daiso.Host`(net10.0-windows): 보안 미들웨어, `server.json`, 부모 감시, `/api/health`·OpenAPI·`/ws`, 옛 앱의 서비스 등록. 보안 테스트 48개. 하다가 SQLite 취약점(CVE-2025-6965) 때문에 `Infrastructure`의 SQLitePCLRaw를 2.1.13으로 올림 |
 | 2026-10-05 | **Stage 0 완료.** `backend/`에 `Daiso.sln`·`Directory.Build.props`·`global.json`. 솔루션은 `old/src` 백엔드 7개와 `old/tests` 세 벌, 테스트가 참조하는 `old/tools/adapters/Daiso.Adapter.Claude`를 담는다. 하다가 빨갛던 옛 테스트 하나(어댑터가 일찍 끝나면 파이프 쓰기에서 던짐)을 고침 |
 
-다음은 [ROADMAP.md](ROADMAP.md) Stage 4(사용량)다. 시작 전에 사용자 인덱스가 깨진 것을 어떻게 할지 주인에게 묻는다 (ROADMAP "위험과 되돌리기"). 새 앱은 루트에서 `tools/run-app.ps1`로 띄운다 ([frontend/web/README.md](../frontend/web/README.md)).
+다음은 [ROADMAP.md](ROADMAP.md) Stage 4(사용량)다. 새 앱은 루트에서 `tools/run-app.ps1`로 띄운다 ([frontend/web/README.md](../frontend/web/README.md)).
 
 ### 이어받는 사람이 먼저 볼 것
 
