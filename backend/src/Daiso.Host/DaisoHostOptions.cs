@@ -17,6 +17,9 @@ public sealed record DaisoHostOptions
     /// <summary>Electron 메인의 PID. 있으면 그 프로세스가 끝날 때 Host 도 끝난다.</summary>
     public const string ParentPidVariable = "DAISO_PARENT_PID";
 
+    /// <summary>웹 화면 빌드 폴더(<c>frontend/web/dist</c>). 개발 중에는 <c>tools/run-app.ps1</c> 이 넘긴다.</summary>
+    public const string WebRootVariable = "DAISO_WEB_ROOT";
+
     /// <summary>이번 실행의 토큰.</summary>
     public required string Token { get; init; }
 
@@ -35,6 +38,9 @@ public sealed record DaisoHostOptions
     /// <summary>도구 플러그인 매니페스트 폴더.</summary>
     public required string PluginDirectory { get; init; }
 
+    /// <summary>웹 화면을 내줄 폴더. null 이거나 없으면 화면 없이 안내 페이지만 낸다.</summary>
+    public string? WebRoot { get; init; }
+
     /// <summary>환경 변수에서 읽는다. 토큰을 읽은 뒤에는 환경 변수를 지운다.</summary>
     public static DaisoHostOptions FromEnvironment()
     {
@@ -47,7 +53,10 @@ public sealed record DaisoHostOptions
             token,
             Environment.GetEnvironmentVariable(ParentPidVariable),
             AppPaths.Root,
-            ToolPluginLoader.DefaultDirectory);
+            ToolPluginLoader.DefaultDirectory) with
+        {
+            WebRoot = Environment.GetEnvironmentVariable(WebRootVariable) is { Length: > 0 } web ? web : null,
+        };
     }
 
     /// <summary>

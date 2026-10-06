@@ -1,0 +1,85 @@
+/* 색·글꼴·크기. docs/design/daiso-d.html 의 :root 를 그대로 옮겼다. 테마는 시스템 · 밝게 · 어둡게 (docs/DECISIONS.md) */
+:root {
+  --ground: #eceee7;
+  --surface: #f7f8f4;
+  --raise: #ffffff;
+  --line: #d8dcd1;
+  --line-soft: #e6e9e1;
+  --ink: #1d211d;
+  --muted: #5b635b;
+  --faint: #8a9289;
+  --hl: #f4c63d;
+  --hl-soft: #fbecb8;
+  --hl-ink: #1d211d;
+  --term-bg: #171a16;
+  --term-fg: #dfe3da;
+  --term-dim: #81897f;
+  --codex: #2c8a73;
+  --claude: #c96b3c;
+  --anti: #7a5bc2;
+  --ok: #2f8650;
+  --warn: #b07a0a;
+  --bad: #c0412c;
+  --shadow: 0 1px 0 rgba(29, 33, 29, 0.04), 0 12px 32px rgba(29, 33, 29, 0.1);
+
+  --f-ui: 'Gothic A1', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+  --f-title: 'Hahmlet', 'Batang', serif;
+  --f-mono: 'JetBrains Mono', 'D2Coding', Consolas, monospace;
+  --t-xs: 0.75rem;
+  --t-sm: 0.84375rem;
+  --t-md: 0.9375rem;
+  --t-lg: 1.125rem;
+  --t-xl: 1.5rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --ground: #121411;
+    --surface: #191c18;
+    --raise: #20241f;
+    --line: #30352e;
+    --line-soft: #272b25;
+    --ink: #eceee8;
+    --muted: #a2a99f;
+    --faint: #737a70;
+    --hl: #e9bd38;
+    --hl-soft: #3a3320;
+    --hl-ink: #181a15;
+    --term-bg: #0f110e;
+    --term-fg: #dfe3da;
+    --term-dim: #737a70;
+    --codex: #4bb398;
+    --claude: #e08a5c;
+    --anti: #a287e0;
+    --ok: #5cbb7e;
+    --warn: #dcaa3c;
+    --bad: #e66a52;
+    --shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 12px 32px rgba(0, 0, 0, 0.45);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --ground: #121411;
+  --surface: #191c18;
+  --raise: #20241f;
+  --line: #30352e;
+  --line-soft: #272b25;
+  --ink: #eceee8;
+  --muted: #a2a99f;
+  --faint: #737a70;
+  --hl: #e9bd38;
+  --hl-soft: #3a3320;
+  --hl-ink: #181a15;
+  --term-bg: #0f110e;
+  --term-fg: #dfe3da;
+  --term-dim: #737a70;
+  --codex: #4bb398;
+  --claude: #e08a5c;
+  --anti: #a287e0;
+  --ok: #5cbb7e;
+  --warn: #dcaa3c;
+  --bad: #e66a52;
+  --shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 12px 32px rgba(0, 0, 0, 0.45);
+  color-scheme: dark;
+}

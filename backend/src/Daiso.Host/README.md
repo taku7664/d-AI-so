@@ -26,6 +26,7 @@ DAISO_OPEN http://127.0.0.1:51234/?token=...
 |---|---|---|
 | `DAISO_TOKEN` | 이번 실행의 토큰. 32자 이상 | Host가 직접 만들고 `DAISO_OPEN` 줄도 쓴다 |
 | `DAISO_PARENT_PID` | Electron 메인 PID. 이 프로세스가 끝나면 Host도 끝난다 | 부모를 지켜보지 않는다 |
+| `DAISO_WEB_ROOT` | 웹 화면 빌드 폴더(`frontend/web/dist`). `tools/run-app.ps1`이 넘긴다 | 화면 없이 안내 페이지만 낸다 |
 
 - Host는 `DAISO_TOKEN`을 읽자마자 자기 환경에서 지운다. Host가 띄우는 터미널(PTY)이 토큰을 물려받지 않게 하려는 것이다
 - Electron은 `DAISO_LISTENING ` 으로 시작하는 줄을 기다렸다가 그 주소에 `/?token=...`을 붙여 창에 연다
@@ -36,7 +37,10 @@ DAISO_OPEN http://127.0.0.1:51234/?token=...
 
 | 경로 | 무엇 |
 |---|---|
-| `/` | 첫 화면. `?token=`은 여기서만 받는다. Stage 3 전까지는 링크 몇 개뿐이다 |
+| `/` | 첫 화면. `?token=`은 여기서만 받는다. 웹 화면 폴더가 있으면 `index.html`, 없으면 링크 몇 개뿐인 안내 페이지 |
+| `/{탭 id}` 등 점 없는 주소 | 웹 화면 폴더가 있으면 `index.html`. 화면이 주소로 탭을 가르기 때문이다. `/api/` 아래 없는 경로는 404 |
+| `/assets/...` | 웹 화면 빌드 파일 |
+| `/api/projects` | 공용 경로. 아는 프로젝트와 지금 프로젝트 ([docs/ARCHITECTURE.md](../../../docs/ARCHITECTURE.md) "탭에 속하지 않는 공용 경로") |
 | `/api/health` | `{"status":"ok"}` |
 | `/openapi/v1.json` | OpenAPI 문서. 웹이 여기서 TS 타입을 만든다 (Stage 3) |
 | `/ws` | 공용 알림 WebSocket. 서버 → 화면 한 방향 |
@@ -54,6 +58,7 @@ DAISO_OPEN http://127.0.0.1:51234/?token=...
 | `Security/` | 토큰, 보안 미들웨어, `server.json`, 주소 알리기 |
 | `Notifications/` | `/ws` 알림 허브 |
 | `Services/` | 옛 `Daiso.App/Services`에서 옮긴 것: `SettingsStore`·`AppSettings`, `ToolRegistry`, `ToolPluginCatalog` |
+| `Shared/` | 탭에 속하지 않는 공용 경로. `ProjectCatalog`(세션 인덱스 + 최근 폴더) |
 | `Tabs/` | 탭 엔드포인트 |
 
 ## 옛 앱과 같이 쓰는 것

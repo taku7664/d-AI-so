@@ -35,13 +35,14 @@ frontend/                      TypeScript 전부. npm 은 여기서만 돈다
   eslint.config.mjs            desktop·web 공용 ESLint 설정
   .prettierrc.json             Prettier 설정 (.md 는 건드리지 않는다)
   desktop/                     Electron 메인 + preload (Stage 2)
-  web/                         웹 화면 (Stage 3)
+  web/                         웹 화면 (Stage 3). 빌드한 dist/ 를 Host 가 내준다
     src/tabs/{id}/             탭마다 화면 모듈
+    src/api/openapi.json       서버 OpenAPI 스냅숏. schema.gen.ts 를 여기서 만든다
 backend/                       C# 전부. dotnet 은 여기서만 돈다
   Daiso.sln                    새 솔루션. 백엔드 라이브러리는 Stage 8 전까지 old/src 를 참조한다 (Stage 0)
   src/Daiso.Host/              C# 프로세스: 보안 미들웨어, /ws, DI (Stage 1)
     Tabs/{Id}/                 탭마다 엔드포인트 묶음
-    Shared/                    탭에 속하지 않는 공용 경로 (Stage 3부터)
+    Shared/                    탭에 속하지 않는 공용 경로 (/api/projects)
   tests/                       새 테스트
 tools/                         빌드·실행 스크립트 (Stage 2에서 새 run-app.ps1). 언어에 묶이지 않는 PowerShell
 .editorconfig                  들여쓰기·줄 끝. old/ 에도 걸리므로 C# 분석기 규칙은 넣지 않는다

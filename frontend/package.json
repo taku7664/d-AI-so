@@ -6,10 +6,13 @@
     "node": ">=24"
   },
   "workspaces": [
-    "desktop"
+    "desktop",
+    "web"
   ],
   "scripts": {
     "build:desktop": "npm run build -w @daiso/desktop",
+    "build:web": "npm run build -w @daiso/web",
+    "test": "npm test -w @daiso/web",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

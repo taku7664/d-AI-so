@@ -38,13 +38,16 @@ Electron 전환을 Stage 0~8로 나누고, 단계마다 할 일과 완료 기준
 
 - `frontend/web/` (Vite + React + TS). workspace로 묶는다. [D안 시안](design/README.md)의 위 줄·왼쪽 메뉴·색·글꼴을 CSS 변수로 옮긴다
   - 테마는 시스템 · 밝게 · 어둡게. 색은 CSS 변수 한 벌씩
-  - 글꼴(Gothic A1 · Hahmlet · JetBrains Mono)은 파일로 동봉한다. 아이콘은 Bootstrap Icons. 둘 다 라이선스를 RELEASE 문서에 적는다
+  - 글꼴(Gothic A1 · Hahmlet · JetBrains Mono, OFL-1.1)은 파일로 동봉한다. 아이콘은 Bootstrap Icons(MIT). 라이선스는 Stage 8에서 배포 문서에 적는다
 - 위 줄: 프로젝트 선택기(`Ctrl+P`), 종, 계정 단추, 톱니. 이 단계에서는 프로젝트 선택기만 실제로 돌고 나머지는 자리만 둔다
 - 공용 경로 `/api/projects` ([ARCHITECTURE.md](ARCHITECTURE.md) "탭에 속하지 않는 공용 경로"). 마지막에 고른 프로젝트를 설정에 남긴다
 - [frontend/web/src/tabs/README.md](../frontend/web/src/tabs/README.md)·[backend/src/Daiso.Host/Tabs/README.md](../backend/src/Daiso.Host/Tabs/README.md)의 탭 약속, 라우팅, `Ctrl+1~6` 단축키. 설정은 메뉴에 없고 톱니로 연다
 - OpenAPI → TS 클라이언트 생성, `/ws` 알림 → 캐시 무효화(TanStack Query)
 - 문구를 `frontend/web/src/strings/ko.json`으로 옮기고 키 검사 vitest를 만든다
 - **완료 기준:** 여섯 탭과 설정이 빈 화면으로 뜨고 메뉴·단축키·톱니로 오간다. 프로젝트를 바꾸면 위 줄과 탭이 따라 바뀐다. 크롬 탭과 Electron 창에서 똑같이 보인다
+  - 2026-10-06 코드 끝: `frontend/web`, Host가 화면 빌드를 내주고(`DAISO_WEB_ROOT`) 탭 주소로 새로 열어도 화면을 낸다, `/api/projects`, OpenAPI 스냅숏 시험 → TS 타입, `/ws` → 캐시 무효화, 문구 키 검사. Electron 창에 화면이 뜨는 것(창 제목 `요약 · DAIso`)까지 확인했다
+  - 남은 것: 화면을 눌러 보는 확인(메뉴·단축키·톱니·프로젝트 바꾸기)과 크롬 탭 확인. 화면 자동 조작은 저장소 주인에게 묻고 하고, 크롬 탭은 토큰을 다뤄야 해서 주인이 직접 하거나 허락 규칙을 더해야 한다
+  - 인덱스를 새로 고치는 일(옛 `IndexService`)은 아직 옮기지 않았다. 프로젝트 목록은 지금 있는 인덱스를 읽기만 한다. Stage 4에서 옮긴다
 
 ## Stage 4 — 사용량 탭
 

@@ -27,7 +27,7 @@
 
 **새 구조**
 - 새 앱은 루트에서 `tools/run-app.ps1`로 띄운다. Host와 Electron을 빌드하고 빌드한 바로 그 Host로 띄운다
-- 프런트: `frontend/`에서 `npm run lint`·`npm run format:check`
+- 프런트: `frontend/`에서 `npm run lint`·`npm run format:check`·`npm test`
 - 백엔드: `backend/`에서 `dotnet build`·`dotnet test` (Stage 0부터)
 
 ## 커밋

@@ -5,3 +5,5 @@
 package-lock.json
 # 문서는 손으로 맞춘 표가 많아 자동 정렬하지 않는다
 *.md
+*.gen.ts
+web/src/api/openapi.json

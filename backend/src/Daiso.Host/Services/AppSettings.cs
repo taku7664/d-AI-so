@@ -17,6 +17,12 @@ public sealed class AppSettings
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? Unknown { get; set; }
 
+    /// <summary>
+    /// 위 줄에서 마지막으로 고른 프로젝트 폴더. null 이면 "모든 프로젝트". 다시 켜면 이 프로젝트로 연다 (docs/ARCHITECTURE.md "상태의 주인").
+    /// 옛 앱은 이 칸을 모른다. 옛 앱이 설정을 저장하면 사라지고, 그때는 "모든 프로젝트"로 연다.
+    /// </summary>
+    public string? CurrentProject { get; set; }
+
     /// <summary>최근에 터미널을 연 폴더. 최신 것이 앞.</summary>
     public List<string> RecentFolders { get; set; } = [];
 

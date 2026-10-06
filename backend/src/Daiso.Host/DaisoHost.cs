@@ -1,6 +1,9 @@
 using System.Net;
+using System.Text.Json.Serialization;
+using Microsoft.Extensions.FileProviders;
 using Daiso.Host.Notifications;
 using Daiso.Host.Security;
+using Daiso.Host.Shared;
 using Daiso.Host.Tabs;
 
 namespace Daiso.Host;
@@ -36,12 +39,20 @@ public static class DaisoHost
         builder.Logging.AddFilter("Microsoft.AspNetCore", LogLevel.Warning);
 
         builder.Services.AddSingleton(options);
+        // 웹 기본값은 숫자를 문자열로도 받는다. 그러면 OpenAPI 타입이 number | string 이 되어 화면이 두 경우를 다 다뤄야 한다
+        builder.Services.ConfigureHttpJsonOptions(json => json.SerializerOptions.NumberHandling = JsonNumberHandling.Strict);
         builder.Services.AddSingleton<NotificationHub>();
         builder.Services.AddSingleton<ServerAnnouncer>();
         builder.Services.AddHostedService(provider => provider.GetRequiredService<ServerAnnouncer>());
         builder.Services.AddHostedService<ParentWatcher>();
-        builder.Services.AddOpenApi();
+        // 문서 제목은 프로세스 이름을 따라간다(시험에서는 testhost). 웹이 쓰는 문서가 띄우는 법에 따라 달라지지 않게 박는다
+        builder.Services.AddOpenApi(openApi => openApi.AddDocumentTransformer((document, _, _) =>
+        {
+            document.Info.Title = "DAIso";
+            return Task.CompletedTask;
+        }));
         builder.Services.AddDaisoDomain(options);
+        builder.Services.AddSingleton<ProjectCatalog>();
 
         configureServices?.Invoke(builder.Services);
 
@@ -51,11 +62,31 @@ public static class DaisoHost
         app.UseWebSockets();
         app.UseMiddleware<LocalOnlyMiddleware>();
 
-        app.MapGet("/", () => Results.Content(LandingPage, "text/html; charset=utf-8")).ExcludeFromDescription();
-        app.MapGet("/api/health", () => new HealthResponse("ok")).WithName("Health");
+        var web = WebFiles(options);
+        if (web is not null)
+        {
+            // 화면 파일도 미들웨어 뒤에 둔다. 쿠키 없이는 화면도 못 받는다
+            app.UseStaticFiles(new StaticFileOptions { FileProvider = web });
+        }
+
+        app.MapGet("/api/health", () => new HealthResponse("ok")).WithName("Health").WithTags("health");
         app.MapOpenApi();
         app.Map("/ws", HoldNotificationsAsync).ExcludeFromDescription();
+        app.MapShared();
         app.MapTabs();
+
+        if (web is null)
+        {
+            app.MapGet("/", () => Results.Content(LandingPage, "text/html; charset=utf-8")).ExcludeFromDescription();
+        }
+        else
+        {
+            // 화면은 주소로 탭을 가른다(/sessions 등). 그 주소로 새로 열어도 index.html 을 낸다. /api 아래는 해당하지 않는다
+            var index = web.GetFileInfo("index.html");
+            app.MapGet("/", () => IndexHtml(index)).ExcludeFromDescription();
+            app.MapFallback("{*path:nonfile}", () => IndexHtml(index)).ExcludeFromDescription();
+            app.MapFallback("/api/{*rest}", () => Results.NotFound()).ExcludeFromDescription();
+        }
 
         return app;
     }
@@ -69,6 +100,18 @@ public static class DaisoHost
             ?? throw new InvalidOperationException("서버가 아직 뜨지 않았다");
     }
 
+    /// <summary>웹 화면 폴더. 지정하지 않았거나 <c>index.html</c> 이 없으면 null.</summary>
+    private static PhysicalFileProvider? WebFiles(DaisoHostOptions options) =>
+        options.WebRoot is { } root && File.Exists(Path.Combine(root, "index.html"))
+            ? new PhysicalFileProvider(Path.GetFullPath(root))
+            : null;
+
+    /// <summary>
+    /// <c>index.html</c>. 캐시하지 않는다 — 빌드가 바뀌면 이름에 해시가 붙은 새 자산을 가리키므로 이것만 늘 새로 받으면 된다.
+    /// </summary>
+    private static IResult IndexHtml(IFileInfo index) =>
+        Results.Stream(index.CreateReadStream(), "text/html; charset=utf-8");
+
     private static async Task HoldNotificationsAsync(HttpContext context, NotificationHub hub)
     {
         if (!context.WebSockets.IsWebSocketRequest)
@@ -81,14 +124,14 @@ public static class DaisoHost
         await hub.HoldAsync(socket, context.RequestAborted).ConfigureAwait(false);
     }
 
-    /// <summary>Stage 3 에서 웹 화면이 들어오기 전까지 보여 주는 첫 화면.</summary>
+    /// <summary>웹 화면 폴더가 없을 때(혼자 띄운 개발용 Host, 테스트) 보여 주는 첫 화면.</summary>
     private const string LandingPage = """
         <!doctype html>
         <html lang="ko">
         <meta charset="utf-8">
         <title>DAIso Host</title>
         <h1>DAIso Host</h1>
-        <p>화면은 아직 없다 (docs/ROADMAP.md Stage 3).</p>
+        <p>웹 화면 폴더(DAISO_WEB_ROOT)가 없어서 화면을 내지 않는다.</p>
         <ul>
           <li><a href="/api/health">/api/health</a></li>
           <li><a href="/openapi/v1.json">/openapi/v1.json</a></li>

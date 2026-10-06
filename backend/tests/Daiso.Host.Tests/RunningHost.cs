@@ -1,4 +1,7 @@
+using System.Text.Json;
 using Daiso.Host.Security;
+using Daiso.Host.Services;
+using Daiso.Infrastructure;
 using Daiso.Host.Tabs;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -36,10 +39,26 @@ internal sealed class RunningHost : IAsyncDisposable
 
     public string InfoPath => Path.Combine(Options.DataDirectory, ServerInfoFile.FileName);
 
-    public static async Task<RunningHost> StartAsync(Func<DaisoHostOptions, DaisoHostOptions>? adjust = null)
+    /// <param name="adjust">옵션을 바꾼다.</param>
+    /// <param name="probe">시험용 탭(<see cref="ProbeTab"/>)을 꽂을지. OpenAPI 문서를 뜰 때는 뺀다.</param>
+    /// <param name="settings">
+    /// 처음 <c>settings.json</c>. 무엇을 주든 인덱스 경로와 세션 홈은 임시 폴더로 덮는다.
+    /// 안 그러면 경로를 다 도는 보안 테스트가 진짜 사용자 인덱스(<c>%LOCALAPPDATA%\DAIso\index.db</c>)와 세션 폴더를 연다.
+    /// </param>
+    public static async Task<RunningHost> StartAsync(
+        Func<DaisoHostOptions, DaisoHostOptions>? adjust = null,
+        Action<AppSettings>? settings = null,
+        bool probe = true)
     {
         var root = Path.Combine(Path.GetTempPath(), "daiso-host-tests", Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(root);
+        Directory.CreateDirectory(Path.Combine(root, "home"));
+        Directory.CreateDirectory(Path.Combine(root, "data"));
+
+        var seed = new AppSettings();
+        settings?.Invoke(seed);
+        seed.IndexDatabasePath = Path.Combine(root, "data", "index.db");
+        seed.SessionHomeOverride = Path.Combine(root, "home");
+        await File.WriteAllTextAsync(Path.Combine(root, "data", SettingsStore.FileName), JsonSerializer.Serialize(seed));
 
         var options = new DaisoHostOptions
         {
@@ -50,7 +69,21 @@ internal sealed class RunningHost : IAsyncDisposable
 
         options = adjust?.Invoke(options) ?? options;
 
-        var app = DaisoHost.Build(options, services => services.AddSingleton<ITabEndpoints, ProbeTab>());
+        var app = DaisoHost.Build(options, services =>
+        {
+            if (probe)
+            {
+                services.AddSingleton<ITabEndpoints, ProbeTab>();
+            }
+        });
+
+        // 임시 경로를 못 열면 IndexLocation 이 기본 경로(진짜 사용자 인덱스)로 물러선다. 그러면 시험을 멈춘다
+        var index = app.Services.GetRequiredService<IndexLocation>();
+        if (!index.Path.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException($"시험 인덱스가 임시 폴더 밖이다: {index.Path} ({index.Failure})");
+        }
+
         await app.StartAsync();
 
         return new RunningHost(app, options);

@@ -5,18 +5,21 @@
 
 ## 탭을 만드는 법
 
-`{id}/index.ts`에서 `tab`을 내보낸다.
+`{id}/index.tsx`에서 `tab`을 내보내고 [registry.ts](registry.ts)에 한 줄 더한다. 타입은 [types.ts](types.ts).
 
-```ts
+```tsx
 export const tab: TabModule = {
   id: 'sessions', // 소문자. 서버 경로 /api/sessions/... 와 같다
-  title: '세션',
-  icon: 'list',
+  title: t('tab.sessions'), // 문구는 strings/ko.json 에
+  icon: 'chat-left-text', // Bootstrap Icons 이름
   order: 30,
   shortcut: 'Ctrl+3',
+  inMenu: true,
   View: SessionsView, // React 컴포넌트
 };
 ```
+
+탭 주소는 `/{id}`다(요약만 `/`). 크롬 탭에서 그 주소로 바로 열 수 있다.
 
 | 필드 | 규칙 |
 |---|---|
@@ -24,7 +27,7 @@ export const tab: TabModule = {
 | `order` | 메뉴 순서. 10 단위로 띄워 사이에 끼울 자리를 남긴다 |
 | `shortcut` | `Ctrl+1`~`Ctrl+6`은 기본 탭이 쓴다. `Ctrl+P`는 프로젝트 바꾸기다 |
 | `inMenu` | 왼쪽 메뉴에 띄울지. 기본 `true`. 설정만 `false`이고 위 줄 톱니로 연다 |
-| `View` | 서버 데이터는 생성된 API 클라이언트로만 받는다. 직접 `fetch`하지 않는다 |
+| `View` | 서버 데이터는 생성된 API 클라이언트(`src/api/client.ts`)로만 받는다. 직접 `fetch`하지 않는다. 쿼리 키 첫 칸은 탭 id다 |
 
 ## 서버 알림을 받는 법
 
