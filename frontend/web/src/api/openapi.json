@@ -98,6 +98,56 @@
         }
       }
     },
+    "/api/limits": {
+      "get": {
+        "tags": [
+          "limits"
+        ],
+        "operationId": "GetLimits",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LimitsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/limits/claude/statusline": {
+      "put": {
+        "tags": [
+          "limits"
+        ],
+        "operationId": "SetClaudeStatusLine",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetStatusLineRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LimitsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/index": {
       "get": {
         "tags": [
@@ -264,6 +314,50 @@
         },
         "description": "\uC778\uB371\uC2A4 \uAC31\uC2E0 \uC0C1\uD0DC. \uD654\uBA74 \uC544\uB798 \uC904\uC5D0 \uADF8\uB300\uB85C \uBCF4\uC5EC \uC900\uB2E4."
       },
+      "LimitWindow": {
+        "required": [
+          "windowMinutes",
+          "usedPercent",
+          "resetsAt"
+        ],
+        "type": "object",
+        "properties": {
+          "windowMinutes": {
+            "type": "integer",
+            "description": "\uCC3D\uC758 \uAE38\uC774(\uBD84). 300 \uC774\uBA74 5\uC2DC\uAC04, 10080 \uC774\uBA74 7\uC77C.",
+            "format": "int32"
+          },
+          "usedPercent": {
+            "type": "number",
+            "description": "\uC4F4 \uBE44\uC728. 0~100.",
+            "format": "double"
+          },
+          "resetsAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "\uB2E4\uC2DC \uCC28\uB294 \uB54C. \uC9C0\uB0AC\uC73C\uBA74 \uD654\uBA74\uC774 \u0022\uCD08\uAE30\uD654\uB428 \u00B7 0%\u0022\uB85C \uBCF4\uC5EC \uC900\uB2E4.",
+            "format": "date-time"
+          }
+        },
+        "description": "\uD55C\uB3C4 \uCC3D \uD558\uB098."
+      },
+      "LimitsResponse": {
+        "required": [
+          "tools"
+        ],
+        "type": "object",
+        "properties": {
+          "tools": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ToolLimits"
+            }
+          }
+        },
+        "description": "\uBAA8\uB4E0 \uB3C4\uAD6C\uC758 \uAD6C\uB3C5 \uD55C\uB3C4. \uB3C4\uAD6C \uBAA9\uB85D \uC21C\uC11C."
+      },
       "ProjectItem": {
         "required": [
           "name",
@@ -342,6 +436,19 @@
         },
         "description": "\uC9C0\uAE08 \uD504\uB85C\uC81D\uD2B8\uB97C \uBC14\uAFB8\uB294 \uC694\uCCAD."
       },
+      "SetStatusLineRequest": {
+        "required": [
+          "enabled"
+        ],
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "\uCF24\uC9C0."
+          }
+        },
+        "description": "Claude \uC0C1\uD0DC\uC904 \uB4F1\uB85D\uC744 \uCF1C\uACE0 \uB044\uB294 \uC694\uCCAD."
+      },
       "ToolItem": {
         "required": [
           "id",
@@ -378,6 +485,57 @@
           }
         },
         "description": "\uB3C4\uAD6C \uD558\uB098. \uD654\uBA74\uC774 \uB3C4\uAD6C \uCE69\uACFC \uAE00\uC790 \uD45C\uC2DC\uB97C \uADF8\uB9B0\uB2E4."
+      },
+      "ToolLimits": {
+        "required": [
+          "tool",
+          "source",
+          "enabled",
+          "at",
+          "windows",
+          "plan"
+        ],
+        "type": "object",
+        "properties": {
+          "tool": {
+            "type": "string",
+            "description": "\uB3C4\uAD6C id."
+          },
+          "source": {
+            "type": "string",
+            "description": "\u0060statusline\u0060(Claude \uC0C1\uD0DC\uC904) \u00B7 \u0060sessions\u0060(Codex \uC138\uC158 \uAE30\uB85D) \u00B7 \u0060none\u0060(\uC77D\uC744 \uAE38\uC774 \uC5C6\uB294 \uB3C4\uAD6C)."
+          },
+          "enabled": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Claude \uB9CC: \uC0C1\uD0DC\uC904 \uB4F1\uB85D\uC774 \uCF1C\uC838 \uC788\uB294\uAC00. \uB2E4\uB978 \uB3C4\uAD6C\uB294 null."
+          },
+          "at": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "\uAC12\uC774 \uC801\uD78C \uB54C. \uC544\uC9C1 \uBC1B\uC740 \uC801\uC774 \uC5C6\uC73C\uBA74 null.",
+            "format": "date-time"
+          },
+          "windows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LimitWindow"
+            },
+            "description": "\uCC3D \uBAA9\uB85D. \uC9E7\uC740 \uCC3D\uBD80\uD130."
+          },
+          "plan": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "\uC694\uAE08\uC81C \uC774\uB984. \uBAA8\uB974\uBA74 null."
+          }
+        },
+        "description": "\uB3C4\uAD6C \uD558\uB098\uC758 \uAD6C\uB3C5 \uD55C\uB3C4."
       },
       "UsageBucket": {
         "required": [
@@ -543,6 +701,9 @@
     },
     {
       "name": "projects"
+    },
+    {
+      "name": "limits"
     },
     {
       "name": "index"

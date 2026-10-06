@@ -23,6 +23,10 @@ public static class SharedEndpoints
 
         app.MapGet("/api/tools", ListTools).WithTags("tools").WithName("ListTools");
 
+        var limits = app.MapGroup("/api/limits").WithTags(LimitsService.Topic);
+        limits.MapGet("/", (LimitsService service) => service.Read()).WithName("GetLimits");
+        limits.MapPut("/claude/statusline", SetStatusLineAsync).WithName("SetClaudeStatusLine");
+
         var index = app.MapGroup("/api/index").WithTags(IndexService.Topic);
         index.MapGet("/", (IndexService service) => service.Status).WithName("GetIndexStatus");
         index.MapPost("/refresh", (IndexService service) => Start(service, rebuild: false)).WithName("RefreshIndex");
@@ -37,6 +41,37 @@ public static class SharedEndpoints
             tool.Display.Initial,
             tool.Display.Order,
             tool.Display.ColorStops))];
+
+    /// <summary>
+    /// Claude 상태줄 등록을 켜고 끈다. 사용자 설정 파일을 고치므로 화면에서 동의를 받은 뒤에만 부른다.
+    /// 설정 파일이 JSON 객체가 아니면 손대지 않고 409 를 낸다.
+    /// </summary>
+    private static async Task<Results<Ok<LimitsResponse>, ProblemHttpResult>> SetStatusLineAsync(
+        SetStatusLineRequest request,
+        ClaudeStatusLine statusLine,
+        LimitsService limits,
+        NotificationHub hub,
+        CancellationToken ct)
+    {
+        try
+        {
+            if (request.Enabled)
+            {
+                statusLine.Enable();
+            }
+            else
+            {
+                statusLine.Disable();
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or System.Text.Json.JsonException)
+        {
+            return TypedResults.Problem(statusCode: StatusCodes.Status409Conflict, title: "Claude 설정 파일을 고치지 못했다", detail: ex.Message);
+        }
+
+        await hub.PublishAsync(new Notification(LimitsService.Topic, "changed"), ct).ConfigureAwait(false);
+        return TypedResults.Ok(limits.Read());
+    }
 
     /// <summary>이미 돌고 있으면 새로 시작하지 않고 지금 상태를 돌려준다.</summary>
     private static Accepted<IndexStatus> Start(IndexService service, bool rebuild)

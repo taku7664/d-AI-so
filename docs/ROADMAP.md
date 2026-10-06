@@ -64,6 +64,8 @@ Electron 전환을 Stage 0~8로 나누고, 단계마다 할 일과 완료 기준
 - **완료 기준:** 옛 사용량 화면과 토큰 수가 같다 (같은 인덱스로 나란히 띄워 비교). Codex 한도가 세션 기록 값과 같다. Claude 한도 보기를 켜고 끄면 `~/.claude/settings.json`이 원래대로 돌아온다
   - 2026-10-06 토큰 부분 끝: `/api/usage`(일·주·월, 도구·프로젝트로 좁히기), `/api/tools`, `/api/index`(뜰 때 한 번 갱신, 다시 읽기), 사용량 화면. 인덱스에 프로젝트로 좁히는 질의를 더했다(`ISessionIndex.GetUsageAsync` 오버로드, `old/` 테스트 포함). 화면 숫자를 같은 인덱스에 SQL로 직접 센 값과 맞췄다(오늘·7일·30일·모델별). 옛 앱 화면을 띄워 나란히 본 것은 아니다. 옛 화면도 같은 `GetUsageAsync`를 쓰고, 다른 점은 빈 날을 0 칸으로 채우는 것뿐이다
   - 알아 둘 것: 합계에 캐시 읽기가 들어가 숫자가 크다(30일 79B 중 61B가 캐시 읽기). 옛 화면과 같은 셈이다
+  - 2026-10-06 구독 한도 코드 끝: `/api/limits`, Codex 세션 기록 읽기(`Providers.Codex`의 `CodexRateLimits`), Claude 상태줄 명령 `backend/src/Daiso.StatusLine`과 켜고 끄기, 파일이 바뀌면 `/ws`로 알림, 사용량 맨 위 구독 한도 카드. Codex 값(63%, 10-05 16:03)을 세션 기록 전체를 직접 훑은 값과 맞췄다. Claude 켜고 끄기는 임시 홈으로 시험했다(원래 설정 그대로 돌아옴, 감싼 상태줄 출력 유지, 등록된 명령을 cmd·Git Bash로 실제 실행)
+  - 남은 것: 사용자 PC의 진짜 `~/.claude/settings.json`으로 켜고 끄기. 사용자 설정을 고치므로 저장소 주인이 화면에서 직접 켜 보거나 허락한다
 - **여기서 C# 서버를 계속 갈지 판단한다** ([DECISIONS.md](DECISIONS.md) "정한 것"의 버린 안)
 
 ## Stage 5 — 요약 · 세션 탭
@@ -109,6 +111,7 @@ Electron 전환을 Stage 0~8로 나누고, 단계마다 할 일과 완료 기준
 ## Stage 8 — 배포 전환과 old 제거
 
 - `old/docs/RELEASE.md`를 `docs/`로 옮기고 §2 표를 먼저 고친다. Windows App SDK·WebView2 줄을 빼고 Electron 줄을 넣는다
+- 설치판에 `Daiso.StatusLine.exe`를 Host 옆에 같이 넣는다. 사용자 Claude 설정에 그 경로가 적히므로 설치 경로가 바뀌면 다시 등록해야 한다
 - 시작 전에 설치 프로그램 도구를 정한다 ([DECISIONS.md](DECISIONS.md) "미정")
 - 백엔드 프로젝트와 테스트를 `old/src`·`old/tests`에서 `backend/src`·`backend/tests`로 `git mv`한다
 - 필요한 옛 문서를 `docs/`로 옮긴 뒤 `old/`를 지운다

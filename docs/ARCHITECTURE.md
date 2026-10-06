@@ -41,6 +41,7 @@ frontend/                      TypeScript 전부. npm 은 여기서만 돈다
 backend/                       C# 전부. dotnet 은 여기서만 돈다
   Daiso.sln                    새 솔루션. 백엔드 라이브러리는 Stage 8 전까지 old/src 를 참조한다 (Stage 0)
   src/Daiso.Host/              C# 프로세스: 보안 미들웨어, /ws, DI (Stage 1)
+  src/Daiso.StatusLine/        Claude 상태줄 명령. 구독 한도를 파일로 남긴다 (Stage 4)
     Tabs/{Id}/                 탭마다 엔드포인트 묶음
     Shared/                    탭에 속하지 않는 공용 경로 (/api/projects)
   tests/                       새 테스트
@@ -77,7 +78,7 @@ old/                           2026-10-03 까지의 WinUI 앱 전부
 |---|---|---|
 | `/api/projects` | 아는 프로젝트 목록 (옛 `KnownProjects`), 프로젝트마다 마지막 작업 시각 | 프로젝트 선택기, "모든 프로젝트" 요약 |
 | `/api/accounts` | 도구 셋의 로그인 상태, 저장한 계정 | 위 줄 계정 단추 |
-| `/api/limits` | 구독 한도와 기준 시각 (Stage 4 뒷부분) | 사용량, 계정 단추 |
+| `/api/limits` | 도구마다 구독 한도와 기준 시각. `PUT /claude/statusline`으로 Claude 상태줄 등록을 켜고 끈다 | 사용량, 계정 단추 |
 | `/api/tools` | 도구 목록(플러그인 포함), 표시 순서·글자·색 | 도구 칩, 도구 표시 |
 | `/api/index` | 인덱스 갱신 상태. `POST /refresh`·`/rebuild`로 시작한다. 서버가 뜰 때 한 번 갱신한다 | 아래 줄, "다시 읽기" |
 

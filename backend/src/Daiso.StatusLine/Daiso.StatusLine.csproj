@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Claude Code 상태줄 명령. Claude 가 응답할 때마다 띄우므로 빨리 떠야 한다. 그래서 Host(ASP.NET)와 따로 둔
+    아주 작은 콘솔 앱이다. 다른 프로젝트를 참조하지 않는다 (docs/DECISIONS.md "구독 한도는 도구가 남긴 파일로만 읽는다")
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Daiso.StatusLine</RootNamespace>
+    <AssemblyName>Daiso.StatusLine</AssemblyName>
+    <!-- 뜨는 시간을 줄인다 -->
+    <TieredPGO>true</TieredPGO>
+    <TieredCompilationQuickJitForLoops>true</TieredCompilationQuickJitForLoops>
+    <UseSystemResourceKeys>true</UseSystemResourceKeys>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Daiso.Host.Tests" />
+  </ItemGroup>
+
+</Project>

@@ -37,6 +37,9 @@ internal sealed class RunningHost : IAsyncDisposable
 
     public string CookieHeader => $"{LocalOnlyMiddleware.CookieName(Port)}={Token}";
 
+    /// <summary>임시 폴더 안의 가짜 홈. 세션 파일(<c>.claude</c>·<c>.codex</c>)과 Claude 설정을 여기서 찾는다.</summary>
+    public string Home => Path.Combine(Path.GetDirectoryName(Options.DataDirectory)!, "home");
+
     public string InfoPath => Path.Combine(Options.DataDirectory, ServerInfoFile.FileName);
 
     /// <param name="adjust">옵션을 바꾼다.</param>

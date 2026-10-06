@@ -40,7 +40,7 @@ DAISO_OPEN http://127.0.0.1:51234/?token=...
 | `/` | 첫 화면. `?token=`은 여기서만 받는다. 웹 화면 폴더가 있으면 `index.html`, 없으면 링크 몇 개뿐인 안내 페이지 |
 | `/{탭 id}` 등 점 없는 주소 | 웹 화면 폴더가 있으면 `index.html`. 화면이 주소로 탭을 가르기 때문이다. `/api/` 아래 없는 경로는 404 |
 | `/assets/...` | 웹 화면 빌드 파일 |
-| `/api/projects`, `/api/tools`, `/api/index` | 공용 경로 ([docs/ARCHITECTURE.md](../../../docs/ARCHITECTURE.md) "탭에 속하지 않는 공용 경로") |
+| `/api/projects`, `/api/tools`, `/api/index`, `/api/limits` | 공용 경로 ([docs/ARCHITECTURE.md](../../../docs/ARCHITECTURE.md) "탭에 속하지 않는 공용 경로") |
 | `/api/usage` | 사용량 탭. `grain`(day·week·month), `tool`, `project`로 좁힌다. 날짜는 UTC 기준(세션 기록이 UTC로 적힌다) |
 | `/api/health` | `{"status":"ok"}` |
 | `/openapi/v1.json` | OpenAPI 문서. 웹이 여기서 TS 타입을 만든다 (Stage 3) |
@@ -60,6 +60,7 @@ DAISO_OPEN http://127.0.0.1:51234/?token=...
 | `Notifications/` | `/ws` 알림 허브 |
 | `Services/` | 옛 `Daiso.App/Services`에서 옮긴 것: `SettingsStore`·`AppSettings`, `ToolRegistry`, `ToolPluginCatalog` |
 | `Shared/` | 탭에 속하지 않는 공용 경로. `ProjectCatalog`(세션 인덱스 + 최근 폴더) |
+| `Shared/Limits.cs` | 구독 한도: Claude 상태줄 켜고 끄기(`ClaudeStatusLine`), 도구마다 한도 모으기, 한도 파일 지켜보기. 상태줄 명령은 [../Daiso.StatusLine/README.md](../Daiso.StatusLine/README.md) |
 | `Services/IndexService.cs` | 인덱스 갱신을 한 번에 하나만 돌리고 진행·끝을 `/ws`로 알린다. 서버가 뜰 때 한 번 갱신한다 |
 | `Tabs/` | 탭 엔드포인트 |
 

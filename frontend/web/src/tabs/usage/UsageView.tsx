@@ -1,4 +1,4 @@
-// 사용량 탭 (docs/design/daiso-d.html "사용량"). 토큰만 보여 준다. 구독 한도는 Stage 4 뒷부분에서 맨 위에 더한다
+// 사용량 탭 (docs/design/daiso-d.html "사용량"). 맨 위 구독 한도(LimitsBox), 그 아래 토큰. $ 는 없다
 import { useQuery } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import { api, type Schemas } from '../../api/client';
@@ -8,6 +8,7 @@ import { useIndexStatus, useRefreshIndex } from '../../indexStatus';
 import { useCurrentProject, useSetCurrentProject } from '../../project';
 import { t } from '../../strings';
 import { ToolBadge, useTools } from '../../tools';
+import { LimitsBox } from './LimitsBox';
 
 type Grain = 'day' | 'week' | 'month';
 type Usage = Schemas['UsageResponse'];
@@ -92,6 +93,7 @@ export function UsageView() {
         ))}
       </div>
 
+      {tools.data && <LimitsBox tools={tools.data} only={tool} />}
       {usage.isError && <div className="empty">{t('usage.failed')}</div>}
       {usage.data && (
         <Report

@@ -18,6 +18,8 @@
     <ProjectReference Include="..\..\..\old\src\Daiso.Providers.Codex\Daiso.Providers.Codex.csproj" />
     <ProjectReference Include="..\..\..\old\src\Daiso.Providers.Antigravity\Daiso.Providers.Antigravity.csproj" />
     <ProjectReference Include="..\..\..\old\src\Daiso.Providers.Manifest\Daiso.Providers.Manifest.csproj" />
+    <!-- 상태줄 명령을 Host 옆에 둔다. Host 가 자기 폴더의 Daiso.StatusLine.exe 를 Claude 설정에 등록한다 -->
+    <ProjectReference Include="..\Daiso.StatusLine\Daiso.StatusLine.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -68,6 +68,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/limits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetLimits"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/limits/claude/statusline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["SetClaudeStatusLine"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/index": {
         parameters: {
             query?: never;
@@ -165,6 +197,28 @@ export interface components {
              */
             finishedAt: null | string;
         };
+        /** @description 한도 창 하나. */
+        LimitWindow: {
+            /**
+             * Format: int32
+             * @description 창의 길이(분). 300 이면 5시간, 10080 이면 7일.
+             */
+            windowMinutes: number;
+            /**
+             * Format: double
+             * @description 쓴 비율. 0~100.
+             */
+            usedPercent: number;
+            /**
+             * Format: date-time
+             * @description 다시 차는 때. 지났으면 화면이 "초기화됨 · 0%"로 보여 준다.
+             */
+            resetsAt: null | string;
+        };
+        /** @description 모든 도구의 구독 한도. 도구 목록 순서. */
+        LimitsResponse: {
+            tools: components["schemas"]["ToolLimits"][];
+        };
         /** @description 프로젝트 하나. 위 줄 프로젝트 선택기와 "모든 프로젝트" 요약이 쓴다. */
         ProjectItem: {
             /** @description 폴더 이름. */
@@ -196,6 +250,11 @@ export interface components {
             /** @description 목록에 있는 경로. null 이면 "모든 프로젝트". */
             path: null | string;
         };
+        /** @description Claude 상태줄 등록을 켜고 끄는 요청. */
+        SetStatusLineRequest: {
+            /** @description 켤지. */
+            enabled: boolean;
+        };
         /** @description 도구 하나. 화면이 도구 칩과 글자 표시를 그린다. */
         ToolItem: {
             /** @description 도구 id. 사용량 등에서 도구를 고를 때 이 값을 보낸다. */
@@ -211,6 +270,24 @@ export interface components {
             order: number;
             /** @description 색. 하나면 단색, 둘 이상이면 그 순서의 그라데이션. */
             colors: string[];
+        };
+        /** @description 도구 하나의 구독 한도. */
+        ToolLimits: {
+            /** @description 도구 id. */
+            tool: string;
+            /** @description `statusline`(Claude 상태줄) · `sessions`(Codex 세션 기록) · `none`(읽을 길이 없는 도구). */
+            source: string;
+            /** @description Claude 만: 상태줄 등록이 켜져 있는가. 다른 도구는 null. */
+            enabled: null | boolean;
+            /**
+             * Format: date-time
+             * @description 값이 적힌 때. 아직 받은 적이 없으면 null.
+             */
+            at: null | string;
+            /** @description 창 목록. 짧은 창부터. */
+            windows: components["schemas"]["LimitWindow"][];
+            /** @description 요금제 이름. 모르면 null. */
+            plan: null | string;
         };
         /** @description 그래프 한 칸. 하루·한 주(월요일 시작)·한 달(1일 시작). */
         UsageBucket: {
@@ -365,6 +442,50 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProjectsResponse"];
+                };
+            };
+        };
+    };
+    GetLimits: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LimitsResponse"];
+                };
+            };
+        };
+    };
+    SetClaudeStatusLine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetStatusLineRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LimitsResponse"];
                 };
             };
         };

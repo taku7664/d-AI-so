@@ -56,6 +56,9 @@ public static class DaisoHost
         builder.Services.AddDaisoDomain(options);
         builder.Services.AddSingleton<ProjectCatalog>();
         builder.Services.AddSingleton<IndexService>();
+        builder.Services.AddSingleton<ClaudeStatusLine>();
+        builder.Services.AddSingleton<LimitsService>();
+        builder.Services.AddHostedService<LimitsWatcher>();
         builder.Services.AddHostedService<IndexRefreshOnStart>();
         builder.Services.AddSingleton<ITabEndpoints, UsageEndpoints>();
 
