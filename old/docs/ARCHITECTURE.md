@@ -259,6 +259,7 @@ public interface IProvider
     Task<bool> IsInstalledAsync(CancellationToken ct);
     Task<AuthStatus> GetAuthStatusAsync(CancellationToken ct);
     IAsyncEnumerable<SessionInfo> EnumerateSessionsAsync(CancellationToken ct);   // 메타만. 본문 파싱 없음
+    Task<SessionInfo?> ReadSessionMetaAsync(string filePath, CancellationToken ct); // 파일 하나의 메타. 목록에 들지 않을 파일이면 null. 기본 null
     Task<SessionInfo> ReadSessionInfoAsync(string filePath, CancellationToken ct); // 본문 스캔해 카운트·usage 채움
     IAsyncEnumerable<SessionMessage> ReadMessagesAsync(string filePath, long fromByteOffset, CancellationToken ct);
     string BuildResumeArguments(SessionInfo session);   // "--resume <id>" | "resume <id>"
@@ -304,9 +305,11 @@ public interface ISessionIndex
 {
     Task RebuildAsync(IProgress<IndexProgress> progress, CancellationToken ct);
     Task RefreshAsync(CancellationToken ct);      // §5.1 증분
+    Task RefreshFilesAsync(IReadOnlyCollection<string> filePaths, CancellationToken ct);   // 이 파일들만 같은 규칙으로. 없어진 파일은 뺀다
     Task<IReadOnlyList<SessionInfo>> ListAsync(SessionFilter filter, CancellationToken ct);
     Task<IReadOnlyList<SearchHit>> SearchAsync(string query, CancellationToken ct);
     Task<UsageSummary> GetUsageAsync(DateOnly from, DateOnly to, CancellationToken ct);
+    Task<IReadOnlyList<SessionMessage>> GetLatestUserMessagesAsync(string filePath, int limit, CancellationToken ct);   // 사람 자리 메시지 최근 것부터. 거르기는 부르는 쪽
 }
 public sealed record IndexProgress(int Done, int Total, string CurrentFile);
 public sealed record SessionFilter(ToolKind? Tool, string? ProjectPath, DateOnly? From, DateOnly? To, bool OrphansOnly, long? MinSizeBytes, bool IncludeArchived = true);
@@ -543,6 +546,10 @@ RefreshAsync
      · size 감소/변경 → offset 0부터 재파싱 (재작성된 경우)
      · 동일          → 건너뜀
   → messages 삽입(트리거가 FTS 따라감), usage_daily 갱신, last_offset = **다 읽은 뒤**의 파일 크기
+
+RefreshFilesAsync(paths)   ← 새 앱 Host 가 세션 폴더를 지켜보다 바뀐 파일만 넘긴다
+  → 파일마다 IProvider.ReadSessionMetaAsync 가 메타를 주는 도구를 찾아 위와 같은 비교·이어 읽기
+  → 파일이 없어졌으면 그 세션 행을 지운다. 메타를 주는 도구가 없으면 건너뛴다(다음 전체 갱신이 맡는다)
      · 이 셋은 **한 트랜잭션**이다. 본문만 커밋하고 나오면, 그 사이에 죽었을 때 오프셋이 옛 값으로 남아 같은 자리를 다시 담는다
 ```
 - SQLite: `%LOCALAPPDATA%\DAIso\index.db`. 설정으로 바꿀 수 있다

@@ -90,6 +90,16 @@ public interface IProvider
     /// <summary>세션 메타만 훑는다. 본문은 파싱하지 않는다.</summary>
     IAsyncEnumerable<SessionInfo> EnumerateSessionsAsync(CancellationToken ct);
 
+    /// <summary>
+    /// 파일 하나의 세션 메타. <see cref="EnumerateSessionsAsync"/> 가 그 파일에 대해 내놓을 것과 같아야 한다.
+    /// 그 목록에 들지 않을 파일(이 도구의 세션 파일이 아니거나 하위 폴더의 곁가지 기록)이면 null.
+    /// <para>
+    /// 기본은 null 이다 — 부르는 쪽은 null 이면 전체 갱신으로 물러선다. 바뀐 파일만 다시 읽을 때 쓴다
+    /// (새 앱 요약이 채팅을 따라오게 할 때. 전체 갱신은 세션 570개의 앞부분을 다 읽어 몇 초 걸린다).
+    /// </para>
+    /// </summary>
+    Task<SessionInfo?> ReadSessionMetaAsync(string filePath, CancellationToken ct) => Task.FromResult<SessionInfo?>(null);
+
     /// <summary>본문을 스캔해 카운트·사용량까지 채운다.</summary>
     Task<SessionInfo> ReadSessionInfoAsync(string filePath, CancellationToken ct);
 

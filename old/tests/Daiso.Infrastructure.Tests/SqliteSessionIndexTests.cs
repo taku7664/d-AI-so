@@ -107,6 +107,24 @@ public sealed class SqliteSessionIndexTests : IDisposable
         session.FirstPrompt.Should().Be("더미 질문 1");
     }
 
+    [Fact]
+    public async Task Latest_user_messages_come_newest_first_and_respect_the_limit()
+    {
+        using var index = CreateWithRealProviders();
+        await index.RebuildAsync(new Progress<IndexProgress>(), default);
+        var path = (await index.ListAsync(SessionFilter.All with { Tool = ToolKind.Claude }, default))
+            .Single(s => Path.GetFileName(s.FilePath) == "session-basic.jsonl").FilePath;
+
+        var all = await index.GetLatestUserMessagesAsync(path, 10, default);
+        var one = await index.GetLatestUserMessagesAsync(path, 1, default);
+
+        all.Should().OnlyContain(m => m.Role == MessageRole.User);
+        all.Select(m => m.At).Should().BeInDescendingOrder();
+        all.Select(m => m.Text).Should().ContainInOrder("더미 질문 2", "더미 질문 1");
+        one.Should().ContainSingle().Which.Should().Be(all[0]);
+        (await index.GetLatestUserMessagesAsync(Path.Combine(_directory, "없는.jsonl"), 5, default)).Should().BeEmpty();
+    }
+
     // ── 검색 ─────────────────────────────────────────────────────────────
 
     [Fact]
@@ -180,6 +198,34 @@ public sealed class SqliteSessionIndexTests : IDisposable
         await index.RefreshAsync(default);
 
         provider.MessageReads.Should().HaveCount(1, "변화가 없으면 파일을 다시 열지 않는다");
+    }
+
+    [Fact]
+    public async Task Refreshing_one_file_reads_only_what_was_added_to_it()
+    {
+        using var index = CreateWithRealProviders();
+        await index.RebuildAsync(new Progress<IndexProgress>(), default);
+        var project = Path.Combine(_directory, "home", ".claude", "projects", "C--Fixture-Project");
+        var path = Path.Combine(project, "session-basic.jsonl");
+
+        File.AppendAllText(path, """{"sessionId": "11111111-2222-3333-4444-555555555555", "cwd": "C:\\Fixture\\Project", "type": "user", "timestamp": "2026-09-02T00:00:00.000Z", "message": {"role": "user", "content": "더한 질문"}}""" + "\n");
+        await index.RefreshFilesAsync([path, Path.Combine(project, "memory", "ignored.jsonl")], default);
+
+        (await index.GetLatestUserMessagesAsync(path, 1, default)).Single().Text.Should().Be("더한 질문");
+        (await index.ListAsync(SessionFilter.All, default)).Should().HaveCount(5, "하위 폴더 기록은 세션이 아니다");
+    }
+
+    [Fact]
+    public async Task Refreshing_a_deleted_file_drops_it()
+    {
+        using var index = CreateWithRealProviders();
+        await index.RebuildAsync(new Progress<IndexProgress>(), default);
+        var path = Path.Combine(_directory, "home", ".claude", "projects", "C--Fixture-Project", "session-offsets.jsonl");
+
+        File.Delete(path);
+        await index.RefreshFilesAsync([path], default);
+
+        (await index.ListAsync(SessionFilter.All, default)).Should().NotContain(s => s.FilePath == path);
     }
 
     [Fact]

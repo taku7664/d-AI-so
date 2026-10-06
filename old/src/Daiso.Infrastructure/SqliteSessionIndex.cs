@@ -143,24 +143,7 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
                 {
                     ct.ThrowIfCancellationRequested();
                     seen.Add(session.FilePath);
-
-                    var previous = ReadRow(session.FilePath);
-
-                    // 크기·수정 시각이 같으면 파일을 열지 않는다.
-                    if (previous is not null
-                        && previous.SizeBytes == session.SizeBytes
-                        && previous.ModifiedAt == session.ModifiedAt)
-                    {
-                        UpdateLiveFlags(session);
-                        continue;
-                    }
-
-                    // 커진 파일은 이전 오프셋부터, 줄어들었거나 새 파일은 처음부터 읽는다.
-                    // 뒤에만 붙는 로그가 아닌 도구(Gemini)는 커졌어도 처음부터 다시 읽는다. 중간 레코드가 앞을 바꾼다.
-                    var append = provider.AppendOnlySessions && previous is not null && session.SizeBytes > previous.SizeBytes;
-                    var offset = append ? previous!.LastOffset : 0;
-
-                    await IndexAsync(provider, session, offset, append ? previous : null, ct).ConfigureAwait(false);
+                    await RefreshOneAsync(provider, session, ct).ConfigureAwait(false);
                 }
             }
 
@@ -170,6 +153,63 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
         {
             _writeGate.Release();
         }
+    }
+
+    /// <inheritdoc />
+    public async Task RefreshFilesAsync(IReadOnlyCollection<string> filePaths, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(filePaths);
+
+        await _writeGate.WaitAsync(ct).ConfigureAwait(false);
+
+        try
+        {
+            foreach (var path in filePaths.Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                ct.ThrowIfCancellationRequested();
+
+                if (!File.Exists(path))
+                {
+                    RemoveRow(path);
+                    continue;
+                }
+
+                foreach (var provider in _providers)
+                {
+                    if (await provider.ReadSessionMetaAsync(path, ct).ConfigureAwait(false) is { } session)
+                    {
+                        await RefreshOneAsync(provider, session, ct).ConfigureAwait(false);
+                        break;
+                    }
+                }
+            }
+        }
+        finally
+        {
+            _writeGate.Release();
+        }
+    }
+
+    /// <summary>세션 하나를 갱신한다. 쓰기 문(_writeGate)을 잡은 채로 부른다.</summary>
+    private async Task RefreshOneAsync(IProvider provider, SessionInfo session, CancellationToken ct)
+    {
+        var previous = ReadRow(session.FilePath);
+
+        // 크기·수정 시각이 같으면 파일을 열지 않는다.
+        if (previous is not null
+            && previous.SizeBytes == session.SizeBytes
+            && previous.ModifiedAt == session.ModifiedAt)
+        {
+            UpdateLiveFlags(session);
+            return;
+        }
+
+        // 커진 파일은 이전 오프셋부터, 줄어들었거나 새 파일은 처음부터 읽는다.
+        // 뒤에만 붙는 로그가 아닌 도구(Gemini)는 커졌어도 처음부터 다시 읽는다. 중간 레코드가 앞을 바꾼다.
+        var append = provider.AppendOnlySessions && previous is not null && session.SizeBytes > previous.SizeBytes;
+        var offset = append ? previous!.LastOffset : 0;
+
+        await IndexAsync(provider, session, offset, append ? previous : null, ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -291,6 +331,40 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
         ct.ThrowIfCancellationRequested();
 
         return Task.Run(() => Usage(from, to, tool, projectPath, ct), ct);
+    }
+
+    /// <inheritdoc />
+    /// <remarks>배경 스레드에서 돈다 (<see cref="ListAsync"/> 와 같은 이유).</remarks>
+    public Task<IReadOnlyList<SessionMessage>> GetLatestUserMessagesAsync(string filePath, int limit, CancellationToken ct)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(filePath);
+        ct.ThrowIfCancellationRequested();
+
+        return Task.Run<IReadOnlyList<SessionMessage>>(
+            () =>
+            {
+                using var connection = OpenRead();
+                using var command = connection.CreateCommand();
+                command.CommandText = """
+                    SELECT at, text FROM messages
+                    WHERE file_path = $path AND role = $role
+                    ORDER BY at DESC, id DESC
+                    LIMIT $limit
+                    """;
+                command.Parameters.AddWithValue("$path", filePath);
+                command.Parameters.AddWithValue("$role", nameof(MessageRole.User));
+                command.Parameters.AddWithValue("$limit", Math.Max(0, limit));
+
+                var messages = new List<SessionMessage>();
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    messages.Add(new SessionMessage(ParseTimestamp(reader.GetString(0)), MessageRole.User, reader.GetString(1), false));
+                }
+
+                return messages;
+            },
+            ct);
     }
 
     private UsageSummary Usage(DateOnly from, DateOnly to, ToolKind? tool, string? projectPath, CancellationToken ct)
@@ -644,13 +718,18 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
 
         foreach (var path in stale)
         {
-            DeleteRows(path);
-
-            using var command = _connection.CreateCommand();
-            command.CommandText = "DELETE FROM sessions WHERE file_path = $path";
-            command.Parameters.AddWithValue("$path", path);
-            command.ExecuteNonQuery();
+            RemoveRow(path);
         }
+    }
+
+    private void RemoveRow(string path)
+    {
+        DeleteRows(path);
+
+        using var command = _connection.CreateCommand();
+        command.CommandText = "DELETE FROM sessions WHERE file_path = $path";
+        command.Parameters.AddWithValue("$path", path);
+        command.ExecuteNonQuery();
     }
 
     // ── 검색 ─────────────────────────────────────────────────────────────

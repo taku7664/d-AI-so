@@ -179,6 +179,25 @@ public sealed class ClaudeProvider : IProvider, IUsageReader
     }
 
     /// <inheritdoc />
+    /// <remarks><see cref="EnumerateSessionsAsync"/> 처럼 <c>projects\{폴더}\*.jsonl</c> 만 받는다. 하위 폴더(subagents 등)는 null.</remarks>
+    public async Task<SessionInfo?> ReadSessionMetaAsync(string filePath, CancellationToken ct)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+
+        var full = Path.GetFullPath(filePath);
+        var folder = Path.GetDirectoryName(full);
+        if (!File.Exists(full)
+            || !string.Equals(Path.GetExtension(full), ".jsonl", StringComparison.OrdinalIgnoreCase)
+            || folder is null
+            || !string.Equals(Path.GetDirectoryName(folder), Path.GetFullPath(SessionsRoot).TrimEnd(Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        return await ReadMetaAsync(full, ReadActiveSessionIds(), ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
     public async Task<SessionInfo> ReadSessionInfoAsync(string filePath, CancellationToken ct)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);

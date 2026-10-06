@@ -147,6 +147,29 @@ public sealed class CodexProvider : IProvider, IUsageReader
     }
 
     /// <inheritdoc />
+    /// <remarks><see cref="EnumerateSessionsAsync"/> 처럼 <c>sessions</c>·<c>archived_sessions</c> 아래 <c>*.jsonl</c> 만 받는다.</remarks>
+    public async Task<SessionInfo?> ReadSessionMetaAsync(string filePath, CancellationToken ct)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+
+        var full = Path.GetFullPath(filePath);
+        if (!File.Exists(full) || !string.Equals(Path.GetExtension(full), ".jsonl", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        static bool Under(string path, string root) =>
+            path.StartsWith(Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+
+        if (Under(full, SessionsRoot))
+        {
+            return await ReadMetaAsync(full, isArchived: false, ct).ConfigureAwait(false);
+        }
+
+        return Under(full, ArchivedSessionsRoot) ? await ReadMetaAsync(full, isArchived: true, ct).ConfigureAwait(false) : null;
+    }
+
+    /// <inheritdoc />
     public async Task<SessionInfo> ReadSessionInfoAsync(string filePath, CancellationToken ct)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
