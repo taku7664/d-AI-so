@@ -281,34 +281,40 @@ public sealed class SqliteSessionIndex : ISessionIndex, IDisposable
     /// <inheritdoc />
     /// <inheritdoc />
     /// <remarks>배경 스레드에서 돈다 (<see cref="ListAsync"/> 와 같은 이유).</remarks>
-    public Task<UsageSummary> GetUsageAsync(DateOnly from, DateOnly to, ToolKind? tool, CancellationToken ct)
+    public Task<UsageSummary> GetUsageAsync(DateOnly from, DateOnly to, ToolKind? tool, CancellationToken ct) =>
+        GetUsageAsync(from, to, tool, projectPath: null, ct);
+
+    /// <inheritdoc />
+    /// <remarks>배경 스레드에서 돈다 (<see cref="ListAsync"/> 와 같은 이유).</remarks>
+    public Task<UsageSummary> GetUsageAsync(DateOnly from, DateOnly to, ToolKind? tool, string? projectPath, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
-        return Task.Run(() => Usage(from, to, tool, ct), ct);
+        return Task.Run(() => Usage(from, to, tool, projectPath, ct), ct);
     }
 
-    private UsageSummary Usage(DateOnly from, DateOnly to, ToolKind? tool, CancellationToken ct)
+    private UsageSummary Usage(DateOnly from, DateOnly to, ToolKind? tool, string? projectPath, CancellationToken ct)
     {
         using var connection = OpenRead();
         using var command = connection.CreateCommand();
-        command.CommandText = tool is null
-            ? """
-              SELECT date, project, model, input, output, cache_create, cache_read
-              FROM usage_daily
-              WHERE date >= $from AND date <= $to
-              """
-            : """
-              SELECT date, project, model, input, output, cache_create, cache_read
-              FROM usage_daily
-              WHERE date >= $from AND date <= $to AND tool = $tool
-              """;
+        command.CommandText = """
+            SELECT date, project, model, input, output, cache_create, cache_read
+            FROM usage_daily
+            WHERE date >= $from AND date <= $to
+            """
+            + (tool is null ? string.Empty : " AND tool = $tool")
+            + (projectPath is null ? string.Empty : " AND project = $project COLLATE NOCASE");
         command.Parameters.AddWithValue("$from", Text(from));
         command.Parameters.AddWithValue("$to", Text(to));
 
         if (tool is { } kind)
         {
             command.Parameters.AddWithValue("$tool", kind.ToString());
+        }
+
+        if (projectPath is not null)
+        {
+            command.Parameters.AddWithValue("$project", projectPath);
         }
 
         var days = new Dictionary<DateOnly, TokenUsage>();

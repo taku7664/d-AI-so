@@ -4,7 +4,9 @@ using Microsoft.Extensions.FileProviders;
 using Daiso.Host.Notifications;
 using Daiso.Host.Security;
 using Daiso.Host.Shared;
+using Daiso.Host.Services;
 using Daiso.Host.Tabs;
+using Daiso.Host.Tabs.Usage;
 
 namespace Daiso.Host;
 
@@ -53,6 +55,9 @@ public static class DaisoHost
         }));
         builder.Services.AddDaisoDomain(options);
         builder.Services.AddSingleton<ProjectCatalog>();
+        builder.Services.AddSingleton<IndexService>();
+        builder.Services.AddHostedService<IndexRefreshOnStart>();
+        builder.Services.AddSingleton<ITabEndpoints, UsageEndpoints>();
 
         configureServices?.Invoke(builder.Services);
 

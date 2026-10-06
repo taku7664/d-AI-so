@@ -1,0 +1,232 @@
+/* 여러 탭이 같이 쓰는 조각. docs/design/daiso-d.html 의 "공용"·"사용량" 부분을 옮겼다 */
+.phead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+.phead .state {
+  color: var(--faint);
+  font-size: var(--t-xs);
+  font-weight: 600;
+}
+.phead .acts {
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 99px;
+  background: var(--ground);
+  border: 1px solid var(--line);
+  flex: none;
+}
+.seg button {
+  border: 0;
+  background: transparent;
+  border-radius: 99px;
+  padding: 3px 12px;
+  color: var(--muted);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.seg button[aria-pressed='true'] {
+  background: var(--hl);
+  color: var(--hl-ink);
+}
+.btn {
+  border: 1px solid var(--line);
+  background: var(--raise);
+  border-radius: 99px;
+  padding: 6px 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.btn:hover:not([disabled]) {
+  border-color: var(--ink);
+}
+.btn.small {
+  padding: 3px 10px;
+  font-size: var(--t-xs);
+}
+.btn[disabled] {
+  opacity: 0.45;
+  cursor: default;
+}
+.chip {
+  border: 1px solid var(--line);
+  background: var(--raise);
+  border-radius: 99px;
+  padding: 4px 12px;
+  font-weight: 600;
+  font-size: var(--t-xs);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.chip[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--surface);
+  border-color: var(--ink);
+}
+.card {
+  background: var(--raise);
+  border: 1px solid var(--line-soft);
+  border-radius: 14px;
+}
+.box {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.box-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.box-head h3 {
+  margin: 0;
+  font-size: var(--t-md);
+}
+.box-head .r {
+  margin-left: auto;
+  display: flex;
+  gap: 12px;
+}
+.two {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 도구 표시 */
+.tool {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  display: inline-grid;
+  place-items: center;
+  font: 700 11px/1 var(--f-mono);
+  color: #fff;
+  flex: none;
+}
+.tool.sm {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  font-size: 10px;
+}
+
+/* 사용량 */
+.cards3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.cards3 .card {
+  padding: 14px 16px;
+}
+.cards3 span {
+  display: block;
+  color: var(--faint);
+  font-size: var(--t-xs);
+  font-weight: 600;
+}
+.cards3 b {
+  font: 700 1.6rem/1.2 var(--f-title);
+}
+.cards3 small {
+  color: var(--faint);
+  font-size: var(--t-xs);
+  margin-left: 8px;
+}
+.chart text {
+  fill: var(--faint);
+  font: 10.5px var(--f-ui);
+}
+.chart rect.b:hover {
+  fill: var(--hl);
+}
+.tbl-wrap {
+  overflow-x: auto;
+}
+.tbl {
+  width: 100%;
+  border-collapse: collapse;
+}
+.tbl th {
+  text-align: left;
+  font-size: var(--t-xs);
+  color: var(--faint);
+  font-weight: 600;
+  padding: 0 10px 8px 0;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.tbl td {
+  padding: 8px 10px 8px 0;
+  border-bottom: 1px solid var(--line-soft);
+  vertical-align: middle;
+}
+.tbl .r {
+  text-align: right;
+}
+.share {
+  display: inline-block;
+  width: 60px;
+  height: 6px;
+  background: var(--ground);
+  border-radius: 6px;
+  overflow: hidden;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+.share span {
+  display: block;
+  height: 100%;
+  background: var(--ink);
+}
+.link {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--ink);
+  font-weight: 600;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: var(--hl);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+@container (max-width: 760px) {
+  .cards3,
+  .two {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

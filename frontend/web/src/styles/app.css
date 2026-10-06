@@ -154,6 +154,9 @@ button {
   padding: 6px 16px;
   border-top: 1px solid var(--line);
   font-size: var(--t-xs);
+  color: var(--muted);
+}
+.statusbar.err {
   color: var(--bad);
 }
 

@@ -20,6 +20,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/tools": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListTools"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/projects": {
         parameters: {
             query?: never;
@@ -52,6 +68,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetIndexStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/index/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["RefreshIndex"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/index/rebuild": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["RebuildIndex"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetUsage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -60,6 +140,30 @@ export interface components {
         HealthResponse: {
             /** @description 살아 있으면 `ok`. */
             status: string;
+        };
+        /** @description 인덱스 갱신 상태. 화면 아래 줄에 그대로 보여 준다. */
+        IndexStatus: {
+            /** @description 돌고 있는가. */
+            running: boolean;
+            /** @description 처음부터 다시 만드는 중인가. false 면 바뀐 것만 이어 읽는다. */
+            rebuilding: boolean;
+            /**
+             * Format: int32
+             * @description 끝낸 세션 수. 다시 만들 때만 센다.
+             */
+            done: number;
+            /**
+             * Format: int32
+             * @description 전체 세션 수. 모르면 0.
+             */
+            total: number;
+            /** @description 마지막 실행이 실패한 까닭. 성공했으면 null. */
+            error: null | string;
+            /**
+             * Format: date-time
+             * @description 마지막으로 끝난 때. 한 번도 안 돌았으면 null.
+             */
+            finishedAt: null | string;
         };
         /** @description 프로젝트 하나. 위 줄 프로젝트 선택기와 "모든 프로젝트" 요약이 쓴다. */
         ProjectItem: {
@@ -92,6 +196,86 @@ export interface components {
             /** @description 목록에 있는 경로. null 이면 "모든 프로젝트". */
             path: null | string;
         };
+        /** @description 도구 하나. 화면이 도구 칩과 글자 표시를 그린다. */
+        ToolItem: {
+            /** @description 도구 id. 사용량 등에서 도구를 고를 때 이 값을 보낸다. */
+            id: string;
+            /** @description 이름. */
+            title: string;
+            /** @description 한 글자 표시. */
+            initial: string;
+            /**
+             * Format: int32
+             * @description 표시 순서. 작은 것이 앞.
+             */
+            order: number;
+            /** @description 색. 하나면 단색, 둘 이상이면 그 순서의 그라데이션. */
+            colors: string[];
+        };
+        /** @description 그래프 한 칸. 하루·한 주(월요일 시작)·한 달(1일 시작). */
+        UsageBucket: {
+            /**
+             * Format: date
+             * @description 칸의 첫날.
+             */
+            start: string;
+            /** @description 그 칸의 합. */
+            tokens: components["schemas"]["UsageTokens"];
+        };
+        /** @description 사용량 탭 한 화면. */
+        UsageResponse: {
+            /**
+             * Format: date
+             * @description 기록이 있는 첫날. 기록이 없으면 null.
+             */
+            firstDay: null | string;
+            /**
+             * Format: date
+             * @description 오늘. 날짜는 UTC 기준이다. 세션 기록의 날짜가 UTC 로 적힌다.
+             */
+            today: string;
+            /** @description 오늘 · 최근 7일 · 최근 30일 합. */
+            totals: components["schemas"]["UsageTotals"];
+            /** @description 그래프 칸. 오늘이 든 칸까지 빈 칸 없이 이어진다. */
+            buckets: components["schemas"]["UsageBucket"][];
+            /** @description 많이 쓴 프로젝트 10개. */
+            byProject: components["schemas"]["UsageShare"][];
+            /** @description 모델 전부. 많이 쓴 것부터. */
+            byModel: components["schemas"]["UsageShare"][];
+        };
+        /** @description 프로젝트별·모델별 한 줄. */
+        UsageShare: {
+            /** @description 프로젝트 경로 또는 모델 이름. */
+            key: string;
+            /** @description 보여 줄 이름. 프로젝트는 폴더 이름이고, 겹치면 상위 폴더까지 붙인다. */
+            label: string;
+            /** @description 합. */
+            tokens: components["schemas"]["UsageTokens"];
+            /**
+             * Format: double
+             * @description 전체에서 차지하는 비율. 0~1.
+             */
+            share: number;
+        };
+        /** @description 토큰 네 갈래와 합. */
+        UsageTokens: {
+            /** Format: int64 */
+            input: number;
+            /** Format: int64 */
+            output: number;
+            /** Format: int64 */
+            cacheCreate: number;
+            /** Format: int64 */
+            cacheRead: number;
+            /** Format: int64 */
+            total: number;
+        };
+        /** @description 최근 기간 합. */
+        UsageTotals: {
+            today: components["schemas"]["UsageTokens"];
+            last7Days: components["schemas"]["UsageTokens"];
+            last30Days: components["schemas"]["UsageTokens"];
+        };
     };
     responses: never;
     parameters: never;
@@ -117,6 +301,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+        };
+    };
+    ListTools: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ToolItem"][];
                 };
             };
         };
@@ -161,6 +365,90 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProjectsResponse"];
+                };
+            };
+        };
+    };
+    GetIndexStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IndexStatus"];
+                };
+            };
+        };
+    };
+    RefreshIndex: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IndexStatus"];
+                };
+            };
+        };
+    };
+    RebuildIndex: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IndexStatus"];
+                };
+            };
+        };
+    };
+    GetUsage: {
+        parameters: {
+            query?: {
+                grain?: string;
+                tool?: string;
+                project?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UsageResponse"];
                 };
             };
         };

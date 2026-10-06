@@ -348,6 +348,29 @@ public sealed class SqliteSessionIndexTests : IDisposable
     }
 
     [Fact]
+    public async Task Usage_can_be_narrowed_to_one_project_ignoring_case()
+    {
+        var provider = new FakeProvider(ToolKind.Claude, usageIsAdditive: true);
+        var started = new DateTimeOffset(2026, 9, 1, 0, 0, 0, TimeSpan.Zero);
+        var mine = Path.Combine(_directory, "mine.jsonl");
+        var other = Path.Combine(_directory, "other.jsonl");
+        provider.Sessions.Add(Session(mine, ToolKind.Claude, started) with { ProjectPath = @"C:\Work\Mine" });
+        provider.Sessions.Add(Session(other, ToolKind.Claude, started) with { ProjectPath = @"C:\Work\Other" });
+        provider.SetUsage(mine, new UsageDay(new DateOnly(2026, 9, 1), new TokenUsage(10, 0, 0, 0, "m")));
+        provider.SetUsage(other, new UsageDay(new DateOnly(2026, 9, 1), new TokenUsage(100, 0, 0, 0, "m")));
+
+        using var index = new SqliteSessionIndex([provider], DatabasePath());
+        await index.RefreshAsync(default);
+
+        var from = new DateOnly(2026, 9, 1);
+        var to = new DateOnly(2026, 9, 30);
+
+        (await index.GetUsageAsync(from, to, null, @"c:\work\mine", default)).Days.Single().Usage.Input.Should().Be(10);
+        (await index.GetUsageAsync(from, to, null, null, default)).Days.Single().Usage.Input.Should().Be(110);
+        (await index.GetUsageAsync(from, to, ToolKind.Codex, @"C:\Work\Mine", default)).Days.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task Usage_outside_the_requested_range_is_ignored()
     {
         var provider = new FakeProvider();

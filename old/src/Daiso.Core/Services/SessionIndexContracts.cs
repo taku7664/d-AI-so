@@ -17,6 +17,12 @@ public interface ISessionIndex
 
     /// <summary>같은 요약을 도구 하나로 좁혀서. <paramref name="tool"/>이 null이면 전체와 같다. (요약 화면의 도구 탭)</summary>
     Task<UsageSummary> GetUsageAsync(DateOnly from, DateOnly to, ToolKind? tool, CancellationToken ct);
+
+    /// <summary>
+    /// 같은 요약을 도구와 프로젝트로 좁혀서. <paramref name="projectPath"/>가 null이면 모든 프로젝트다.
+    /// 경로는 대소문자를 가리지 않고 비교한다. (새 앱 사용량 화면의 "이 프로젝트")
+    /// </summary>
+    Task<UsageSummary> GetUsageAsync(DateOnly from, DateOnly to, ToolKind? tool, string? projectPath, CancellationToken ct);
 }
 
 public sealed record IndexProgress(int Done, int Total, string CurrentFile);

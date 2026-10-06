@@ -25,6 +25,29 @@
         }
       }
     },
+    "/api/tools": {
+      "get": {
+        "tags": [
+          "tools"
+        ],
+        "operationId": "ListTools",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ToolItem"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects": {
       "get": {
         "tags": [
@@ -74,6 +97,109 @@
           }
         }
       }
+    },
+    "/api/index": {
+      "get": {
+        "tags": [
+          "index"
+        ],
+        "operationId": "GetIndexStatus",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndexStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/index/refresh": {
+      "post": {
+        "tags": [
+          "index"
+        ],
+        "operationId": "RefreshIndex",
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndexStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/index/rebuild": {
+      "post": {
+        "tags": [
+          "index"
+        ],
+        "operationId": "RebuildIndex",
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndexStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/usage": {
+      "get": {
+        "tags": [
+          "usage"
+        ],
+        "operationId": "GetUsage",
+        "parameters": [
+          {
+            "name": "grain",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tool",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "project",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -90,6 +216,53 @@
           }
         },
         "description": "\uD5EC\uC2A4 \uCCB4\uD06C \uC751\uB2F5."
+      },
+      "IndexStatus": {
+        "required": [
+          "running",
+          "rebuilding",
+          "done",
+          "total",
+          "error",
+          "finishedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "running": {
+            "type": "boolean",
+            "description": "\uB3CC\uACE0 \uC788\uB294\uAC00."
+          },
+          "rebuilding": {
+            "type": "boolean",
+            "description": "\uCC98\uC74C\uBD80\uD130 \uB2E4\uC2DC \uB9CC\uB4DC\uB294 \uC911\uC778\uAC00. false \uBA74 \uBC14\uB010 \uAC83\uB9CC \uC774\uC5B4 \uC77D\uB294\uB2E4."
+          },
+          "done": {
+            "type": "integer",
+            "description": "\uB05D\uB0B8 \uC138\uC158 \uC218. \uB2E4\uC2DC \uB9CC\uB4E4 \uB54C\uB9CC \uC13C\uB2E4.",
+            "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "description": "\uC804\uCCB4 \uC138\uC158 \uC218. \uBAA8\uB974\uBA74 0.",
+            "format": "int32"
+          },
+          "error": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "\uB9C8\uC9C0\uB9C9 \uC2E4\uD589\uC774 \uC2E4\uD328\uD55C \uAE4C\uB2ED. \uC131\uACF5\uD588\uC73C\uBA74 null."
+          },
+          "finishedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "\uB9C8\uC9C0\uB9C9\uC73C\uB85C \uB05D\uB09C \uB54C. \uD55C \uBC88\uB3C4 \uC548 \uB3CC\uC558\uC73C\uBA74 null.",
+            "format": "date-time"
+          }
+        },
+        "description": "\uC778\uB371\uC2A4 \uAC31\uC2E0 \uC0C1\uD0DC. \uD654\uBA74 \uC544\uB798 \uC904\uC5D0 \uADF8\uB300\uB85C \uBCF4\uC5EC \uC900\uB2E4."
       },
       "ProjectItem": {
         "required": [
@@ -168,6 +341,196 @@
           }
         },
         "description": "\uC9C0\uAE08 \uD504\uB85C\uC81D\uD2B8\uB97C \uBC14\uAFB8\uB294 \uC694\uCCAD."
+      },
+      "ToolItem": {
+        "required": [
+          "id",
+          "title",
+          "initial",
+          "order",
+          "colors"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "\uB3C4\uAD6C id. \uC0AC\uC6A9\uB7C9 \uB4F1\uC5D0\uC11C \uB3C4\uAD6C\uB97C \uACE0\uB97C \uB54C \uC774 \uAC12\uC744 \uBCF4\uB0B8\uB2E4."
+          },
+          "title": {
+            "type": "string",
+            "description": "\uC774\uB984."
+          },
+          "initial": {
+            "type": "string",
+            "description": "\uD55C \uAE00\uC790 \uD45C\uC2DC."
+          },
+          "order": {
+            "type": "integer",
+            "description": "\uD45C\uC2DC \uC21C\uC11C. \uC791\uC740 \uAC83\uC774 \uC55E.",
+            "format": "int32"
+          },
+          "colors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "\uC0C9. \uD558\uB098\uBA74 \uB2E8\uC0C9, \uB458 \uC774\uC0C1\uC774\uBA74 \uADF8 \uC21C\uC11C\uC758 \uADF8\uB77C\uB370\uC774\uC158."
+          }
+        },
+        "description": "\uB3C4\uAD6C \uD558\uB098. \uD654\uBA74\uC774 \uB3C4\uAD6C \uCE69\uACFC \uAE00\uC790 \uD45C\uC2DC\uB97C \uADF8\uB9B0\uB2E4."
+      },
+      "UsageBucket": {
+        "required": [
+          "start",
+          "tokens"
+        ],
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "description": "\uCE78\uC758 \uCCAB\uB0A0.",
+            "format": "date"
+          },
+          "tokens": {
+            "description": "\uADF8 \uCE78\uC758 \uD569.",
+            "$ref": "#/components/schemas/UsageTokens"
+          }
+        },
+        "description": "\uADF8\uB798\uD504 \uD55C \uCE78. \uD558\uB8E8\u00B7\uD55C \uC8FC(\uC6D4\uC694\uC77C \uC2DC\uC791)\u00B7\uD55C \uB2EC(1\uC77C \uC2DC\uC791)."
+      },
+      "UsageResponse": {
+        "required": [
+          "firstDay",
+          "today",
+          "totals",
+          "buckets",
+          "byProject",
+          "byModel"
+        ],
+        "type": "object",
+        "properties": {
+          "firstDay": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "\uAE30\uB85D\uC774 \uC788\uB294 \uCCAB\uB0A0. \uAE30\uB85D\uC774 \uC5C6\uC73C\uBA74 null.",
+            "format": "date"
+          },
+          "today": {
+            "type": "string",
+            "description": "\uC624\uB298. \uB0A0\uC9DC\uB294 UTC \uAE30\uC900\uC774\uB2E4. \uC138\uC158 \uAE30\uB85D\uC758 \uB0A0\uC9DC\uAC00 UTC \uB85C \uC801\uD78C\uB2E4.",
+            "format": "date"
+          },
+          "totals": {
+            "description": "\uC624\uB298 \u00B7 \uCD5C\uADFC 7\uC77C \u00B7 \uCD5C\uADFC 30\uC77C \uD569.",
+            "$ref": "#/components/schemas/UsageTotals"
+          },
+          "buckets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UsageBucket"
+            },
+            "description": "\uADF8\uB798\uD504 \uCE78. \uC624\uB298\uC774 \uB4E0 \uCE78\uAE4C\uC9C0 \uBE48 \uCE78 \uC5C6\uC774 \uC774\uC5B4\uC9C4\uB2E4."
+          },
+          "byProject": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UsageShare"
+            },
+            "description": "\uB9CE\uC774 \uC4F4 \uD504\uB85C\uC81D\uD2B8 10\uAC1C."
+          },
+          "byModel": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UsageShare"
+            },
+            "description": "\uBAA8\uB378 \uC804\uBD80. \uB9CE\uC774 \uC4F4 \uAC83\uBD80\uD130."
+          }
+        },
+        "description": "\uC0AC\uC6A9\uB7C9 \uD0ED \uD55C \uD654\uBA74."
+      },
+      "UsageShare": {
+        "required": [
+          "key",
+          "label",
+          "tokens",
+          "share"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "\uD504\uB85C\uC81D\uD2B8 \uACBD\uB85C \uB610\uB294 \uBAA8\uB378 \uC774\uB984."
+          },
+          "label": {
+            "type": "string",
+            "description": "\uBCF4\uC5EC \uC904 \uC774\uB984. \uD504\uB85C\uC81D\uD2B8\uB294 \uD3F4\uB354 \uC774\uB984\uC774\uACE0, \uACB9\uCE58\uBA74 \uC0C1\uC704 \uD3F4\uB354\uAE4C\uC9C0 \uBD99\uC778\uB2E4."
+          },
+          "tokens": {
+            "description": "\uD569.",
+            "$ref": "#/components/schemas/UsageTokens"
+          },
+          "share": {
+            "type": "number",
+            "description": "\uC804\uCCB4\uC5D0\uC11C \uCC28\uC9C0\uD558\uB294 \uBE44\uC728. 0~1.",
+            "format": "double"
+          }
+        },
+        "description": "\uD504\uB85C\uC81D\uD2B8\uBCC4\u00B7\uBAA8\uB378\uBCC4 \uD55C \uC904."
+      },
+      "UsageTokens": {
+        "required": [
+          "input",
+          "output",
+          "cacheCreate",
+          "cacheRead",
+          "total"
+        ],
+        "type": "object",
+        "properties": {
+          "input": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "output": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "cacheCreate": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "cacheRead": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "description": "\uD1A0\uD070 \uB124 \uAC08\uB798\uC640 \uD569."
+      },
+      "UsageTotals": {
+        "required": [
+          "today",
+          "last7Days",
+          "last30Days"
+        ],
+        "type": "object",
+        "properties": {
+          "today": {
+            "$ref": "#/components/schemas/UsageTokens"
+          },
+          "last7Days": {
+            "$ref": "#/components/schemas/UsageTokens"
+          },
+          "last30Days": {
+            "$ref": "#/components/schemas/UsageTokens"
+          }
+        },
+        "description": "\uCD5C\uADFC \uAE30\uAC04 \uD569."
       }
     }
   },
@@ -176,7 +539,16 @@
       "name": "health"
     },
     {
+      "name": "tools"
+    },
+    {
       "name": "projects"
+    },
+    {
+      "name": "index"
+    },
+    {
+      "name": "usage"
     }
   ]
 }

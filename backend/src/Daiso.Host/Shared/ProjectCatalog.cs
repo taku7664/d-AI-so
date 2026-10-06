@@ -12,6 +12,14 @@ namespace Daiso.Host.Shared;
 /// <param name="Exists">폴더가 아직 있는가. 없으면 세션만 남은 것이다.</param>
 public sealed record ProjectItem(string Name, string Path, int SessionCount, DateTimeOffset? LastActivity, bool Exists);
 
+/// <summary>도구 하나. 화면이 도구 칩과 글자 표시를 그린다.</summary>
+/// <param name="Id">도구 id. 사용량 등에서 도구를 고를 때 이 값을 보낸다.</param>
+/// <param name="Title">이름.</param>
+/// <param name="Initial">한 글자 표시.</param>
+/// <param name="Order">표시 순서. 작은 것이 앞.</param>
+/// <param name="Colors">색. 하나면 단색, 둘 이상이면 그 순서의 그라데이션.</param>
+public sealed record ToolItem(string Id, string Title, string Initial, int Order, IReadOnlyList<string> Colors);
+
 /// <summary>프로젝트 목록과 지금 고른 프로젝트.</summary>
 /// <param name="Projects">마지막 작업이 최근인 것부터.</param>
 /// <param name="Current">지금 프로젝트의 경로. null 이면 "모든 프로젝트".</param>

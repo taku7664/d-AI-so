@@ -21,7 +21,7 @@ describe('ko.json', () => {
 
   it('모든 키를 코드 어딘가에서 쓴다', () => {
     // t('key') 로 바로 쓰거나, 탭 제목처럼 `tab.${id}` 로 조합해 쓴다. 조합하는 접두사는 여기 적어 둔다
-    const composed = ['tab.'];
+    const composed = ['tab.', 'usage.grain.'];
     const unused = Object.keys(ko).filter(
       (key) => !code.includes(`'${key}'`) && !composed.some((prefix) => key.startsWith(prefix)),
     );
