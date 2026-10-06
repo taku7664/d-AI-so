@@ -14,6 +14,10 @@ Claude Code 상태줄 명령이다. Claude가 응답할 때마다 이 실행 파
 
 로그인 토큰은 보지도 쓰지도 않는다. stdin에 토큰은 오지 않는다.
 
+## 터미널 방 상태 훅
+
+`--hook {run|done|ask|codex} --room {방 id} --data {자료 폴더}`로 부르면 상태줄 일은 하지 않고 `{자료 폴더}ooms\{방 id}.json`에 `{ "state": …, "at": … }`를 남긴다. Host 가 방을 띄울 때 Claude 는 `--settings`의 hooks 로, Codex 는 `-c notify=[...]`로 넣는다(`backend/src/Daiso.Host/Tabs/Terminal/RoomService.cs`). `codex`는 Codex 가 마지막 인자로 붙이는 JSON 의 `type`이 `agent-turn-complete`일 때만 `done`을 남긴다. 방 id 가 32자 16진수가 아니면 아무것도 쓰지 않는다(경로로 쓰기 때문).
+
 ## 등록
 
 `Daiso.Host`가 사용량 탭의 "한도 보기 켜기"를 받으면 `~/.claude/settings.json`의 `statusLine`을 이렇게 바꾼다(`Shared/Limits.cs`의 `ClaudeStatusLine`).

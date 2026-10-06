@@ -52,6 +52,8 @@
 | 테마: **시스템 · 밝게 · 어둡게** (2026-10-06) | D안이 두 테마를 다 갖고 있다. 색은 CSS 변수로 한 벌씩 둔다 | 어두운 테마만 |
 | 아이콘: **Bootstrap Icons** (MIT). 글꼴: **Gothic A1 · Hahmlet · JetBrains Mono** (2026-10-06) | D안이 쓰는 그대로. 글꼴은 앱에 동봉한다 | |
 | Claude 상태줄 명령: **따로 둔 작은 콘솔 앱 `Daiso.StatusLine`** (2026-10-06) | 응답마다 뜨므로 빨라야 한다. 다른 프로젝트를 참조하지 않아 63~70ms에 뜬다. Host 출력 폴더에 같이 놓인다 | PowerShell 스크립트(뜨는 데 느리다) · Node 스크립트(Node가 없을 수 있다) · Host 실행 파일에 옵션(ASP.NET을 싣느라 무겁다) |
+| 터미널 방 상태는 **DAIso 가 띄운 프로세스에만 넣는 훅으로 받는다** (2026-10-06) | Claude 는 `--settings {방 설정 파일}`의 hooks(UserPromptSubmit·PostToolUse → 작업 중, Stop·Notification(idle_prompt) → 답 끝남, Notification(permission_prompt) → 허락 기다림), Codex 는 `-c notify=[...]`(턴 끝 → 답 끝남). 훅 명령은 `Daiso.StatusLine.exe --hook`. 사용자 설정 파일은 고치지 않는다. Codex 의 허락 기다림은 알릴 길이 문서에 없어 보여 주지 않는다. 그 밖의 도구는 Enter 를 보내면 작업 중으로만 본다 | 화면 글자를 읽어 짐작하기(도구 판마다 깨진다) · 사용자 settings.json 에 훅 넣기 |
+| 터미널 방은 **셸로 감싸지 않고 CLI 를 바로 띄운다** (2026-10-06) | 옛 앱은 PowerShell 로 감쌌다가 첫 메시지의 `$`·백틱이 실행되는 일을 겪었다(779e734). npm 래퍼(`.cmd`)만 `cmd /d /s /c`로 돌린다. CLI 가 끝나면 방도 끝난다 | PowerShell `-NoExit` 로 감싸기 |
 | 세션·방 이름은 **DAIso 자료 폴더의 `session-names.json`에 따로 둔다** (2026-10-06) | 도구가 쓰는 세션 파일은 고치지 않는다. 옛 앱과 같이 쓰는 인덱스 DB 모양도 바꾸지 않는다. 첫 질문을 제목으로 쓰면 세션끼리 구별이 안 된다 | 세션 파일에 이름 쓰기 · 인덱스 DB에 표 더하기 |
 
 ## 안 하기로 한 것
@@ -69,4 +71,3 @@
 |---|---|
 | 규칙·프롬프트 폴더가 겹칠 때 우선순위 (사용자 폴더 vs 프로젝트 폴더) | Stage 7 시작 전 |
 | 설치 프로그램 도구 (Inno 유지 / electron-builder NSIS). 둘 다 관리자 권한 없이 사용자 폴더에 깔려야 한다 | Stage 8 시작 전 |
-| 터미널 방의 "허락 기다림"을 알아낼 수 있는지. 안 되면 종은 "작업 중 · 답 끝남"만 보여 준다 | Stage 6 시작 전에 조사 |

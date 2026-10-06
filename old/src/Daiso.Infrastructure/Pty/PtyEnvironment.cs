@@ -18,6 +18,12 @@ public static class PtyEnvironment
     /// <summary>중첩 세션일 때만 함께 걷어내는 값. 상위 세션이 프록시로 돌려 놓은 주소라 그대로 두면 안의 CLI가 그 프록시로 간다.</summary>
     private static readonly string[] NestedOnlyNames = ["ANTHROPIC_BASE_URL", "ANTHROPIC_AUTH_TOKEN"];
 
+    /// <summary>
+    /// 앱 자신의 값. 새 앱의 Host 는 토큰(DAISO_TOKEN)을 읽자마자 지우지만, 그 밖의 값(부모 PID·화면 폴더 등)도
+    /// 방 안의 셸과 AI 가 알 까닭이 없다. 혹시 남은 토큰까지 막는 두 번째 울타리다 (docs/SECURITY.md).
+    /// </summary>
+    private static readonly string[] AppPrefixes = ["DAISO_"];
+
     /// <summary>현재 프로세스 환경에서 시작해 걷어낸 사전.</summary>
     public static Dictionary<string, string> Sanitized()
     {
@@ -46,6 +52,7 @@ public static class PtyEnvironment
         {
             if (NestedNames.Contains(key, StringComparer.OrdinalIgnoreCase)
                 || NestedPrefixes.Any(prefix => key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                || AppPrefixes.Any(prefix => key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
                 || (nested && NestedOnlyNames.Contains(key, StringComparer.OrdinalIgnoreCase)))
             {
                 continue;

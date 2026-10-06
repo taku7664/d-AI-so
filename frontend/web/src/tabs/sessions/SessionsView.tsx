@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from 'react';
 import { bytes, dateTime } from '../../format';
 import { Icon } from '../../icons/Icon';
 import { useCurrentProject } from '../../project';
+import { navigate } from '../../router';
+import { useResumeInRoom } from '../terminal/api';
 import { t } from '../../strings';
 import { ToolBadge, useTools, type Tool } from '../../tools';
 import { useIndexStatus, useRefreshIndex } from '../../indexStatus';
@@ -424,7 +426,8 @@ function Detail({ session, tool, onBack }: { session: Session; tool?: Tool; onBa
   const [name, setName] = useState(session.named ? session.title : '');
   const messages = useMessages(session.path, showTools);
   const rename = useRename();
-  const resume = useResume();
+  const resume = useResumeInRoom();
+  const external = useResume();
   const input = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -470,10 +473,19 @@ function Detail({ session, tool, onBack }: { session: Session; tool?: Tool; onBa
           type="button"
           title={t('sessions.resumeHint')}
           disabled={resume.isPending}
-          onClick={() => resume.mutate(session.path)}
+          onClick={() => resume.mutate(session, { onSuccess: (id) => id && navigate('terminal') })}
         >
           <Icon name="arrow-repeat" />
           {t('sessions.resume')}
+        </button>
+        <button
+          className="icon-btn"
+          type="button"
+          title={t('sessions.resumeExternal')}
+          disabled={external.isPending}
+          onClick={() => external.mutate(session.path)}
+        >
+          <Icon name="box-arrow-up-right" />
         </button>
         <a className="btn small" href={exportUrl(session.path)} download>
           <Icon name="file-earmark-text" />
@@ -483,7 +495,9 @@ function Detail({ session, tool, onBack }: { session: Session; tool?: Tool; onBa
           <input type="checkbox" checked={showTools} onChange={(e) => setShowTools(e.target.checked)} />
           {t('sessions.showTools')}
         </label>
-        {resume.isError && <span className="lnote err">{resume.error.message}</span>}
+        {(resume.isError || external.isError) && (
+          <span className="lnote err">{(resume.error ?? external.error)?.message}</span>
+        )}
       </div>
       <div className="timeline">
         {messages.isPending && <div className="centered">{t('sessions.reading')}</div>}

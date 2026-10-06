@@ -8,6 +8,7 @@ using Daiso.Host.Services;
 using Daiso.Host.Tabs;
 using Daiso.Host.Tabs.Dashboard;
 using Daiso.Host.Tabs.Sessions;
+using Daiso.Host.Tabs.Terminal;
 using Daiso.Host.Tabs.Usage;
 
 namespace Daiso.Host;
@@ -65,6 +66,9 @@ public static class DaisoHost
         builder.Services.AddSingleton<ITabEndpoints, UsageEndpoints>();
         builder.Services.AddSingleton<ITabEndpoints, SessionsEndpoints>();
         builder.Services.AddSingleton<ITabEndpoints, DashboardEndpoints>();
+        builder.Services.AddSingleton<ITabEndpoints, TerminalEndpoints>();
+        builder.Services.AddSingleton<RoomService>();
+        builder.Services.AddHostedService(provider => provider.GetRequiredService<RoomService>());
         builder.Services.AddSingleton<SessionNames>();
 
         configureServices?.Invoke(builder.Services);

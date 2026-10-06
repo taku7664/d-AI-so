@@ -1,0 +1,356 @@
+/* 터미널 탭과 위 줄 종. docs/design/daiso-d.html 의 "터미널"·"새 터미널" 부분을 옮겼다 */
+.term-page {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+.rooms {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.room {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border: 1px solid var(--line);
+  background: var(--raise);
+  border-radius: 12px;
+  padding: 3px 4px 3px 6px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex: none;
+}
+.room .room-main {
+  border: 0;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px;
+  font-weight: inherit;
+  color: inherit;
+}
+.room .name {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.room[aria-pressed='true'] {
+  background: var(--hl);
+  border-color: var(--hl);
+  color: var(--hl-ink);
+}
+.room .x {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  opacity: 0.55;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+}
+.room .x:hover {
+  opacity: 1;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+.room .new-dot,
+.troom .new-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ok);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 25%, transparent);
+}
+.st-ask {
+  color: var(--warn);
+  display: inline-flex;
+}
+.room-plus {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  border: 1.5px dashed var(--line);
+  background: transparent;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  color: var(--muted);
+  flex: none;
+}
+.room-plus[aria-pressed='true'] {
+  border-style: solid;
+  border-color: var(--ink);
+  background: var(--raise);
+  color: var(--ink);
+}
+.rooms .others {
+  margin-left: auto;
+  color: var(--faint);
+  font-size: var(--t-xs);
+  white-space: nowrap;
+  padding-left: 10px;
+}
+.roombody {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+}
+.rtools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  min-width: 0;
+}
+.rtools .sep {
+  width: 1px;
+  height: 18px;
+  background: var(--line);
+  margin: 0 6px;
+}
+.rtools .title {
+  margin-left: auto;
+  color: var(--faint);
+  font-size: var(--t-xs);
+  padding-left: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.rtools .title .icon-btn {
+  width: 26px;
+  height: 26px;
+  font-size: 12px;
+}
+.rtools .title-edit {
+  max-width: 220px;
+  padding: 3px 8px;
+}
+.findbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+.findbar .input {
+  max-width: 320px;
+  padding: 4px 10px;
+}
+.term {
+  background: var(--term-bg);
+  min-height: 0;
+  padding: 8px 4px 4px 12px;
+  overflow: hidden;
+}
+.term .xterm {
+  height: 100%;
+}
+/* 스크롤바 폭을 늘 잡아 둔다. 스크롤백이 생길 때 열 수가 바뀌면 ConPTY 가 다시 그려 줄이 겹친다(옛 앱 eb521fa) */
+.term .xterm-viewport {
+  overflow-y: scroll !important;
+  scrollbar-width: thin;
+}
+
+/* 새 터미널 */
+.nt {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-height: 0;
+}
+.nt-steps {
+  overflow: auto;
+  padding: 22px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.step {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: 4px 12px;
+  padding: 10px 0;
+}
+.step.later {
+  opacity: 0.4;
+}
+.step .mark {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  border: 1.5px solid var(--line);
+  color: var(--faint);
+  background: var(--raise);
+  margin-top: 1px;
+}
+.step.done .mark {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--surface);
+}
+.step.now .mark {
+  border-color: var(--ink);
+  color: var(--ink);
+  box-shadow: 0 0 0 3px var(--hl);
+}
+.step h4 {
+  margin: 0;
+  font-size: var(--t-md);
+  min-height: 26px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.step h4 small {
+  color: var(--faint);
+  font-weight: 600;
+  font-size: var(--t-xs);
+}
+.step .sbody {
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 720px;
+}
+.tools3 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.toolpick {
+  width: 160px;
+  border: 1.5px solid var(--line);
+  background: var(--raise);
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+}
+.toolpick[aria-pressed='true'] {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px var(--hl);
+}
+.toolpick small {
+  color: var(--faint);
+  font-size: var(--t-xs);
+}
+.toolpick .miss {
+  color: var(--warn);
+}
+.lbl-row {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+.lbl-row > span:first-child {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: var(--t-xs);
+}
+.nt-foot {
+  border-top: 1px solid var(--line);
+  background: var(--raise);
+  padding: 12px 22px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: center;
+}
+.nt-foot .sentence {
+  font-weight: 600;
+}
+.nt-foot .left-hint {
+  color: var(--warn);
+  font-weight: 600;
+}
+.nt-foot .go {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* 위 줄 종 */
+.bell {
+  position: relative;
+}
+.bell .badge {
+  position: absolute;
+  top: 1px;
+  right: 0;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 99px;
+  background: var(--bad);
+  color: #fff;
+  font: 700 10px/16px var(--f-ui);
+  padding: 0 4px;
+  text-align: center;
+  pointer-events: none;
+}
+.bell-pop {
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  padding: 6px;
+}
+.pop-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px 8px;
+  font-size: var(--t-xs);
+  color: var(--faint);
+  font-weight: 700;
+}
+.pop-head .link {
+  margin-left: auto;
+}
+.troom {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  border-radius: 10px;
+  padding: 8px;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  gap: 2px 10px;
+  align-items: center;
+}
+.troom:hover {
+  background: var(--hl-soft);
+}
+.troom small {
+  grid-column: 2;
+  color: var(--faint);
+  font-size: var(--t-xs);
+}
+.troom .pill {
+  grid-column: 3;
+  grid-row: 1 / 3;
+}
+.trow {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px;
+  border-radius: 10px;
+}
+.trow:hover {
+  background: var(--surface);
+}

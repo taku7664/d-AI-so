@@ -30,6 +30,24 @@ public sealed class PtyEnvironmentTests
     }
 
     [Fact]
+    public void The_apps_own_variables_never_reach_the_terminal()
+    {
+        var source = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["DAISO_TOKEN"] = "secret",
+            ["DAISO_PARENT_PID"] = "1",
+            ["daiso_web_root"] = @"C:\web",
+            ["DAISOFT_KEEP"] = "keep",
+        };
+
+        var result = PtyEnvironment.Sanitize(source);
+
+        result.Should().NotContainKey("DAISO_TOKEN", because: "방 안의 셸과 AI 가 서버 토큰을 물려받으면 안 된다");
+        result.Should().NotContainKey("DAISO_PARENT_PID").And.NotContainKey("daiso_web_root");
+        result["DAISOFT_KEEP"].Should().Be("keep", because: "접두사 DAISO_ 만 걷는다");
+    }
+
+    [Fact]
     public void Outside_a_nested_session_the_users_anthropic_settings_are_kept()
     {
         var source = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)

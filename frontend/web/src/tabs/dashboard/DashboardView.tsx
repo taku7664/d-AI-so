@@ -8,7 +8,8 @@ import { useCurrentProject, useSetCurrentProject } from '../../project';
 import { navigate } from '../../router';
 import { t } from '../../strings';
 import { ToolBadge, useTools, type Tool } from '../../tools';
-import { requestOpen, useResume } from '../sessions/api';
+import { requestOpen } from '../sessions/api';
+import { requestRoom, useResumeInRoom, useRooms, inProject } from '../terminal/api';
 
 type Dashboard = Schemas['DashboardResponse'];
 
@@ -49,7 +50,7 @@ function ProjectHome({
   name: string;
   toolOf: (id: string) => Tool | undefined;
 }) {
-  const resume = useResume();
+  const resume = useResumeInRoom();
   const last = data.recent[0]?.modifiedAt;
   return (
     <>
@@ -63,7 +64,7 @@ function ProjectHome({
             <div className="box-head">
               <h3>{t('dashboard.openTerminals')}</h3>
             </div>
-            <div className="empty">{t('dashboard.terminalsLater')}</div>
+            <OpenRooms />
           </section>
           <section className="card box">
             <div className="box-head">
@@ -93,7 +94,7 @@ function ProjectHome({
                       type="button"
                       title={t('sessions.resumeHint')}
                       disabled={resume.isPending}
-                      onClick={() => resume.mutate(session.path)}
+                      onClick={() => resume.mutate(session, { onSuccess: (id) => id && navigate('terminal') })}
                     >
                       <Icon name="arrow-repeat" />
                       {t('dashboard.resume')}
@@ -305,5 +306,54 @@ function AttentionBox({ items, toolOf }: { items: Schemas['Attention'][]; toolOf
         );
       })}
     </section>
+  );
+}
+
+/** 이 프로젝트의 열린 터미널 방. 누르면 그 방으로 간다 */
+function OpenRooms() {
+  const rooms = useRooms();
+  const project = useCurrentProject();
+  const tools = useTools();
+  const list = (rooms.data ?? []).filter((room) => inProject(room, project?.members ?? null));
+  if (!list.length)
+    return (
+      <div className="empty">
+        {t('dashboard.noRooms')}{' '}
+        <button className="btn small" type="button" onClick={() => navigate('terminal')}>
+          <Icon name="plus-lg" />
+          {t('dashboard.newTerminal')}
+        </button>
+      </div>
+    );
+  return (
+    <>
+      {list.map((room) => {
+        const tool = tools.data?.find((x) => x.id === room.tool);
+        return (
+          <div className="trow" key={room.id}>
+            {tool ? <ToolBadge tool={tool} /> : <span />}
+            <span className="ell">
+              <b>{room.name}</b> {room.unseen && <span className="pill ok">{t('terminal.unseen')}</span>}
+            </span>
+            <span
+              className={`pill ${room.state === 'done' ? 'ok' : room.state === 'ask' ? 'warn' : room.state === 'exited' ? 'bad' : 'plain'}`}
+            >
+              {t(`terminal.state.${room.state}` as 'terminal.state.run')}
+            </span>
+            <button
+              className="btn small"
+              type="button"
+              onClick={() => {
+                requestRoom(room.id);
+                navigate('terminal');
+              }}
+            >
+              <Icon name="terminal" />
+              {t('dashboard.openRoom')}
+            </button>
+          </div>
+        );
+      })}
+    </>
   );
 }

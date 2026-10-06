@@ -1,10 +1,6 @@
-import { Placeholder } from '../../layout/Placeholder';
 import { t } from '../../strings';
 import type { TabModule } from '../types';
-
-function TerminalView() {
-  return <Placeholder id="terminal" stage="Stage 6" />;
-}
+import { TerminalView } from './TerminalView';
 
 export const tab: TabModule = {
   id: 'terminal',
@@ -13,5 +9,6 @@ export const tab: TabModule = {
   order: 20,
   shortcut: 'Ctrl+2',
   inMenu: true,
+  pageClass: 'fixed term-page',
   View: TerminalView,
 };

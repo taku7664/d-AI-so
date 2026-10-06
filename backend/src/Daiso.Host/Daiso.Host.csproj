@@ -8,6 +8,10 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <!-- 공개 형식마다 문서 주석을 강제하지는 않는다. 주석은 OpenAPI 설명으로 쓰려고 켠다 -->
     <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <!-- 터미널(Stage 6): 최신 ConPTY(conpty.dll + x64/OpenConsole.exe)를 Host 옆에 둔다. 패키지는 Infrastructure 가 참조하고,
+         OpenConsole.exe 복사는 x64 로 빌드하고 이 값을 켠 실행 프로젝트에서만 돈다 (옛 Daiso.App.csproj 와 같은 이유) -->
+    <PlatformTarget>x64</PlatformTarget>
+    <ConptyRequiresx64Host>true</ConptyRequiresx64Host>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,6 +32,16 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
+    <!-- 복사 규칙(build/)은 직접 참조한 프로젝트에서만 돈다. 판은 Infrastructure 와 맞춘다 -->
+    <PackageReference Include="Microsoft.Windows.Console.ConPTY" Version="1.24.260710001" />
   </ItemGroup>
+
+  <!--
+    conpty.dll 은 deps.json 대로 runtimes/win-x64/native 에서 실린다. 그 dll 은 자기 옆의 x64/OpenConsole.exe 를 찾는데,
+    패키지는 OpenConsole 을 출력 폴더 바로 아래 x64/ 에만 둔다. 옆에도 둔다
+  -->
+  <Target Name="CopyOpenConsoleBesideConpty" AfterTargets="Build">
+    <Copy SourceFiles="$(OutDir)x64/OpenConsole.exe" DestinationFolder="$(OutDir)runtimes/win-x64/native/x64" SkipUnchangedFiles="true" Condition="Exists('$(OutDir)x64/OpenConsole.exe')" />
+  </Target>
 
 </Project>

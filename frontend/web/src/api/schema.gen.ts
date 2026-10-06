@@ -388,6 +388,118 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/terminal/rooms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListRooms"];
+        put?: never;
+        post: operations["OpenRoom"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/terminal/rooms/{id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["CloseRoom"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/terminal/rooms/{id}/seen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["MarkRoomSeen"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/terminal/rooms/{id}/name": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["RenameRoom"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/terminal/models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListModels"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/terminal/external": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["OpenExternalTerminal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/terminal/open-folder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["OpenFolder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -520,6 +632,10 @@ export interface components {
             /** @description 못 지운 것과 까닭. 실행 중 세션은 늘 여기 온다. */
             skipped: components["schemas"]["SkippedSession"][];
         };
+        /** @description 폴더를 가리키는 요청. */
+        FolderRequest: {
+            path: string;
+        };
         /** @description 헬스 체크 응답. */
         HealthResponse: {
             /** @description 살아 있으면 `ok`. */
@@ -590,6 +706,26 @@ export interface components {
             /** @description 2000개를 넘어 뒤를 잘랐는가. */
             truncated: boolean;
         };
+        ModelOption: {
+            id: string;
+            name: string;
+            description?: null | string;
+        };
+        /** @description 방을 여는 요청. */
+        OpenRoomRequest: {
+            /** @description 도구 id. */
+            tool: string;
+            /** @description 작업 폴더. 있어야 한다. */
+            folder: string;
+            /** @description 이어서 열 세션 파일. 비우면 새 대화. */
+            resumePath?: null | string;
+            /** @description 모델 id. 비우면 도구 설정대로. */
+            model?: null | string;
+            /** @description 사람이 적은 옵션 인자. 그대로 붙는다. */
+            arguments?: null | string;
+            /** @description 방 이름. 비우면 폴더 이름. */
+            name?: null | string;
+        };
         /** @description 프로필 이름을 받는 요청. */
         ProfileRequest: {
             name: string;
@@ -652,6 +788,40 @@ export interface components {
             path: string;
             /** @description 이름. 비우면 뗀다. */
             name: null | string;
+        };
+        /** @description 방 하나. */
+        RoomInfo: {
+            /** @description 방 id. */
+            id: string;
+            /** @description 도구 id. */
+            tool: string;
+            /** @description 작업 폴더. */
+            folder: string;
+            /** @description 방 이름. */
+            name: string;
+            /** @description `idle` · `run` · `done` · `ask`(허락 기다림, Claude 만) · `exited`. */
+            state: string;
+            /** @description 답이 끝났는데 아직 안 봤다. */
+            unseen: boolean;
+            /**
+             * Format: date-time
+             * @description 연 때.
+             */
+            startedAt: string;
+            /**
+             * Format: date-time
+             * @description 마지막으로 답이 끝난 때.
+             */
+            doneAt: null | string;
+            /**
+             * Format: int32
+             * @description 프로세스가 끝났으면 종료 코드.
+             */
+            exitCode: null | number;
+        };
+        /** @description 이름을 바꾸는 요청. */
+        RoomNameRequest: {
+            name: string;
         };
         /** @description 검색에 걸린 세션 하나와 그 안의 메시지들. */
         SearchGroup: {
@@ -1439,6 +1609,180 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["DashboardResponse"];
                 };
+            };
+        };
+    };
+    ListRooms: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoomInfo"][];
+                };
+            };
+        };
+    };
+    OpenRoom: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpenRoomRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoomInfo"];
+                };
+            };
+        };
+    };
+    CloseRoom: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    MarkRoomSeen: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    RenameRoom: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoomNameRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ListModels: {
+        parameters: {
+            query: {
+                tool: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModelOption"][];
+                };
+            };
+        };
+    };
+    OpenExternalTerminal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpenRoomRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    OpenFolder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FolderRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
