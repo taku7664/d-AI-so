@@ -312,7 +312,7 @@ public sealed class SessionsEndpoints : ITabEndpoints
 
     // ── 도움 ──
 
-    private static List<SessionRow> Rows(IReadOnlyList<SessionInfo> sessions, SessionNames names)
+    internal static List<SessionRow> Rows(IReadOnlyList<SessionInfo> sessions, SessionNames names)
     {
         var labels = ProjectLabels(sessions);
 

@@ -148,6 +148,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListAccounts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/accounts/{tool}/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["Login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/accounts/{tool}/profiles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["SaveProfile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/accounts/{tool}/profiles/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ApplyProfile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/accounts/{tool}/profiles/remove": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["RemoveProfile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/usage": {
         parameters: {
             query?: never;
@@ -292,10 +372,99 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetDashboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description 도구 하나의 로그인 상태. 토큰 값은 어디에도 없다. */
+        Account: {
+            /** @description 도구 id. */
+            tool: string;
+            /** @description CLI 가 깔려 있는가. */
+            installed: boolean;
+            /** @description `loggedIn` · `expiringSoon`(7일 안) · `expired` · `missing`. */
+            state: string;
+            /** @description 계정 이름. */
+            accountLabel: null | string;
+            /** @description 이메일. */
+            email: null | string;
+            /** @description 요금제. */
+            plan: null | string;
+            /**
+             * Format: date-time
+             * @description 다시 로그인해야 하는 때. 모르면 null.
+             */
+            expiresAt: null | string;
+            /** @description 부가 정보. */
+            notes: components["schemas"]["AccountNote"][];
+            /** @description 로그인이 파일에 있어 저장·바꾸기를 할 수 있는가. Windows 자격 증명 관리자에 두는 도구는 못 한다. */
+            canSaveProfiles: boolean;
+            /** @description 저장한 계정. 최근 것이 앞. */
+            profiles: components["schemas"]["AccountProfile"][];
+        };
+        /** @description 로그인 카드 한 줄 부가 정보. 문장은 화면이 `Key` 로 찾는다. */
+        AccountNote: {
+            /** @description 문구 키(`AuthNote_…`). */
+            key: string;
+            /** @description 문구의 `{0}`. 토큰 값은 들어오지 않는다. */
+            argument: null | string;
+        };
+        /** @description 저장한 계정 하나. */
+        AccountProfile: {
+            name: string;
+            accountLabel: null | string;
+            email: null | string;
+            /** Format: date-time */
+            savedAt: string;
+            /** Format: date-time */
+            expiresAt: null | string;
+        };
+        /** @description "손볼 것" 한 줄. 화면이 `Kind` 를 보고 문장과 단추를 고른다. */
+        Attention: {
+            /** @description `account`(로그인 곧 만료·만료·없음) · `cleanup`(정리할 만한 세션) · `index`(인덱스 실패) · `plugin`(도구 플러그인 실패). */
+            kind: string;
+            /** @description `warn` · `bad`. */
+            level: string;
+            /** @description account 일 때 도구 id. */
+            tool?: null | string;
+            /** @description account 일 때 상태(`expiringSoon` · `expired` · `missing`). */
+            state?: null | string;
+            /**
+             * Format: date-time
+             * @description account 일 때 만료 시각.
+             */
+            at?: null | string;
+            /**
+             * Format: int32
+             * @description cleanup 일 때 세션 수.
+             */
+            count?: null | number;
+            /**
+             * Format: int64
+             * @description cleanup 일 때 크기 합.
+             */
+            bytes?: null | number;
+            /** @description plugin 일 때 플러그인 이름. */
+            name?: null | string;
+            /** @description index·plugin 일 때 까닭. */
+            detail?: null | string;
+        };
         /** @description 정리 기준. "골라 체크"와 요약의 "손볼 것"이 같은 값을 쓴다. */
         CleanupRule: {
             /**
@@ -308,6 +477,34 @@ export interface components {
              * @description 이 크기를 넘는 세션.
              */
             largerThanMegabytes: number;
+        };
+        /** @description 요약 화면. */
+        DashboardResponse: {
+            /** @description 지금 프로젝트 경로. null 이면 모든 프로젝트. */
+            project: null | string;
+            /** @description 최근 세션 5개. */
+            recent: components["schemas"]["SessionRow"][];
+            /** @description 숫자. */
+            stats: components["schemas"]["DashboardStats"];
+            /** @description 손볼 것. */
+            attention: components["schemas"]["Attention"][];
+            /** @description 모든 프로젝트일 때만 채운다. 마지막 작업이 최근인 것부터. */
+            projects: components["schemas"]["ProjectCard"][];
+        };
+        /** @description 숫자 셋. */
+        DashboardStats: {
+            /**
+             * Format: int32
+             * @description 세션 수.
+             */
+            sessions: number;
+            /**
+             * Format: int64
+             * @description 세션 파일 합.
+             */
+            sizeBytes: number;
+            /** @description 최근 7일 토큰. */
+            last7Days: components["schemas"]["UsageTokens"];
         };
         /** @description 세션을 지우는 요청. */
         DeleteRequest: {
@@ -392,6 +589,34 @@ export interface components {
             messages: components["schemas"]["MessageRow"][];
             /** @description 2000개를 넘어 뒤를 잘랐는가. */
             truncated: boolean;
+        };
+        /** @description 프로필 이름을 받는 요청. */
+        ProfileRequest: {
+            name: string;
+        };
+        /** @description "모든 프로젝트" 요약의 프로젝트 카드. */
+        ProjectCard: {
+            /** @description 프로젝트 경로. */
+            path: string;
+            /** @description 보여 줄 이름. 이름이 겹치면 상위 폴더까지 붙인다. */
+            label: string;
+            /** @description 폴더가 아직 있는가. */
+            exists: boolean;
+            /**
+             * Format: int32
+             * @description 세션 수.
+             */
+            sessions: number;
+            /**
+             * Format: int64
+             * @description 세션 파일 합.
+             */
+            sizeBytes: number;
+            /**
+             * Format: date-time
+             * @description 마지막 세션이 바뀐 때.
+             */
+            lastActivity: null | string;
         };
         /** @description 프로젝트 하나. 위 줄 프로젝트 선택기와 "모든 프로젝트" 요약이 쓴다. */
         ProjectItem: {
@@ -824,6 +1049,146 @@ export interface operations {
             };
         };
     };
+    ListAccounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Account"][];
+                };
+            };
+        };
+    };
+    Login: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tool: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    SaveProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tool: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProfileRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ApplyProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tool: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProfileRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    RemoveProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tool: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProfileRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     GetUsage: {
         parameters: {
             query?: {
@@ -1049,6 +1414,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CleanupRule"];
+                };
+            };
+        };
+    };
+    GetDashboard: {
+        parameters: {
+            query?: {
+                project?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardResponse"];
                 };
             };
         };

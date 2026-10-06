@@ -40,7 +40,8 @@ DAISO_OPEN http://127.0.0.1:51234/?token=...
 | `/` | 첫 화면. `?token=`은 여기서만 받는다. 웹 화면 폴더가 있으면 `index.html`, 없으면 링크 몇 개뿐인 안내 페이지 |
 | `/{탭 id}` 등 점 없는 주소 | 웹 화면 폴더가 있으면 `index.html`. 화면이 주소로 탭을 가르기 때문이다. `/api/` 아래 없는 경로는 404 |
 | `/assets/...` | 웹 화면 빌드 파일 |
-| `/api/projects`, `/api/tools`, `/api/index`, `/api/limits` | 공용 경로 ([docs/ARCHITECTURE.md](../../../docs/ARCHITECTURE.md) "탭에 속하지 않는 공용 경로") |
+| `/api/dashboard` | 요약 탭. `project`로 좁힌다. 손볼 것(로그인·정리·인덱스·플러그인)을 모아 준다 |
+| `/api/projects`, `/api/tools`, `/api/index`, `/api/limits`, `/api/accounts` | 공용 경로 ([docs/ARCHITECTURE.md](../../../docs/ARCHITECTURE.md) "탭에 속하지 않는 공용 경로") |
 | `/api/sessions` | 세션 탭. 목록·검색·대화·내보내기·이름·지우기·이어서 열기·정리 기준. 경로로 받는 세션은 인덱스에 있는 것만 다룬다 |
 | `/api/usage` | 사용량 탭. `grain`(day·week·month), `tool`, `project`로 좁힌다. 날짜는 UTC 기준(세션 기록이 UTC로 적힌다) |
 | `/api/health` | `{"status":"ok"}` |

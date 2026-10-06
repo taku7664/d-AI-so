@@ -16,6 +16,8 @@ import {
   useSearch,
   useSessions,
   useSetCleanup,
+  clearPendingOpen,
+  peekPendingOpen,
   type Session,
 } from './api';
 
@@ -29,7 +31,8 @@ export function SessionsView() {
   const [filter, setFilter] = useState(DEFAULT_FILTER);
   const [query, setQuery] = useState('');
   const [searched, setSearched] = useState('');
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(peekPendingOpen);
+  useEffect(() => clearPendingOpen(), []);
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [pop, setPop] = useState<Pop>(null);
   const [deleting, setDeleting] = useState(false);

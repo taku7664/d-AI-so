@@ -3,6 +3,8 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 
+const ALSO_DASHBOARD = new Set(['accounts', 'sessions', 'index', 'projects']);
+
 interface ServerNotification {
   tab: string;
   kind: string;
@@ -42,7 +44,10 @@ export function useServerEvents(): boolean {
       };
       socket.onmessage = (event) => {
         const notification = parse(event.data);
-        if (notification) void queryClient.invalidateQueries({ queryKey: [notification.tab] });
+        if (!notification) return;
+        void queryClient.invalidateQueries({ queryKey: [notification.tab] });
+        // 요약은 여러 곳의 값을 모아 보여 준다. 그 값이 바뀌면 요약도 다시 받는다
+        if (ALSO_DASHBOARD.has(notification.tab)) void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       };
       socket.onclose = () => {
         if (stopped) return;

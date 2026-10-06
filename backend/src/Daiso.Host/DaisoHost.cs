@@ -6,6 +6,7 @@ using Daiso.Host.Security;
 using Daiso.Host.Shared;
 using Daiso.Host.Services;
 using Daiso.Host.Tabs;
+using Daiso.Host.Tabs.Dashboard;
 using Daiso.Host.Tabs.Sessions;
 using Daiso.Host.Tabs.Usage;
 
@@ -63,6 +64,7 @@ public static class DaisoHost
         builder.Services.AddHostedService<IndexRefreshOnStart>();
         builder.Services.AddSingleton<ITabEndpoints, UsageEndpoints>();
         builder.Services.AddSingleton<ITabEndpoints, SessionsEndpoints>();
+        builder.Services.AddSingleton<ITabEndpoints, DashboardEndpoints>();
         builder.Services.AddSingleton<SessionNames>();
 
         configureServices?.Invoke(builder.Services);
@@ -84,6 +86,7 @@ public static class DaisoHost
         app.MapOpenApi();
         app.Map("/ws", HoldNotificationsAsync).ExcludeFromDescription();
         app.MapShared();
+        app.MapAccounts();
         app.MapTabs();
 
         if (web is null)

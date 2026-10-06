@@ -9,3 +9,8 @@ export function t(key: StringKey, values?: Record<string, string | number>): str
   if (!values) return text;
   return text.replace(/\{(\w+)\}/g, (whole, name: string) => (name in values ? String(values[name]) : whole));
 }
+
+/** 키가 있는가. 서버가 문구 키를 보낼 때(로그인 부가 정보 등) 모르는 키를 가린다 */
+export function has(key: string): key is StringKey {
+  return key in ko;
+}

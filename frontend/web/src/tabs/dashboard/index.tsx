@@ -1,10 +1,6 @@
-import { Placeholder } from '../../layout/Placeholder';
 import { t } from '../../strings';
 import type { TabModule } from '../types';
-
-function DashboardView() {
-  return <Placeholder id="dashboard" stage="Stage 5" />;
-}
+import { DashboardView } from './DashboardView';
 
 export const tab: TabModule = {
   id: 'dashboard',

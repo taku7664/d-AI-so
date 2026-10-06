@@ -56,7 +56,12 @@ public static class DomainServices
 
         // Infrastructure
         services.AddSingleton<IRuleFileService, RuleFileService>();
-        services.AddSingleton<IAuthProfileStore, AuthProfileStore>();
+        // 저장한 계정은 자료 폴더 아래에 둔다. 실제 실행에서는 옛 앱과 같은 %LOCALAPPDATA%\DAIso\profiles 이고,
+        // 시험은 임시 자료 폴더라 진짜 저장 계정을 읽지 않는다. DAISO_PROFILES_DIR 이 있으면 그것이 먼저다(옛 앱과 같다)
+        services.AddSingleton<IAuthProfileStore>(_ => new AuthProfileStore(
+            Environment.GetEnvironmentVariable(AuthProfileStore.RootVariable) is { Length: > 0 } overridden
+                ? overridden
+                : Path.Combine(options.DataDirectory, "profiles")));
         services.AddSingleton<IPromptLibrary, PromptLibraryStore>();
         services.AddSingleton<IInstructionMigrationService>(provider =>
             new InstructionMigrationService(provider.GetServices<IProvider>()));

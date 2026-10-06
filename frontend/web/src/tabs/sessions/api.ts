@@ -119,3 +119,20 @@ export function useSetCleanup() {
 export function exportUrl(path: string): string {
   return `/api/sessions/export?path=${encodeURIComponent(path)}`;
 }
+
+// 다른 탭(요약)에서 "이 세션 보기"를 누르면 여기 남기고 세션 탭으로 간다. 세션 탭이 뜰 때 한 번 꺼내 연다
+let pendingOpen: string | null = null;
+
+export function requestOpen(path: string): void {
+  pendingOpen = path;
+}
+
+/** 남긴 세션. 화면 상태의 첫 값으로 읽기만 한다(개발 모드는 첫 값 함수를 두 번 부른다) */
+export function peekPendingOpen(): string | null {
+  return pendingOpen;
+}
+
+/** 다 읽었으면 지운다. 다음에 세션 탭을 열 때 또 열리지 않게 */
+export function clearPendingOpen(): void {
+  pendingOpen = null;
+}
