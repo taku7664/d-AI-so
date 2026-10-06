@@ -30,6 +30,21 @@ public sealed class ParentWatcher : BackgroundService
             return;
         }
 
+        // 다 뜬 뒤에 끈다. 뜨는 도중에 끄면 시작이 취소 예외로 끝난다(2026-10-06 시험에서 가끔 재현)
+        var started = new TaskCompletionSource();
+        using (_lifetime.ApplicationStarted.Register(() => started.TrySetResult()))
+        using (stoppingToken.Register(() => started.TrySetCanceled(stoppingToken)))
+        {
+            try
+            {
+                await started.Task.ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+        }
+
         Process parent;
 
         try
