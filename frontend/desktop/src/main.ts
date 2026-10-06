@@ -104,11 +104,14 @@ async function main(): Promise<void> {
   createWindow(h);
 }
 
-if (!app.requestSingleInstanceLock()) {
-  // 이미 떠 있는 앱이 second-instance 를 받아 창을 앞으로 꺼낸다
+// --quit: 떠 있는 앱을 트레이의 "끝내기"처럼 끈다(tools/stop-app.ps1). 프로세스를 강제로 죽이면 트레이 아이콘이 지워지지 않고 남는다
+const quitRequest = process.argv.includes('--quit');
+
+if (!app.requestSingleInstanceLock() || quitRequest) {
+  // 이미 떠 있는 앱이 second-instance 를 받아 창을 앞으로 꺼내거나 끝낸다. 떠 있는 앱이 없는데 --quit 이면 그냥 끝난다
   app.quit();
 } else {
-  app.on('second-instance', showWindow);
+  app.on('second-instance', (_event, argv) => (argv.includes('--quit') ? quit() : showWindow()));
   app.on('before-quit', () => {
     quitting = true;
   });

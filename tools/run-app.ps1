@@ -13,12 +13,8 @@ $backend = Join-Path $root "backend"
 $frontend = Join-Path $root "frontend"
 $hostProject = Join-Path $backend "src\Daiso.Host\Daiso.Host.csproj"
 
-# 이 저장소의 Electron 으로 띄운 앱만 끈다. Host 는 부모가 끝나면 따라 끝난다
-$electronDir = Join-Path $frontend "node_modules\electron\dist"
-Get-Process -Name "electron" -ErrorAction SilentlyContinue |
-    Where-Object { $_.Path -and $_.Path.StartsWith($electronDir, [System.StringComparison]::OrdinalIgnoreCase) } |
-    Stop-Process -Force
-Start-Sleep -Milliseconds 800
+# 떠 있는 앱을 끈다. 강제로 죽이지 않는다(트레이 아이콘이 쌓인다)
+& (Join-Path $PSScriptRoot "stop-app.ps1")
 
 # dotnet 은 backend/global.json 을 찾아야 하므로 backend/ 에서 돌린다
 Push-Location $backend

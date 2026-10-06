@@ -35,6 +35,7 @@ Host는 `detached: true`로 띄운다. Windows에서 Node(libuv)는 자식을 "�
 |---|---|
 | Electron 메인을 강제로 끔 | Host가 끝나고 `server.json`이 지워진다 (2026-10-06) |
 | 트레이 "끝내기" | 같은 부모 감시를 탄다. 화면을 눌러 보지는 않았다 |
+| `electron … --quit`(`tools/stop-app.ps1`) | 떠 있는 앱이 트레이 "끝내기"와 같은 길로 끝난다. 0.9초 만에 Electron·Host가 다 끝나고 `server.json`이 지워진다 (2026-10-07). 강제로 끄면 트레이 아이콘이 지워지지 않고 쌓이므로 빌드 전에는 이것으로 끈다. `run-app.ps1`도 이것을 부른다 |
 
 Host가 띄우는 터미널(Stage 6)도 이제 Electron의 잡 밖에 있다. Host가 끝날 때 자기 자식을 정리해야 한다.
 
