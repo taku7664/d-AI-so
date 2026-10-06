@@ -63,6 +63,25 @@ public sealed class ProjectsTests : IAsyncLifetime
         (await GetAsync()).Current.Should().BeNull();
     }
 
+    [Fact]
+    public async Task A_broken_index_still_lists_recent_folders()
+    {
+        // SQLite 파일이 아닌 것을 인덱스 자리에 둔다
+        await using var host = await RunningHost.StartAsync(
+            options =>
+            {
+                File.WriteAllText(Path.Combine(options.DataDirectory, "index.db"), new string('x', 4096));
+                return options;
+            },
+            settings => settings.RecentFolders.Add(_project));
+        using var client = host.Client();
+        using var request = host.Authed(HttpMethod.Get, "/api/projects");
+        using var response = await client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK, because: "인덱스가 깨져도 최근 폴더로는 고를 수 있어야 한다");
+        (await response.Content.ReadFromJsonAsync<ProjectsResponse>())!.Projects.Should().ContainSingle(p => p.Path == _project);
+    }
+
     private async Task<ProjectsResponse> GetAsync()
     {
         using var client = _host.Client();

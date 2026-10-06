@@ -1,3 +1,4 @@
+using System.Data.Common;
 using Daiso.Core;
 using Daiso.Host.Services;
 
@@ -26,15 +27,20 @@ public sealed record SetCurrentProjectRequest(string? Path);
 /// </summary>
 public sealed class ProjectCatalog
 {
-    private readonly ISessionIndex _index;
+    private readonly IServiceProvider _services;
     private readonly ISettingsStore _settings;
 
-    public ProjectCatalog(ISessionIndex index, ISettingsStore settings)
+    /// <param name="services">
+    /// 인덱스는 여기서 그때그때 꺼낸다. 인덱스는 만들 때 DB 를 열기 때문에, 생성자로 받으면 DB 가 깨졌을 때
+    /// 이 클래스조차 못 만들어 최근 폴더로 물러설 수 없다.
+    /// </param>
+    /// <param name="settings">최근 폴더를 읽는다.</param>
+    public ProjectCatalog(IServiceProvider services, ISettingsStore settings)
     {
-        ArgumentNullException.ThrowIfNull(index);
+        ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(settings);
 
-        _index = index;
+        _services = services;
         _settings = settings;
     }
 
@@ -45,7 +51,8 @@ public sealed class ProjectCatalog
 
         try
         {
-            var sessions = await _index.ListAsync(SessionFilter.All, ct).ConfigureAwait(false);
+            var index = _services.GetRequiredService<ISessionIndex>();
+            var sessions = await index.ListAsync(SessionFilter.All, ct).ConfigureAwait(false);
 
             foreach (var group in sessions
                 .Where(session => session.ProjectPath is { Length: > 0 })
@@ -54,9 +61,9 @@ public sealed class ProjectCatalog
                 byPath[group.Key] = (group.Count(), group.Max(session => session.ModifiedAt));
             }
         }
-        catch (Exception ex) when (ex is IOException or InvalidOperationException)
+        catch (Exception ex) when (ex is IOException or InvalidOperationException or DbException)
         {
-            // 인덱스를 못 읽어도 최근 폴더로는 고를 수 있다
+            // 인덱스를 못 읽어도 최근 폴더로는 고를 수 있다. DB 가 깨진 경우도 여기로 온다(2026-10-06 사용자 index.db-wal 손상으로 재현)
         }
 
         foreach (var folder in _settings.Current.RecentFolders)
