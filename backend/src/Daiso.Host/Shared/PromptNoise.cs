@@ -18,6 +18,9 @@ public static class PromptNoise
         "# Context from my IDE setup:",
         "# Files mentioned by the user:",
         "# Review comments selected by the user:",
+
+        // Codex 가 대화 첫머리에 사람 자리로 넣는 지침 전문
+        "# AGENTS.md instructions",
     ];
 
     /// <summary>Codex 가 사람 글 바로 앞에 두는 표시. 그 앞은 IDE 맥락·첨부 파일·리뷰 댓글이다(2026-10-07 인덱스의 사람 줄 759개).</summary>

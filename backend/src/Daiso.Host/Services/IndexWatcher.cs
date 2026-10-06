@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using Daiso.Core;
+using Daiso.Host.Tabs.Terminal;
 
 namespace Daiso.Host.Services;
 
@@ -20,6 +21,7 @@ public sealed class IndexWatcher : IHostedService, IDisposable
 
     private readonly IEnumerable<IProvider> _providers;
     private readonly IndexService _index;
+    private readonly RoomService _rooms;
     private readonly ILogger<IndexWatcher> _logger;
     private readonly List<FileSystemWatcher> _watchers = [];
     private readonly ConcurrentDictionary<string, byte> _pending = new(StringComparer.OrdinalIgnoreCase);
@@ -28,10 +30,11 @@ public sealed class IndexWatcher : IHostedService, IDisposable
     private Timer? _timer;
     private DateTimeOffset? _firstChange;
 
-    public IndexWatcher(IEnumerable<IProvider> providers, IndexService index, ILogger<IndexWatcher> logger)
+    public IndexWatcher(IEnumerable<IProvider> providers, IndexService index, RoomService rooms, ILogger<IndexWatcher> logger)
     {
         _providers = providers;
         _index = index;
+        _rooms = rooms;
         _logger = logger;
     }
 
@@ -101,6 +104,9 @@ public sealed class IndexWatcher : IHostedService, IDisposable
         if (paths.Count > 0 && !_stopping.IsCancellationRequested)
         {
             _ = _index.RefreshFilesAsync(paths, _stopping.Token);
+
+            // 터미널 방의 말풍선도 같은 기록 파일을 읽는다
+            _rooms.SessionFilesChanged(paths);
         }
     }
 

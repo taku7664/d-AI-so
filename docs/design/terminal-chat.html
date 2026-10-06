@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>터미널 말풍선 시안</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@400;500;600;700&family=Hahmlet:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --ground: #eceee7; --surface: #f7f8f4; --raise: #ffffff; --line: #d8dcd1; --line-soft: #e6e9e1;
+  --ink: #1d211d; --muted: #5b635b; --faint: #8a9289; --hl: #f4c63d; --hl-soft: #fbecb8;
+  --term-bg: #171a16; --term-fg: #dfe3da; --term-dim: #81897f;
+  --codex: #2c8a73; --claude: #c96b3c; --ok: #2f8650; --warn: #b07a0a; --bad: #c0412c;
+  --shadow: 0 1px 0 rgba(29, 33, 29, .04), 0 12px 32px rgba(29, 33, 29, .10);
+  --f-ui: "Gothic A1", "Malgun Gothic", sans-serif; --f-title: "Hahmlet", "Batang", serif; --f-mono: "JetBrains Mono", Consolas, monospace;
+  --t-xs: .75rem; --t-sm: .84375rem; --t-md: .9375rem; --t-lg: 1.125rem; --t-xl: 1.5rem;
+}
+:root[data-theme="dark"] {
+  --ground: #121411; --surface: #191c18; --raise: #20241f; --line: #30352e; --line-soft: #272b25;
+  --ink: #eceee8; --muted: #a2a99f; --faint: #737a70; --hl: #e9bd38; --hl-soft: #3a3320;
+  --term-bg: #0f110e; --codex: #4bb398; --claude: #e08a5c; --ok: #5cbb7e; --warn: #dcaa3c; --bad: #e66a52;
+  --shadow: 0 1px 0 rgba(0, 0, 0, .3), 0 12px 32px rgba(0, 0, 0, .45); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ground); color: var(--ink); font: 400 var(--t-sm)/1.5 var(--f-ui); }
+button { font: inherit; color: inherit; cursor: pointer; }
+.i { width: 1em; height: 1em; fill: currentColor; flex: none; vertical-align: -.125em; }
+.ell { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.faint { color: var(--faint); }
+
+/* 시안 고르기 (앱 바깥) */
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 16px 20px 12px; }
+.bar h1 { font: 700 var(--t-lg) var(--f-title); margin: 0; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; background: var(--raise); }
+.seg button { border: 0; background: transparent; border-radius: 999px; padding: 5px 12px; font-weight: 600; color: var(--muted); display: inline-flex; gap: 6px; align-items: center; }
+.seg button[aria-pressed="true"] { background: var(--hl); color: var(--ink); }
+.desc { width: 100%; color: var(--muted); margin: 0; }
+.desc b { color: var(--ink); }
+
+/* 앱 틀: 실제 창 크기 */
+.frame { margin: 0 20px 24px; width: 1280px; height: 820px; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; display: grid; grid-template-columns: 200px minmax(0, 1fr); grid-template-rows: 52px minmax(0, 1fr); background: var(--surface); box-shadow: var(--shadow); }
+.frame.narrow { width: 960px; }
+.nav { grid-row: 1 / 3; border-right: 1px solid var(--line-soft); padding: 14px 10px; display: flex; flex-direction: column; gap: 2px; }
+.brand { display: flex; align-items: center; gap: 8px; font-weight: 700; padding: 2px 8px 14px; }
+.brand span { width: 22px; height: 22px; border-radius: 6px; background: var(--ink); color: var(--surface); display: grid; place-items: center; font-size: 12px; }
+.nav a { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; color: var(--muted); font-weight: 600; text-decoration: none; }
+.nav a.on { background: var(--hl); color: var(--ink); }
+.top { display: flex; align-items: center; gap: 10px; padding: 0 16px; border-bottom: 1px solid var(--line-soft); }
+.pick { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--raise); border-radius: 10px; padding: 5px 10px; font-weight: 600; }
+.top .r { margin-left: auto; display: flex; align-items: center; gap: 14px; color: var(--muted); }
+.main { min-height: 0; display: grid; grid-template-rows: auto auto minmax(0, 1fr); }
+
+.tool { width: 22px; height: 22px; border-radius: 6px; display: inline-grid; place-items: center; color: #fff; font: 700 11px var(--f-ui); flex: none; }
+.tool.claude { background: var(--claude); } .tool.codex { background: var(--codex); }
+.tool.sm { width: 18px; height: 18px; border-radius: 5px; font-size: 10px; }
+.btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--raise); border-radius: 999px; padding: 5px 12px; font-weight: 600; white-space: nowrap; }
+.btn.primary { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.btn.small { padding: 3px 10px; font-size: var(--t-xs); }
+.icon-btn { border: 0; background: transparent; width: 30px; height: 30px; border-radius: 8px; display: inline-grid; place-items: center; color: var(--muted); }
+.icon-btn:hover { background: var(--ground); color: var(--ink); }
+.pill { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 999px; font-size: var(--t-xs); font-weight: 700; white-space: nowrap; background: var(--ground); color: var(--muted); }
+.pill.warn { background: color-mix(in srgb, var(--warn) 16%, transparent); color: var(--warn); }
+
+/* 방 띠와 도구 줄 (지금 앱과 같다) */
+.rooms { display: flex; align-items: center; gap: 6px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+.room { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--raise); border-radius: 12px; padding: 5px 8px; font-weight: 600; white-space: nowrap; }
+.room[aria-pressed="true"] { background: var(--hl); border-color: var(--hl); }
+.room .hg { color: var(--warn); display: inline-flex; }
+.room[aria-pressed="true"] .hg { color: inherit; }
+.room-plus { width: 36px; height: 36px; border-radius: 12px; border: 1.5px dashed var(--line); background: transparent; display: grid; place-items: center; color: var(--muted); }
+.rtools { display: flex; align-items: center; gap: 2px; padding: 6px 12px; border-bottom: 1px solid var(--line); background: var(--surface); min-width: 0; }
+.rtools .sep { width: 1px; height: 18px; background: var(--line); margin: 0 6px; }
+.rtools .title { margin-left: auto; color: var(--faint); font-size: var(--t-xs); padding-left: 10px; }
+
+/* 말풍선 */
+.chat { display: grid; grid-template-rows: minmax(0, 1fr) auto; min-height: 0; background: var(--surface); }
+.msgs { overflow: auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 12px; }
+.msg { max-width: min(760px, 92%); display: flex; flex-direction: column; gap: 6px; }
+.msg.me { align-self: flex-end; background: var(--hl-soft); border-radius: 16px 16px 4px 16px; padding: 10px 14px; white-space: pre-wrap; }
+.msg.ai { align-self: flex-start; }
+.msg.ai .body { background: var(--raise); border: 1px solid var(--line-soft); border-radius: 4px 16px 16px 16px; padding: 10px 14px; line-height: 1.65; }
+.msg.ai .body p { margin: 0 0 8px; } .msg.ai .body p:last-child { margin: 0; }
+.msg.ai .body ul { margin: 4px 0 8px; padding-left: 20px; }
+.msg.ai .body code { font: 12px var(--f-mono); background: var(--ground); padding: 1px 5px; border-radius: 5px; }
+.msg .who { font-size: 11px; font-weight: 700; color: var(--faint); display: flex; align-items: center; gap: 6px; }
+.tools { align-self: flex-start; max-width: min(760px, 92%); display: flex; flex-direction: column; gap: 4px; }
+.tools > button { align-self: flex-start; border: 1px solid var(--line-soft); background: var(--raise); border-radius: 10px; padding: 4px 10px; font: 400 12px var(--f-mono); color: var(--muted); display: inline-flex; gap: 8px; align-items: center; }
+.tools .list { display: flex; flex-direction: column; gap: 3px; padding-left: 12px; border-left: 2px solid var(--line-soft); margin-left: 8px; }
+.tools .one { display: grid; grid-template-columns: 16px auto minmax(0, 1fr); gap: 8px; align-items: center; font: 400 12px var(--f-mono); color: var(--muted); }
+.tools .one b { font-weight: 600; color: var(--ink); }
+.ok { color: var(--ok); } .err { color: var(--bad); }
+.working { align-self: flex-start; display: inline-flex; gap: 8px; align-items: center; color: var(--muted); font-size: var(--t-xs); }
+.dots span { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--faint); margin-right: 3px; animation: blink 1.2s infinite; }
+.dots span:nth-child(2) { animation-delay: .2s; } .dots span:nth-child(3) { animation-delay: .4s; }
+@keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+.ask { align-self: stretch; border: 1.5px solid var(--warn); background: color-mix(in srgb, var(--warn) 8%, var(--raise)); border-radius: 14px; padding: 12px 14px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.ask > .i { color: var(--warn); font-size: 18px; }
+.ask div { flex: 1; min-width: 200px; }
+.ask code { font: 12px var(--f-mono); display: block; margin-top: 4px; white-space: pre-wrap; word-break: break-all; }
+.composer { border-top: 1px solid var(--line); padding: 10px 16px 14px; background: var(--surface); position: relative; }
+.compose-box { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 6px; align-items: end; border: 1.5px solid var(--line); background: var(--raise); border-radius: 16px; padding: 6px; }
+.compose-box.focus { border-color: var(--ink); }
+.compose-box .text { padding: 6px 4px; min-height: 34px; line-height: 1.5; color: var(--ink); font-family: var(--f-mono); }
+.compose-box .text.ph { color: var(--faint); font-family: var(--f-ui); }
+.send { width: 34px; height: 34px; border-radius: 12px; border: 0; background: var(--ink); color: var(--surface); display: grid; place-items: center; }
+.compose-hint { display: flex; gap: 14px; margin-top: 6px; font-size: 11px; color: var(--faint); }
+.cmdpop { position: absolute; left: 16px; right: 16px; bottom: calc(100% - 4px); max-width: 620px; background: var(--raise); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 6px; max-height: 360px; overflow: auto; z-index: 5; }
+.cmdgroup { font-size: 11px; font-weight: 700; color: var(--faint); padding: 8px 10px 4px; display: flex; align-items: center; gap: 6px; }
+.cmd { width: 100%; border: 0; background: transparent; text-align: left; border-radius: 10px; padding: 6px 10px; display: grid; grid-template-columns: auto auto minmax(0, 1fr); gap: 10px; align-items: baseline; }
+.cmd.on, .cmd:hover { background: var(--hl-soft); }
+.cmd b { font: 600 13px var(--f-mono); white-space: nowrap; }
+.cmd em { font: 400 11px var(--f-mono); color: var(--faint); font-style: normal; white-space: nowrap; }
+.cmd span { color: var(--muted); font-size: var(--t-xs); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cmd.tui b, .cmd.tui span { color: var(--faint); }
+.cmd.tui span::after { content: " · 터미널 보기로"; }
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true"><!-- Bootstrap Icons 1.11.3, MIT License, https://icons.getbootstrap.com -->
+<symbol id="bi-arrow-clockwise" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"/>
+  <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"/></symbol>
+<symbol id="bi-arrow-down" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1"/></symbol>
+<symbol id="bi-arrow-left-right" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 11.5a.5.5 0 0 0 .5.5h11.793l-3.147 3.146a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 11H1.5a.5.5 0 0 0-.5.5m14-7a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 1 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 4H14.5a.5.5 0 0 1 .5.5"/></symbol>
+<symbol id="bi-arrow-left" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"/></symbol>
+<symbol id="bi-arrow-repeat" viewBox="0 0 16 16"><path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41m-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9"/>
+  <path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5 5 0 0 0 8 3M3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9z"/></symbol>
+<symbol id="bi-arrow-right" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/></symbol>
+<symbol id="bi-arrow-up" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5"/></symbol>
+<symbol id="bi-bar-chart-line" viewBox="0 0 16 16"><path d="M11 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12h.5a.5.5 0 0 1 0 1H.5a.5.5 0 0 1 0-1H1v-3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3h1V7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7h1zm1 12h2V2h-2zm-3 0V7H7v7zm-5 0v-3H2v3z"/></symbol>
+<symbol id="bi-bookmark-star" viewBox="0 0 16 16"><path d="M7.84 4.1a.178.178 0 0 1 .32 0l.634 1.285a.18.18 0 0 0 .134.098l1.42.206c.145.021.204.2.098.303L9.42 6.993a.18.18 0 0 0-.051.158l.242 1.414a.178.178 0 0 1-.258.187l-1.27-.668a.18.18 0 0 0-.165 0l-1.27.668a.178.178 0 0 1-.257-.187l.242-1.414a.18.18 0 0 0-.05-.158l-1.03-1.001a.178.178 0 0 1 .098-.303l1.42-.206a.18.18 0 0 0 .134-.098z"/>
+  <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5zm2-1a1 1 0 0 0-1 1v12.566l4.723-2.482a.5.5 0 0 1 .554 0L13 14.566V2a1 1 0 0 0-1-1z"/></symbol>
+<symbol id="bi-box-arrow-in-right" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M6 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 0-1 0v2A1.5 1.5 0 0 0 6.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-8A1.5 1.5 0 0 0 5 3.5v2a.5.5 0 0 0 1 0z"/>
+  <path fill-rule="evenodd" d="M11.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H1.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z"/></symbol>
+<symbol id="bi-box-arrow-up-right" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5"/>
+  <path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"/></symbol>
+<symbol id="bi-chat-dots" viewBox="0 0 16 16"><path d="M5 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0m4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2"/>
+  <path d="m2.165 15.803.02-.004c1.83-.363 2.948-.842 3.468-1.105A9 9 0 0 0 8 15c4.418 0 8-3.134 8-7s-3.582-7-8-7-8 3.134-8 7c0 1.76.743 3.37 1.97 4.6a10.4 10.4 0 0 1-.524 2.318l-.003.011a11 11 0 0 1-.244.637c-.079.186.074.394.273.362a22 22 0 0 0 .693-.125m.8-3.108a1 1 0 0 0-.287-.801C1.618 10.83 1 9.468 1 8c0-3.192 3.004-6 7-6s7 2.808 7 6-3.004 6-7 6a8 8 0 0 1-2.088-.272 1 1 0 0 0-.711.074c-.387.196-1.24.57-2.634.893a11 11 0 0 0 .398-2"/></symbol>
+<symbol id="bi-chat-left-text" viewBox="0 0 16 16"><path d="M14 1a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4.414A2 2 0 0 0 3 11.586l-2 2V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12.793a.5.5 0 0 0 .854.353l2.853-2.853A1 1 0 0 1 4.414 12H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/>
+  <path d="M3 3.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5M3 6a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 6m0 2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5"/></symbol>
+<symbol id="bi-chat-square-quote" viewBox="0 0 16 16"><path d="M14 1a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-2.5a2 2 0 0 0-1.6.8L8 14.333 6.1 11.8a2 2 0 0 0-1.6-.8H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2.5a1 1 0 0 1 .8.4l1.9 2.533a1 1 0 0 0 1.6 0l1.9-2.533a1 1 0 0 1 .8-.4H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/>
+  <path d="M7.066 4.76A1.665 1.665 0 0 0 4 5.668a1.667 1.667 0 0 0 2.561 1.406c-.131.389-.375.804-.777 1.22a.417.417 0 1 0 .6.58c1.486-1.54 1.293-3.214.682-4.112zm4 0A1.665 1.665 0 0 0 8 5.668a1.667 1.667 0 0 0 2.561 1.406c-.131.389-.375.804-.777 1.22a.417.417 0 1 0 .6.58c1.486-1.54 1.293-3.214.682-4.112z"/></symbol>
+<symbol id="bi-check-circle-fill" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></symbol>
+<symbol id="bi-check2-square" viewBox="0 0 16 16"><path d="M3 14.5A1.5 1.5 0 0 1 1.5 13V3A1.5 1.5 0 0 1 3 1.5h8a.5.5 0 0 1 0 1H3a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5h10a.5.5 0 0 0 .5-.5V8a.5.5 0 0 1 1 0v5a1.5 1.5 0 0 1-1.5 1.5z"/>
+  <path d="m8.354 10.354 7-7a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0"/></symbol>
+<symbol id="bi-check2" viewBox="0 0 16 16"><path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/></symbol>
+<symbol id="bi-chevron-down" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708"/></symbol>
+<symbol id="bi-chevron-left" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0"/></symbol>
+<symbol id="bi-chevron-right" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/></symbol>
+<symbol id="bi-clipboard" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z"/>
+  <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z"/></symbol>
+<symbol id="bi-clock" viewBox="0 0 16 16"><path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/>
+  <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/></symbol>
+<symbol id="bi-cpu" viewBox="0 0 16 16"><path d="M5 0a.5.5 0 0 1 .5.5V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2A2.5 2.5 0 0 1 14 4.5h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14a2.5 2.5 0 0 1-2.5 2.5v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14A2.5 2.5 0 0 1 2 11.5H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2A2.5 2.5 0 0 1 4.5 2V.5A.5.5 0 0 1 5 0m-.5 3A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13h7a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 11.5 3zM5 6.5A1.5 1.5 0 0 1 6.5 5h3A1.5 1.5 0 0 1 11 6.5v3A1.5 1.5 0 0 1 9.5 11h-3A1.5 1.5 0 0 1 5 9.5zM6.5 6a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5z"/></symbol>
+<symbol id="bi-download" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+  <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/></symbol>
+<symbol id="bi-eraser" viewBox="0 0 16 16"><path d="M8.086 2.207a2 2 0 0 1 2.828 0l3.879 3.879a2 2 0 0 1 0 2.828l-5.5 5.5A2 2 0 0 1 7.879 15H5.12a2 2 0 0 1-1.414-.586l-2.5-2.5a2 2 0 0 1 0-2.828zm2.121.707a1 1 0 0 0-1.414 0L4.16 7.547l5.293 5.293 4.633-4.633a1 1 0 0 0 0-1.414zM8.746 13.547 3.453 8.254 1.914 9.793a1 1 0 0 0 0 1.414l2.5 2.5a1 1 0 0 0 .707.293H7.88a1 1 0 0 0 .707-.293z"/></symbol>
+<symbol id="bi-exclamation-circle-fill" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/></symbol>
+<symbol id="bi-exclamation-triangle-fill" viewBox="0 0 16 16"><path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/></symbol>
+<symbol id="bi-eye" viewBox="0 0 16 16"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8M1.173 8a13 13 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5s3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5s-3.879-1.168-5.168-2.457A13 13 0 0 1 1.172 8z"/>
+  <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0"/></symbol>
+<symbol id="bi-file-earmark-text" viewBox="0 0 16 16"><path d="M5.5 7a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1zM5 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5"/>
+  <path d="M9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.5zm0 1v2A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z"/></symbol>
+<symbol id="bi-folder-plus" viewBox="0 0 16 16"><path d="m.5 3 .04.87a2 2 0 0 0-.342 1.311l.637 7A2 2 0 0 0 2.826 14H9v-1H2.826a1 1 0 0 1-.995-.91l-.637-7A1 1 0 0 1 2.19 4h11.62a1 1 0 0 1 .996 1.09L14.54 8h1.005l.256-2.819A2 2 0 0 0 13.81 3H9.828a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 6.172 1H2.5a2 2 0 0 0-2 2m5.672-1a1 1 0 0 1 .707.293L7.586 3H2.19q-.362.002-.683.12L1.5 2.98a1 1 0 0 1 1-.98z"/>
+  <path d="M13.5 9a.5.5 0 0 1 .5.5V11h1.5a.5.5 0 1 1 0 1H14v1.5a.5.5 0 1 1-1 0V12h-1.5a.5.5 0 0 1 0-1H13V9.5a.5.5 0 0 1 .5-.5"/></symbol>
+<symbol id="bi-folder" viewBox="0 0 16 16"><path d="M.54 3.87.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.826a2 2 0 0 1-1.991-1.819l-.637-7a2 2 0 0 1 .342-1.31zM2.19 4a1 1 0 0 0-.996 1.09l.637 7a1 1 0 0 0 .995.91h10.348a1 1 0 0 0 .995-.91l.637-7A1 1 0 0 0 13.81 4zm4.69-1.707A1 1 0 0 0 6.172 2H2.5a1 1 0 0 0-1 .981l.006.139q.323-.119.684-.12h5.396z"/></symbol>
+<symbol id="bi-folder2-open" viewBox="0 0 16 16"><path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v.64c.57.265.94.876.856 1.546l-.64 5.124A2.5 2.5 0 0 1 12.733 15H3.266a2.5 2.5 0 0 1-2.481-2.19l-.64-5.124A1.5 1.5 0 0 1 1 6.14zM2 6h12v-.5a.5.5 0 0 0-.5-.5H9c-.964 0-1.71-.629-2.174-1.154C6.374 3.334 5.82 3 5.264 3H2.5a.5.5 0 0 0-.5.5zm-.367 1a.5.5 0 0 0-.496.562l.64 5.124A1.5 1.5 0 0 0 3.266 14h9.468a1.5 1.5 0 0 0 1.489-1.314l.64-5.124A.5.5 0 0 0 14.367 7z"/></symbol>
+<symbol id="bi-funnel" viewBox="0 0 16 16"><path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5zm1 .5v1.308l4.372 4.858A.5.5 0 0 1 7 8.5v5.306l2-.666V8.5a.5.5 0 0 1 .128-.334L13.5 3.308V2z"/></symbol>
+<symbol id="bi-gear" viewBox="0 0 16 16"><path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/>
+  <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"/></symbol>
+<symbol id="bi-hdd" viewBox="0 0 16 16"><path d="M4.5 11a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1M3 10.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0"/>
+  <path d="M16 11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V9.51c0-.418.105-.83.305-1.197l2.472-4.531A1.5 1.5 0 0 1 4.094 3h7.812a1.5 1.5 0 0 1 1.317.782l2.472 4.53c.2.368.305.78.305 1.198zM3.655 4.26 1.592 8.043Q1.79 8 2 8h12q.21 0 .408.042L12.345 4.26a.5.5 0 0 0-.439-.26H4.094a.5.5 0 0 0-.44.26zM1 10v1a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1"/></symbol>
+<symbol id="bi-hourglass-split" viewBox="0 0 16 16"><path d="M2.5 15a.5.5 0 1 1 0-1h1v-1a4.5 4.5 0 0 1 2.557-4.06c.29-.139.443-.377.443-.59v-.7c0-.213-.154-.451-.443-.59A4.5 4.5 0 0 1 3.5 3V2h-1a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-1v1a4.5 4.5 0 0 1-2.557 4.06c-.29.139-.443.377-.443.59v.7c0 .213.154.451.443.59A4.5 4.5 0 0 1 12.5 13v1h1a.5.5 0 0 1 0 1zm2-13v1c0 .537.12 1.045.337 1.5h6.326c.216-.455.337-.963.337-1.5V2zm3 6.35c0 .701-.478 1.236-1.011 1.492A3.5 3.5 0 0 0 4.5 13s.866-1.299 3-1.48zm1 0v3.17c2.134.181 3 1.48 3 1.48a3.5 3.5 0 0 0-1.989-3.158C8.978 9.586 8.5 9.052 8.5 8.351z"/></symbol>
+<symbol id="bi-house-door" viewBox="0 0 16 16"><path d="M8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4.5a.5.5 0 0 0 .5-.5v-4h2v4a.5.5 0 0 0 .5.5H14a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293zM2.5 14V7.707l5.5-5.5 5.5 5.5V14H10v-4a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5v4z"/></symbol>
+<symbol id="bi-info-circle" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+  <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/></symbol>
+<symbol id="bi-journal-check" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M10.854 6.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 8.793l2.646-2.647a.5.5 0 0 1 .708 0"/>
+  <path d="M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-1h1v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v1H1V2a2 2 0 0 1 2-2"/>
+  <path d="M1 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1z"/></symbol>
+<symbol id="bi-journal-plus" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 5.5a.5.5 0 0 1 .5.5v1.5H10a.5.5 0 0 1 0 1H8.5V10a.5.5 0 0 1-1 0V8.5H6a.5.5 0 0 1 0-1h1.5V6a.5.5 0 0 1 .5-.5"/>
+  <path d="M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-1h1v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v1H1V2a2 2 0 0 1 2-2"/>
+  <path d="M1 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1z"/></symbol>
+<symbol id="bi-journal-text" viewBox="0 0 16 16"><path d="M5 10.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5m0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5"/>
+  <path d="M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-1h1v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v1H1V2a2 2 0 0 1 2-2"/>
+  <path d="M1 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1z"/></symbol>
+<symbol id="bi-keyboard" viewBox="0 0 16 16"><path d="M14 5a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM2 4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
+  <path d="M13 10.25a.25.25 0 0 1 .25-.25h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5a.25.25 0 0 1-.25-.25zm0-2a.25.25 0 0 1 .25-.25h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5a.25.25 0 0 1-.25-.25zm-5 0A.25.25 0 0 1 8.25 8h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 8 8.75zm2 0a.25.25 0 0 1 .25-.25h1.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-1.5a.25.25 0 0 1-.25-.25zm1 2a.25.25 0 0 1 .25-.25h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5a.25.25 0 0 1-.25-.25zm-5-2A.25.25 0 0 1 6.25 8h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 6 8.75zm-2 0A.25.25 0 0 1 4.25 8h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 4 8.75zm-2 0A.25.25 0 0 1 2.25 8h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 2 8.75zm11-2a.25.25 0 0 1 .25-.25h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5a.25.25 0 0 1-.25-.25zm-2 0a.25.25 0 0 1 .25-.25h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5a.25.25 0 0 1-.25-.25zm-2 0A.25.25 0 0 1 9.25 6h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 9 6.75zm-2 0A.25.25 0 0 1 7.25 6h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 7 6.75zm-2 0A.25.25 0 0 1 5.25 6h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 5 6.75zm-3 0A.25.25 0 0 1 2.25 6h1.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-1.5A.25.25 0 0 1 2 6.75zm0 4a.25.25 0 0 1 .25-.25h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5a.25.25 0 0 1-.25-.25zm2 0a.25.25 0 0 1 .25-.25h5.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-5.5a.25.25 0 0 1-.25-.25z"/></symbol>
+<symbol id="bi-layout-sidebar" viewBox="0 0 16 16"><path d="M0 3a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm5-1v12h9a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1zM4 2H2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h2z"/></symbol>
+<symbol id="bi-lightning-charge" viewBox="0 0 16 16"><path d="M11.251.068a.5.5 0 0 1 .227.58L9.677 6.5H13a.5.5 0 0 1 .364.843l-8 8.5a.5.5 0 0 1-.842-.49L6.323 9.5H3a.5.5 0 0 1-.364-.843l8-8.5a.5.5 0 0 1 .615-.09zM4.157 8.5H7a.5.5 0 0 1 .478.647L6.11 13.59l5.732-6.09H9a.5.5 0 0 1-.478-.647L9.89 2.41z"/></symbol>
+<symbol id="bi-link-45deg" viewBox="0 0 16 16"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/>
+  <path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></symbol>
+<symbol id="bi-palette" viewBox="0 0 16 16"><path d="M8 5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3m4 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3M5.5 7a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m.5 6a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3"/>
+  <path d="M16 8c0 3.15-1.866 2.585-3.567 2.07C11.42 9.763 10.465 9.473 10 10c-.603.683-.475 1.819-.351 2.92C9.826 14.495 9.996 16 8 16a8 8 0 1 1 8-8m-8 7c.611 0 .654-.171.655-.176.078-.146.124-.464.07-1.119-.014-.168-.037-.37-.061-.591-.052-.464-.112-1.005-.118-1.462-.01-.707.083-1.61.704-2.314.369-.417.845-.578 1.272-.618.404-.038.812.026 1.16.104.343.077.702.186 1.025.284l.028.008c.346.105.658.199.953.266.653.148.904.083.991.024C14.717 9.38 15 9.161 15 8a7 7 0 1 0-7 7"/></symbol>
+<symbol id="bi-paperclip" viewBox="0 0 16 16"><path d="M4.5 3a2.5 2.5 0 0 1 5 0v9a1.5 1.5 0 0 1-3 0V5a.5.5 0 0 1 1 0v7a.5.5 0 0 0 1 0V3a1.5 1.5 0 1 0-3 0v9a2.5 2.5 0 0 0 5 0V5a.5.5 0 0 1 1 0v7a3.5 3.5 0 1 1-7 0z"/></symbol>
+<symbol id="bi-pencil-square" viewBox="0 0 16 16"><path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+  <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/></symbol>
+<symbol id="bi-people" viewBox="0 0 16 16"><path d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1zm-7.978-1L7 12.996c.001-.264.167-1.03.76-1.72C8.312 10.629 9.282 10 11 10c1.717 0 2.687.63 3.24 1.276.593.69.758 1.457.76 1.72l-.008.002-.014.002zM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4m3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0M6.936 9.28a6 6 0 0 0-1.23-.247A7 7 0 0 0 5 9c-4 0-5 3-5 4q0 1 1 1h4.216A2.24 2.24 0 0 1 5 13c0-1.01.377-2.042 1.09-2.904.243-.294.526-.569.846-.816M4.92 10A5.5 5.5 0 0 0 4 13H1c0-.26.164-1.03.76-1.724.545-.636 1.492-1.256 3.16-1.275ZM1.5 5.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0m3-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4"/></symbol>
+<symbol id="bi-person" viewBox="0 0 16 16"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"/></symbol>
+<symbol id="bi-play-fill" viewBox="0 0 16 16"><path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393"/></symbol>
+<symbol id="bi-plug" viewBox="0 0 16 16"><path d="M6 0a.5.5 0 0 1 .5.5V3h3V.5a.5.5 0 0 1 1 0V3h1a.5.5 0 0 1 .5.5v3A3.5 3.5 0 0 1 8.5 10c-.002.434-.01.845-.04 1.22-.041.514-.126 1.003-.317 1.424a2.08 2.08 0 0 1-.97 1.028C6.725 13.9 6.169 14 5.5 14c-.998 0-1.61.33-1.974.718A1.92 1.92 0 0 0 3 16H2c0-.616.232-1.367.797-1.968C3.374 13.42 4.261 13 5.5 13c.581 0 .962-.088 1.218-.219.241-.123.4-.3.514-.55.121-.266.193-.621.23-1.09.027-.34.035-.718.037-1.141A3.5 3.5 0 0 1 4 6.5v-3a.5.5 0 0 1 .5-.5h1V.5A.5.5 0 0 1 6 0M5 4v2.5A2.5 2.5 0 0 0 7.5 9h1A2.5 2.5 0 0 0 11 6.5V4z"/></symbol>
+<symbol id="bi-plus-lg" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/></symbol>
+<symbol id="bi-save" viewBox="0 0 16 16"><path d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H9.5a1 1 0 0 0-1 1v7.293l2.646-2.647a.5.5 0 0 1 .708.708l-3.5 3.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L7.5 9.293V2a2 2 0 0 1 2-2H14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h2.5a.5.5 0 0 1 0 1z"/></symbol>
+<symbol id="bi-search" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/></symbol>
+<symbol id="bi-send-fill" viewBox="0 0 16 16"><path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 3.178 4.995.002.002.26.41a.5.5 0 0 0 .886-.083zm-1.833 1.89L6.637 10.07l-.215-.338a.5.5 0 0 0-.154-.154l-.338-.215 7.494-7.494 1.178-.471z"/></symbol>
+<symbol id="bi-shield-check" viewBox="0 0 16 16"><path d="M5.338 1.59a61 61 0 0 0-2.837.856.48.48 0 0 0-.328.39c-.554 4.157.726 7.19 2.253 9.188a10.7 10.7 0 0 0 2.287 2.233c.346.244.652.42.893.533q.18.085.293.118a1 1 0 0 0 .101.025 1 1 0 0 0 .1-.025q.114-.034.294-.118c.24-.113.547-.29.893-.533a10.7 10.7 0 0 0 2.287-2.233c1.527-1.997 2.807-5.031 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C9.552 1.29 8.531 1.067 8 1.067c-.53 0-1.552.223-2.662.524zM5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.8 11.8 0 0 1-2.517 2.453 7 7 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7 7 0 0 1-1.048-.625 11.8 11.8 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 63 63 0 0 1 5.072.56"/>
+  <path d="M10.854 5.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 7.793l2.646-2.647a.5.5 0 0 1 .708 0"/></symbol>
+<symbol id="bi-sliders" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M11.5 2a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M9.05 3a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0V3zM4.5 7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M2.05 8a2.5 2.5 0 0 1 4.9 0H16v1H6.95a2.5 2.5 0 0 1-4.9 0H0V8zm9.45 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3m-2.45 1a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0v-1z"/></symbol>
+<symbol id="bi-square" viewBox="0 0 16 16"><path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/></symbol>
+<symbol id="bi-stars" viewBox="0 0 16 16"><path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.593 5.69l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.69A1.73 1.73 0 0 0 2.31 4.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.407 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.16 1.16 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.16 1.16 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z"/></symbol>
+<symbol id="bi-terminal" viewBox="0 0 16 16"><path d="M6 9a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3A.5.5 0 0 1 6 9M3.854 4.146a.5.5 0 1 0-.708.708L4.793 6.5 3.146 8.146a.5.5 0 1 0 .708.708l2-2a.5.5 0 0 0 0-.708z"/>
+  <path d="M2 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zm12 1a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/></symbol>
+<symbol id="bi-three-dots" viewBox="0 0 16 16"><path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3"/></symbol>
+<symbol id="bi-trash3" viewBox="0 0 16 16"><path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5"/></symbol>
+<symbol id="bi-window-plus" viewBox="0 0 16 16"><path d="M2.5 5a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1M4 5a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1m2-.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0"/>
+  <path d="M0 4a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v4a.5.5 0 0 1-1 0V7H1v5a1 1 0 0 0 1 1h5.5a.5.5 0 0 1 0 1H2a2 2 0 0 1-2-2zm1 2h13V4a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1z"/>
+  <path d="M16 12.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0m-3.5-2a.5.5 0 0 0-.5.5v1h-1a.5.5 0 0 0 0 1h1v1a.5.5 0 0 0 1 0v-1h1a.5.5 0 0 0 0-1h-1v-1a.5.5 0 0 0-.5-.5"/></symbol>
+<symbol id="bi-x-circle-fill" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293z"/></symbol>
+<symbol id="bi-x-lg" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/></symbol>
+<symbol id="bi-bell" viewBox="0 0 16 16"><path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2M8 1.918l-.797.161A4 4 0 0 0 4 6c0 .628-.134 2.197-.459 3.742-.16.767-.376 1.566-.663 2.258h10.244c-.287-.692-.502-1.49-.663-2.258C12.134 8.197 12 6.628 12 6a4 4 0 0 0-3.203-3.92zM14.22 12c.223.447.481.801.78 1H1c.299-.199.557-.553.78-1C2.68 10.2 3 6.88 3 6c0-2.42 1.72-4.44 4.005-4.901a1 1 0 1 1 1.99 0A5 5 0 0 1 13 6c0 .88.32 4.2 1.22 6"/></symbol>
+<symbol id="bi-bell-fill" viewBox="0 0 16 16"><path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2m.995-14.901a1 1 0 1 0-1.99 0A5 5 0 0 0 3 6c0 1.098-.5 6-2 7h14c-1.5-1-2-5.902-2-7 0-2.42-1.72-4.44-4.005-4.901"/></symbol>
+<symbol id="bi-check2-circle" viewBox="0 0 16 16"><path d="M2.5 8a5.5 5.5 0 0 1 8.25-4.764.5.5 0 0 0 .5-.866A6.5 6.5 0 1 0 14.5 8a.5.5 0 0 0-1 0 5.5 5.5 0 1 1-11 0"/>
+  <path d="M15.354 3.354a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0z"/></symbol>
+<symbol id="bi-pencil" viewBox="0 0 16 16"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325"/></symbol>
+<symbol id="bi-grid" viewBox="0 0 16 16"><path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5zM2.5 2a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5zm6.5.5A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5zM1 10.5A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5zm6.5.5A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5z"/></symbol>
+</svg>
+<div class="bar">
+  <h1>터미널 · 말풍선 보기 시안</h1>
+  <div class="seg" id="views" role="group" aria-label="상태">
+    <button type="button" data-v="chat" aria-pressed="true">말풍선</button>
+    <button type="button" data-v="cmd" aria-pressed="false">/ 목록</button>
+    <button type="button" data-v="ask" aria-pressed="false">허락 기다림</button>
+  </div>
+  <div class="seg" role="group" aria-label="창 너비"><button type="button" data-w="1280" aria-pressed="true">앱 창 1280</button><button type="button" data-w="960" aria-pressed="false">좁은 창 960</button></div>
+  <div class="seg" role="group" aria-label="테마"><button type="button" data-th="light" aria-pressed="true">밝게</button><button type="button" data-th="dark" aria-pressed="false">어둡게</button></div>
+  <p class="desc" id="desc"></p>
+</div>
+<div class="frame" id="frame">
+  <nav class="nav">
+    <div class="brand"><span>D</span>DAIso</div>
+    <a><svg class="i"><use href="#bi-house-door"/></svg>요약</a>
+    <a class="on"><svg class="i"><use href="#bi-terminal"/></svg>터미널</a>
+    <a><svg class="i"><use href="#bi-chat-left-text"/></svg>세션</a>
+    <a><svg class="i"><use href="#bi-journal-check"/></svg>지침</a>
+    <a><svg class="i"><use href="#bi-lightning-charge"/></svg>프롬프트</a>
+    <a><svg class="i"><use href="#bi-bar-chart-line"/></svg>사용량</a>
+  </nav>
+  <div class="top">
+    <span class="pick"><svg class="i"><use href="#bi-folder"/></svg>JBroEngine<svg class="i"><use href="#bi-chevron-down"/></svg></span>
+    <span class="r"><svg class="i"><use href="#bi-bell"/></svg><span class="tool sm codex">X</span><span class="tool sm claude">C</span><svg class="i"><use href="#bi-gear"/></svg></span>
+  </div>
+  <main class="main" id="main"></main>
+</div>
+<script>
+(() => {
+  const ic = (n, c = '') => `<svg class="i ${c}"><use href="#bi-${n}"/></svg>`;
+  const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+  // 이 PC 의 실제 Claude 세션 끝부분 (JBroEngine, 2026-10-06 14:37~14:55). 도구 결과는 성공·실패만
+  const CHAT = [{"k": "tool", "ts": "14:37", "t": "PowerShell $s = \"F:\\AI\\Temp\\claude\\C--Users-----Documents-GitHub-JBroEngine\\648447b9-9eb7-43a1-b23f-62d702f61f2d\\scratchpad\"; Remove-Item Env:JBRO_TESTS -ErrorAction SilentlyContinue; Remove-Item Env:TMPONLY -ErrorAction SilentlyContinue; Set-Location F:\\AI\\wt\\JBroEngine-lighting\\source\\JBroEngine; $p = Start-Process .\\Build\\x64\\Debug\\JBroTests.exe -NoNewWindow -PassThru -RedirectStandardOutput \"$s\\full.log\" -RedirectStandardError \"$s\\full.err\"; $p.PriorityClass = 'Idle'; $p.WaitForExit(); \"exit=$($p.ExitCode)\"; Get-Content \"$s\\full.log\" | Select-String \"test failure|all tests passed|selected tests\" | Select-Object -First 5", "ok": true}, {"k": "ai", "ts": "14:37", "t": "전체 시험이 도는 동안 기다립니다."}, {"k": "tool", "ts": "14:37", "t": "Bash until grep -q \"exit=\" \"/f/AI/Temp/claude/C--Users-----Documents-GitHub-JBroEngine/648447b9-9eb7-43a1-b23f-62d702f61f2d/tasks/bvyhfj4vv.output\" 2>/dev/null; do sleep 10; done; cat \"/f/AI/Temp/claude/C--Users-----Documents-GitHub-JBroEngine/648447b9-9eb7-43a1-b23f-62d702f61f2d/tasks/bvyhfj4vv.output\"; grep \"^\\[suite\\]\" \"/f/AI/Temp/claude/C--Users-----Documents-GitHub-JBroEngine/648447b9-9eb7-43a1-b23f-62d702f61f2d/scratchpad/full.log\" | awk '{s+=$3} END {print \"total\", s, \"s\"}'", "ok": true}, {"k": "ai", "ts": "14:43", "t": "전체 시험이 모두 통과했습니다(341초). main 이 그사이 움직였는지 보고 합칩니다."}, {"k": "tool", "ts": "14:43", "t": "Bash git status --short | head -3; git log --oneline -1 main; git merge --ff-only lighting2d 2>&1 | tail -2; git log --oneline -3 main", "ok": true}, {"k": "ai", "ts": "14:43", "t": "main 에 합쳤습니다. 다 쓴 워크트리와 브랜치를 지웁니다(워크트리에 남은 것은 시험용으로 줄바꿈만 바꾼 문서 사본뿐입니다)."}, {"k": "tool", "ts": "14:43", "t": "Bash cd /f/AI/wt/JBroEngine-lighting && git status --short | grep -v \"^ M tasks/\" | head -3; cd /c/Users/박주형/Documents/GitHub/JBroEngine && git worktree remove --force /f/AI/wt/JBroEngine-lighting && git branch -d lighting2d && git worktree list && git log --oneline origin/main..main | wc -l", "ok": true}, {"k": "ai", "ts": "14:44", "t": "main 체크아웃에서 솔루션 전체를 빌드하겠습니다. 먼저 main 의 에디터가 켜져 있어 실행 파일이 잠겨 있지 않은지 봅니다."}, {"k": "tool", "ts": "14:44", "t": "PowerShell Get-Process JBroEditorHost, JBroTests -ErrorAction SilentlyContinue | Select-Object Id, ProcessName, Path", "ok": false}, {"k": "tool", "ts": "14:44", "t": "PowerShell Set-Location C:\\Users\\박주형\\Documents\\GitHub\\JBroEngine\\source\\JBroEngine; $env:_MSPDBSRV_ENDPOINT_ = 'jbro-main-build'; $msb = & \"C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe\" -latest -find MSBuild\\**\\Bin\\MSBuild.exe | Select-Object -First 1; $out = & $msb JBroEngine.slnx -p:Configuration=Debug -p:Platform=x64 -m:2 -nr:false -v:m -nologo 2>&1; $out | Select-String \" error |warning C\" | Select-Object -First 10; Get-ChildItem .\\Build\\x64\\Debug\\JBroEditorHost.exe, .\\Build\\x64\\Debug\\JBroTests.exe, .\\Build\\x64\\Debug\\Localization\\ko-KR.yaml | Select-Object Name, LastWriteTime", "ok": false}, {"k": "ai", "ts": "14:46", "t": "lighting2d 를 main 에 합쳤습니다(`c1f0f42e`). 합치기 직전 전체 시험은 모두 통과했습니다(341초). 그런데 main 빌드는 에디터 실행 파일 하나만 끝내지 못했습니다. 지금 켜져 있는 에디터(PID 16856)가 그 파일을 잡고 있어 링크가 실패했습니다. 그 에디터는 제가 띄운 것이 아니라 닫지 않았습니다.\n\n**합친 것**\n- 라이트 1~5단계, 시험 시간 개선(D-292), 알파 모양 그림자를 열린 항목으로 적은 문서 커밋입니다.\n- 그사이 main 에 들어온 D-293~D-297 과 겹친 곳은 네 파일이었습니다.\n  - D-295 가 \"게임 뷰\"를 \"시뮬레이션 뷰\"로 바꾼 것에 맞춰 제 문구도 고쳤습니다.\n  - Decisions 는 번호 차례대로 D-297~D-293, 그다음 D-292, D-291 입니다.\n- 다 쓴 워크트리와 `lighting2d` 브랜치는 지웠습니다.\n\n**빌드 결과**\n- 엔진, 테스트 등 나머지는 모두 빌드됐습니다(경고 0).\n- 에디터 실행 파일은 오후 3:41 빌드 그대로입니다. 번역 파일(`Build/.../Localization`)도 에디터 빌드 때 복사되는 것이라 아직 옛것입니다.\n\n에디터를 닫아 주시면 바로 다시 빌드하겠습니다. 제가 닫아도 되면 그렇게 말씀해 주세요.\n\n**남은 것**\n- **푸시**: main 이 origin 보다 커밋 21개 앞서 있습니다. 다른 세션의 커밋도 섞여 있으니 푸시할지 말씀해 주세요.\n- **알파 모양 그림자**: 외곽선을 어디에 저장할지와 새 모양 종류를 더할지 정해 주셔야 합니다.\n- **`Float` 이 `snprintf` 에 그대로 넘어가는 결함**: 따로 띄운 작업 칩에 있습니다.\n- **기존 열린 일**:\n  - `Text2DSystem` 의 `lit` 전달 시험\n  - 전역 컴포넌트 표에 무언가가 남는 문제\n  - 10초가 넘는 시험 둘\n- **위키와 구조 다이어그램(drawio)**: 미뤄 둔 그대로입니다."}, {"k": "me", "ts": "14:54", "t": "푸시 ㄱ.\n에디터닫고 빌드하고 다시 실행\n"}, {"k": "tool", "ts": "14:54", "t": "Bash cd /c/Users/박주형/Documents/GitHub/JBroEngine && git fetch -q origin && git log --oneline main..origin/main | head -3; git push origin main 2>&1 | tail -2", "ok": true}, {"k": "ai", "ts": "14:54", "t": "푸시했습니다. 이제 에디터(PID 16856)를 닫고 다시 빌드합니다."}, {"k": "tool", "ts": "14:54", "t": "PowerShell $p = Get-Process -Id 16856 -ErrorAction SilentlyContinue; if ($p) { $args0 = (Get-CimInstance Win32_Process -Filter \"ProcessId=16856\").CommandLine; Set-Content \"F:\\AI\\Temp\\claude\\C--Users-----Documents-GitHub-JBroEngine\\648447b9-9eb7-43a1-b23f-62d702f61f2d\\scratchpad\\user_editor_cmd.txt\" $args0; $args0; Stop-Process -Id 16856 -Confirm:$false; Start-Sleep 1 }; \"alive: $([bool](Get-Process -Id 16856 -ErrorAction SilentlyContinue))\"", "ok": true}, {"k": "tool", "ts": "14:55", "t": "PowerShell Set-Location C:\\Users\\박주형\\Documents\\GitHub\\JBroEngine\\source\\JBroEngine; $env:_MSPDBSRV_ENDPOINT_ = 'jbro-main-build'; $msb = & \"C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe\" -latest -find MSBuild\\**\\Bin\\MSBuild.exe | Select-Object -First 1; $out = & $msb JBroEngine.slnx -p:Configuration=Debug -p:Platform=x64 -m:2 -nr:false -v:m -nologo 2>&1; $out | Select-String \" error |warning C\" | Select-Object -First 10; Get-ChildItem .\\Build\\x64\\Debug\\JBroEditorHost.exe, .\\Build\\x64\\Debug\\Localization\\ko-KR.yaml | Select-Object Name, LastWriteTime; Select-String -Path .\\Build\\x64\\Debug\\Localization\\ko-KR.yaml -Pattern \"canvas_view.lighting\" | Select-Object -First 1 | ForEach-Object Line", "ok": true}, {"k": "ai", "ts": "14:55", "t": "빌드가 오류·경고 없이 끝났고 번역 파일도 새로 들어갔습니다. 에디터를 원래처럼 인자 없이 다시 띄웁니다."}, {"k": "tool", "ts": "14:55", "t": "PowerShell $d = \"C:\\Users\\박주형\\Documents\\GitHub\\JBroEngine\\source\\JBroEngine\\Build\\x64\\Debug\"; $p = Start-Process -FilePath \"$d\\JBroEditorHost.exe\" -WorkingDirectory $d -PassThru; Start-Sleep -Seconds 6; \"pid $($p.Id) alive: $(-not $p.HasExited)\"", "ok": true}, {"k": "ai", "ts": "14:55", "t": "푸시, 빌드, 에디터 재실행까지 끝냈습니다.\n\n- **푸시**: origin/main 이 `1c5cdfdd` 에서 `c1f0f42e` 로 올라갔습니다. 다른 세션의 D-293~D-297 커밋도 함께 올라갔습니다.\n- **빌드**: 켜져 있던 에디터(PID 16856)를 닫고 솔루션 전체를 다시 빌드했습니다. 오류와 경고는 없습니다. 에디터 실행 파일과 번역 파일(새 \"라이팅\" 키 포함)이 새로 들어갔습니다.\n- **재실행**: 에디터를 원래처럼 인자 없이 다시 띄웠고, 지금 켜져 있습니다(PID 47320).\n\n**남은 것**\n- **알파 모양 그림자**: 외곽선을 어디에 저장할지와 새 모양 종류를 더할지 정해 주셔야 합니다.\n- **`Float` 이 `snprintf` 에 그대로 넘어가는 결함**: 캔버스 뷰 상태 줄 카메라 값이 깨지는 원인입니다. 따로 띄운 작업 칩에 있습니다.\n- **기존 열린 일**:\n  - `Text2DSystem` 의 `lit` 전달 시험\n  - 전역 컴포넌트 표에 무언가가 남는 문제(원인 미확인)\n  - 10초가 넘는 시험 둘\n- **위키와 구조 다이어그램(drawio)**: 라이팅 내용을 아직 넣지 않았습니다."}];
+  // 실제 스킬: ~/.claude/skills. 기본 명령은 Claude Code 의 것 일부, tui 는 화면 없이는 못 하는 것
+  const SKILLS = [["better-kor", "한국어로 말하고 쓸 때 쓴다. 번역투를 걷어내고 그 분야 한국 사람이 실제로 쓰는 말과 구조로 전달한다. 모드 인자로 성격을 바꾼다 — 인자 없음(그냥 제대로 된"], ["guigu-mod-codec", "Decode, re-encode, and audit 鬼谷八荒 (Tale of Immortal / 귀곡팔황) mod data files — ModExportData"], ["skill-creator", "Create new skills, modify and improve existing skills. Use when users want to create a ski"], ["sonmat-autoloop", "범용 자율 루프 — 기획→정의→실행→평가→판단→기록→반복. 에스컬레이션 판단 포함."], ["sonmat-devil", "Devil's advocate for reasoning — discovery-led counter-arguments against interpretations, "], ["sonmat-guard", "Main-side verification checks — pre-commit test / sensitive-file blocking, discipline conf"], ["sonmat-inspect", "Trigger-reactive discovery-led depth — when a System 1 signal surfaces (blast radius, shar"], ["sonmat-punch", "Punch list — completeness and residue check before delivery. Finds what's missing that sho"], ["sonmat-scribe", "Post-work persistence layer — observes completed work and writes what should outlive the s"]];
+  const COMMANDS = [
+    ['기본 명령', 'box', [['/compact', '', '대화를 줄여 컨텍스트를 비웁니다'], ['/clear', '', '새 대화로 비웁니다'], ['/model', '<모델>', '모델을 바꿉니다'], ['/context', '', '컨텍스트 사용량을 봅니다'], ['/review', '', '변경 사항을 검토합니다'], ['/init', '', 'CLAUDE.md 를 만듭니다'], ['/login', '', '다시 로그인합니다', 1], ['/config', '', '설정 화면', 1], ['/permissions', '', '권한 규칙 화면', 1]]],
+    ['내 스킬 · ~/.claude/skills', 'person', SKILLS.map(([n, d]) => ['/' + n, '', d])],
+  ];
+
+  // 마크다운 조금: **굵게**, `코드`, - 목록, 빈 줄 문단
+  function md(text) {
+    const inline = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`([^`]+)`/g, '<code>$1</code>');
+    // 문단 안에 섞인 "- " 줄도 목록으로 묶는다
+    return text.split(/\n{2,}/).map((block) => {
+      let html = '', list = [], para = [];
+      const flushList = () => { if (list.length) html += `<ul>${list.map((l) => `<li>${inline(l)}</li>`).join('')}</ul>`; list = []; };
+      const flushPara = () => { if (para.length) html += `<p>${para.map(inline).join('<br>')}</p>`; para = []; };
+      for (const line of block.split('\n')) {
+        if (/^\s*- /.test(line)) { flushPara(); list.push(line.replace(/^\s*- /, '')); }
+        else { flushList(); para.push(line); }
+      }
+      flushList(); flushPara();
+      return html;
+    }).join('');
+  }
+  const short = (t) => { const [name, ...rest] = t.split(' '); const arg = rest.join(' ').replace(/\s+/g, ' '); return [name, arg.length > 90 ? arg.slice(0, 90) + '…' : arg]; };
+
+  function msgs(state) {
+    const out = [];
+    let group = null;
+    const flush = () => {
+      if (!group) return;
+      const names = [...new Set(group.map((g) => short(g.t)[0]))].join(' · ');
+      const fails = group.filter((g) => g.ok === false).length;
+      const open = group.open;
+      out.push(`<div class="tools"><button type="button">${ic('chevron-' + (open ? 'down' : 'right'))}도구 ${group.length}번 · ${esc(names)}${fails ? ` <span class="err">· 실패 ${fails}</span>` : ''}</button>${open ? `<div class="list">${group.map((g) => { const [n, a] = short(g.t); return `<span class="one">${g.ok === false ? ic('x-lg', 'err') : ic('check2', 'ok')}<b>${esc(n)}</b><span class="ell" title="${esc(g.t)}">${esc(a)}</span></span>`; }).join('')}</div>` : ''}</div>`);
+      group = null;
+    };
+    CHAT.forEach((m, i) => {
+      if (m.k === 'tool') { group ??= []; group.push(m); if (m.ok === false) group.open = true; return; }
+      flush();
+      if (m.k === 'me') out.push(`<div class="msg me">${esc(m.t.trim())}</div>`);
+      else out.push(`<div class="msg ai"><span class="who"><span class="tool sm claude">C</span>Claude · ${m.ts}</span><div class="body">${md(m.t.trim())}</div></div>`);
+    });
+    flush();
+    if (state === 'ask') {
+      out.push(`<div class="msg me">에디터 로그 폴더도 정리해 줘</div>`);
+      out.push(`<div class="tools"><button type="button">${ic('chevron-right')}도구 2번 · Glob · Bash</button></div>`);
+      out.push(`<div class="ask">${ic('hourglass-split')}<div><b>Claude 가 허락을 기다립니다</b><code>Bash  rm -r source/JBroEngine/Build/x64/Debug/Logs</code></div><button class="btn primary small" type="button">${ic('terminal')}터미널에서 답하기</button></div>`);
+    }
+    return out.join('');
+  }
+
+  function cmdPop() {
+    let n = 0;
+    return `<div class="cmdpop" role="listbox">${COMMANDS.map(([g, i, items]) => `<div class="cmdgroup">${ic(i)}${esc(g)}</div>${items.map(([name, arg, d, tui]) => `<button class="cmd ${tui ? 'tui' : ''} ${n++ === 0 ? 'on' : ''}" type="button"><b>${esc(name)}</b><em>${esc(arg)}</em><span>${esc(d)}</span></button>`).join('')}`).join('')}</div>`;
+  }
+
+  function page(state) {
+    const working = state === 'ask';
+    return `<div class="rooms"><button class="room-plus" type="button" title="새 터미널">${ic('plus-lg')}</button>
+        <span class="room" aria-pressed="true"><span class="tool sm claude">C</span>에디터 빌드${working ? `<span class="hg" title="허락 기다림">${ic('hourglass-split')}</span>` : ''}<button class="icon-btn" type="button" style="width:22px;height:22px">${ic('x-lg')}</button></span>
+        <span class="room"><span class="tool sm codex">X</span>레이어 선택<button class="icon-btn" type="button" style="width:22px;height:22px">${ic('x-lg')}</button></span></div>
+      <div class="rtools">
+        <span class="seg" style="margin-right:8px"><button type="button" aria-pressed="true">${ic('chat-dots')}말풍선</button><button type="button" aria-pressed="false">${ic('terminal')}터미널</button></span>
+        <button class="icon-btn" type="button" title="찾기">${ic('search')}</button><span class="sep"></span>
+        <button class="icon-btn" type="button" title="파일 첨부">${ic('paperclip')}</button>
+        <button class="icon-btn" type="button" title="폴더 열기">${ic('folder2-open')}</button>
+        <button class="icon-btn" type="button" title="더보기">${ic('three-dots')}</button>
+        <span class="title ell">Claude Code · JBroEngine — 에디터 빌드 ${working ? '<span class="pill warn">허락 기다림</span>' : '<span class="pill">답 끝남</span>'}</span>
+      </div>
+      <div class="chat"><div class="msgs" id="msgs">${msgs(state)}</div>
+        <div class="composer">${state === 'cmd' ? cmdPop() : ''}
+          <div class="compose-box ${state === 'cmd' ? 'focus' : ''}"><button class="icon-btn" type="button" title="파일 첨부">${ic('paperclip')}</button>
+            ${state === 'cmd' ? '<span class="text">/</span>' : '<span class="text ph">Claude 에게 보낼 말 · / 를 치면 명령과 스킬</span>'}
+            <button class="send" type="button" title="보내기 (Enter)">${ic('send-fill')}</button></div>
+          <div class="compose-hint"><span>Enter 보내기 · Shift+Enter 줄바꿈</span><span>보낸 글은 이 방의 Claude 입력 줄로 들어갑니다</span></div>
+        </div></div>`;
+  }
+
+  const DESC = {
+    chat: '<b>말풍선</b> — 이 PC 의 실제 Claude 세션 끝부분입니다. 도구를 잇달아 쓴 곳은 한 줄로 접고(누르면 펼침, 한 곳은 펼쳐 둠), 실패한 도구는 빨갛게 셉니다.',
+    cmd: '<b>/ 목록</b> — 입력칸에 / 를 치면 바로 위에 뜹니다. 내 스킬은 ~/.claude/skills 의 실제 9개. 화면이 있어야 하는 명령(/login 등)은 고르면 터미널 보기로 넘어갑니다.',
+    ask: '<b>허락 기다림</b> — 아래 두 말풍선과 허락 요청은 <b>예시</b>입니다(지금 허락을 기다리는 방이 없어서). 허락은 CLI 화면에서 답하므로 단추가 터미널 보기로 넘깁니다.',
+  };
+  const q = new URLSearchParams(location.search);
+  let state = q.get('v') || 'chat';
+  function show() {
+    document.getElementById('main').innerHTML = page(state);
+    document.getElementById('desc').innerHTML = DESC[state] + ' <span class="faint">방 띠의 두 번째 방 이름은 예시입니다.</span>';
+    document.querySelectorAll('[data-v]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === state)));
+    const m = document.getElementById('msgs'); m.scrollTop = m.scrollHeight;
+  }
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.v) { state = b.dataset.v; show(); }
+    if (b.dataset.w) { document.getElementById('frame').classList.toggle('narrow', b.dataset.w === '960'); b.parentElement.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); show(); }
+    if (b.dataset.th) { document.documentElement.dataset.theme = b.dataset.th; b.parentElement.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); }
+  });
+  if (q.get('w') === '960') document.getElementById('frame').classList.add('narrow');
+  if (q.get('th') === 'dark') document.documentElement.dataset.theme = 'dark';
+  show();
+})();
+</script>
+</body>
+</html>

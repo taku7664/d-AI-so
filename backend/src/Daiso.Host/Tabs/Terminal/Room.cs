@@ -58,11 +58,41 @@ public sealed class Room : IDisposable
 
     public int? ExitCode { get; private set; }
 
+    /// <summary>(Claude) 방을 열 때 정해 준 세션 id. 세션 기록 파일 이름이 된다. 이어서 연 방·사람이 인자로 정한 방은 null.</summary>
+    public string? SessionId { get; init; }
+
+    /// <summary>이어서 연 세션 파일.</summary>
+    public string? ResumePath { get; init; }
+
+    /// <summary>(Claude) 훅이 마지막으로 알려 준 세션 기록 파일.</summary>
+    public string? Transcript { get; set; }
+
+    /// <summary>(Codex) 알림이 알려 준 세션(스레드) id.</summary>
+    public string? Thread { get; set; }
+
+    /// <summary>말풍선 보기.</summary>
+    public RoomChat Chat { get; } = new();
+
     /// <summary>답이 끝났는데 아직 안 봤다.</summary>
     public bool Unseen => State == RoomState.Done && DoneAt is { } done && (SeenAt is not { } seen || seen < done);
 
     /// <summary>상태가 바뀌면 부른다. 서버가 화면에 알린다.</summary>
     public event Action<Room>? Changed;
+
+    /// <summary>
+    /// 말풍선 입력칸의 글을 CLI 입력 줄에 붙여 넣고 Enter 를 친다. 붙여넣기(bracketed paste)로 넣어야 여러 줄이 한 메시지가 된다
+    /// (2026-10-07 Claude·Codex 로 확인). 붙여넣기를 받아들일 틈을 조금 둔다.
+    /// </summary>
+    public async Task SendAsync(string text, CancellationToken ct)
+    {
+        Write(PasteStart + text.Replace("\r\n", "\n", StringComparison.Ordinal) + PasteEnd);
+        await Task.Delay(PasteSettle, ct).ConfigureAwait(false);
+        Write("\r");
+    }
+
+    private const string PasteStart = "\u001b[200~";
+    private const string PasteEnd = "\u001b[201~";
+    private static readonly TimeSpan PasteSettle = TimeSpan.FromMilliseconds(300);
 
     /// <summary>키 입력을 보낸다. Enter 가 들어 있으면 일을 시작한 것으로 본다(훅이 없는 도구도 "작업 중"이 보이게).</summary>
     public void Write(string text)

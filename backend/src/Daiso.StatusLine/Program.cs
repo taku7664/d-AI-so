@@ -213,24 +213,65 @@ internal static class Hooks
             return;
         }
 
-        var state = hook == "codex" ? CodexState(args) : hook;
+        var payload = hook == "codex" ? CodexPayload(args) : ClaudePayload();
+        var state = hook == "codex" ? CodexState(payload) : hook;
         if (state is null || !States.Contains(state))
         {
             return;
         }
 
         var record = new JsonObject { ["state"] = state, ["at"] = DateTimeOffset.Now.ToString("O") };
+
+        // 말풍선 보기가 읽을 세션 기록. Claude 는 훅 입력에 기록 파일 경로를, Codex 는 알림에 세션(스레드) id 를 준다.
+        // /clear 처럼 도중에 기록 파일이 바뀌어도 다음 훅이 새 경로를 알린다
+        if (payload?["transcript_path"]?.GetValue<string>() is { Length: > 0 } transcript)
+        {
+            record["transcript"] = transcript;
+        }
+
+        if (payload?["thread-id"]?.GetValue<string>() is { Length: > 0 } thread)
+        {
+            record["thread"] = thread;
+        }
+
         Files.WriteAtomic(Path.Combine(data, Folder, room + ".json"), record.ToJsonString());
     }
 
-    /// <summary>Codex notify 는 JSON 하나를 마지막 인자로 준다. 턴이 끝났을 때만 알린다.</summary>
-    private static string? CodexState(string[] args)
+    /// <summary>Claude 훅은 JSON 하나를 표준 입력으로 준다(session_id·transcript_path·cwd·hook_event_name). 못 읽으면 null.</summary>
+    private static JsonNode? ClaudePayload()
     {
         try
         {
-            return JsonNode.Parse(args[^1])?["type"]?.GetValue<string>() == "agent-turn-complete" ? "done" : null;
+            using var stdin = new StreamReader(Console.OpenStandardInput(), new UTF8Encoding(false));
+            return JsonNode.Parse(stdin.ReadToEnd());
+        }
+        catch (Exception ex) when (ex is JsonException or IOException or InvalidOperationException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Codex notify 는 JSON 하나를 마지막 인자로 준다. 표준 입력은 읽지 않는다(이어진 콘솔이면 막힌다).</summary>
+    private static JsonNode? CodexPayload(string[] args)
+    {
+        try
+        {
+            return args.Length > 0 ? JsonNode.Parse(args[^1]) : null;
         }
         catch (Exception ex) when (ex is JsonException or InvalidOperationException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>턴이 끝났을 때만 알린다.</summary>
+    private static string? CodexState(JsonNode? payload)
+    {
+        try
+        {
+            return payload?["type"]?.GetValue<string>() == "agent-turn-complete" ? "done" : null;
+        }
+        catch (InvalidOperationException)
         {
             return null;
         }

@@ -27,6 +27,10 @@ public sealed record RoomInfo(string Id, string Tool, string Folder, string Name
 /// <summary>이름을 바꾸는 요청.</summary>
 public sealed record RoomNameRequest(string Name);
 
+/// <summary>말풍선 입력칸에서 보내는 글.</summary>
+/// <param name="Text">여러 줄이어도 한 메시지로 들어간다.</param>
+public sealed record SendRequest(string Text);
+
 /// <summary>폴더를 가리키는 요청.</summary>
 public sealed record FolderRequest(string Path);
 
@@ -49,6 +53,9 @@ public sealed class TerminalEndpoints : ITabEndpoints
         group.MapPut("/rooms/{id}/name", Rename).WithName("RenameRoom");
         group.Map("/rooms/{id}/pty", PtyAsync).ExcludeFromDescription();
         group.MapGet("/models", ModelsAsync).WithName("ListModels");
+        group.MapGet("/rooms/{id}/chat", ChatAsync).WithName("GetRoomChat");
+        group.MapPost("/rooms/{id}/send", SendAsync).WithName("SendToRoom");
+        group.MapGet("/commands", ListCommands).WithName("ListCommands");
         group.MapPost("/external", ExternalAsync).WithName("OpenExternalTerminal");
         group.MapPost("/open-folder", OpenFolder).WithName("OpenFolder");
     }
@@ -111,6 +118,52 @@ public sealed class TerminalEndpoints : ITabEndpoints
         {
             return TypedResults.Problem(statusCode: StatusCodes.Status400BadRequest, title: "방을 열지 못했다", detail: ex.Message);
         }
+    }
+
+    /// <summary>말풍선. <paramref name="after"/> 뒤의 칸만 준다. 0 이면 끝부분 한 쪽.</summary>
+    /// <param name="id">방 id.</param>
+    /// <param name="rooms">방들.</param>
+    /// <param name="ct">요청이 끊기면 멈춘다.</param>
+    /// <param name="after">화면이 마지막으로 받은 칸 번호.</param>
+    private static async Task<Results<Ok<ChatResponse>, NotFound>> ChatAsync(string id, RoomService rooms, CancellationToken ct, long after = 0)
+    {
+        if (rooms.Find(id) is not { } room)
+        {
+            return TypedResults.NotFound();
+        }
+
+        return TypedResults.Ok(await room.Chat.ReadAsync(room, after, ct).ConfigureAwait(false));
+    }
+
+    /// <summary>말풍선 입력칸의 글을 그 방 CLI 의 입력 줄에 넣고 Enter 를 친다.</summary>
+    private static async Task<IResult> SendAsync(string id, SendRequest request, RoomService rooms, CancellationToken ct)
+    {
+        if (rooms.Find(id) is not { } room)
+        {
+            return Results.NotFound();
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Text) || request.Text.Length > MaxSend)
+        {
+            return Results.BadRequest();
+        }
+
+        await room.SendAsync(request.Text, ct).ConfigureAwait(false);
+        return Results.NoContent();
+    }
+
+    /// <summary>보낼 글의 최대 길이. 붙여 넣은 큰 파일 내용이 터미널을 멈추지 않게.</summary>
+    private const int MaxSend = 100_000;
+
+    /// <summary>/ 목록. 도구 기본 명령과 내 명령·스킬, 이 프로젝트의 명령·스킬.</summary>
+    private static IReadOnlyList<CommandGroup> ListCommands(string tool, ToolRegistry tools, string? folder = null)
+    {
+        if (!ToolKind.TryParse(tool, out var kind) || tools.Tools.FirstOrDefault(provider => provider.Kind == kind) is not { } found)
+        {
+            return [];
+        }
+
+        return Commands.For(found, folder);
     }
 
     private static IResult Seen(string id, RoomService rooms)

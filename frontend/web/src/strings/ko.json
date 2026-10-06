@@ -282,5 +282,22 @@
   "nt.leftConversation": "아직 대화를 안 골랐어요",
   "nt.external": "새 창에서 열기",
   "nt.resume": "이어서 열기",
-  "nt.start": "시작하기"
+  "nt.start": "시작하기",
+  "chat.view": "말풍선",
+  "chat.viewHint": "세션 기록을 말풍선으로 봅니다. CLI 는 뒤에서 그대로 돕니다",
+  "chat.noTranscript": "아직 대화가 없습니다. 아래 입력칸에 첫 메시지를 보내면 여기에 말풍선으로 나옵니다",
+  "chat.working": "{tool} 이(가) 일하는 중",
+  "chat.ask": "{tool} 이(가) 허락을 기다립니다",
+  "chat.askHint": "허락은 CLI 화면에서 답합니다",
+  "chat.answerInTerminal": "터미널에서 답하기",
+  "chat.tools": "도구 {count}번 · {names}",
+  "chat.toolsFailed": " · 실패 {count}",
+  "chat.placeholder": "{tool} 에게 보낼 말 · / 를 치면 명령과 스킬",
+  "chat.exited": "CLI 가 끝났습니다",
+  "chat.send": "보내기 (Enter)",
+  "chat.hintKeys": "Enter 보내기 · Shift+Enter 줄바꿈",
+  "chat.hintWhere": "보낸 글은 이 방의 {tool} 입력 줄로 들어갑니다",
+  "chat.sendFailed": "보내지 못했습니다",
+  "chat.noCommand": "맞는 명령이 없습니다",
+  "chat.inTerminal": "터미널 보기로"
 }

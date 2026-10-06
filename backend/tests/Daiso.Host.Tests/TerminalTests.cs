@@ -103,6 +103,24 @@ public sealed class TerminalTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Sending_empty_text_or_to_an_unknown_room_is_refused()
+    {
+        var room = await OpenAsync();
+
+        (await PostJsonAsync($"/api/terminal/rooms/{room.Id}/send", new SendRequest("  "))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await PostJsonAsync("/api/terminal/rooms/nope/send", new SendRequest("hi"))).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        (await PostJsonAsync($"/api/terminal/rooms/{room.Id}/send", new SendRequest("echo hi"))).StatusCode.Should().Be(HttpStatusCode.NoContent);
+    }
+
+    private async Task<HttpResponseMessage> PostJsonAsync<T>(string path, T body)
+    {
+        using var client = _host.Client();
+        using var request = _host.Authed(HttpMethod.Post, path, _host.Url);
+        request.Content = JsonContent.Create(body);
+        return await client.SendAsync(request);
+    }
+
+    [Fact]
     public async Task Closing_a_room_ends_it()
     {
         var room = await OpenAsync();

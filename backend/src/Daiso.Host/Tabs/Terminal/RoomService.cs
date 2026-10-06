@@ -75,9 +75,17 @@ public sealed class RoomService : IHostedService, IDisposable
         }
 
         var id = Guid.NewGuid().ToString("N");
+
+        // 새 Claude 대화는 세션 id 를 정해 준다. 그러면 말풍선 보기가 첫 메시지부터 기록 파일을 바로 찾는다.
+        // 사람이 인자로 세션을 고른 경우(--resume·--continue·--session-id)는 건드리지 않는다
+        var sessionId = provider.Kind == ToolKind.Claude && resume is null && !ChoosesSession(request.Arguments)
+            ? Guid.NewGuid().ToString()
+            : null;
+
         var arguments = string.Join(' ', new[]
         {
             resume is null ? null : provider.BuildResumeArguments(resume),
+            sessionId is null ? null : $"--session-id {sessionId}",
             // 모델을 골랐을 때만 인자의 --model 을 갈아 끼운다. 안 골랐으면 사람이 적은 --model 을 지우지 않는다
             string.IsNullOrWhiteSpace(request.Model) ? request.Arguments : ModelArgument.Apply(request.Arguments, request.Model),
             HookArguments(provider, id),
@@ -85,7 +93,11 @@ public sealed class RoomService : IHostedService, IDisposable
 
         var session = PtySession.Start(CommandLine(Target(provider), arguments), request.Folder, DefaultColumns, DefaultRows);
         var name = string.IsNullOrWhiteSpace(request.Name) ? Path.GetFileName(request.Folder.TrimEnd('\\', '/')) : request.Name.Trim();
-        var room = new Room(id, provider, request.Folder, name, session, DefaultColumns, DefaultRows);
+        var room = new Room(id, provider, request.Folder, name, session, DefaultColumns, DefaultRows)
+        {
+            SessionId = sessionId,
+            ResumePath = resume?.FilePath,
+        };
 
         room.Changed += _ => Publish();
         _rooms[id] = room;
@@ -106,6 +118,30 @@ public sealed class RoomService : IHostedService, IDisposable
         TryDelete(Path.Combine(StateFolder, id + ".settings.json"));
         Publish();
         return true;
+    }
+
+    /// <summary>사람이 적은 인자가 이미 세션을 고르는가.</summary>
+    private static bool ChoosesSession(string? arguments) =>
+        arguments is not null
+        && arguments.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Any(arg => arg is "--session-id" or "--resume" or "-r" or "--continue" or "-c");
+
+    /// <summary>
+    /// 바뀐 세션 기록 파일들(<see cref="Services.IndexWatcher"/>). 말풍선 보기가 읽는 기록이거나 아직 기록을 못 찾은 방이 있으면 화면에 알린다.
+    /// </summary>
+    public void SessionFilesChanged(IReadOnlyCollection<string> paths)
+    {
+        ArgumentNullException.ThrowIfNull(paths);
+
+        var touched = _rooms.Values.Any(room =>
+            room.Chat.Path is not { } path
+                ? paths.Any(changed => changed.StartsWith(room.Provider.SessionsRoot, StringComparison.OrdinalIgnoreCase))
+                : paths.Contains(path, StringComparer.OrdinalIgnoreCase));
+
+        if (touched)
+        {
+            _ = _hub.PublishAsync(new Notification(Topic, "chat"), CancellationToken.None);
+        }
     }
 
     /// <summary>
@@ -209,7 +245,20 @@ public sealed class RoomService : IHostedService, IDisposable
 
         try
         {
-            var state = JsonNode.Parse(File.ReadAllText(path))?["state"]?.GetValue<string>();
+            var record = JsonNode.Parse(File.ReadAllText(path));
+            var state = record?["state"]?.GetValue<string>();
+
+            // 말풍선 보기가 읽을 기록. 상태보다 먼저 넣어야 상태 알림을 받은 화면이 새 기록을 읽는다
+            if (record?["transcript"]?.GetValue<string>() is { Length: > 0 } transcript)
+            {
+                room.Transcript = transcript;
+            }
+
+            if (record?["thread"]?.GetValue<string>() is { Length: > 0 } thread)
+            {
+                room.Thread = thread;
+            }
+
             room.SetState(state switch
             {
                 "run" => RoomState.Run,

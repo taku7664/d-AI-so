@@ -161,3 +161,55 @@ export function useResumeInRoom() {
     },
   });
 }
+
+// ── 말풍선 보기 ──
+
+export type ChatItem = Schemas['ChatItem'];
+export type ChatData = Schemas['ChatResponse'];
+export type CommandGroup = Schemas['CommandGroup'];
+
+/**
+ * 방의 말풍선. 서버는 마지막으로 받은 칸 번호 뒤만 준다. 받은 것은 캐시에 이어 붙인다.
+ * 세션 기록이 바뀌면 서버 알림 { tab: "terminal" } 이 와서 다시 받는다
+ */
+export function useRoomChat(roomId: string) {
+  const queryClient = useQueryClient();
+  const key = ['terminal', 'chat', roomId];
+  return useQuery({
+    queryKey: key,
+    queryFn: async (): Promise<ChatData> => {
+      const previous = queryClient.getQueryData<ChatData>(key);
+      const after = previous?.last ?? 0;
+      const { data, error } = await api.GET('/api/terminal/rooms/{id}/chat', {
+        params: { path: { id: roomId }, query: { after } },
+      });
+      if (error || !data) throw new Error('말풍선을 읽지 못했다');
+      if (!previous || after === 0) return data;
+      const seen = new Set(previous.items.map((item) => item.seq));
+      return { ...data, items: [...previous.items, ...data.items.filter((item) => !seen.has(item.seq))] };
+    },
+  });
+}
+
+/** 말풍선 입력칸의 글을 방 CLI 의 입력 줄에 넣고 Enter 를 친다 */
+export function useSendToRoom() {
+  return useMutation({
+    mutationFn: async ({ id, text }: { id: string; text: string }) => {
+      const { error } = await api.POST('/api/terminal/rooms/{id}/send', { params: { path: { id } }, body: { text } });
+      if (error) throw new Error('보내지 못했다');
+    },
+  });
+}
+
+/** / 목록 */
+export function useCommands(tool: string, folder: string) {
+  return useQuery({
+    queryKey: ['terminal', 'commands', tool, folder],
+    queryFn: async () => {
+      const { data, error } = await api.GET('/api/terminal/commands', { params: { query: { tool, folder } } });
+      if (error || !data) throw new Error('명령 목록을 읽지 못했다');
+      return data;
+    },
+    staleTime: 60_000,
+  });
+}

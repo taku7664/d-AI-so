@@ -20,6 +20,7 @@ import {
   useRooms,
   type Room,
 } from './api';
+import { ChatView } from './ChatView';
 import { EMPTY_DRAFT, NewTerminal, type Draft } from './NewTerminal';
 import { TermScreen, type TermHandle } from './TermScreen';
 
@@ -145,8 +146,19 @@ export function TerminalView() {
   );
 }
 
+// 방마다 마지막으로 고른 보기. 말풍선은 세션 기록을 아는 도구(Claude·Codex)만
+const VIEWS = new Map<string, 'chat' | 'term'>();
+const CHAT_TOOLS = new Set(['claude', 'codex']);
+
 function RoomBody({ room, onSameFolder }: { room: Room; onSameFolder: () => void }) {
   const screen = useRef<TermHandle>(null);
+  const canChat = CHAT_TOOLS.has(room.tool);
+  const [view, setViewState] = useState<'chat' | 'term'>(VIEWS.get(room.id) ?? (canChat ? 'chat' : 'term'));
+  const setView = (next: 'chat' | 'term') => {
+    VIEWS.set(room.id, next);
+    setViewState(next);
+    if (next === 'term') window.setTimeout(() => screen.current?.focus(), 0);
+  };
   const rename = useRenameRoom();
   const [finding, setFinding] = useState(false);
   const [query, setQuery] = useState('');
@@ -223,15 +235,33 @@ function RoomBody({ room, onSameFolder }: { room: Room; onSameFolder: () => void
           </div>
         ) : (
           <>
-            <span
-              className={`pill ${room.state === 'done' ? 'ok' : room.state === 'ask' ? 'warn' : room.state === 'exited' ? 'bad' : 'plain'}`}
-            >
-              <Icon name={STATE_ICON[room.state] ?? 'keyboard'} />
-              {t(`terminal.state.${room.state}` as 'terminal.state.run')}
-            </span>
-            <button className="icon-btn" type="button" title={t('terminal.findHint')} onClick={() => setFinding(true)}>
-              <Icon name="search" />
-            </button>
+            {canChat && (
+              <span className="seg view-seg">
+                <button
+                  type="button"
+                  aria-pressed={view === 'chat'}
+                  title={t('chat.viewHint')}
+                  onClick={() => setView('chat')}
+                >
+                  <Icon name="chat-dots" />
+                  {t('chat.view')}
+                </button>
+                <button type="button" aria-pressed={view === 'term'} onClick={() => setView('term')}>
+                  <Icon name="terminal" />
+                  {t('tab.terminal')}
+                </button>
+              </span>
+            )}
+            {view === 'term' && (
+              <button
+                className="icon-btn"
+                type="button"
+                title={t('terminal.findHint')}
+                onClick={() => setFinding(true)}
+              >
+                <Icon name="search" />
+              </button>
+            )}
             <span className="sep" />
             <button
               className="icon-btn"
@@ -291,6 +321,12 @@ function RoomBody({ room, onSameFolder }: { room: Room; onSameFolder: () => void
                 />
               ) : (
                 <>
+                  <span
+                    className={`pill ${room.state === 'done' ? 'ok' : room.state === 'ask' ? 'warn' : room.state === 'exited' ? 'bad' : 'plain'}`}
+                  >
+                    <Icon name={STATE_ICON[room.state] ?? 'keyboard'} />
+                    {t(`terminal.state.${room.state}` as 'terminal.state.run')}
+                  </span>
                   <span title={room.folder}>{room.name}</span>
                   <button
                     className="icon-btn"
@@ -306,7 +342,11 @@ function RoomBody({ room, onSameFolder }: { room: Room; onSameFolder: () => void
           </>
         )}
       </div>
-      <TermScreen ref={screen} roomId={room.id} onFind={() => setFinding(true)} onExit={() => undefined} />
+      {/* 터미널은 말풍선을 보는 동안에도 붙어 있는다. 다시 터미널로 오면 CLI 화면이 그대로다 */}
+      {view === 'chat' && <ChatView room={room} onTerminal={() => setView('term')} />}
+      <div className="term-wrap" hidden={view === 'chat'}>
+        <TermScreen ref={screen} roomId={room.id} onFind={() => setFinding(true)} onExit={() => undefined} />
+      </div>
     </div>
   );
 }

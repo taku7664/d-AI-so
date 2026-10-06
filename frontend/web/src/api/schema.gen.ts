@@ -500,6 +500,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/terminal/rooms/{id}/chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetRoomChat"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/terminal/rooms/{id}/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["SendToRoom"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/terminal/commands": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListCommands"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/terminal/external": {
         parameters: {
             query?: never;
@@ -617,6 +665,39 @@ export interface components {
             /** @description 다른 프로젝트에서 하던 것. 프로젝트마다 가장 최근 것 하나, 최대 int BellEndpoints.OthersCount개. */
             others: components["schemas"]["ProjectWork"][];
         };
+        /** @description 말풍선 한 칸. */
+        ChatItem: {
+            /**
+             * Format: int64
+             * @description 이 방에서 몇 번째 칸인가. 화면은 마지막으로 받은 번호 뒤만 다시 받는다.
+             */
+            seq: number;
+            /**
+             * Format: date-time
+             * @description 기록에 적힌 때.
+             */
+            at: string;
+            /** @description `me`(사람) · `ai`(답) · `tool`(도구 호출) · `result`(도구 결과. 성공·실패만 쓴다). */
+            kind: string;
+            /** @description 본문. 사람 글은 도구가 감싼 머리말을 벗긴 것. */
+            text: string;
+            /** @description tool 일 때 도구 이름. */
+            tool: null | string;
+            /** @description result 일 때 실패했는가. */
+            error: boolean;
+        };
+        /** @description 말풍선 목록. */
+        ChatResponse: {
+            /** @description 이 방의 세션 기록을 찾았는가. 첫 메시지를 보내기 전에는 기록이 없을 수 있다(Codex 는 첫 메시지 때 만든다). */
+            found: boolean;
+            /**
+             * Format: int64
+             * @description 지금까지의 마지막 칸 번호. 다음에 `after` 로 보낸다.
+             */
+            last: number;
+            /** @description `after` 뒤의 칸들. 처음 받을 때는 끝에서 int RoomChat.FirstPage개까지. */
+            items: components["schemas"]["ChatItem"][];
+        };
         /** @description 정리 기준. "골라 체크"와 요약의 "손볼 것"이 같은 값을 쓴다. */
         CleanupRule: {
             /**
@@ -629,6 +710,26 @@ export interface components {
              * @description 이 크기를 넘는 세션.
              */
             largerThanMegabytes: number;
+        };
+        /** @description / 목록의 묶음. */
+        CommandGroup: {
+            /** @description `builtin`(도구 기본 명령) · `user`(내 명령·스킬) · `project`(이 프로젝트의 명령·스킬). */
+            kind: string;
+            /** @description 어디서 읽었나. 화면이 묶음 제목 옆에 보인다. */
+            source: string;
+            /** @description 명령들. */
+            items: components["schemas"]["CommandItem"][];
+        };
+        /** @description / 목록 한 줄. */
+        CommandItem: {
+            /** @description `/` 로 시작하는 이름. */
+            name: string;
+            /** @description 받는 인자 모양. 없으면 빈 문자열. */
+            argument: string;
+            /** @description 설명 한 줄. */
+            description: string;
+            /** @description 화면이 있어야 하는 명령. 고르면 터미널 보기로 넘긴다. */
+            terminal: boolean;
         };
         /** @description "이번 주 토큰" 막대 하나. */
         DashboardDay: {
@@ -907,6 +1008,11 @@ export interface components {
              * @description 걸린 메시지 수. 서버가 200개에서 끊는다.
              */
             total: number;
+        };
+        /** @description 말풍선 입력칸에서 보내는 글. */
+        SendRequest: {
+            /** @description 여러 줄이어도 한 메시지로 들어간다. */
+            text: string;
         };
         /** @description 세션 하나를 가리키는 요청. */
         SessionRequest: {
@@ -1880,6 +1986,84 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ModelOption"][];
+                };
+            };
+        };
+    };
+    GetRoomChat: {
+        parameters: {
+            query?: {
+                after?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    SendToRoom: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ListCommands: {
+        parameters: {
+            query: {
+                tool: string;
+                folder?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommandGroup"][];
                 };
             };
         };
