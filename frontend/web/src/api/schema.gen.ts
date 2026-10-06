@@ -36,6 +36,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/bell": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetBell"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/projects": {
         parameters: {
             query?: never;
@@ -388,6 +404,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/dashboard/worktrees": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetWorktrees"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/terminal/rooms": {
         parameters: {
             query?: never;
@@ -577,6 +609,14 @@ export interface components {
             /** @description index·plugin 일 때 까닭. */
             detail?: null | string;
         };
+        /** @description 위 줄 종 팝업. 열린 터미널 방은 `/api/terminal/rooms` 에서 따로 받는다. */
+        BellResponse: {
+            /** @description 손볼 것. 팝업 맨 위. */
+            attention: components["schemas"]["Attention"][];
+            last: null | components["schemas"]["ProjectWork"];
+            /** @description 다른 프로젝트에서 하던 것. 프로젝트마다 가장 최근 것 하나, 최대 int BellEndpoints.OthersCount개. */
+            others: components["schemas"]["ProjectWork"][];
+        };
         /** @description 정리 기준. "골라 체크"와 요약의 "손볼 것"이 같은 값을 쓴다. */
         CleanupRule: {
             /**
@@ -590,33 +630,47 @@ export interface components {
              */
             largerThanMegabytes: number;
         };
-        /** @description 요약 화면. */
+        /** @description "이번 주 토큰" 막대 하나. */
+        DashboardDay: {
+            /**
+             * Format: date
+             * @description 날짜. 도구 기록의 날짜(UTC)다.
+             */
+            date: string;
+            /**
+             * Format: int64
+             * @description 그날 토큰 합.
+             */
+            tokens: number;
+        };
+        /** @description 요약 화면. 열린 터미널은 `/api/terminal/rooms`, 한도는 `/api/limits`, 워크트리는 `/api/dashboard/worktrees` 에서 따로 받는다. */
         DashboardResponse: {
             /** @description 지금 프로젝트 경로. null 이면 모든 프로젝트. */
             project: null | string;
-            /** @description 최근 세션 5개. */
-            recent: components["schemas"]["SessionRow"][];
-            /** @description 숫자. */
-            stats: components["schemas"]["DashboardStats"];
-            /** @description 손볼 것. */
-            attention: components["schemas"]["Attention"][];
-            /** @description 모든 프로젝트일 때만 채운다. 마지막 작업이 최근인 것부터. */
-            projects: components["schemas"]["ProjectCard"][];
+            /** @description 오늘 세션. */
+            today: components["schemas"]["DashboardToday"];
+            /** @description 최근 7일, 오래된 날부터. */
+            week: components["schemas"]["DashboardDay"][];
+            /** @description 최근 세션 최대 5개. 마지막 활동 순. */
+            recent: components["schemas"]["RecentSession"][];
         };
-        /** @description 숫자 셋. */
-        DashboardStats: {
+        /** @description "오늘 세션" 타일. */
+        DashboardToday: {
             /**
              * Format: int32
-             * @description 세션 수.
+             * @description 오늘(이 PC 의 날짜) 바뀐 세션 수.
              */
             sessions: number;
             /**
-             * Format: int64
-             * @description 세션 파일 합.
+             * Format: int32
+             * @description 그 세션들의 프로젝트 수(워크트리·임시 폴더는 원래 프로젝트로 센다).
              */
-            sizeBytes: number;
-            /** @description 최근 7일 토큰. */
-            last7Days: components["schemas"]["UsageTokens"];
+            projects: number;
+            /**
+             * Format: int32
+             * @description 어제 바뀐 세션 수.
+             */
+            yesterday: number;
         };
         /** @description 세션을 지우는 요청. */
         DeleteRequest: {
@@ -730,30 +784,6 @@ export interface components {
         ProfileRequest: {
             name: string;
         };
-        /** @description "모든 프로젝트" 요약의 프로젝트 카드. */
-        ProjectCard: {
-            /** @description 프로젝트 경로. */
-            path: string;
-            /** @description 보여 줄 이름. 이름이 겹치면 상위 폴더까지 붙인다. */
-            label: string;
-            /** @description 폴더가 아직 있는가. */
-            exists: boolean;
-            /**
-             * Format: int32
-             * @description 세션 수.
-             */
-            sessions: number;
-            /**
-             * Format: int64
-             * @description 세션 파일 합.
-             */
-            sizeBytes: number;
-            /**
-             * Format: date-time
-             * @description 마지막 세션이 바뀐 때.
-             */
-            lastActivity: null | string;
-        };
         /** @description 프로젝트 하나. 위 줄 프로젝트 선택기와 "모든 프로젝트" 요약이 쓴다. */
         ProjectItem: {
             /** @description 폴더 이름. Claude 임시 폴더 묶음은 정해 둔 이름. */
@@ -775,12 +805,33 @@ export interface components {
             /** @description 이 프로젝트로 묶은 폴더들(자기 포함). 워크트리·임시 폴더가 여기 들어온다 (ProjectGroups). */
             members: string[];
         };
+        /** @description 한 프로젝트에서 가장 최근에 하던 것. */
+        ProjectWork: {
+            /** @description 프로젝트(묶음) 경로. */
+            projectPath: string;
+            /** @description 프로젝트 이름. */
+            projectLabel: string;
+            /** @description 그 프로젝트의 가장 최근 세션. */
+            work: components["schemas"]["RecentSession"];
+        };
         /** @description 프로젝트 목록과 지금 고른 프로젝트. */
         ProjectsResponse: {
             /** @description 마지막 작업이 최근인 것부터. */
             projects: components["schemas"]["ProjectItem"][];
             /** @description 지금 프로젝트의 경로. null 이면 "모든 프로젝트". */
             current: null | string;
+        };
+        /** @description 세션 한 줄과 그 세션에서 사람이 마지막으로 친 질문. */
+        RecentSession: {
+            /** @description 세션. */
+            session: components["schemas"]["SessionRow"];
+            /** @description 마지막으로 친 질문(한 줄로 다듬음). 사람이 친 줄이 없으면 null. */
+            lastPrompt: null | string;
+            /**
+             * Format: date-time
+             * @description 그 질문을 친 때.
+             */
+            lastPromptAt: null | string;
         };
         /** @description 세션 이름을 붙이거나 떼는 요청. */
         RenameRequest: {
@@ -1024,6 +1075,50 @@ export interface components {
             last7Days: components["schemas"]["UsageTokens"];
             last30Days: components["schemas"]["UsageTokens"];
         };
+        /** @description 워크트리 하나. 저장소의 메인 작업 폴더는 넣지 않는다. */
+        WorktreeItem: {
+            /** @description 저장소 이름(폴더 이름). */
+            repo: string;
+            /** @description 저장소 메인 작업 폴더. */
+            repoPath: string;
+            /** @description 워크트리 폴더. */
+            path: string;
+            /** @description 브랜치. 분리된 HEAD 면 null. */
+            branch: null | string;
+            /** @description 폴더가 아직 있는가. git 에는 남았는데 폴더를 지운 경우 false. */
+            exists: boolean;
+            /**
+             * Format: int32
+             * @description 커밋 안 한 변경 파일 수(새 파일 포함). 못 읽었으면 null.
+             */
+            changes: null | number;
+            /** @description 앞뒤를 잰 기준 브랜치(origin 의 기본 브랜치, 없으면 main·master). 못 찾았으면 null. */
+            baseBranch: null | string;
+            /**
+             * Format: int32
+             * @description 기준 브랜치에 없는 이 워크트리의 커밋 수.
+             */
+            ahead: null | number;
+            /**
+             * Format: int32
+             * @description 이 워크트리에 없는 기준 브랜치의 커밋 수.
+             */
+            behind: null | number;
+            /**
+             * Format: date-time
+             * @description 마지막 커밋 시각.
+             */
+            lastCommitAt: null | string;
+            /** @description 마지막 커밋 제목. */
+            lastCommit: null | string;
+        };
+        /** @description 워크트리 목록. */
+        WorktreesResponse: {
+            /** @description 마지막 커밋이 최근인 것부터. */
+            worktrees: components["schemas"]["WorktreeItem"][];
+            /** @description git 을 찾지 못했다. 그러면 목록은 비어 있다. */
+            gitMissing: boolean;
+        };
     };
     responses: never;
     parameters: never;
@@ -1069,6 +1164,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ToolItem"][];
+                };
+            };
+        };
+    };
+    GetBell: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BellResponse"];
                 };
             };
         };
@@ -1608,6 +1723,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DashboardResponse"];
+                };
+            };
+        };
+    };
+    GetWorktrees: {
+        parameters: {
+            query?: {
+                project?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorktreesResponse"];
                 };
             };
         };

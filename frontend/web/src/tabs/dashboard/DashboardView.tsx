@@ -1,21 +1,23 @@
-// 요약 탭 (docs/design/daiso-d.html "요약"). 프로젝트를 골랐으면 그 프로젝트의 첫 화면, 아니면 프로젝트 카드
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { useLogin } from '../../accounts';
+// 요약 탭 (docs/design/summary.html, docs/DECISIONS.md "요약은 지금 상황"). 위에 타일 넷, 아래에 최근 세션과 워크트리.
+// 프로젝트를 고르면 같은 틀을 그 프로젝트로 좁힌다. 손볼 것과 마지막으로 하던 것은 위 줄 종 팝업(layout/Bell.tsx)에 있다
+import { useQuery } from '@tanstack/react-query';
 import { api, type Schemas } from '../../api/client';
-import { bytes, dateTime, tokens } from '../../format';
+import { bytes, dateTime, exact, tokens, when } from '../../format';
 import { Icon } from '../../icons/Icon';
-import { useCurrentProject, useSetCurrentProject } from '../../project';
+import { useCurrentProject } from '../../project';
 import { navigate } from '../../router';
-import { t } from '../../strings';
+import { has, t } from '../../strings';
 import { ToolBadge, useTools, type Tool } from '../../tools';
 import { requestOpen } from '../sessions/api';
-import { requestRoom, useResumeInRoom, useRooms, inProject } from '../terminal/api';
+import { inProject, requestNewTerminal, useResumeInRoom, useRooms } from '../terminal/api';
+import { useLimits } from '../usage/LimitsBox';
 
 type Dashboard = Schemas['DashboardResponse'];
+type Worktree = Schemas['WorktreeItem'];
 
 function useDashboard(project: string | null) {
   return useQuery({
-    // 계정·인덱스·세션이 바뀌면 서버가 dashboard 알림을 보낸다
+    // 인덱스·세션이 바뀌면 서버가 dashboard 알림을 보낸다. 세션 폴더를 지켜보므로 다른 터미널에서 친 채팅도 따라온다
     queryKey: ['dashboard', project],
     queryFn: async () => {
       const { data, error } = await api.GET('/api/dashboard', { params: { query: { project: project ?? undefined } } });
@@ -25,335 +27,320 @@ function useDashboard(project: string | null) {
   });
 }
 
+function useWorktrees(project: string | null) {
+  return useQuery({
+    // git 을 여러 번 부르므로 타일과 따로 받는다. 늦게 와도 위쪽은 먼저 보인다
+    queryKey: ['dashboard', 'worktrees', project],
+    queryFn: async () => {
+      const { data, error } = await api.GET('/api/dashboard/worktrees', {
+        params: { query: { project: project ?? undefined } },
+      });
+      if (error || !data) throw new Error('워크트리를 읽지 못했다');
+      return data;
+    },
+  });
+}
+
 export function DashboardView() {
   const project = useCurrentProject();
-  const dashboard = useDashboard(project?.path ?? null);
+  const scope = project?.path ?? null;
+  const dashboard = useDashboard(scope);
   const tools = useTools();
   const toolOf = (id: string | null | undefined) => tools.data?.find((tool) => tool.id === id);
 
   if (dashboard.isError) return <div className="empty">{t('dashboard.failed')}</div>;
   if (!dashboard.data) return <div className="centered">{t('top.project.loading')}</div>;
 
-  return project ? (
-    <ProjectHome data={dashboard.data} name={project.name} toolOf={toolOf} />
-  ) : (
-    <AllProjects data={dashboard.data} toolOf={toolOf} />
-  );
-}
-
-function ProjectHome({
-  data,
-  name,
-  toolOf,
-}: {
-  data: Dashboard;
-  name: string;
-  toolOf: (id: string) => Tool | undefined;
-}) {
-  const resume = useResumeInRoom();
-  const last = data.recent[0]?.modifiedAt;
   return (
     <>
-      <div className="phead">
-        <h2>{name}</h2>
-        {last && <span className="state">{t('dashboard.lastWork', { at: dateTime(last) })}</span>}
-      </div>
-      <div className="home">
-        <div className="col">
-          <section className="card box">
-            <div className="box-head">
-              <h3>{t('dashboard.openTerminals')}</h3>
-            </div>
-            <OpenRooms />
-          </section>
-          <section className="card box">
-            <div className="box-head">
-              <h3>{t('dashboard.recent')}</h3>
-              <span className="r">
-                <button className="link" type="button" onClick={() => navigate('sessions')}>
-                  {t('dashboard.seeAll')}
-                </button>
-              </span>
-            </div>
-            {!data.recent.length && <div className="faint">{t('dashboard.noSessions')}</div>}
-            {data.recent.map((session) => {
-              const tool = toolOf(session.tool);
-              return (
-                <div className="srow2" key={session.path}>
-                  {tool ? <ToolBadge tool={tool} /> : <span />}
-                  <span className="t ell" title={session.title}>
-                    {session.title || t('sessions.noPrompt')}
-                  </span>
-                  <small className="num">
-                    {dateTime(session.modifiedAt)} · {bytes(session.sizeBytes)} ·{' '}
-                    {t('dashboard.turns', { count: session.userMessages })}
-                  </small>
-                  <span className="acts">
-                    <button
-                      className="btn small"
-                      type="button"
-                      title={t('sessions.resumeHint')}
-                      disabled={resume.isPending}
-                      onClick={() => resume.mutate(session, { onSuccess: (id) => id && navigate('terminal') })}
-                    >
-                      <Icon name="arrow-repeat" />
-                      {t('dashboard.resume')}
-                    </button>
-                    <button
-                      className="icon-btn"
-                      type="button"
-                      title={t('dashboard.view')}
-                      onClick={() => {
-                        requestOpen(session.path);
-                        navigate('sessions');
-                      }}
-                    >
-                      <Icon name="eye" />
-                    </button>
-                  </span>
-                </div>
-              );
-            })}
-          </section>
-        </div>
-        <div className="col">
-          <AttentionBox items={data.attention} toolOf={toolOf} />
-          <section className="card box">
-            <div className="box-head">
-              <h3>{t('dashboard.thisProject')}</h3>
-              <span className="r">
-                <button className="link" type="button" onClick={() => navigate('usage')}>
-                  {t('tab.usage')}
-                </button>
-              </span>
-            </div>
-            <Stats stats={data.stats} />
-          </section>
-        </div>
+      <Tiles data={dashboard.data} members={project?.members ?? null} />
+      <div className="sum-lower">
+        <RecentBox data={dashboard.data} toolOf={toolOf} />
+        <WorktreeBox project={scope} />
       </div>
     </>
   );
 }
 
-function AllProjects({ data, toolOf }: { data: Dashboard; toolOf: (id: string) => Tool | undefined }) {
-  const setProject = useSetCurrentProject();
-  return (
-    <>
-      <div className="phead">
-        <h2>{t('top.project.all')}</h2>
-        <span className="state">{t('dashboard.projectCount', { count: data.projects.length })}</span>
-      </div>
-      {/* 급한 것이 먼저다. 프로젝트가 많으면 카드 아래 둔 손볼 것이 화면 밖으로 밀린다 */}
-      <div className="two">
-        <AttentionBox items={data.attention} toolOf={toolOf} />
-        <section className="card box">
-          <div className="box-head">
-            <h3>{t('dashboard.everything')}</h3>
-          </div>
-          <Stats stats={data.stats} />
-        </section>
-      </div>
-      <div className="pgrid">
-        {data.projects.map((card) => (
-          <button key={card.path} className="pcard" type="button" onClick={() => setProject.mutate(card.path)}>
-            <span className="top">
-              <Icon name="folder" />
-              <b className="ell">{card.label}</b>
-              {!card.exists && <span className="pill bad">{t('sessions.folderMissing')}</span>}
-            </span>
-            <span className="path ell" title={card.path}>
-              {card.path}
-            </span>
-            <span className="foot2 num">
-              {card.lastActivity && (
-                <span>
-                  <Icon name="clock" /> {dateTime(card.lastActivity)}
-                </span>
-              )}
-              <span>{t('dashboard.sessions', { count: card.sessions })}</span>
-              <span>{bytes(card.sizeBytes)}</span>
-            </span>
-          </button>
-        ))}
-      </div>
-    </>
-  );
-}
+// ── 타일 ──
 
-function Stats({ stats }: { stats: Schemas['DashboardStats'] }) {
+function Tiles({ data, members }: { data: Dashboard; members: readonly string[] | null }) {
+  const rooms = (useRooms().data ?? []).filter((room) => inProject(room, members));
+  const need = rooms.filter((room) => room.state === 'ask' || room.unseen).length;
+  const week = data.week.reduce((sum, day) => sum + day.tokens, 0);
+  const max = Math.max(1, ...data.week.map((day) => day.tokens));
+
   return (
-    <div className="stats3 num">
-      <div>
-        <span>{t('tab.sessions')}</span>
-        <b>{stats.sessions}</b>
-      </div>
-      <div>
-        <span>{t('dashboard.size')}</span>
-        <b>{bytes(stats.sizeBytes)}</b>
-      </div>
-      <div title={stats.last7Days.total.toLocaleString('ko-KR')}>
-        <span>{t('dashboard.week')}</span>
-        <b>{tokens(stats.last7Days.total)}</b>
-      </div>
+    <div className="tiles">
+      <button className="tile card" type="button" onClick={() => navigate('terminal')}>
+        <span className="k">
+          <Icon name="terminal" />
+          {t('dashboard.tile.rooms')}
+        </span>
+        <span className="v num">{rooms.length}</span>
+        <span className="s">
+          {!rooms.length
+            ? t('dashboard.tile.roomsNone')
+            : need
+              ? t('dashboard.tile.roomsNeed', { count: need })
+              : t('dashboard.tile.roomsFine')}
+        </span>
+      </button>
+      <button className="tile card" type="button" onClick={() => navigate('sessions')}>
+        <span className="k">
+          <Icon name="chat-left-text" />
+          {t('dashboard.tile.today')}
+        </span>
+        <span className="v num">
+          {data.today.sessions}
+          <small>{t('dashboard.unit.count')}</small>
+        </span>
+        <span className="s">
+          {t('dashboard.tile.todayHint', { projects: data.today.projects, yesterday: data.today.yesterday })}
+        </span>
+      </button>
+      <LimitTile />
+      <button className="tile card" type="button" onClick={() => navigate('usage')}>
+        <span className="k">
+          <Icon name="bar-chart-line" />
+          {t('dashboard.tile.week')}
+          <b className="num total" title={exact(week)}>
+            {tokens(week)}
+          </b>
+        </span>
+        <span className="bars">
+          {data.week.map((day, i) => (
+            <span
+              key={day.date}
+              className={i === data.week.length - 1 ? 'today' : ''}
+              style={{ height: `${Math.max(6, (day.tokens / max) * 100)}%` }}
+              title={`${day.date} ${tokens(day.tokens)}`}
+            />
+          ))}
+        </span>
+      </button>
     </div>
   );
 }
 
-function AttentionBox({ items, toolOf }: { items: Schemas['Attention'][]; toolOf: (id: string) => Tool | undefined }) {
-  const login = useLogin();
-  const rebuild = useMutation({
-    mutationFn: async () => {
-      await api.POST('/api/index/rebuild');
-    },
-  });
+/** 계정 단위 구독 한도 가운데 가장 많이 쓴 7일(없으면 5시간) 창. 한도는 프로젝트와 상관없다 */
+function LimitTile() {
+  const limits = useLimits();
+  const tools = useTools();
+  const candidates = (limits.data?.tools ?? []).flatMap((tool) => tool.windows.map((window) => ({ tool, window })));
+  const weekly = candidates.filter((c) => c.window.windowMinutes === 10080);
+  const pool = weekly.length ? weekly : candidates;
+  const pick = pool.reduce<(typeof pool)[number] | null>(
+    (best, c) => (!best || c.window.usedPercent > best.window.usedPercent ? c : best),
+    null,
+  );
+  const tool = pick ? tools.data?.find((x) => x.id === pick.tool.tool) : undefined;
+  const used = pick ? Math.round(pick.window.usedPercent) : null;
+  const windowKey = `dashboard.window.${pick?.window.windowMinutes ?? 0}`;
 
   return (
-    <section className="card box">
-      <div className="box-head">
-        <h3>{t('dashboard.attention')}</h3>
-        {items.length > 0 && <span className="faint num">{items.length}</span>}
-      </div>
-      {!items.length && (
-        <div className="allgood">
-          <Icon name="check-circle-fill" />
-          {t('dashboard.allGood')}
-        </div>
+    <button className="tile card has-ring" type="button" onClick={() => navigate('usage')}>
+      <span className="k">
+        {tool ? <ToolBadge tool={tool} small /> : <Icon name="bar-chart-line" />}
+        {pick && tool && has(windowKey)
+          ? t('dashboard.tile.limit', { tool: tool.title, window: t(windowKey) })
+          : t('dashboard.tile.limitAny')}
+      </span>
+      {used === null ? (
+        <span className="s gap">{t('dashboard.tile.limitNone')}</span>
+      ) : (
+        <>
+          <Ring percent={used} />
+          <span className={`v alt num ${used >= 80 ? 'bad' : used >= 50 ? 'warn' : ''}`}>
+            {used}
+            <small>%</small>
+          </span>
+          {pick!.window.resetsAt && (
+            <span className="s gap">
+              {t('dashboard.tile.limitReset', { at: dateTime(pick!.window.resetsAt).slice(5) })}
+            </span>
+          )}
+          {pick!.tool.at && (
+            <span className="s faint">{t('dashboard.tile.limitAt', { at: dateTime(pick!.tool.at).slice(5) })}</span>
+          )}
+        </>
       )}
-      {items.map((item, i) => {
-        const tool = toolOf(item.tool ?? '');
-        const toolName = tool?.title ?? item.tool ?? '';
-        return (
-          <div key={i} className={`attn ${item.level}`}>
-            <Icon
-              name={
-                item.kind === 'account'
-                  ? 'clock'
-                  : item.kind === 'cleanup'
-                    ? 'hdd'
-                    : item.kind === 'plugin'
-                      ? 'plug'
-                      : 'exclamation-triangle-fill'
-              }
-            />
-            {item.kind === 'account' && (
-              <>
-                <span>
-                  <b>
-                    {t(
-                      item.state === 'expiringSoon'
-                        ? 'dashboard.expiringSoon'
-                        : item.state === 'expired'
-                          ? 'dashboard.expired'
-                          : 'dashboard.noLogin',
-                      { tool: toolName },
-                    )}
-                  </b>
-                  {item.at && <small>{t('account.until', { at: dateTime(item.at) })}</small>}
+    </button>
+  );
+}
+
+function Ring({ percent }: { percent: number }) {
+  const r = 30;
+  const c = 2 * Math.PI * r;
+  const tone = percent >= 80 ? 'var(--bad)' : percent >= 50 ? 'var(--warn)' : 'var(--ink)';
+  return (
+    <svg className="ring" viewBox="0 0 80 80" aria-hidden="true">
+      <circle cx="40" cy="40" r={r} fill="none" stroke="var(--line-soft)" strokeWidth="9" />
+      <circle
+        cx="40"
+        cy="40"
+        r={r}
+        fill="none"
+        stroke={tone}
+        strokeWidth="9"
+        strokeLinecap="round"
+        strokeDasharray={`${(percent / 100) * c} ${c}`}
+        transform="rotate(-90 40 40)"
+      />
+      <text x="40" y="45" textAnchor="middle" fontSize="15" fontWeight="700" fill="var(--ink)">
+        {percent}%
+      </text>
+    </svg>
+  );
+}
+
+// ── 최근 세션 ──
+
+function RecentBox({ data, toolOf }: { data: Dashboard; toolOf: (id: string) => Tool | undefined }) {
+  const resume = useResumeInRoom();
+  return (
+    <section className="card sum-box">
+      <div className="box-head">
+        <h3>{t('dashboard.recent')}</h3>
+        <span className="faint sub">{t('dashboard.recentHint', { count: 5 })}</span>
+        <span className="r">
+          <button className="link" type="button" onClick={() => navigate('sessions')}>
+            {t('dashboard.seeAll')}
+          </button>
+        </span>
+      </div>
+      <div className="sum-body">
+        {!data.recent.length && <div className="faint pad">{t('dashboard.noSessions')}</div>}
+        {data.recent.map(({ session, lastPrompt }) => {
+          const tool = toolOf(session.tool);
+          return (
+            <div className="srow3" key={session.path}>
+              {tool ? <ToolBadge tool={tool} /> : <span />}
+              <span className="t">
+                <span className="ptag">{session.projectLabel}</span>
+                <span className="ell" title={session.title}>
+                  {session.title || <span className="faint">{t('sessions.noPrompt')}</span>}
                 </span>
+              </span>
+              <span className="q ell" title={lastPrompt ?? undefined}>
+                <b>{t('dashboard.lastPrompt')}</b>
+                {lastPrompt ?? t('dashboard.noLastPrompt')}
+              </span>
+              <small className="num">
+                {when(session.modifiedAt)} · {t('dashboard.turns', { count: session.userMessages })} ·{' '}
+                {bytes(session.sizeBytes)}
+              </small>
+              <span className="acts">
                 <button
                   className="btn small"
                   type="button"
-                  disabled={login.isPending}
-                  onClick={() => login.mutate(item.tool!)}
-                >
-                  <Icon name="box-arrow-in-right" />
-                  {item.state === 'missing' ? t('account.login') : t('account.relogin')}
-                </button>
-              </>
-            )}
-            {item.kind === 'cleanup' && (
-              <>
-                <span>
-                  <b>{t('dashboard.cleanup', { count: item.count ?? 0, size: bytes(item.bytes ?? 0) })}</b>
-                  <small>{t('dashboard.cleanupHint')}</small>
-                </span>
-                <button className="btn small" type="button" onClick={() => navigate('sessions')}>
-                  <Icon name="check2-square" />
-                  {t('dashboard.goPick')}
-                </button>
-              </>
-            )}
-            {item.kind === 'index' && (
-              <>
-                <span>
-                  <b>{t('dashboard.indexBroken')}</b>
-                  <small>{item.detail}</small>
-                </span>
-                <button
-                  className="btn small"
-                  type="button"
-                  disabled={rebuild.isPending}
-                  onClick={() => rebuild.mutate()}
+                  title={t('sessions.resumeHint')}
+                  disabled={resume.isPending}
+                  onClick={() => resume.mutate(session, { onSuccess: (id) => id && navigate('terminal') })}
                 >
                   <Icon name="arrow-repeat" />
-                  {t('dashboard.rebuild')}
+                  {t('dashboard.resume')}
                 </button>
-              </>
-            )}
-            {item.kind === 'plugin' && (
-              <>
-                <span>
-                  <b>{t('dashboard.plugin', { name: item.name ?? '' })}</b>
-                  <small>{item.detail}</small>
-                </span>
-                <button className="btn small" type="button" onClick={() => navigate('settings')}>
-                  <Icon name="gear" />
-                  {t('tab.settings')}
+                <button
+                  className="icon-btn"
+                  type="button"
+                  title={t('dashboard.view')}
+                  onClick={() => {
+                    requestOpen(session.path);
+                    navigate('sessions');
+                  }}
+                >
+                  <Icon name="eye" />
                 </button>
-              </>
-            )}
-          </div>
-        );
-      })}
+              </span>
+            </div>
+          );
+        })}
+      </div>
     </section>
   );
 }
 
-/** 이 프로젝트의 열린 터미널 방. 누르면 그 방으로 간다 */
-function OpenRooms() {
-  const rooms = useRooms();
-  const project = useCurrentProject();
-  const tools = useTools();
-  const list = (rooms.data ?? []).filter((room) => inProject(room, project?.members ?? null));
-  if (!list.length)
-    return (
-      <div className="empty">
-        {t('dashboard.noRooms')}{' '}
-        <button className="btn small" type="button" onClick={() => navigate('terminal')}>
-          <Icon name="plus-lg" />
-          {t('dashboard.newTerminal')}
-        </button>
-      </div>
-    );
+// ── 워크트리 ──
+
+function WorktreeBox({ project }: { project: string | null }) {
+  const worktrees = useWorktrees(project);
+  const list = worktrees.data?.worktrees ?? [];
+  const dirty = list.filter((item) => item.changes).length;
+
   return (
-    <>
-      {list.map((room) => {
-        const tool = tools.data?.find((x) => x.id === room.tool);
-        return (
-          <div className="trow" key={room.id}>
-            {tool ? <ToolBadge tool={tool} /> : <span />}
-            <span className="ell">
-              <b>{room.name}</b> {room.unseen && <span className="pill ok">{t('terminal.unseen')}</span>}
-            </span>
-            <span
-              className={`pill ${room.state === 'done' ? 'ok' : room.state === 'ask' ? 'warn' : room.state === 'exited' ? 'bad' : 'plain'}`}
-            >
-              {t(`terminal.state.${room.state}` as 'terminal.state.run')}
-            </span>
-            <button
-              className="btn small"
-              type="button"
-              onClick={() => {
-                requestRoom(room.id);
-                navigate('terminal');
-              }}
-            >
-              <Icon name="terminal" />
-              {t('dashboard.openRoom')}
-            </button>
-          </div>
-        );
-      })}
-    </>
+    <section className="card sum-box">
+      <div className="box-head">
+        <h3>{t('dashboard.worktrees')}</h3>
+        {worktrees.data && (
+          <span className="faint sub">{t('dashboard.worktreesHint', { count: list.length, dirty })}</span>
+        )}
+        <span className="r faint sub">{t('dashboard.worktreesOrder')}</span>
+      </div>
+      <div className="sum-body">
+        {worktrees.isPending && <div className="faint pad">{t('dashboard.worktreesLoading')}</div>}
+        {worktrees.isError && <div className="faint pad">{t('dashboard.worktreesFailed')}</div>}
+        {worktrees.data?.gitMissing && <div className="faint pad">{t('dashboard.gitMissing')}</div>}
+        {worktrees.data && !worktrees.data.gitMissing && !list.length && (
+          <div className="faint pad">{t('dashboard.worktreesNone')}</div>
+        )}
+        {list.map((item) => (
+          <WorktreeRow key={item.path} item={item} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function distance(item: Worktree): string | null {
+  if (!item.baseBranch || item.ahead == null || item.behind == null) return null;
+  const base = item.baseBranch.replace(/^origin\//, '');
+  if (!item.ahead && !item.behind) return t('dashboard.wt.same', { base });
+  if (!item.ahead) return t('dashboard.wt.behind', { base, behind: item.behind });
+  if (!item.behind) return t('dashboard.wt.ahead', { ahead: item.ahead });
+  return t('dashboard.wt.both', { ahead: item.ahead, behind: item.behind });
+}
+
+function WorktreeRow({ item }: { item: Worktree }) {
+  const far = distance(item);
+  return (
+    <div className="wrow">
+      <span className="br">
+        <span className="ptag">{item.repo}</span>
+        <span className="ell mono" title={item.branch ?? undefined}>
+          {item.branch ?? t('dashboard.wt.detached')}
+        </span>
+      </span>
+      <span className="path ell mono" title={item.path}>
+        {item.path}
+      </span>
+      <span className="cm ell" title={item.lastCommit ?? undefined}>
+        {item.lastCommitAt && `${when(item.lastCommitAt)} · `}
+        {item.lastCommit}
+      </span>
+      <span className="side">
+        {!item.exists ? (
+          <span className="pill bad">{t('dashboard.wt.gone')}</span>
+        ) : item.changes ? (
+          <span className="pill warn">{t('dashboard.wt.changes', { count: item.changes })}</span>
+        ) : (
+          <span className="pill ok">{t('dashboard.wt.clean')}</span>
+        )}
+        {far && <span className="ab">{far}</span>}
+        {item.exists && (
+          <button
+            className="icon-btn"
+            type="button"
+            title={t('dashboard.wt.terminal')}
+            onClick={() => {
+              requestNewTerminal(item.path);
+              navigate('terminal');
+            }}
+          >
+            <Icon name="terminal" />
+          </button>
+        )}
+      </span>
+    </div>
   );
 }

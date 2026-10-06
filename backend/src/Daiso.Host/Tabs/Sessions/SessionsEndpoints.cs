@@ -2,6 +2,7 @@ using Daiso.Core;
 using Daiso.Core.Sessions;
 using Daiso.Host.Notifications;
 using Daiso.Host.Services;
+using Daiso.Host.Shared;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Daiso.Host.Tabs.Sessions;
@@ -331,7 +332,8 @@ public sealed class SessionsEndpoints : ITabEndpoints
                 session.FilePath,
                 session.Tool.Id,
                 session.Id,
-                name ?? SessionTitle.Clean(session.FirstPrompt),
+                // 첫 줄이 도구가 끼워 넣은 알림·이어 붙인 요약이면 제목이 아니다. 화면이 "제목 없음"을 쓴다
+                name ?? (PromptNoise.IsNoise(session.FirstPrompt) ? string.Empty : SessionTitle.Clean(session.FirstPrompt)),
                 name is not null,
                 session.ProjectPath,
                 session.ProjectPath is { } key && labels.TryGetValue(key, out var label) ? label : SessionLabels.Unknown,

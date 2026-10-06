@@ -33,3 +33,16 @@ export function dateTime(iso: string, timeOnly = false): string {
   const time = `${pad(at.getHours())}:${pad(at.getMinutes())}`;
   return timeOnly ? time : `${at.getFullYear()}-${pad(at.getMonth() + 1)}-${pad(at.getDate())} ${time}`;
 }
+
+/** 오늘 14:20 · 어제 09:02 · 10-03 18:40 · 2025-12-31 18:40. 요약·종처럼 최근 것을 짧게 보일 때 */
+export function when(iso: string, now: Date = new Date()): string {
+  const at = new Date(iso);
+  const pad = (v: number) => String(v).padStart(2, '0');
+  const time = `${pad(at.getHours())}:${pad(at.getMinutes())}`;
+  const day = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const diff = Math.round((day(now) - day(at)) / 86_400_000);
+  if (diff === 0) return `오늘 ${time}`;
+  if (diff === 1) return `어제 ${time}`;
+  const date = `${pad(at.getMonth() + 1)}-${pad(at.getDate())} ${time}`;
+  return at.getFullYear() === now.getFullYear() ? date : `${at.getFullYear()}-${date}`;
+}

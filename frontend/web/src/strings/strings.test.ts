@@ -29,6 +29,7 @@ describe('ko.json', () => {
       'account.done.',
       'authNote.',
       'terminal.state.',
+      'dashboard.window.',
     ];
     const unused = Object.keys(ko).filter(
       (key) => !code.includes(`'${key}'`) && !composed.some((prefix) => key.startsWith(prefix)),

@@ -63,6 +63,8 @@ public static class DaisoHost
         builder.Services.AddSingleton<LimitsService>();
         builder.Services.AddHostedService<LimitsWatcher>();
         builder.Services.AddHostedService<IndexRefreshOnStart>();
+        builder.Services.AddHostedService<IndexWatcher>();
+        builder.Services.AddSingleton<WorktreeReader>();
         builder.Services.AddSingleton<ITabEndpoints, UsageEndpoints>();
         builder.Services.AddSingleton<ITabEndpoints, SessionsEndpoints>();
         builder.Services.AddSingleton<ITabEndpoints, DashboardEndpoints>();
@@ -91,6 +93,7 @@ public static class DaisoHost
         app.Map("/ws", HoldNotificationsAsync).ExcludeFromDescription();
         app.MapShared();
         app.MapAccounts();
+        app.MapBell();
         app.MapTabs();
 
         if (web is null)

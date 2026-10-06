@@ -37,24 +37,38 @@ public sealed class DashboardTests : IAsyncLifetime
     private static string Fixture(string name) => Path.Combine(AppContext.BaseDirectory, "fixtures", "claude", name);
 
     [Fact]
-    public async Task A_project_home_has_recent_sessions_numbers_and_things_to_fix()
+    public async Task A_project_home_has_recent_sessions_with_the_last_prompt()
     {
         var home = await GetAsync<DashboardResponse>("/api/dashboard?project=" + Uri.EscapeDataString(Project));
 
         home.Project.Should().Be(Project);
-        home.Recent.Should().ContainSingle().Which.Title.Should().Be("더미 질문 1");
-        home.Stats.Sessions.Should().Be(1);
-        home.Projects.Should().BeEmpty(because: "프로젝트 카드는 모든 프로젝트일 때만 준다");
-        home.Attention.Should().Contain(item => item.Kind == "cleanup" && item.Count == 1, because: "fixture 세션은 2026-09-01 것이라 30일이 넘었다");
+        var recent = home.Recent.Should().ContainSingle().Subject;
+        recent.Session.Title.Should().Be("더미 질문 1");
+        recent.LastPrompt.Should().NotBeNullOrEmpty().And.NotBe("더미 메타 주입", because: "메타 주입 줄은 사람이 친 글이 아니다");
+        home.Week.Should().HaveCount(7);
+        home.Today.Sessions.Should().Be(0, because: "fixture 세션은 2026-09-01 것이다");
     }
 
     [Fact]
-    public async Task All_projects_lists_project_cards()
+    public async Task All_projects_counts_every_session_and_the_bell_has_things_to_fix()
     {
         var all = await GetAsync<DashboardResponse>("/api/dashboard");
+        var bell = await GetAsync<BellResponse>("/api/bell");
 
         all.Project.Should().BeNull();
-        all.Projects.Should().ContainSingle(card => card.Path == Project && card.Sessions == 1 && !card.Exists);
+        all.Recent.Should().ContainSingle();
+        bell.Attention.Should().Contain(item => item.Kind == "cleanup" && item.Count == 1, because: "fixture 세션은 30일이 넘었다");
+        bell.Last!.ProjectPath.Should().Be(Project);
+        bell.Last.Work.LastPrompt.Should().NotBeNullOrEmpty();
+        bell.Others.Should().BeEmpty(because: "프로젝트가 하나뿐이다");
+    }
+
+    [Fact]
+    public async Task Worktrees_answer_even_when_no_project_is_a_git_repository()
+    {
+        var worktrees = await GetAsync<WorktreesResponse>("/api/dashboard/worktrees");
+
+        worktrees.Worktrees.Should().BeEmpty();
     }
 
     [Fact]

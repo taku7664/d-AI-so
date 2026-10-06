@@ -9,5 +9,6 @@ export const tab: TabModule = {
   order: 10,
   shortcut: 'Ctrl+1',
   inMenu: true,
+  pageClass: 'sum-page',
   View: DashboardView,
 };

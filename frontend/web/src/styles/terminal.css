@@ -303,9 +303,65 @@
   pointer-events: none;
 }
 .bell-pop {
-  width: 360px;
+  width: 440px;
   max-width: calc(100vw - 32px);
+  /* 손볼 것·방이 많으면 팝업 안에서 스크롤한다. 창 밖으로 나가지 않는다 */
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  padding: 6px 8px 8px;
+}
+.bell-pop .attn {
+  padding: 6px 8px;
+}
+.pop-head .hint {
+  margin-left: auto;
+  font-weight: 600;
+}
+.last-work {
+  margin: 8px 0 4px;
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.last-work .k {
+  color: var(--faint);
+  font-size: var(--t-xs);
+  font-weight: 700;
+}
+.last-work .q {
+  font: 700 var(--t-md) / 1.4 var(--f-title);
+  overflow-wrap: anywhere;
+}
+.last-work .meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--muted);
+  font-size: var(--t-xs);
+}
+.last-work .acts {
+  display: flex;
+  gap: 6px;
+  margin-top: 2px;
+}
+.orow {
+  display: grid;
+  grid-template-columns: 18px auto minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
   padding: 6px;
+  border-radius: 8px;
+}
+.orow:hover {
+  background: var(--surface);
+}
+.orow small {
+  display: block;
+  color: var(--faint);
+  font-size: var(--t-xs);
 }
 .pop-head {
   display: flex;

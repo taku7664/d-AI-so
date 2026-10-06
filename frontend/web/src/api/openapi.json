@@ -48,6 +48,26 @@
         }
       }
     },
+    "/api/bell": {
+      "get": {
+        "tags": [
+          "bell"
+        ],
+        "operationId": "GetBell",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BellResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects": {
       "get": {
         "tags": [
@@ -712,6 +732,35 @@
         }
       }
     },
+    "/api/dashboard/worktrees": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "operationId": "GetWorktrees",
+        "parameters": [
+          {
+            "name": "project",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorktreesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/terminal/rooms": {
       "get": {
         "tags": [
@@ -1131,6 +1180,42 @@
         },
         "description": "\u0022\uC190\uBCFC \uAC83\u0022 \uD55C \uC904. \uD654\uBA74\uC774 \u0060Kind\u0060 \uB97C \uBCF4\uACE0 \uBB38\uC7A5\uACFC \uB2E8\uCD94\uB97C \uACE0\uB978\uB2E4."
       },
+      "BellResponse": {
+        "required": [
+          "attention",
+          "last",
+          "others"
+        ],
+        "type": "object",
+        "properties": {
+          "attention": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Attention"
+            },
+            "description": "\uC190\uBCFC \uAC83. \uD31D\uC5C5 \uB9E8 \uC704."
+          },
+          "last": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "\uB9C8\uC9C0\uB9C9\uC73C\uB85C \uD558\uB358 \uAC83. \uC138\uC158\uC774 \uC5C6\uC73C\uBA74 null.",
+                "$ref": "#/components/schemas/ProjectWork"
+              }
+            ]
+          },
+          "others": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectWork"
+            },
+            "description": "\uB2E4\uB978 \uD504\uB85C\uC81D\uD2B8\uC5D0\uC11C \uD558\uB358 \uAC83. \uD504\uB85C\uC81D\uD2B8\uB9C8\uB2E4 \uAC00\uC7A5 \uCD5C\uADFC \uAC83 \uD558\uB098, \uCD5C\uB300 int BellEndpoints.OthersCount\uAC1C."
+          }
+        },
+        "description": "\uC704 \uC904 \uC885 \uD31D\uC5C5. \uC5F4\uB9B0 \uD130\uBBF8\uB110 \uBC29\uC740 \u0060/api/terminal/rooms\u0060 \uC5D0\uC11C \uB530\uB85C \uBC1B\uB294\uB2E4."
+      },
       "CleanupRule": {
         "required": [
           "olderThanDays",
@@ -1151,13 +1236,32 @@
         },
         "description": "\uC815\uB9AC \uAE30\uC900. \u0022\uACE8\uB77C \uCCB4\uD06C\u0022\uC640 \uC694\uC57D\uC758 \u0022\uC190\uBCFC \uAC83\u0022\uC774 \uAC19\uC740 \uAC12\uC744 \uC4F4\uB2E4."
       },
+      "DashboardDay": {
+        "required": [
+          "date",
+          "tokens"
+        ],
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "description": "\uB0A0\uC9DC. \uB3C4\uAD6C \uAE30\uB85D\uC758 \uB0A0\uC9DC(UTC)\uB2E4.",
+            "format": "date"
+          },
+          "tokens": {
+            "type": "integer",
+            "description": "\uADF8\uB0A0 \uD1A0\uD070 \uD569.",
+            "format": "int64"
+          }
+        },
+        "description": "\u0022\uC774\uBC88 \uC8FC \uD1A0\uD070\u0022 \uB9C9\uB300 \uD558\uB098."
+      },
       "DashboardResponse": {
         "required": [
           "project",
-          "recent",
-          "stats",
-          "attention",
-          "projects"
+          "today",
+          "week",
+          "recent"
         ],
         "type": "object",
         "properties": {
@@ -1168,58 +1272,52 @@
             ],
             "description": "\uC9C0\uAE08 \uD504\uB85C\uC81D\uD2B8 \uACBD\uB85C. null \uC774\uBA74 \uBAA8\uB4E0 \uD504\uB85C\uC81D\uD2B8."
           },
+          "today": {
+            "description": "\uC624\uB298 \uC138\uC158.",
+            "$ref": "#/components/schemas/DashboardToday"
+          },
+          "week": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardDay"
+            },
+            "description": "\uCD5C\uADFC 7\uC77C, \uC624\uB798\uB41C \uB0A0\uBD80\uD130."
+          },
           "recent": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/SessionRow"
+              "$ref": "#/components/schemas/RecentSession"
             },
-            "description": "\uCD5C\uADFC \uC138\uC158 5\uAC1C."
-          },
-          "stats": {
-            "description": "\uC22B\uC790.",
-            "$ref": "#/components/schemas/DashboardStats"
-          },
-          "attention": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Attention"
-            },
-            "description": "\uC190\uBCFC \uAC83."
-          },
-          "projects": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ProjectCard"
-            },
-            "description": "\uBAA8\uB4E0 \uD504\uB85C\uC81D\uD2B8\uC77C \uB54C\uB9CC \uCC44\uC6B4\uB2E4. \uB9C8\uC9C0\uB9C9 \uC791\uC5C5\uC774 \uCD5C\uADFC\uC778 \uAC83\uBD80\uD130."
+            "description": "\uCD5C\uADFC \uC138\uC158 \uCD5C\uB300 5\uAC1C. \uB9C8\uC9C0\uB9C9 \uD65C\uB3D9 \uC21C."
           }
         },
-        "description": "\uC694\uC57D \uD654\uBA74."
+        "description": "\uC694\uC57D \uD654\uBA74. \uC5F4\uB9B0 \uD130\uBBF8\uB110\uC740 \u0060/api/terminal/rooms\u0060, \uD55C\uB3C4\uB294 \u0060/api/limits\u0060, \uC6CC\uD06C\uD2B8\uB9AC\uB294 \u0060/api/dashboard/worktrees\u0060 \uC5D0\uC11C \uB530\uB85C \uBC1B\uB294\uB2E4."
       },
-      "DashboardStats": {
+      "DashboardToday": {
         "required": [
           "sessions",
-          "sizeBytes",
-          "last7Days"
+          "projects",
+          "yesterday"
         ],
         "type": "object",
         "properties": {
           "sessions": {
             "type": "integer",
-            "description": "\uC138\uC158 \uC218.",
+            "description": "\uC624\uB298(\uC774 PC \uC758 \uB0A0\uC9DC) \uBC14\uB010 \uC138\uC158 \uC218.",
             "format": "int32"
           },
-          "sizeBytes": {
+          "projects": {
             "type": "integer",
-            "description": "\uC138\uC158 \uD30C\uC77C \uD569.",
-            "format": "int64"
+            "description": "\uADF8 \uC138\uC158\uB4E4\uC758 \uD504\uB85C\uC81D\uD2B8 \uC218(\uC6CC\uD06C\uD2B8\uB9AC\u00B7\uC784\uC2DC \uD3F4\uB354\uB294 \uC6D0\uB798 \uD504\uB85C\uC81D\uD2B8\uB85C \uC13C\uB2E4).",
+            "format": "int32"
           },
-          "last7Days": {
-            "description": "\uCD5C\uADFC 7\uC77C \uD1A0\uD070.",
-            "$ref": "#/components/schemas/UsageTokens"
+          "yesterday": {
+            "type": "integer",
+            "description": "\uC5B4\uC81C \uBC14\uB010 \uC138\uC158 \uC218.",
+            "format": "int32"
           }
         },
-        "description": "\uC22B\uC790 \uC14B."
+        "description": "\u0022\uC624\uB298 \uC138\uC158\u0022 \uD0C0\uC77C."
       },
       "DeleteRequest": {
         "required": [
@@ -1506,50 +1604,6 @@
         },
         "description": "\uD504\uB85C\uD544 \uC774\uB984\uC744 \uBC1B\uB294 \uC694\uCCAD."
       },
-      "ProjectCard": {
-        "required": [
-          "path",
-          "label",
-          "exists",
-          "sessions",
-          "sizeBytes",
-          "lastActivity"
-        ],
-        "type": "object",
-        "properties": {
-          "path": {
-            "type": "string",
-            "description": "\uD504\uB85C\uC81D\uD2B8 \uACBD\uB85C."
-          },
-          "label": {
-            "type": "string",
-            "description": "\uBCF4\uC5EC \uC904 \uC774\uB984. \uC774\uB984\uC774 \uACB9\uCE58\uBA74 \uC0C1\uC704 \uD3F4\uB354\uAE4C\uC9C0 \uBD99\uC778\uB2E4."
-          },
-          "exists": {
-            "type": "boolean",
-            "description": "\uD3F4\uB354\uAC00 \uC544\uC9C1 \uC788\uB294\uAC00."
-          },
-          "sessions": {
-            "type": "integer",
-            "description": "\uC138\uC158 \uC218.",
-            "format": "int32"
-          },
-          "sizeBytes": {
-            "type": "integer",
-            "description": "\uC138\uC158 \uD30C\uC77C \uD569.",
-            "format": "int64"
-          },
-          "lastActivity": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "\uB9C8\uC9C0\uB9C9 \uC138\uC158\uC774 \uBC14\uB010 \uB54C.",
-            "format": "date-time"
-          }
-        },
-        "description": "\u0022\uBAA8\uB4E0 \uD504\uB85C\uC81D\uD2B8\u0022 \uC694\uC57D\uC758 \uD504\uB85C\uC81D\uD2B8 \uCE74\uB4DC."
-      },
       "ProjectItem": {
         "required": [
           "name",
@@ -1596,6 +1650,29 @@
         },
         "description": "\uD504\uB85C\uC81D\uD2B8 \uD558\uB098. \uC704 \uC904 \uD504\uB85C\uC81D\uD2B8 \uC120\uD0DD\uAE30\uC640 \u0022\uBAA8\uB4E0 \uD504\uB85C\uC81D\uD2B8\u0022 \uC694\uC57D\uC774 \uC4F4\uB2E4."
       },
+      "ProjectWork": {
+        "required": [
+          "projectPath",
+          "projectLabel",
+          "work"
+        ],
+        "type": "object",
+        "properties": {
+          "projectPath": {
+            "type": "string",
+            "description": "\uD504\uB85C\uC81D\uD2B8(\uBB36\uC74C) \uACBD\uB85C."
+          },
+          "projectLabel": {
+            "type": "string",
+            "description": "\uD504\uB85C\uC81D\uD2B8 \uC774\uB984."
+          },
+          "work": {
+            "description": "\uADF8 \uD504\uB85C\uC81D\uD2B8\uC758 \uAC00\uC7A5 \uCD5C\uADFC \uC138\uC158.",
+            "$ref": "#/components/schemas/RecentSession"
+          }
+        },
+        "description": "\uD55C \uD504\uB85C\uC81D\uD2B8\uC5D0\uC11C \uAC00\uC7A5 \uCD5C\uADFC\uC5D0 \uD558\uB358 \uAC83."
+      },
       "ProjectsResponse": {
         "required": [
           "projects",
@@ -1619,6 +1696,36 @@
           }
         },
         "description": "\uD504\uB85C\uC81D\uD2B8 \uBAA9\uB85D\uACFC \uC9C0\uAE08 \uACE0\uB978 \uD504\uB85C\uC81D\uD2B8."
+      },
+      "RecentSession": {
+        "required": [
+          "session",
+          "lastPrompt",
+          "lastPromptAt"
+        ],
+        "type": "object",
+        "properties": {
+          "session": {
+            "description": "\uC138\uC158.",
+            "$ref": "#/components/schemas/SessionRow"
+          },
+          "lastPrompt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "\uB9C8\uC9C0\uB9C9\uC73C\uB85C \uCE5C \uC9C8\uBB38(\uD55C \uC904\uB85C \uB2E4\uB4EC\uC74C). \uC0AC\uB78C\uC774 \uCE5C \uC904\uC774 \uC5C6\uC73C\uBA74 null."
+          },
+          "lastPromptAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "\uADF8 \uC9C8\uBB38\uC744 \uCE5C \uB54C.",
+            "format": "date-time"
+          }
+        },
+        "description": "\uC138\uC158 \uD55C \uC904\uACFC \uADF8 \uC138\uC158\uC5D0\uC11C \uC0AC\uB78C\uC774 \uB9C8\uC9C0\uB9C9\uC73C\uB85C \uCE5C \uC9C8\uBB38."
       },
       "RenameRequest": {
         "required": [
@@ -2191,6 +2298,115 @@
           }
         },
         "description": "\uCD5C\uADFC \uAE30\uAC04 \uD569."
+      },
+      "WorktreeItem": {
+        "required": [
+          "repo",
+          "repoPath",
+          "path",
+          "branch",
+          "exists",
+          "changes",
+          "baseBranch",
+          "ahead",
+          "behind",
+          "lastCommitAt",
+          "lastCommit"
+        ],
+        "type": "object",
+        "properties": {
+          "repo": {
+            "type": "string",
+            "description": "\uC800\uC7A5\uC18C \uC774\uB984(\uD3F4\uB354 \uC774\uB984)."
+          },
+          "repoPath": {
+            "type": "string",
+            "description": "\uC800\uC7A5\uC18C \uBA54\uC778 \uC791\uC5C5 \uD3F4\uB354."
+          },
+          "path": {
+            "type": "string",
+            "description": "\uC6CC\uD06C\uD2B8\uB9AC \uD3F4\uB354."
+          },
+          "branch": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "\uBE0C\uB79C\uCE58. \uBD84\uB9AC\uB41C HEAD \uBA74 null."
+          },
+          "exists": {
+            "type": "boolean",
+            "description": "\uD3F4\uB354\uAC00 \uC544\uC9C1 \uC788\uB294\uAC00. git \uC5D0\uB294 \uB0A8\uC558\uB294\uB370 \uD3F4\uB354\uB97C \uC9C0\uC6B4 \uACBD\uC6B0 false."
+          },
+          "changes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "\uCEE4\uBC0B \uC548 \uD55C \uBCC0\uACBD \uD30C\uC77C \uC218(\uC0C8 \uD30C\uC77C \uD3EC\uD568). \uBABB \uC77D\uC5C8\uC73C\uBA74 null.",
+            "format": "int32"
+          },
+          "baseBranch": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "\uC55E\uB4A4\uB97C \uC7B0 \uAE30\uC900 \uBE0C\uB79C\uCE58(origin \uC758 \uAE30\uBCF8 \uBE0C\uB79C\uCE58, \uC5C6\uC73C\uBA74 main\u00B7master). \uBABB \uCC3E\uC558\uC73C\uBA74 null."
+          },
+          "ahead": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "\uAE30\uC900 \uBE0C\uB79C\uCE58\uC5D0 \uC5C6\uB294 \uC774 \uC6CC\uD06C\uD2B8\uB9AC\uC758 \uCEE4\uBC0B \uC218.",
+            "format": "int32"
+          },
+          "behind": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "\uC774 \uC6CC\uD06C\uD2B8\uB9AC\uC5D0 \uC5C6\uB294 \uAE30\uC900 \uBE0C\uB79C\uCE58\uC758 \uCEE4\uBC0B \uC218.",
+            "format": "int32"
+          },
+          "lastCommitAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "\uB9C8\uC9C0\uB9C9 \uCEE4\uBC0B \uC2DC\uAC01.",
+            "format": "date-time"
+          },
+          "lastCommit": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "\uB9C8\uC9C0\uB9C9 \uCEE4\uBC0B \uC81C\uBAA9."
+          }
+        },
+        "description": "\uC6CC\uD06C\uD2B8\uB9AC \uD558\uB098. \uC800\uC7A5\uC18C\uC758 \uBA54\uC778 \uC791\uC5C5 \uD3F4\uB354\uB294 \uB123\uC9C0 \uC54A\uB294\uB2E4."
+      },
+      "WorktreesResponse": {
+        "required": [
+          "worktrees",
+          "gitMissing"
+        ],
+        "type": "object",
+        "properties": {
+          "worktrees": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorktreeItem"
+            },
+            "description": "\uB9C8\uC9C0\uB9C9 \uCEE4\uBC0B\uC774 \uCD5C\uADFC\uC778 \uAC83\uBD80\uD130."
+          },
+          "gitMissing": {
+            "type": "boolean",
+            "description": "git \uC744 \uCC3E\uC9C0 \uBABB\uD588\uB2E4. \uADF8\uB7EC\uBA74 \uBAA9\uB85D\uC740 \uBE44\uC5B4 \uC788\uB2E4."
+          }
+        },
+        "description": "\uC6CC\uD06C\uD2B8\uB9AC \uBAA9\uB85D."
       }
     }
   },
@@ -2200,6 +2416,9 @@
     },
     {
       "name": "tools"
+    },
+    {
+      "name": "bell"
     },
     {
       "name": "projects"

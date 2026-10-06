@@ -6,11 +6,14 @@ import { useCurrentProject } from '../../project';
 import { t } from '../../strings';
 import { ToolBadge, useTools } from '../../tools';
 import {
+  NEW_TERMINAL_EVENT,
   ROOM_EVENT,
+  clearPendingFolder,
   clearPendingRoom,
   inProject,
   markSeen,
   openFolder,
+  peekPendingFolder,
   peekPendingRoom,
   useCloseRoom,
   useRenameRoom,
@@ -33,16 +36,26 @@ export function TerminalView() {
   const tools = useTools();
   const project = useCurrentProject();
   const close = useCloseRoom();
-  const [active, setActive] = useState<string | null>(peekPendingRoom);
-  const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
+  const [active, setActive] = useState<string | null>(() => peekPendingRoom() ?? (peekPendingFolder() ? 'new' : null));
+  const [draft, setDraft] = useState<Draft>(() => ({ ...EMPTY_DRAFT, folder: peekPendingFolder() }));
   useEffect(() => {
     clearPendingRoom();
+    clearPendingFolder();
     const onRoom = (event: Event) => {
       setActive((event as CustomEvent<string>).detail);
       clearPendingRoom();
     };
+    const onNew = (event: Event) => {
+      setDraft({ ...EMPTY_DRAFT, folder: (event as CustomEvent<string>).detail });
+      setActive('new');
+      clearPendingFolder();
+    };
     window.addEventListener(ROOM_EVENT, onRoom);
-    return () => window.removeEventListener(ROOM_EVENT, onRoom);
+    window.addEventListener(NEW_TERMINAL_EVENT, onNew);
+    return () => {
+      window.removeEventListener(ROOM_EVENT, onRoom);
+      window.removeEventListener(NEW_TERMINAL_EVENT, onNew);
+    };
   }, []);
 
   const visible = (rooms.data ?? []).filter((room) => inProject(room, project?.members ?? null));

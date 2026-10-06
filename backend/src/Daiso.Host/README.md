@@ -40,7 +40,8 @@ DAISO_OPEN http://127.0.0.1:51234/?token=...
 | `/` | 첫 화면. `?token=`은 여기서만 받는다. 웹 화면 폴더가 있으면 `index.html`, 없으면 링크 몇 개뿐인 안내 페이지 |
 | `/{탭 id}` 등 점 없는 주소 | 웹 화면 폴더가 있으면 `index.html`. 화면이 주소로 탭을 가르기 때문이다. `/api/` 아래 없는 경로는 404 |
 | `/assets/...` | 웹 화면 빌드 파일 |
-| `/api/dashboard` | 요약 탭. `project`로 좁힌다. 손볼 것(로그인·정리·인덱스·플러그인)을 모아 준다 |
+| `/api/dashboard` | 요약 탭. `project`로 좁힌다. 오늘 세션 수, 최근 7일 토큰, 최근 세션 5개(마지막으로 친 질문 포함). `/api/dashboard/worktrees`는 프로젝트 저장소의 워크트리(git 을 그대로 부른다, 20초 캐시) |
+| `/api/bell` | 위 줄 종 팝업. 손볼 것(로그인·정리·인덱스·플러그인), 마지막으로 하던 것, 다른 프로젝트에서 하던 것. 모든 프로젝트 기준 |
 | `/api/projects`, `/api/tools`, `/api/index`, `/api/limits`, `/api/accounts` | 공용 경로 ([docs/ARCHITECTURE.md](../../../docs/ARCHITECTURE.md) "탭에 속하지 않는 공용 경로") |
 | `/api/terminal` | 터미널 탭. 방 목록·열기·닫기·이름·본 표시, 모델 목록, 새 창으로 열기, 폴더 열기. 방 화면은 WebSocket `/api/terminal/rooms/{id}/pty`(서버→화면 바이너리, 화면→서버 `{"t":"in"}`·`{"t":"resize"}`) |
 | `/api/sessions` | 세션 탭. 목록·검색·대화·내보내기·이름·지우기·이어서 열기·정리 기준. 경로로 받는 세션은 인덱스에 있는 것만 다룬다 |
@@ -66,6 +67,7 @@ DAISO_OPEN http://127.0.0.1:51234/?token=...
 | `Shared/Limits.cs` | 구독 한도: Claude 상태줄 켜고 끄기(`ClaudeStatusLine`), 도구마다 한도 모으기, 한도 파일 지켜보기. 상태줄 명령은 [../Daiso.StatusLine/README.md](../Daiso.StatusLine/README.md) |
 | `Tabs/Terminal/` | 방(`Room`), 여러 화면에 흘리는 출력(`RoomOutput`), 방 띄우기·상태 훅·상태 파일 지켜보기(`RoomService`). ConPTY 는 옛 `Infrastructure/Pty` 를 그대로 쓴다 |
 | `Services/IndexService.cs` | 인덱스 갱신을 한 번에 하나만 돌리고 진행·끝을 `/ws`로 알린다. 서버가 뜰 때 한 번 갱신한다 |
+| `Services/IndexWatcher.cs` | 도구들의 세션 폴더를 지켜보다 바뀐 파일만 인덱스에 다시 읽힌다(1.5초 조용하면, 길어도 6초 안에). 다른 터미널에서 친 채팅도 요약·세션에 따라온다 |
 | `Tabs/` | 탭 엔드포인트 |
 
 ## 옛 앱과 같이 쓰는 것

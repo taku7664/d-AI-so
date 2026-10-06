@@ -29,7 +29,7 @@ public sealed class IndexService : IDisposable
     public const string Topic = "index";
 
     /// <summary>갱신이 끝나면 다시 받아야 하는 화면들. 인덱스를 읽는 곳이다.</summary>
-    private static readonly string[] Readers = [Topic, "projects", "usage", "sessions", "dashboard"];
+    private static readonly string[] Readers = [Topic, "projects", "usage", "sessions", "dashboard", "bell"];
 
     /// <summary>진행 알림 사이 최소 간격. 세션마다 보내면 화면이 쉬지 않고 다시 받는다.</summary>
     private static readonly TimeSpan ProgressInterval = TimeSpan.FromMilliseconds(500);
@@ -77,6 +77,31 @@ public sealed class IndexService : IDisposable
 
         _ = PublishAsync([Topic]);
         return true;
+    }
+
+    /// <summary>
+    /// 바뀐 세션 파일만 이어 읽는다(<see cref="IndexWatcher"/>). 상태 줄은 건드리지 않는다 — 채팅마다 아래 줄이 깜박이면 안 된다.
+    /// 전체 갱신과 겹치면 인덱스의 쓰기 문에서 차례를 기다린다. 실패는 기록만 하고 다음 변화나 다음 전체 갱신에 맡긴다.
+    /// </summary>
+    public async Task RefreshFilesAsync(IReadOnlyCollection<string> paths, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(paths);
+
+        try
+        {
+            await _services.GetRequiredService<ISessionIndex>().RefreshFilesAsync(paths, ct).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            return;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "바뀐 세션 {Count}개를 다시 읽지 못했다", paths.Count);
+            return;
+        }
+
+        await PublishAsync(Readers).ConfigureAwait(false);
     }
 
     private async Task RunAsync(bool rebuild, CancellationToken ct)

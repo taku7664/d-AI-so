@@ -47,7 +47,11 @@ export function useServerEvents(): boolean {
         if (!notification) return;
         void queryClient.invalidateQueries({ queryKey: [notification.tab] });
         // 요약은 여러 곳의 값을 모아 보여 준다. 그 값이 바뀌면 요약도 다시 받는다
-        if (ALSO_DASHBOARD.has(notification.tab)) void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        if (ALSO_DASHBOARD.has(notification.tab)) {
+          void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+          // 종 팝업도 같은 값(손볼 것·하던 것)을 모은다
+          void queryClient.invalidateQueries({ queryKey: ['bell'] });
+        }
       };
       socket.onclose = () => {
         if (stopped) return;

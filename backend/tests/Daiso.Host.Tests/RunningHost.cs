@@ -45,6 +45,7 @@ internal sealed class RunningHost : IAsyncDisposable
     /// <param name="adjust">옵션을 바꾼다.</param>
     /// <param name="extra">서비스를 더 꽂는다. 터미널 시험이 진짜 AI CLI 대신 쓸 도구를 넣는다.</param>
     /// <param name="probe">시험용 탭(<see cref="ProbeTab"/>)을 꽂을지. OpenAPI 문서를 뜰 때는 뺀다.</param>
+    /// <param name="home">서버를 띄우기 전에 가짜 홈을 채운다. 서버가 뜰 때 있는 세션 폴더만 지켜보므로 그 시험은 여기서 폴더를 만든다.</param>
     /// <param name="settings">
     /// 처음 <c>settings.json</c>. 무엇을 주든 인덱스 경로와 세션 홈은 임시 폴더로 덮는다.
     /// 안 그러면 경로를 다 도는 보안 테스트가 진짜 사용자 인덱스(<c>%LOCALAPPDATA%\DAIso\index.db</c>)와 세션 폴더를 연다.
@@ -53,10 +54,12 @@ internal sealed class RunningHost : IAsyncDisposable
         Func<DaisoHostOptions, DaisoHostOptions>? adjust = null,
         Action<AppSettings>? settings = null,
         bool probe = true,
-        Action<IServiceCollection>? extra = null)
+        Action<IServiceCollection>? extra = null,
+        Action<string>? home = null)
     {
         var root = Path.Combine(Path.GetTempPath(), "daiso-host-tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(Path.Combine(root, "home"));
+        home?.Invoke(Path.Combine(root, "home"));
         Directory.CreateDirectory(Path.Combine(root, "data"));
 
         var seed = new AppSettings();

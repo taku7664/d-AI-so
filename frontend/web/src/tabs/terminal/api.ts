@@ -103,6 +103,24 @@ export function clearPendingRoom(): void {
   pendingRoom = null;
 }
 
+// 요약의 워크트리 줄 "이 폴더에서 새 터미널". 폴더를 채운 새 터미널 카드를 연다
+let pendingFolder: string | null = null;
+
+export const NEW_TERMINAL_EVENT = 'daiso:new-terminal';
+
+export function requestNewTerminal(folder: string): void {
+  pendingFolder = folder;
+  window.dispatchEvent(new CustomEvent(NEW_TERMINAL_EVENT, { detail: folder }));
+}
+
+export function peekPendingFolder(): string | null {
+  return pendingFolder;
+}
+
+export function clearPendingFolder(): void {
+  pendingFolder = null;
+}
+
 /** 방이 이 프로젝트 것인가. 워크트리 등 묶인 폴더까지 본다 */
 export function inProject(room: Room, members: readonly string[] | null): boolean {
   if (!members) return true;
