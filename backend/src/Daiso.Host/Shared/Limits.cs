@@ -49,6 +49,7 @@ public sealed class ClaudeStatusLine
     private static readonly JsonSerializerOptions Indented = new()
     {
         WriteIndented = true,
+        NewLine = "\n",
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 
@@ -76,6 +77,8 @@ public sealed class ClaudeStatusLine
 
     private string OriginalPath => Path.Combine(_data, Folder, OriginalFile);
 
+    private string BackupPath => SettingsPath + ".daiso-backup";
+
     /// <summary>Claude 에 넣는 명령. Git Bash 와 cmd 둘 다 읽게 경로를 / 로 쓰고 따옴표로 감싼다.</summary>
     public string Command => $"\"{_exe.Replace('\\', '/')}\" --data \"{_data.Replace('\\', '/')}\"";
 
@@ -99,7 +102,7 @@ public sealed class ClaudeStatusLine
 
             if (existed)
             {
-                File.Copy(SettingsPath, SettingsPath + ".daiso-backup", overwrite: true);
+                File.Copy(SettingsPath, BackupPath, overwrite: true);
             }
 
             // 원래 상태줄(없으면 null)과 파일이 있었는지를 남겨 끌 때 그대로 돌린다
@@ -117,7 +120,7 @@ public sealed class ClaudeStatusLine
             }
 
             settings["statusLine"] = ours;
-            WriteAtomic(SettingsPath, settings.ToJsonString(Indented));
+            WriteSettings(settings);
         }
     }
 
@@ -147,9 +150,16 @@ public sealed class ClaudeStatusLine
             {
                 File.Delete(SettingsPath);
             }
+            else if (SameAsBackup(settings))
+            {
+                // 켠 사이에 다른 칸을 안 바꿨으면 켜기 전 파일을 바이트 그대로 돌린다. 줄 바꿈·들여쓰기까지 같다
+                File.Copy(BackupPath, SettingsPath, overwrite: true);
+                File.Delete(BackupPath);
+            }
             else
             {
-                WriteAtomic(SettingsPath, settings.ToJsonString(Indented));
+                // 켠 사이에 사용자가 다른 칸을 바꿨다. 그 변경은 살리고 상태줄만 되돌린다
+                WriteSettings(settings);
             }
 
             File.Delete(OriginalPath);
@@ -188,6 +198,41 @@ public sealed class ClaudeStatusLine
         {
             return null;
         }
+    }
+
+    /// <summary>되돌린 설정이 켜기 전 사본과 내용이 같은가.</summary>
+    private bool SameAsBackup(JsonObject settings)
+    {
+        if (!File.Exists(BackupPath))
+        {
+            return false;
+        }
+
+        try
+        {
+            return JsonNode.DeepEquals(JsonNode.Parse(File.ReadAllText(BackupPath), documentOptions: Lenient), settings);
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 설정 파일을 쓴다. 지금 파일의 줄 바꿈(LF·CRLF)과 끝 줄 바꿈을 따른다. Claude 는 LF 에 끝 줄 바꿈을 붙여 쓴다.
+    /// </summary>
+    private void WriteSettings(JsonObject settings)
+    {
+        var current = File.Exists(SettingsPath) ? File.ReadAllText(SettingsPath) : null;
+        var newline = current?.Contains("\r\n", StringComparison.Ordinal) == true ? "\r\n" : "\n";
+        var text = settings.ToJsonString(Indented).Replace("\n", newline, StringComparison.Ordinal);
+
+        if (current is null || current.EndsWith('\n'))
+        {
+            text += newline;
+        }
+
+        WriteAtomic(SettingsPath, text);
     }
 
     private JsonObject? ReadSettings()

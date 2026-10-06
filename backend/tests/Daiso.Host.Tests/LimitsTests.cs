@@ -61,6 +61,38 @@ public sealed class LimitsTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Turning_off_gives_back_the_very_same_bytes()
+    {
+        // Claude 가 쓰는 모양: LF, 2칸 들여쓰기, 끝 줄 바꿈
+        const string original = "{\n  \"model\": \"opus\",\n  \"theme\": \"dark\"\n}\n";
+        Directory.CreateDirectory(Path.GetDirectoryName(SettingsPath)!);
+        File.WriteAllText(SettingsPath, original);
+
+        await SetAsync(true);
+        File.ReadAllText(SettingsPath).Should().NotContain("\r\n", because: "켠 동안에도 원래 줄 바꿈을 따른다").And.EndWith("}\n");
+        await SetAsync(false);
+
+        File.ReadAllText(SettingsPath).Should().Be(original, because: "2026-10-06 진짜 설정으로 켜고 껐더니 내용은 같은데 CRLF 로 바뀌고 끝 줄 바꿈이 빠졌다");
+    }
+
+    [Fact]
+    public async Task Changes_made_while_on_survive_turning_off()
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(SettingsPath)!);
+        File.WriteAllText(SettingsPath, "{\n  \"model\": \"opus\"\n}\n");
+        await SetAsync(true);
+
+        var on = JsonNode.Parse(File.ReadAllText(SettingsPath))!.AsObject();
+        on["model"] = "sonnet";
+        File.WriteAllText(SettingsPath, on.ToJsonString());
+        await SetAsync(false);
+
+        var off = JsonNode.Parse(File.ReadAllText(SettingsPath))!;
+        off["model"]!.GetValue<string>().Should().Be("sonnet", because: "켠 사이에 사용자가 바꾼 칸은 살린다");
+        off["statusLine"].Should().BeNull();
+    }
+
+    [Fact]
     public async Task A_settings_file_that_is_not_an_object_is_left_alone()
     {
         Directory.CreateDirectory(Path.GetDirectoryName(SettingsPath)!);

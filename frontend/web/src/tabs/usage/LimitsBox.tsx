@@ -91,7 +91,14 @@ export function LimitsBox({ tools, only }: { tools: Tool[]; only: string | null 
                 </small>
               )}
             </span>
-            <Row row={row} now={now} onEnable={() => setStatusLine.mutate(true)} pending={setStatusLine.isPending} />
+            {/* 켜고 끌 때마다 새로 그린다. 안 그러면 '켜기 확인' 단계가 남아 다음에 끄고 나서 바로 확인 단계가 뜬다 */}
+            <Row
+              key={String(row.enabled)}
+              row={row}
+              now={now}
+              onEnable={() => setStatusLine.mutate(true)}
+              pending={setStatusLine.isPending}
+            />
           </div>
         );
       })}

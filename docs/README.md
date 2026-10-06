@@ -8,7 +8,8 @@ WinUI 3 앱을 **Electron + 웹 화면 + C# 서버**로 옮기는 작업의 문�
 | 날짜 | 한 일 |
 |---|---|
 | 2026-10-03 | 작업물을 `old/`로 옮김. 문서를 주제별로 나눔. 최상위를 `frontend/`(TS)·`backend/`(C#)로 나누고 ESLint·Prettier는 `frontend/`에 둠 |
-| 2026-10-06 | **Stage 4 구독 한도 코드 끝, 진짜 Claude 설정으로 켜 보기만 남음.** Codex는 세션 기록에서, Claude는 새 상태줄 명령(`backend/src/Daiso.StatusLine`, 63~70ms)이 남긴 파일에서 읽음. 켜기 전에 동의를 묻고, 끄면 원래 설정으로 돌림. 하다가 부모가 이미 없을 때 Host가 뜨는 도중에 꺼져 시작이 취소 예외로 끝나던 경쟁을 고침. 전체 시험 중 Providers 시험 하나가 한 번 실패했는데 다시 돌려 보니 재현되지 않아 어느 것인지 못 찾음 |
+| 2026-10-06 | **Stage 4 완료.** 진짜 Claude 설정으로 켜고 끄기(끄면 바이트 그대로 돌아오게 고침), 옛 앱과 사용량 화면을 나란히 비교(같음), 두 앱 동시 인덱스 갱신 이상 없음. Claude 한도 보기는 주인 PC에 켜 둠. 하다가 켜기 확인 단계가 끈 뒤에도 남던 화면 버그를 고침 |
+| 2026-10-06 | **Stage 4 구독 한도 코드 끝.** Codex는 세션 기록에서, Claude는 새 상태줄 명령(`backend/src/Daiso.StatusLine`, 63~70ms)이 남긴 파일에서 읽음. 켜기 전에 동의를 묻고, 끄면 원래 설정으로 돌림. 하다가 부모가 이미 없을 때 Host가 뜨는 도중에 꺼져 시작이 취소 예외로 끝나던 경쟁을 고침. 전체 시험 중 Providers 시험 하나가 한 번 실패했는데 다시 돌려 보니 재현되지 않아 어느 것인지 못 찾음 |
 | 2026-10-06 | **Stage 4 토큰 부분 끝, 구독 한도 남음.** 사용량 화면(오늘·7일·30일, 일·주·월 그래프, 도구 칩, 이 프로젝트/모든 프로젝트, 프로젝트별·모델별). Host에 `/api/usage`·`/api/tools`·`/api/index`(뜰 때 한 번 갱신)와 아래 줄 인덱스 상태. 숫자를 인덱스에 SQL로 직접 센 값과 맞춤 |
 | 2026-10-06 | **Stage 3 완료 (크롬 탭은 주인이 틈틈이 확인).** Electron 창을 CDP로 눌러 메뉴·단축키·톱니·프로젝트 바꾸기·다시 켜도 유지를 확인함. 하다가 `Ctrl+P` 방향키 초점 문제와, 인덱스가 깨졌을 때 프로젝트 목록이 500을 내던 것을 고침. **사용자 `index.db-wal`이 깨져 있는 것을 발견**(원인 모름). 주인 허락으로 깨진 파일을 `index-broken-20261006\`에 옮겨 두고 인덱스를 다시 만듦(세션 570) |
 | 2026-10-06 | **Stage 3 코드 끝.** `frontend/web`(React 19·Vite 8·TanStack Query): 위 줄(프로젝트 선택기, 종·계정 자리, 톱니), 탭 여섯 개와 설정 빈 화면, `Ctrl+1~6`·`Ctrl+P`, D안 색·글꼴·아이콘. Host가 화면 빌드를 내주고 `/api/projects`를 엶. OpenAPI 스냅숏 시험으로 서버와 TS 타입을 맞춤. 하다가 시험 Host가 진짜 사용자 인덱스를 열 수 있던 것을 임시 폴더로 막음 |
@@ -17,7 +18,7 @@ WinUI 3 앱을 **Electron + 웹 화면 + C# 서버**로 옮기는 작업의 문�
 | 2026-10-05 | **Stage 1 코드·테스트 끝, 크롬 확인 남음.** `backend/src/Daiso.Host`(net10.0-windows): 보안 미들웨어, `server.json`, 부모 감시, `/api/health`·OpenAPI·`/ws`, 옛 앱의 서비스 등록. 보안 테스트 48개. 하다가 SQLite 취약점(CVE-2025-6965) 때문에 `Infrastructure`의 SQLitePCLRaw를 2.1.13으로 올림 |
 | 2026-10-05 | **Stage 0 완료.** `backend/`에 `Daiso.sln`·`Directory.Build.props`·`global.json`. 솔루션은 `old/src` 백엔드 7개와 `old/tests` 세 벌, 테스트가 참조하는 `old/tools/adapters/Daiso.Adapter.Claude`를 담는다. 하다가 빨갛던 옛 테스트 하나(어댑터가 일찍 끝나면 파이프 쓰기에서 던짐)을 고침 |
 
-다음은 [ROADMAP.md](ROADMAP.md) Stage 4(사용량)다. 새 앱은 루트에서 `tools/run-app.ps1`로 띄운다 ([frontend/web/README.md](../frontend/web/README.md)).
+다음은 [ROADMAP.md](ROADMAP.md) Stage 5(요약·세션)다. 새 앱은 루트에서 `tools/run-app.ps1`로 띄운다 ([frontend/web/README.md](../frontend/web/README.md)).
 
 ### 이어받는 사람이 먼저 볼 것
 
