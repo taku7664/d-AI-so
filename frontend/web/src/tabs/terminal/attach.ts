@@ -6,12 +6,7 @@
 //   - 그 밖의 파일은 전체 경로를 붙인다. 빈칸이 있으면 따옴표로 감싸고 앞뒤에 빈칸을 둔다(앞 경로에 들러붙지 않게)
 //   - 사용자의 클립보드는 덮어써진다
 import { api } from '../../api/client';
-
-interface Desktop {
-  pathForFile?: (file: File) => string;
-}
-
-const desktop = (globalThis as { daisoDesktop?: Desktop }).daisoDesktop;
+import { desktop } from '../../desktop';
 
 /** Electron 창이면 파일의 전체 경로를 안다. 브라우저 탭에서는 그림만 붙일 수 있다 */
 export const knowsPaths = typeof desktop?.pathForFile === 'function';

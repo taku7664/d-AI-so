@@ -8,9 +8,10 @@ import { bytes, dateTime, when } from '../format';
 import { Icon } from '../icons/Icon';
 import { navigate } from '../router';
 import { t } from '../strings';
-import { useCurrentProject, useProjects, useSetCurrentProject } from '../project';
+import { useCurrentProject, useSetCurrentProject } from '../project';
 import { requestOpen } from '../tabs/sessions/api';
-import { inProject, requestRoom, useResumeInRoom, useRooms } from '../tabs/terminal/api';
+import { useResumeInRoom, useRooms } from '../tabs/terminal/api';
+import { useGoToRoom } from './goToRoom';
 import { STATE_ICON } from '../tabs/terminal/TerminalView';
 import { ToolBadge, useTools, type Tool } from '../tools';
 
@@ -33,9 +34,6 @@ function useBell(enabled: boolean) {
 
 export function Bell() {
   const rooms = useRooms();
-  const current = useCurrentProject();
-  const projects = useProjects();
-  const setProject = useSetCurrentProject();
   const tools = useTools();
   const [open, setOpen] = useState(false);
   const bell = useBell(open);
@@ -53,16 +51,11 @@ export function Bell() {
     return () => document.removeEventListener('pointerdown', close);
   }, [open]);
 
+  const goToRoom = useGoToRoom();
   const go = (id?: string) => {
-    const room = list.find((r) => r.id === id);
-    // 지금 프로젝트 밖의 방이면 그 방의 프로젝트로 바꾼다. 터미널 탭은 지금 프로젝트의 방만 보인다
-    if (room && !inProject(room, current?.members ?? null)) {
-      const owner = projects.data?.projects.find((p) => inProject(room, p.members));
-      setProject.mutate(owner?.path ?? null);
-    }
-    if (id) requestRoom(id);
     setOpen(false);
-    navigate('terminal');
+    if (id) goToRoom(id);
+    else navigate('terminal');
   };
 
   return (

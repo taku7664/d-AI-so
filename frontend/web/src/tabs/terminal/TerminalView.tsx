@@ -15,6 +15,7 @@ import {
   openFolder,
   peekPendingFolder,
   peekPendingRoom,
+  setViewingRoom,
   useCloseRoom,
   useRenameRoom,
   useRooms,
@@ -72,6 +73,12 @@ export function TerminalView() {
   const others = (rooms.data?.length ?? 0) - visible.length;
   const room = visible.find((r) => r.id === active) ?? (active === 'new' ? null : (visible[0] ?? null));
   const showNew = active === 'new' || !room;
+
+  useEffect(() => {
+    if (!room || showNew) return;
+    setViewingRoom(room.id);
+    return () => setViewingRoom(null);
+  }, [room, showNew]);
 
   // 보고 있는 방의 "안 본 답"을 지운다. 창이 앞에 있을 때만 본 것으로 친다
   useEffect(() => {

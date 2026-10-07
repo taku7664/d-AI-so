@@ -1,6 +1,6 @@
 // Electron 메인. Daiso.Host 를 띄워 알려 준 주소를 창에 열고, 트레이에 머문다 (docs/ARCHITECTURE.md "프로세스 구성")
 // 앱을 끝내면 Host 는 부모(이 프로세스)가 끝난 것을 보고 스스로 끝난다 (Daiso.Host 의 ParentWatcher)
-import { app, BrowserWindow, dialog, Menu, nativeTheme, shell, Tray } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, Notification, shell, Tray } from 'electron';
 import path from 'node:path';
 import { startHost, type RunningHost } from './host';
 
@@ -84,6 +84,39 @@ function createWindow(h: RunningHost): void {
   void win.loadURL(h.openUrl);
 }
 
+// 완료 알림 (옛 앱 e682f15 DoneNotifier). 언제 띄울지는 화면이 정한다(안 본 답이 새로 생긴 방). 누르면 창을 꺼내 그 방을 연다
+// 알림 객체를 잡아 두지 않으면 GC 가 거둬 누르기가 오지 않는다. 닫히거나 눌릴 때까지 들고 있는다
+const notices = new Set<Notification>();
+
+function text(value: unknown, max: number): string | null {
+  return typeof value === 'string' && value.length > 0 && value.length <= max ? value : null;
+}
+
+function listenNotices(): void {
+  ipcMain.on('daiso:notify', (event, payload: { room?: unknown; title?: unknown; body?: unknown }) => {
+    // 우리 창이 보낸 것만 받는다
+    if (!win || win.isDestroyed() || event.sender !== win.webContents) return;
+    const room = text(payload?.room, 64);
+    const title = text(payload?.title, 200);
+    const body = text(payload?.body, 400) ?? '';
+    if (!room || !title || !Notification.isSupported()) return;
+
+    const notice = new Notification({ title, body, icon: ICON });
+    notices.add(notice);
+    const forget = () => notices.delete(notice);
+    notice.on('click', () => {
+      forget();
+      const before = win;
+      showWindow();
+      // 창이 없어져 새로 만들었으면 그 창은 아직 뜨는 중이라 방을 열라고 할 곳이 없다. 창만 꺼낸다
+      if (win && win === before && !win.isDestroyed()) win.webContents.send('daiso:open-room', room);
+    });
+    notice.on('close', forget);
+    notice.on('failed', forget);
+    notice.show();
+  });
+}
+
 function createTray(h: RunningHost): void {
   tray = new Tray(ICON);
   tray.setToolTip('DAIso');
@@ -108,6 +141,7 @@ async function main(): Promise<void> {
     quit();
   });
   createTray(h);
+  listenNotices();
   createWindow(h);
 }
 
@@ -124,6 +158,8 @@ if (!app.requestSingleInstanceLock() || quitRequest) {
   });
   // 창을 숨겨도 트레이에 남는다. 창이 다 닫혀도 끝내지 않는다
   app.on('window-all-closed', () => undefined);
+  // 윈도우 알림에 앱 이름이 뜨게 한다. 설치판(Stage 8)은 시작 메뉴 바로 가기에 같은 값을 넣는다
+  app.setAppUserModelId('DAIso');
   app
     .whenReady()
     .then(main)

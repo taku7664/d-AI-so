@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useServerEvents } from './api/events';
 import { useIndexStatus } from './indexStatus';
 import { Nav } from './layout/Nav';
+import { useDoneNotices } from './layout/notices';
 import { TopBar } from './layout/TopBar';
 import { navigate, usePathId } from './router';
 import { t } from './strings';
@@ -11,6 +12,7 @@ import { MENU_TABS, tabFor } from './tabs/registry';
 export function App() {
   const tab = tabFor(usePathId());
   const connected = useServerEvents();
+  useDoneNotices();
   const [pickerOpen, setPickerOpen] = useState(false);
 
   useEffect(() => {

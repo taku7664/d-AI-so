@@ -103,6 +103,17 @@ export function clearPendingRoom(): void {
   pendingRoom = null;
 }
 
+// 지금 화면에 보이는 방. 완료 알림은 이 방이면 띄우지 않는다(보고 있으니까)
+let viewing: string | null = null;
+
+export function setViewingRoom(id: string | null): void {
+  viewing = id;
+}
+
+export function viewingRoom(): string | null {
+  return viewing;
+}
+
 // 요약의 워크트리 줄 "이 폴더에서 새 터미널". 폴더를 채운 새 터미널 카드를 연다
 let pendingFolder: string | null = null;
 
