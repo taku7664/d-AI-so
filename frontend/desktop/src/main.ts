@@ -156,6 +156,15 @@ if (!app.requestSingleInstanceLock() || quitRequest) {
   app.on('before-quit', () => {
     quitting = true;
   });
+  // 끝내기의 마지막 단계. 창은 이미 닫혔다. 트레이를 지우고 Chromium 의 종료 정리를 건너뛰어 스스로 끝낸다.
+  // Electron 44 의 Chromium 은 종료 정리에서 GPU 프로세스를 먼저 치운 뒤 브라우저 쪽 GPU 컨텍스트를 치우며 GPU 에 동기 호출을 한다.
+  // GPU 프로세스가 그 사이 먼저 끝나 버리면 답이 오지 않아 메인만 영영 남는다(2026-10-07 덤프로 확인. README "알려진 문제").
+  // process.exit 는 app.exit 로 이어져 같은 정리를 타므로 쓸 수 없다. 종료 코드는 1 이 된다
+  app.on('quit', () => {
+    tray?.destroy();
+    tray = null;
+    process.kill(process.pid);
+  });
   // 창을 숨겨도 트레이에 남는다. 창이 다 닫혀도 끝내지 않는다
   app.on('window-all-closed', () => undefined);
   // 윈도우 알림에 앱 이름이 뜨게 한다. 설치판(Stage 8)은 시작 메뉴 바로 가기에 같은 값을 넣는다

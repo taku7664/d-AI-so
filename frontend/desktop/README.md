@@ -37,7 +37,12 @@ Host는 `detached: true`로 띄운다. Windows에서 Node(libuv)는 자식을 "�
 | 트레이 "끝내기" | 같은 부모 감시를 탄다. 화면을 눌러 보지는 않았다 |
 | `electron … --quit`(`tools/stop-app.ps1`) | 떠 있는 앱이 트레이 "끝내기"와 같은 길로 끝난다. 0.9초 만에 Electron·Host가 다 끝나고 `server.json`이 지워진다 (2026-10-07). 강제로 끄면 트레이 아이콘이 지워지지 않고 쌓이므로 빌드 전에는 이것으로 끈다. `run-app.ps1`도 이것을 부른다 |
 
-**알려진 문제 (2026-10-07, 원인 모름):** `run-app.ps1`의 출력을 파이프로 받아 둔 채 띄우고 60~90초쯤 지나 `--quit`으로 끄면, 창·렌더러는 닫히고 메인의 JS 쪽(디버거 연결)도 끝나는데 메인 프로세스만 남아 `stop-app.ps1`이 15초 뒤 강제로 끈다. 알림 기능 전 코드에서도 2번 중 1번 났다. Host 출력을 메인 표준 출력으로 옮겨 쓰지 않게 해 봤지만 그대로였다. 같은 셸에서 띄워 그 셸이 살아 있을 때는 60초 뒤에도 1초 안에 끝났다. 사람이 터미널에서 띄우거나 트레이에서 끝낼 때도 나는지는 아직 모른다
+**끝낼 때 메인만 남던 문제 (2026-10-07 원인 확인, 고침):** 띄우고 60~90초쯤 지나 끄면 창·렌더러·GPU 프로세스는 끝나는데 메인만 남아 `stop-app.ps1`이 15초 뒤 강제로 껐다.
+
+- 원인: Chromium 종료 정리(`BrowserMainLoop::ShutdownThreadsAndCleanUp`)는 GPU 프로세스를 먼저 치우고(`ProcessHostCleanUp`) 그다음 브라우저 쪽 GPU 컨텍스트를 치운다(`ImageTransportFactory::Terminate`). 이때 `CommandBufferProxyImpl::DisconnectChannel → GpuChannelHost::VerifyFlush`가 GPU에 동기 호출(`GetSharedMemoryForFlushId`)을 한다. GPU 프로세스가 그 사이 먼저 끝나 버리면 답이 오지 않아 메인이 영영 기다린다. 멈춘 메인 덤프 4개가 모두 이 자리였다. 최신 Chromium은 이 호출을 비동기(`EnsureFlush`)로 바꿨다
+- 경합이다. 같은 조건에서 6번 중 4번 멈췄고, 20초 만에 끄거나 창을 띄우지 않으면 멈추지 않았다. 부모 셸과는 상관없다(살아 있는 셸에서 띄워도 멈췄다). 60초쯤부터 잦아지는 까닭은 확인하지 못했다
+- 조치: `quit`(창이 다 닫힌 마지막 단계)에서 트레이를 지우고 `process.kill(process.pid)`로 Chromium 종료 정리를 건너뛴다. `process.exit`는 `app.exit`로 이어져 같은 정리를 타서 쓸 수 없다. 종료 코드는 1이 된다. 건너뛰어 잃는 것은 없다: 토큰 쿠키는 실행마다 새로 받고, 화면은 localStorage 등을 쓰지 않고, Host는 부모 감시로 정리된다
+- 확인: 출력을 받아 둔 셸로 `run-app.ps1 -NoBuild`를 띄우고 75~90초 뒤 `stop-app.ps1`, 6번 모두 0.3~3.1초에 끝나고 Host·`server.json`도 정리됐다. 트레이에 아이콘이 남지 않는지는 눈으로 보지 않았다
 
 Host가 띄우는 터미널(Stage 6)도 이제 Electron의 잡 밖에 있다. Host가 끝날 때 자기 자식을 정리해야 한다.
 
