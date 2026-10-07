@@ -56,4 +56,8 @@ Host가 띄우는 터미널(Stage 6)도 이제 Electron의 잡 밖에 있다. Ho
 
 ## preload
 
-`window.daisoDesktop`을 연다 ([docs/DECISIONS.md](../../docs/DECISIONS.md) "Electron 전용 기능은 좁은 다리 하나로"). 지금은 빈 객체다. 화면은 이 객체가 있는지만 보고 Electron 전용 기능을 켠다. 쓰는 기능이 생길 때 하나씩 더한다.
+`window.daisoDesktop`을 연다 ([docs/DECISIONS.md](../../docs/DECISIONS.md) "Electron 전용 기능은 좁은 다리 하나로"). 화면은 이 객체가 있는지만 보고 Electron 전용 기능을 켠다. 쓰는 기능이 생길 때 하나씩 더한다.
+
+| 이름 | 하는 일 | 쓰는 곳 |
+|---|---|---|
+| `pathForFile(file)` | 끌어 놓았거나 고른 파일의 전체 경로(`webUtils.getPathForFile`). 파일이 없는 것(클립보드 그림)은 빈 글자 | 터미널 방에 파일 붙이기 |

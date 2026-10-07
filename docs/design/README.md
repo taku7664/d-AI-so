@@ -18,7 +18,7 @@ D안의 수치와 목록은 예시다. 동작도 흉내만 낸다. 2026-10-07 �
 
 왜 이렇게 정했는지는 [../DECISIONS.md](../DECISIONS.md) "정한 것"의 2026-10-06 줄들에 있다.
 
-터미널 방의 말풍선 보기 시안: [terminal-chat.html](terminal-chat.html) (2026-10-07, 이 PC 의 실제 Claude 세션으로 그림)
+터미널 방의 말풍선 보기 시안: [terminal-chat.html](terminal-chat.html) (2026-10-07, 이 PC 의 실제 Claude 세션으로 그림). "끌어 놓는 중"·"첨부 대기" 상태는 파일 붙이기(첨부 칩의 그림·파일도 이 PC 의 실제 파일)
 
 ## 시안에서 정해 둔 화면 규칙
 

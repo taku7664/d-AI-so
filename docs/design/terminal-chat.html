@@ -105,6 +105,17 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .compose-box .text { padding: 6px 4px; min-height: 34px; line-height: 1.5; color: var(--ink); font-family: var(--f-mono); }
 .compose-box .text.ph { color: var(--faint); font-family: var(--f-ui); }
 .send { width: 34px; height: 34px; border-radius: 12px; border: 0; background: var(--ink); color: var(--surface); display: grid; place-items: center; }
+.chat { position: relative; }
+.dropzone { position: absolute; inset: 10px; border: 2px dashed var(--hl); border-radius: 16px; background: var(--surface); display: grid; place-content: center; justify-items: center; gap: 6px; text-align: center; z-index: 5; }
+.dropzone > .i { font-size: 34px; color: var(--warn); }
+.dropzone b { font-size: var(--t-md); }
+.dropzone span { color: var(--muted); }
+.atts { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 2px 4px; }
+.att { display: inline-flex; align-items: center; gap: 8px; max-width: 320px; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 4px 4px 4px 4px; }
+.att img, .att .ficon { width: 36px; height: 36px; border-radius: 7px; object-fit: cover; flex: none; background: var(--line-soft); display: grid; place-items: center; color: var(--muted); font-size: 18px; }
+.att .meta { display: grid; min-width: 0; line-height: 1.3; }
+.att .meta small { color: var(--faint); font-size: 11px; }
+.att .icon-btn { width: 24px; height: 24px; }
 .compose-hint { display: flex; gap: 14px; margin-top: 6px; font-size: 11px; color: var(--faint); }
 .cmdpop { position: absolute; left: 16px; right: 16px; bottom: calc(100% - 4px); max-width: 620px; background: var(--raise); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 6px; max-height: 360px; overflow: auto; z-index: 5; }
 .cmdgroup { font-size: 11px; font-weight: 700; color: var(--faint); padding: 8px 10px 4px; display: flex; align-items: center; gap: 6px; }
@@ -230,6 +241,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
     <button type="button" data-v="chat" aria-pressed="true">말풍선</button>
     <button type="button" data-v="cmd" aria-pressed="false">/ 목록</button>
     <button type="button" data-v="ask" aria-pressed="false">허락 기다림</button>
+    <button type="button" data-v="drop" aria-pressed="false">끌어 놓는 중</button>
+    <button type="button" data-v="attach" aria-pressed="false">첨부 대기</button>
   </div>
   <div class="seg" role="group" aria-label="창 너비"><button type="button" data-w="1280" aria-pressed="true">앱 창 1280</button><button type="button" data-w="960" aria-pressed="false">좁은 창 960</button></div>
   <div class="seg" role="group" aria-label="테마"><button type="button" data-th="light" aria-pressed="true">밝게</button><button type="button" data-th="dark" aria-pressed="false">어둡게</button></div>
@@ -308,6 +321,13 @@ button { font: inherit; color: inherit; cursor: pointer; }
     return out.join('');
   }
 
+  // 이 PC 의 실제 파일: 그림은 DAIso 확인 스크린샷, 파일은 JBroEngine 번역 파일
+  const SHOT = 'file:///F:/AI/Temp/claude/C--Users-----Documents-GitHub-d-AI-so/34566841-1538-498e-87c1-16c29e39e060/scratchpad/chat-ask.png';
+  function atts() {
+    return `<div class="atts"><span class="att"><img src="${SHOT}" alt=""><span class="meta"><span class="ell">chat-ask.png</span><small>그림 · 1280×820</small></span><button class="icon-btn" type="button" title="빼기">${ic('x-lg')}</button></span>
+      <span class="att"><span class="ficon">${ic('file-earmark-text')}</span><span class="meta"><span class="ell">ko-KR.yaml</span><small class="ell" title="C:&#92;Users&#92;박주형&#92;Documents&#92;GitHub&#92;JBroEngine&#92;source&#92;JBroEngine&#92;Build&#92;x64&#92;Debug&#92;Localization&#92;ko-KR.yaml">JBroEngine&#92;…&#92;Localization</small></span><button class="icon-btn" type="button" title="빼기">${ic('x-lg')}</button></span></div>`;
+  }
+
   function cmdPop() {
     let n = 0;
     return `<div class="cmdpop" role="listbox">${COMMANDS.map(([g, i, items]) => `<div class="cmdgroup">${ic(i)}${esc(g)}</div>${items.map(([name, arg, d, tui]) => `<button class="cmd ${tui ? 'tui' : ''} ${n++ === 0 ? 'on' : ''}" type="button"><b>${esc(name)}</b><em>${esc(arg)}</em><span>${esc(d)}</span></button>`).join('')}`).join('')}</div>`;
@@ -326,18 +346,20 @@ button { font: inherit; color: inherit; cursor: pointer; }
         <button class="icon-btn" type="button" title="더보기">${ic('three-dots')}</button>
         <span class="title ell">Claude Code · JBroEngine — 에디터 빌드 ${working ? '<span class="pill warn">허락 기다림</span>' : '<span class="pill">답 끝남</span>'}</span>
       </div>
-      <div class="chat"><div class="msgs" id="msgs">${msgs(state)}</div>
+      <div class="chat"><div class="msgs" id="msgs">${msgs(state)}</div>${state === 'drop' ? `<div class="dropzone">${ic('download')}<b>놓으면 Claude 에 붙입니다</b><span>그림은 첨부로, 다른 파일은 전체 경로로 · 보내기 전까지 입력칸에서 뺄 수 있습니다</span></div>` : ''}
         <div class="composer">${state === 'cmd' ? cmdPop() : ''}
-          <div class="compose-box ${state === 'cmd' ? 'focus' : ''}"><button class="icon-btn" type="button" title="파일 첨부">${ic('paperclip')}</button>
-            ${state === 'cmd' ? '<span class="text">/</span>' : '<span class="text ph">Claude 에게 보낼 말 · / 를 치면 명령과 스킬</span>'}
+          <div class="compose-box ${state === 'cmd' || state === 'attach' ? 'focus' : ''}">${state === 'attach' ? atts() : ''}<button class="icon-btn" type="button" title="파일 첨부">${ic('paperclip')}</button>
+            ${state === 'cmd' ? '<span class="text">/</span>' : state === 'attach' ? '<span class="text">이 화면처럼 허락 카드가 뜨는지 ko-KR.yaml 의 문구도 같이 봐 줘</span>' : '<span class="text ph">Claude 에게 보낼 말 · / 를 치면 명령과 스킬</span>'}
             <button class="send" type="button" title="보내기 (Enter)">${ic('send-fill')}</button></div>
-          <div class="compose-hint"><span>Enter 보내기 · Shift+Enter 줄바꿈</span><span>보낸 글은 이 방의 Claude 입력 줄로 들어갑니다</span></div>
+          <div class="compose-hint"><span>Enter 보내기 · Shift+Enter 줄바꿈</span><span>${state === 'attach' ? '보낼 때 그림은 클립보드를 거쳐 Claude 에 첨부되고, 파일은 경로로 붙습니다' : '보낸 글은 이 방의 Claude 입력 줄로 들어갑니다'}</span></div>
         </div></div>`;
   }
 
   const DESC = {
     chat: '<b>말풍선</b> — 이 PC 의 실제 Claude 세션 끝부분입니다. 도구를 잇달아 쓴 곳은 한 줄로 접고(누르면 펼침, 한 곳은 펼쳐 둠), 실패한 도구는 빨갛게 셉니다.',
     cmd: '<b>/ 목록</b> — 입력칸에 / 를 치면 바로 위에 뜹니다. 내 스킬은 ~/.claude/skills 의 실제 9개. 화면이 있어야 하는 명령(/login 등)은 고르면 터미널 보기로 넘어갑니다.',
+    drop: '<b>끌어 놓는 중</b> — 탐색기에서 파일을 끌어 말풍선 위에 올린 모습. 터미널 보기에서도 같은 판이 뜨고, 거기서는 놓자마자 CLI 입력 줄에 붙습니다. 브라우저 탭에서는 경로를 알 수 없어 그림만 받습니다.',
+    attach: '<b>첨부 대기</b> — 놓았거나 📎 로 고른 파일, Ctrl+V 로 붙인 그림이 입력칸 위에 칩으로 쌓입니다. 보낼 때 그림은 하나씩 클립보드에 올려 Claude 의 그림 붙이기 키(Alt+V)로 첨부하고, 다른 파일은 경로로 글 뒤에 붙입니다. 그림은 이 PC 의 실제 스크린샷, 파일은 JBroEngine 의 실제 번역 파일입니다.',
     ask: '<b>허락 기다림</b> — 아래 두 말풍선과 허락 요청은 <b>예시</b>입니다(지금 허락을 기다리는 방이 없어서). 허락은 CLI 화면에서 답하므로 단추가 터미널 보기로 넘깁니다.',
   };
   const q = new URLSearchParams(location.search);

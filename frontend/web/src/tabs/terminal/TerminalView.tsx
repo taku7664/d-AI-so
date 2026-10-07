@@ -20,6 +20,15 @@ import {
   useRooms,
   type Room,
 } from './api';
+import {
+  attachImages,
+  knowsPaths,
+  pasteImageKeys,
+  quotePaths,
+  release,
+  toAttachments,
+  type Attachment,
+} from './attach';
 import { ChatView } from './ChatView';
 import { EMPTY_DRAFT, NewTerminal, type Draft } from './NewTerminal';
 import { TermScreen, type TermHandle } from './TermScreen';
@@ -166,10 +175,45 @@ function RoomBody({ room, onSameFolder }: { room: Room; onSameFolder: () => void
   const [name, setName] = useState(room.name);
   const [more, setMore] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  // 말풍선 입력칸 위에 쌓인 첨부. 보낼 때 CLI 로 간다
+  const [atts, setAtts] = useState<Attachment[]>([]);
+  const [dragging, setDragging] = useState(false);
+  const picker = useRef<HTMLInputElement>(null);
+  const exited = room.state === 'exited';
+  const tools = useTools();
+  const toolName = tools.data?.find((tool) => tool.id === room.tool)?.title ?? room.tool;
 
-  const flash = (text: string) => {
+  const flash = (text: string, ms = 2000) => {
     setNote(text);
-    window.setTimeout(() => setNote(null), 2000);
+    window.setTimeout(() => setNote(null), ms);
+  };
+
+  // 터미널 보기: 받자마자 입력 줄에 붙인다. 클립보드에서 온 그림은 이미 클립보드에 있으니 키만 보낸다
+  const attachNow = async (list: Attachment[], fromClipboard: boolean) => {
+    const paths = list.filter((a) => !a.image).map((a) => a.path!);
+    if (paths.length) screen.current?.paste(quotePaths(paths));
+    const images = list.filter((a) => a.image);
+    if (fromClipboard && images.length === 1 && !images[0]?.path) {
+      await pasteImageKeys(room.id);
+    } else if (images.length) {
+      const done = await attachImages(
+        room.id,
+        images.map((a) => a.file),
+      );
+      if (done < images.length) flash(t('attach.failed'), 4000);
+    }
+    release(list);
+    screen.current?.focus();
+  };
+
+  // 끌어 놓기·📎·붙여넣기가 다 이 길이다. 말풍선 보기면 입력칸 위에 쌓고, 터미널 보기면 바로 붙인다
+  const take = (files: File[], fromClipboard = false) => {
+    if (exited) return;
+    const { taken, refused } = toAttachments(files);
+    if (refused) flash(t('attach.refused', { count: refused }), 4000);
+    if (!taken.length) return;
+    if (view === 'chat') setAtts((now) => [...now, ...taken]);
+    else void attachNow(taken, fromClipboard);
   };
 
   const saveScreen = () => {
@@ -266,6 +310,15 @@ function RoomBody({ room, onSameFolder }: { room: Room; onSameFolder: () => void
             <button
               className="icon-btn"
               type="button"
+              title={t('attach.pick')}
+              disabled={exited}
+              onClick={() => picker.current?.click()}
+            >
+              <Icon name="paperclip" />
+            </button>
+            <button
+              className="icon-btn"
+              type="button"
               title={t('terminal.openFolder')}
               onClick={() => openFolder(room.folder)}
             >
@@ -342,11 +395,78 @@ function RoomBody({ room, onSameFolder }: { room: Room; onSameFolder: () => void
           </>
         )}
       </div>
-      {/* 터미널은 말풍선을 보는 동안에도 붙어 있는다. 다시 터미널로 오면 CLI 화면이 그대로다 */}
-      {view === 'chat' && <ChatView room={room} onTerminal={() => setView('term')} />}
-      <div className="term-wrap" hidden={view === 'chat'}>
-        <TermScreen ref={screen} roomId={room.id} onFind={() => setFinding(true)} onExit={() => undefined} />
+      <div
+        className="roomview"
+        onDragEnter={(e) => {
+          if (exited || !e.dataTransfer.types.includes('Files')) return;
+          e.preventDefault();
+          setDragging(true);
+        }}
+      >
+        {/* 터미널은 말풍선을 보는 동안에도 붙어 있는다. 다시 터미널로 오면 CLI 화면이 그대로다 */}
+        {view === 'chat' && (
+          <ChatView
+            room={room}
+            onTerminal={() => setView('term')}
+            atts={atts}
+            onFiles={(files) => take(files, true)}
+            onPick={() => picker.current?.click()}
+            onRemove={(key) =>
+              setAtts((now) => {
+                release(now.filter((a) => a.key === key));
+                return now.filter((a) => a.key !== key);
+              })
+            }
+            onSent={() =>
+              setAtts((now) => {
+                release(now);
+                return [];
+              })
+            }
+          />
+        )}
+        <div className="term-wrap" hidden={view === 'chat'}>
+          <TermScreen
+            ref={screen}
+            roomId={room.id}
+            onFind={() => setFinding(true)}
+            onExit={() => undefined}
+            onFiles={(files) => take(files, true)}
+            onClipboardImage={() => void pasteImageKeys(room.id)}
+          />
+        </div>
+        {dragging && (
+          <div
+            className="dropzone"
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.dataTransfer.dropEffect = 'copy';
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragging(false);
+              take([...e.dataTransfer.files]);
+            }}
+          >
+            <Icon name="download" />
+            <b>{t('attach.dropChat', { tool: toolName })}</b>
+            <span>{view === 'chat' ? t('attach.dropChatHint') : t('attach.dropTermHint')}</span>
+            {!knowsPaths && <span>{t('attach.browserOnly')}</span>}
+          </div>
+        )}
       </div>
+      <input
+        ref={picker}
+        type="file"
+        multiple
+        hidden
+        accept={knowsPaths ? undefined : 'image/*'}
+        onChange={(e) => {
+          take([...(e.target.files ?? [])]);
+          e.target.value = '';
+        }}
+      />
     </div>
   );
 }

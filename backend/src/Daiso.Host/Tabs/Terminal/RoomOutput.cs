@@ -83,6 +83,44 @@ public sealed class RoomOutput
         }
     }
 
+    /// <summary>지난 출력 없이 앞으로 올 출력만 읽는 통로. 다 보면 <see cref="Unsubscribe"/> 한다.</summary>
+    public Channel<byte[]> Follow()
+    {
+        var live = Channel.CreateUnbounded<byte[]>(new UnboundedChannelOptions { SingleReader = true });
+
+        lock (_gate)
+        {
+            if (_completed)
+            {
+                live.Writer.TryComplete();
+            }
+            else
+            {
+                _readers.Add(live);
+            }
+        }
+
+        return live;
+    }
+
+    /// <summary>마지막 <paramref name="bytes"/> 바이트. 덩어리 경계에서 자르므로 조금 더 올 수 있다.</summary>
+    public byte[] Tail(int bytes)
+    {
+        lock (_gate)
+        {
+            var picked = new List<byte[]>();
+            var total = 0;
+            for (var node = _chunks.Last; node is not null && total < bytes; node = node.Previous)
+            {
+                picked.Add(node.Value);
+                total += node.Value.Length;
+            }
+
+            picked.Reverse();
+            return [.. picked.SelectMany(chunk => chunk)];
+        }
+    }
+
     public void Unsubscribe(Channel<byte[]> live)
     {
         lock (_gate)

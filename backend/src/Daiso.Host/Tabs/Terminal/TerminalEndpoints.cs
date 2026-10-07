@@ -55,6 +55,7 @@ public sealed class TerminalEndpoints : ITabEndpoints
         group.MapGet("/models", ModelsAsync).WithName("ListModels");
         group.MapGet("/rooms/{id}/chat", ChatAsync).WithName("GetRoomChat");
         group.MapPost("/rooms/{id}/send", SendAsync).WithName("SendToRoom");
+        group.MapPost("/rooms/{id}/image", PasteImageAsync).WithName("PasteImageToRoom");
         group.MapGet("/commands", ListCommands).WithName("ListCommands");
         group.MapPost("/external", ExternalAsync).WithName("OpenExternalTerminal");
         group.MapPost("/open-folder", OpenFolder).WithName("OpenFolder");
@@ -151,6 +152,31 @@ public sealed class TerminalEndpoints : ITabEndpoints
         await room.SendAsync(request.Text, ct).ConfigureAwait(false);
         return Results.NoContent();
     }
+
+    /// <summary>
+    /// 그 도구의 그림 붙이기 키를 CLI 에 보내고, CLI 가 입력 줄에 첨부 표시를 그릴 때까지 기다린다.
+    /// CLI 가 시스템 클립보드의 그림을 스스로 읽어 첨부한다(Claude Code 는 Alt+V, Codex 는 Ctrl+V — 옛 앱 0694861).
+    /// 그림을 클립보드에 올리는 일은 화면이 먼저 한다. 키가 없는 도구나 끝난 방은 409, 제때 첨부되지 않으면 504.
+    /// </summary>
+    private static async Task<IResult> PasteImageAsync(string id, RoomService rooms, CancellationToken ct)
+    {
+        if (rooms.Find(id) is not { } room)
+        {
+            return Results.NotFound();
+        }
+
+        if (room.State == RoomState.Exited || string.IsNullOrEmpty(room.Provider.ImagePasteKeys))
+        {
+            return Results.Conflict();
+        }
+
+        return await room.PasteImageAsync(ImageWait, ct).ConfigureAwait(false)
+            ? Results.NoContent()
+            : Results.StatusCode(StatusCodes.Status504GatewayTimeout);
+    }
+
+    /// <summary>그림 하나를 첨부하기를 기다리는 시간. Claude 는 PowerShell 로 클립보드를 읽어 1~2초 걸린다.</summary>
+    private static readonly TimeSpan ImageWait = TimeSpan.FromSeconds(8);
 
     /// <summary>보낼 글의 최대 길이. 붙여 넣은 큰 파일 내용이 터미널을 멈추지 않게.</summary>
     private const int MaxSend = 100_000;

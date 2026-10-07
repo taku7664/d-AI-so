@@ -5,6 +5,7 @@ import { Icon } from '../../icons/Icon';
 import { t } from '../../strings';
 import { ToolBadge, useTools } from '../../tools';
 import { useCommands, useRoomChat, useSendToRoom, type ChatItem, type CommandGroup, type Room } from './api';
+import { attachImages, filesOf, quotePaths, where, type Attachment } from './attach';
 import { Md } from './Md';
 
 type Block =
@@ -37,7 +38,17 @@ function hhmm(iso: string): string {
   return `${String(at.getHours()).padStart(2, '0')}:${String(at.getMinutes()).padStart(2, '0')}`;
 }
 
-export function ChatView({ room, onTerminal }: { room: Room; onTerminal: () => void }) {
+interface AttachProps {
+  atts: Attachment[];
+  /** 입력칸에 붙여 넣은 파일·그림 */
+  onFiles: (files: File[]) => void;
+  onPick: () => void;
+  onRemove: (key: string) => void;
+  /** 보냈다. 첨부를 비운다 */
+  onSent: () => void;
+}
+
+export function ChatView({ room, onTerminal, ...attach }: { room: Room; onTerminal: () => void } & AttachProps) {
   const chat = useRoomChat(room.id);
   const tools = useTools();
   const tool = tools.data?.find((x) => x.id === room.tool);
@@ -118,7 +129,7 @@ export function ChatView({ room, onTerminal }: { room: Room; onTerminal: () => v
           </div>
         )}
       </div>
-      <Composer room={room} toolName={name} onTerminal={onTerminal} />
+      <Composer room={room} toolName={name} onTerminal={onTerminal} {...attach} />
     </div>
   );
 }
@@ -154,8 +165,46 @@ function ToolGroup({
   );
 }
 
-function Composer({ room, toolName, onTerminal }: { room: Room; toolName: string; onTerminal: () => void }) {
+/** 입력칸 위 첨부 칩 하나. 그림은 미리보기와 크기, 파일은 어느 폴더인지 */
+function Chip({ att, folder, onRemove }: { att: Attachment; folder: string; onRemove: () => void }) {
+  const [size, setSize] = useState('');
+  return (
+    <span className="att" title={att.path ?? att.file.name}>
+      {att.image ? (
+        <img
+          src={att.url!}
+          alt=""
+          onLoad={(e) => setSize(`${e.currentTarget.naturalWidth}×${e.currentTarget.naturalHeight}`)}
+        />
+      ) : (
+        <span className="ficon">
+          <Icon name="file-earmark-text" />
+        </span>
+      )}
+      <span className="meta">
+        <span className="ell">{att.file.name}</span>
+        <small className="ell">{att.image ? t('attach.image', { size }) : where(att.path!, folder)}</small>
+      </span>
+      <button className="icon-btn" type="button" title={t('attach.remove')} onClick={onRemove}>
+        <Icon name="x-lg" />
+      </button>
+    </span>
+  );
+}
+
+function Composer({
+  room,
+  toolName,
+  onTerminal,
+  atts,
+  onFiles,
+  onPick,
+  onRemove,
+  onSent,
+}: { room: Room; toolName: string; onTerminal: () => void } & AttachProps) {
   const send = useSendToRoom();
+  const [attaching, setAttaching] = useState(false);
+  const [attachFailed, setAttachFailed] = useState(false);
   const commands = useCommands(room.tool, room.folder);
   const [draft, setDraft] = useState('');
   const [index, setIndex] = useState(0);
@@ -188,15 +237,38 @@ function Composer({ room, toolName, onTerminal }: { room: Room; toolName: string
     area.current.style.height = `${Math.min(area.current.scrollHeight, 160)}px`;
   }, [draft]);
 
-  const submit = (text: string) => {
-    if (!text.trim() || exited) return;
-    send.mutate({ id: room.id, text }, { onSuccess: () => setDraft('') });
+  // 그림을 먼저 하나씩 첨부하고(CLI 입력 줄에 [Image #1] 처럼 들어간다) 글과 파일 경로를 붙여 Enter
+  const submit = async (text: string) => {
+    if (exited || attaching) return;
+    const paths = atts.filter((a) => !a.image).map((a) => a.path!);
+    const images = atts.filter((a) => a.image).map((a) => a.file);
+    const full = (text.trim() + (paths.length ? quotePaths(paths) : '')).trim();
+    if (!full) return;
+    setAttachFailed(false);
+    if (images.length) {
+      setAttaching(true);
+      const done = await attachImages(room.id, images);
+      setAttaching(false);
+      if (done < images.length) {
+        setAttachFailed(true);
+        return;
+      }
+    }
+    send.mutate(
+      { id: room.id, text: full },
+      {
+        onSuccess: () => {
+          setDraft('');
+          onSent();
+        },
+      },
+    );
   };
 
   const choose = (name: string, terminal: boolean) => {
     if (terminal) {
-      // 화면이 있어야 하는 명령은 보내고 터미널 보기로 넘어간다
-      submit(name);
+      // 화면이 있어야 하는 명령은 보내고 터미널 보기로 넘어간다. 첨부는 남겨 둔다
+      send.mutate({ id: room.id, text: name }, { onSuccess: () => setDraft('') });
       onTerminal();
       return;
     }
@@ -223,9 +295,10 @@ function Composer({ room, toolName, onTerminal }: { room: Room; toolName: string
     }
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      submit(draft);
+      void submit(draft);
     }
   };
+  const ready = (draft.trim() || atts.some((a) => !a.image)) && !send.isPending && !attaching && !exited;
 
   let n = 0;
   return (
@@ -265,6 +338,16 @@ function Composer({ room, toolName, onTerminal }: { room: Room; toolName: string
         </div>
       )}
       <div className="compose-box">
+        {atts.length > 0 && (
+          <div className="atts">
+            {atts.map((att) => (
+              <Chip key={att.key} att={att} folder={room.folder} onRemove={() => onRemove(att.key)} />
+            ))}
+          </div>
+        )}
+        <button className="icon-btn" type="button" title={t('attach.pick')} disabled={exited} onClick={onPick}>
+          <Icon name="paperclip" />
+        </button>
         <textarea
           ref={area}
           rows={1}
@@ -277,20 +360,36 @@ function Composer({ room, toolName, onTerminal }: { room: Room; toolName: string
             setIndex(0);
           }}
           onKeyDown={onKey}
+          onPaste={(e) => {
+            const files = filesOf(e.clipboardData);
+            if (!files.length) return;
+            e.preventDefault();
+            onFiles(files);
+          }}
         />
         <button
           className="send"
           type="button"
           title={t('chat.send')}
-          disabled={!draft.trim() || send.isPending || exited}
-          onClick={() => submit(draft)}
+          disabled={!ready}
+          onClick={() => void submit(draft)}
         >
           <Icon name="send-fill" />
         </button>
       </div>
       <div className="compose-hint">
         <span>{t('chat.hintKeys')}</span>
-        <span>{send.isError ? t('chat.sendFailed') : t('chat.hintWhere', { tool: toolName })}</span>
+        <span className={send.isError || attachFailed ? 'bad' : undefined}>
+          {attachFailed
+            ? t('attach.failed')
+            : send.isError
+              ? t('chat.sendFailed')
+              : attaching
+                ? t('attach.sending')
+                : atts.length
+                  ? t('attach.hint', { tool: toolName })
+                  : t('chat.hintWhere', { tool: toolName })}
+        </span>
       </div>
     </div>
   );

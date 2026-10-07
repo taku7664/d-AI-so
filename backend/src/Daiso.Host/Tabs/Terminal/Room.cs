@@ -1,3 +1,4 @@
+using System.Text;
 using Daiso.Core;
 using Daiso.Infrastructure.Pty;
 
@@ -89,6 +90,48 @@ public sealed class Room : IDisposable
         await Task.Delay(PasteSettle, ct).ConfigureAwait(false);
         Write("\r");
     }
+
+    /// <summary>
+    /// 그림 붙이기 키를 보내고 CLI 가 입력 줄에 새 첨부 표시를 그릴 때까지 기다린다(<see cref="ImageMark"/>).
+    /// 그림은 화면이 먼저 시스템 클립보드에 올려 둔다. 제때 안 그리면 false(클립보드에 그림이 없었거나 도구가 표시를 다르게 그린다).
+    /// </summary>
+    public async Task<bool> PasteImageAsync(TimeSpan timeout, CancellationToken ct)
+    {
+        var before = ImageMark.Numbers(Encoding.UTF8.GetString(Output.Tail(ScreenTail)));
+        var live = Output.Follow();
+        try
+        {
+            Write(Provider.ImagePasteKeys);
+
+            var decoder = Encoding.UTF8.GetDecoder();
+            var seen = new StringBuilder();
+            using var limit = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            limit.CancelAfter(timeout);
+            await foreach (var chunk in live.Reader.ReadAllAsync(limit.Token).ConfigureAwait(false))
+            {
+                var chars = new char[decoder.GetCharCount(chunk, 0, chunk.Length)];
+                decoder.GetChars(chunk, 0, chunk.Length, chars, 0);
+                seen.Append(chars);
+                if (ImageMark.Added(before, seen.ToString()))
+                {
+                    return true;
+                }
+            }
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            // 제때 안 그렸다
+        }
+        finally
+        {
+            Output.Unsubscribe(live);
+        }
+
+        return false;
+    }
+
+    /// <summary>키를 보내기 직전의 화면으로 볼 출력 끝부분. 입력 줄을 한 번 그리는 데 수백 바이트다.</summary>
+    private const int ScreenTail = 8 * 1024;
 
     private const string PasteStart = "\u001b[200~";
     private const string PasteEnd = "\u001b[201~";

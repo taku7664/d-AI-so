@@ -113,6 +113,15 @@ public sealed class TerminalTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Pasting_an_image_needs_a_tool_that_reads_the_clipboard()
+    {
+        var room = await OpenAsync();
+
+        (await PostJsonAsync($"/api/terminal/rooms/{room.Id}/image", new { })).StatusCode.Should().Be(HttpStatusCode.Conflict, because: "시험 도구에는 그림 붙이기 키가 없다");
+        (await PostJsonAsync("/api/terminal/rooms/nope/image", new { })).StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
     public async Task A_slash_command_does_not_look_like_work_but_a_question_does()
     {
         var room = await OpenAsync();

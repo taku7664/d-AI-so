@@ -90,11 +90,11 @@ old/                           2026-10-03 까지의 WinUI 앱 전부
 
 | 기능 | Electron 창 | 크롬 탭 |
 |---|---|---|
-| 탐색기에서 파일 끌어 놓기 → 전체 경로 | `webUtils.getPathForFile`로 경로를 받는다 | 브라우저가 경로를 주지 않는다. **끌어 놓기를 끈다** |
+| 탐색기에서 파일 끌어 놓기 → 전체 경로 | `webUtils.getPathForFile`로 경로를 받는다 | 브라우저가 경로를 주지 않는다. **그림만 받는다** |
 | 폴더 "찾아보기" | `dialog.showOpenDialog` | 서버가 폴더 목록을 주는 자체 선택기 (Electron도 이걸 기본으로 써도 된다) |
 | 트레이 상주, 창 X로 숨기기 | Electron `Tray` | 해당 없음 (탭을 닫아도 서버는 Electron이 붙들고 있다) |
 | 완료 알림 | Electron `Notification` | 웹 알림 (권한을 물음) |
-| 클립보드 이미지 붙여넣기 | 웹 클립보드 API → 서버가 파일로 저장 | 같음 |
+| 클립보드 이미지 붙여넣기 | 그림은 시스템 클립보드에 두고 서버가 도구의 그림 키를 보낸다(CLI 가 읽는다) | 같음 |
 | 외부 터미널 창으로 열기 | 서버가 띄운다 | 같음 |
 
 Electron 전용 기능은 전부 `window.daisoDesktop` 하나로 들어온다. preload가 `contextBridge`로 연다. 화면은 이 객체가 있는지만 보고 기능을 켜고 끈다.

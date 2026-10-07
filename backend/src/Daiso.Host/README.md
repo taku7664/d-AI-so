@@ -43,6 +43,7 @@ DAISO_OPEN http://127.0.0.1:51234/?token=...
 | `/api/dashboard` | 요약 탭. `project`로 좁힌다. 오늘 세션 수, 최근 7일 토큰, 최근 세션 5개(마지막으로 친 질문 포함). `/api/dashboard/worktrees`는 프로젝트 저장소의 워크트리(git 을 그대로 부른다, 20초 캐시) |
 | `/api/bell` | 위 줄 종 팝업. 손볼 것(로그인·정리·인덱스·플러그인), 마지막으로 하던 것, 다른 프로젝트에서 하던 것. 모든 프로젝트 기준 |
 | `/api/projects`, `/api/tools`, `/api/index`, `/api/limits`, `/api/accounts` | 공용 경로 ([docs/ARCHITECTURE.md](../../../docs/ARCHITECTURE.md) "탭에 속하지 않는 공용 경로") |
+| `/api/terminal/rooms/{id}/image` | 그 도구의 그림 붙이기 키를 보내고 입력 줄에 새 `[Image #N]`이 그려질 때까지(8초) 기다린다. 그림은 화면이 먼저 클립보드에 올린다. 키 없는 도구·끝난 방 409, 제때 안 되면 504 |
 | `/api/terminal/rooms/{id}/chat`, `/send`, `/api/terminal/commands` | 말풍선 보기: 방의 세션 기록을 말풍선 칸으로(`after` 뒤만), 입력칸 글을 CLI 입력 줄로(붙여넣기 + Enter), / 목록 |
 | `/api/terminal` | 터미널 탭. 방 목록·열기·닫기·이름·본 표시, 모델 목록, 새 창으로 열기, 폴더 열기. 방 화면은 WebSocket `/api/terminal/rooms/{id}/pty`(서버→화면 바이너리, 화면→서버 `{"t":"in"}`·`{"t":"resize"}`) |
 | `/api/sessions` | 세션 탭. 목록·검색·대화·내보내기·이름·지우기·이어서 열기·정리 기준. 경로로 받는 세션은 인덱스에 있는 것만 다룬다 |

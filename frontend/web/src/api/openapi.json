@@ -999,6 +999,29 @@
         }
       }
     },
+    "/api/terminal/rooms/{id}/image": {
+      "post": {
+        "tags": [
+          "terminal"
+        ],
+        "operationId": "PasteImageToRoom",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/terminal/commands": {
       "get": {
         "tags": [

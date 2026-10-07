@@ -1,5 +1,11 @@
 // 화면에 여는 Electron 전용 다리. 화면은 window.daisoDesktop 이 있는지만 보고 Electron 전용 기능을 켠다 (docs/DECISIONS.md "좁은 다리 하나")
-// 지금은 비어 있다. 쓰는 기능이 생길 때(끌어 놓기 경로, 알림 등) 하나씩 더한다
-import { contextBridge } from 'electron';
+// 쓰는 기능이 생길 때 하나씩 더한다
+import { contextBridge, webUtils } from 'electron';
 
-contextBridge.exposeInMainWorld('daisoDesktop', Object.freeze({}));
+contextBridge.exposeInMainWorld(
+  'daisoDesktop',
+  Object.freeze({
+    // 끌어 놓았거나 고른 파일의 전체 경로. 브라우저는 경로를 주지 않는다. 클립보드에서 온 그림처럼 파일이 없으면 빈 글자
+    pathForFile: (file: File): string => webUtils.getPathForFile(file),
+  }),
+);
