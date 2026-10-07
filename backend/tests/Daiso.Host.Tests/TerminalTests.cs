@@ -112,6 +112,18 @@ public sealed class TerminalTests : IAsyncLifetime
         (await PostJsonAsync($"/api/terminal/rooms/{room.Id}/send", new SendRequest("echo hi"))).StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
 
+    [Fact]
+    public async Task A_slash_command_does_not_look_like_work_but_a_question_does()
+    {
+        var room = await OpenAsync();
+
+        (await PostJsonAsync($"/api/terminal/rooms/{room.Id}/send", new SendRequest("/login"))).StatusCode.Should().Be(HttpStatusCode.NoContent);
+        (await RoomsAsync()).Single().State.Should().Be("idle", because: "명령은 질문이 아니라 답 끝남 신호가 오지 않는다");
+
+        (await PostJsonAsync($"/api/terminal/rooms/{room.Id}/send", new SendRequest("echo hi"))).StatusCode.Should().Be(HttpStatusCode.NoContent);
+        (await RoomsAsync()).Single().State.Should().Be("run");
+    }
+
     private async Task<HttpResponseMessage> PostJsonAsync<T>(string path, T body)
     {
         using var client = _host.Client();

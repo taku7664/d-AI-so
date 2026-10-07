@@ -94,16 +94,29 @@ public sealed class Room : IDisposable
     private const string PasteEnd = "\u001b[201~";
     private static readonly TimeSpan PasteSettle = TimeSpan.FromMilliseconds(300);
 
-    /// <summary>키 입력을 보낸다. Enter 가 들어 있으면 일을 시작한 것으로 본다(훅이 없는 도구도 "작업 중"이 보이게).</summary>
+    /// <summary>
+    /// 키 입력을 보낸다. 질문을 보냈으면(Enter) 일을 시작한 것으로 본다 — 시작을 알려 주는 훅이 없는 도구(Codex 등)도 "작업 중"이 보이게.
+    /// Claude 는 질문을 보내면 훅(UserPromptSubmit)이 알려 주므로 짐작하지 않는다. <c>/login</c> 처럼 질문이 아닌 입력에 "작업 중"이 남지 않게
+    /// 빈 줄과 <c>/</c> 로 시작하는 명령도 짐작에서 뺀다(2026-10-07 /login 뒤 "작업 중"에 머문 것을 보고).
+    /// </summary>
     public void Write(string text)
     {
         _session.Write(text);
 
-        if (text.Contains('\r', StringComparison.Ordinal) && State is RoomState.Idle or RoomState.Done or RoomState.Ask)
+        var sent = _line.Feed(text);
+        if (Provider.Kind == ToolKind.Claude)
+        {
+            return;
+        }
+
+        if (sent.Any(line => line.Trim() is { Length: > 0 } typed && !typed.StartsWith('/'))
+            && State is RoomState.Idle or RoomState.Done or RoomState.Ask)
         {
             SetState(RoomState.Run);
         }
     }
+
+    private readonly InputLine _line = new();
 
     /// <summary>크기가 같으면 보내지 않는다. 같은 크기를 다시 보내면 ConPTY 가 다시 그려 줄이 겹쳤다(옛 앱 eb521fa).</summary>
     public void Resize(int columns, int rows)
